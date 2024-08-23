@@ -283,8 +283,12 @@ Clay_RenderCommandArray CreateLayout(float lerpValue) {
             CLAY_CONTAINER(CLAY_ID("Spacer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }), {});
 
             if (!mobileScreen) {
-                CLAY_TEXT(CLAY_ID("LinkFeatures"), CLAY_STRING("Features"), &headerTextConfig);
-                CLAY_TEXT(CLAY_ID("LinkDocs"), CLAY_STRING("Docs"), &headerTextConfig);
+                CLAY_RECTANGLE(CLAY_ID("LinkExamplesOuter"), &CLAY_LAYOUT_DEFAULT, CLAY_RECTANGLE_CONFIG(.link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples"), .color = {0,0,0,0}), {
+                    CLAY_TEXT(CLAY_ID("LinkExamplesText"), CLAY_STRING("Examples"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
+                });
+                CLAY_RECTANGLE(CLAY_ID("LinkDocsOuter"), &CLAY_LAYOUT_DEFAULT, CLAY_RECTANGLE_CONFIG(.link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md"), .color = {0,0,0,0}), {
+                    CLAY_TEXT(CLAY_ID("LinkDocsText"), CLAY_STRING("Docs"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
+                });
             }
             uint32_t githubButtonId = CLAY_ID("HeaderButtonGithub");
             CLAY_BORDER_CONTAINER(CLAY_ID("LinkGithubOuter"), CLAY_LAYOUT(), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, COLOR_RED, 10), {
