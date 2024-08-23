@@ -324,6 +324,11 @@
                         [config.cornerRadius.topLeft.value * scale, config.cornerRadius.topRight.value * scale, config.cornerRadius.bottomRight.value * scale, config.cornerRadius.bottomLeft.value * scale]) // height;
                     ctx.fill();
                     ctx.closePath();
+                    // Handle link clicks
+                    let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
+                    if (linkContents.length > 0 && (window.mouseDown || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
+                        window.location.href = linkContents;
+                    }
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_BORDER): {
