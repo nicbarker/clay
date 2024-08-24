@@ -780,6 +780,7 @@ typedef struct
     Clay_Vector2 pointerOrigin;
     Clay_Vector2 scrollMomentum;
     Clay_Vector2 scrollPosition;
+    Clay_Vector2 previousDelta;
     float momentumTime;
     uint32_t elementId;
     bool openThisFrame;
@@ -2229,9 +2230,9 @@ void Clay_UpdateScrollContainers(bool isPointerActive, Clay_Vector2 scrollDelta,
                     float oldYScrollPosition = highestPriorityScrollData->scrollPosition.y;
                     highestPriorityScrollData->scrollPosition.y = highestPriorityScrollData->scrollOrigin.y + (Clay__pointerPosition.y - highestPriorityScrollData->pointerOrigin.y);
                     highestPriorityScrollData->scrollPosition.y = CLAY__MAX(CLAY__MIN(highestPriorityScrollData->scrollPosition.y, 0), -(highestPriorityScrollData->contentSize.height - highestPriorityScrollData->boundingBox.height));
-                    scrollDeltaX = highestPriorityScrollData->scrollPosition.x - oldYScrollPosition;
+                    scrollDeltaY = highestPriorityScrollData->scrollPosition.y - oldYScrollPosition;
                 }
-                if (scrollDeltaX > -0.1f && scrollDeltaX < 0.1f && scrollDeltaY > -0.1f && scrollDeltaY < 0.1f && highestPriorityScrollData->momentumTime > 0.5f) {
+                if (scrollDeltaX > -0.1f && scrollDeltaX < 0.1f && scrollDeltaY > -0.1f && scrollDeltaY < 0.1f && highestPriorityScrollData->momentumTime > 0.15f) {
                     highestPriorityScrollData->momentumTime = 0;
                     highestPriorityScrollData->pointerOrigin = Clay__pointerPosition;
                     highestPriorityScrollData->scrollOrigin = highestPriorityScrollData->scrollPosition;

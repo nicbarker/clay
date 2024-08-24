@@ -221,7 +221,7 @@
         window.touchDown = false;
         let zeroTimeout = null;
         addEventListener("wheel", (event) => {
-            window.mouseWheelXThisFrame = event.deltaX * -0.1;
+            window.mouseWheelXThisFrame = event.deltaX * 0.1;
             window.mouseWheelYThisFrame = event.deltaY * -0.1;
             clearTimeout(zeroTimeout);
             zeroTimeout = setTimeout(() => {
