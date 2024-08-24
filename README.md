@@ -414,7 +414,10 @@ Creates a `Clay_Arena` struct with the given capacity and base memory pointer, w
 `void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config))`
 
 Takes a pointer to a function that can be used to measure the `width, height` dimensions of a string. Used by clay during layout to determine [CLAY_TEXT](#clay_text) element sizing and wrapping.
-**Note: It is essential that this function is as fast as possible.** For text heavy use-cases this function is called many times, and despite the fact that clay caches text measurements internally, it can easily become the dominant overall layout cost if the provided function is slow. **This is on the hot path!**
+
+**Note 1: This string is not guaranteed to be null terminated.** Clay saves significant performance overhead by using slices when wrapping text instead of having to clone new null terminated strings. If your renderer does not support **ptr, length** style strings (e.g. Raylib), you will need to clone this to a new C string before rendering.
+
+**Note 2: It is essential that this function is as fast as possible.** For text heavy use-cases this function is called many times, and despite the fact that clay caches text measurements internally, it can easily become the dominant overall layout cost if the provided function is slow. **This is on the hot path!**
 
 ### Clay_Initialize
 
@@ -1415,3 +1418,108 @@ Generates a `uint32_t` string hash from the provided `char *label`. Used both to
 `uint32_t CLAY_IDI(char *label, int index)`
 
 Generates a `uint32_t` string hash from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+
+## Data Structures & Definitions
+
+### Clay_RenderCommandArray
+
+```C
+typedef struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_RenderCommand *internalArray;
+} Clay_RenderCommandArray;
+```
+
+Returned by [Clay_EndLayout](#clay_endlayout), this array contains the [Clay_RenderCommand](#clay_rendercommand)s representing the calculated layout.
+
+**Fields**
+
+`.capacity` - `uint32_t`
+
+Represents the total capacity of the allocated memory in `.internalArray`.
+
+---
+
+`.length` - `uint32_t`
+
+Represents the total number of `Clay_RenderCommand` elements stored consecutively at the address `.internalArray`.
+
+
+---
+
+`.internalArray` - `Clay_RenderCommand`
+
+An array of [Clay_RenderCommand](#clay_rendercommand)s representing the calculated layout. If there was at least one render command, this array will contain elements from `.internalArray[0]` to `.internalArray[.length - 1]`.
+
+### Clay_RenderCommand
+
+```C
+typedef struct
+{
+    Clay_Rectangle boundingBox;
+    Clay_ElementConfigUnion config;
+    Clay_String text;
+    uint32_t id;
+    Clay_RenderCommandType commandType;
+} Clay_RenderCommand;
+```
+
+**Fields**
+
+---
+
+`.commandType` - `Clay_RenderCommandType`
+
+An enum indicating how this render command should be handled. Possible values include:
+
+- `CLAY_RENDER_COMMAND_TYPE_NONE` - Should be ignored by the renderer, and never emitted by clay under normal conditions.
+- `CLAY_RENDER_COMMAND_TYPE_RECTANGLE` - A rectangle should be drawn, configured with `.config.rectangleElementConfig`
+- `CLAY_RENDER_COMMAND_TYPE_BORDER` - A border should be drawn, configured with `.config.borderElementConfig`
+- `CLAY_RENDER_COMMAND_TYPE_TEXT` - Text should be drawn, configured with `.config.textElementConfig`
+- `CLAY_RENDER_COMMAND_TYPE_IMAGE` - An image should be drawn, configured with `.config.imageElementConfig`
+- `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` - Named after [glScissor](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glScissor.xhtml), this indicates that the renderer should begin culling any subsequent pixels that are drawn outside the `.boundingBox` of this render command.
+- `CLAY_RENDER_COMMAND_TYPE_SCISSOR_END` - Only ever appears after a matching `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` command, and indicates that the scissor has ended.
+- `CLAY_RENDER_COMMAND_TYPE_CUSTOM` - A custom render command controlled by the user, configured with `.config.customElementConfig`
+
+---
+
+`.boundingBox` - `Clay_Rectangle`
+
+```C
+typedef struct {
+    float x, y, width, height;
+} Clay_Rectangle;
+```
+
+A rectangle representing the bounding box of this render command, with `.x` and `.y` representing the top left corner of the element.
+
+---
+
+`.config` - `Clay_ElementConfigUnion`
+
+A C union containing various pointers to config data, with the type dependent on `.commandType`. Possible values include:
+
+- `config.rectangleElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE`. See [CLAY_RECTANGLE_CONFIG](#clay_rectangle_config) for details.
+- `config.textElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. See [CLAY_TEXT_CONFIG](#clay_text_config) for details.
+- `config.imageElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE`. See [CLAY_IMAGE_CONFIG](#clay_image_config) for details.
+- `config.borderElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_BORDER`. See [CLAY_BORDER_CONFIG](#clay_border_config) for details.
+- `config.customElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM`. See [CLAY_CUSTOM_CONFIG](#clay_custom_config) for details.
+- `config.floatingElementConfig` - Not used and will always be NULL.
+- `config.scrollElementConfig` - Not used and will always be NULL.
+
+---
+
+`.text` - `Clay_String`
+
+Only used if `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. A `Clay_String` containing a string slice (char *chars, int length) representing text to be rendered. **Note: This string is not guaranteed to be null terminated.** Clay saves significant performance overhead by using slices when wrapping text instead of having to clone new null terminated strings. If your renderer does not support **ptr, length** style strings (e.g. Raylib), you will need to clone this to a new C string before rendering.
+
+---
+
+`.id` - `uint32_t`
+
+The id that was originally used with the element macro that created this render command. See [CLAY_ID](#clay_id) for details.
+
+
+
