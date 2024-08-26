@@ -93,7 +93,7 @@ Clay_RenderCommandArray CreateLayout() {
                 });
             });
         });
-//
+
         CLAY_FLOATING_CONTAINER(CLAY_ID("Blob4Floating"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.zIndex = 1, .parentId = CLAY_ID("SidebarBlob4")), {
             CLAY_SCROLL_CONTAINER(CLAY_ID("ScrollContainer"), CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(200) }, .childGap = 2), CLAY_SCROLL_CONFIG(.vertical = true), {
                 CLAY_FLOATING_CONTAINER(CLAY_ID("FloatingContainer"), CLAY_LAYOUT(), CLAY_FLOATING_CONFIG(.zIndex = 1), {
@@ -108,11 +108,22 @@ Clay_RenderCommandArray CreateLayout() {
                 });
             });
         });
+        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("MainContent"));
+        CLAY_FLOATING_CONTAINER(CLAY_ID("ScrollBar"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height }, .zIndex = 1, .parentId = CLAY_ID("MainContent"), .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}), {
+            CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = 6, .color = Clay_PointerOver(CLAY_ID("ScrollBar")) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150}), {});
+        });
     });
     return Clay_EndLayout(GetScreenWidth(), GetScreenHeight());
 }
 
-int display_size_changed = 0;
+typedef struct
+{
+    Clay_Vector2 clickOrigin;
+    Clay_Vector2 positionOrigin;
+    bool mouseDown;
+} ScrollbarData;
+
+ScrollbarData scrollbarData = (ScrollbarData) {};
 
 void UpdateDrawFrame(void)
 {
@@ -122,8 +133,34 @@ void UpdateDrawFrame(void)
     mouseWheelY = mouseWheelDelta.y;
     //----------------------------------------------------------------------------------
     // Handle scroll containers
-    Clay_SetPointerPosition(RAYLIB_VECTOR2_TO_CLAY_VECTOR2(GetMousePosition()));
-    Clay_UpdateScrollContainers(IsMouseButtonDown(0), (Clay_Vector2) {mouseWheelX, mouseWheelY}, GetFrameTime());
+    Clay_Vector2 mousePosition = RAYLIB_VECTOR2_TO_CLAY_VECTOR2(GetMousePosition());
+    Clay_SetPointerPosition(mousePosition);
+    if (!IsMouseButtonDown(0)) {
+        scrollbarData.mouseDown = false;
+    }
+
+    if (IsMouseButtonDown(0) && !scrollbarData.mouseDown && Clay_PointerOver(CLAY_ID("ScrollBar"))) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("MainContent"));
+        scrollbarData.clickOrigin = mousePosition;
+        scrollbarData.positionOrigin = *scrollContainerData.scrollPosition;
+        scrollbarData.mouseDown = true;
+    } else if (scrollbarData.mouseDown) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("MainContent"));
+        if (scrollContainerData.contentDimensions.height > 0) {
+            Clay_Vector2 ratio = (Clay_Vector2) {
+                scrollContainerData.contentDimensions.width / scrollContainerData.scrollContainerDimensions.width,
+                scrollContainerData.contentDimensions.height / scrollContainerData.scrollContainerDimensions.height,
+            };
+            if (scrollContainerData.config.vertical) {
+                scrollContainerData.scrollPosition->y = scrollbarData.positionOrigin.y + (scrollbarData.clickOrigin.y - mousePosition.y) * ratio.y;
+            }
+            if (scrollContainerData.config.horizontal) {
+                scrollContainerData.scrollPosition->x = scrollbarData.positionOrigin.x + (scrollbarData.clickOrigin.x - mousePosition.x) * ratio.x;
+            }
+        }
+    }
+
+    Clay_UpdateScrollContainers(false, (Clay_Vector2) {mouseWheelX, mouseWheelY}, GetFrameTime());
     // Generate the auto layout for rendering
     double currentTime = GetTime();
     Clay_RenderCommandArray renderCommands = CreateLayout();
