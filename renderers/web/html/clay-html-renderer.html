@@ -338,6 +338,9 @@
                 }
                 element = document.createElement(elementType);
                 element.id = renderCommand.id.value;
+                if (renderCommand.commandType.value === CLAY_RENDER_COMMAND_TYPE_SCISSOR_START) {
+                    element.style.overflow = 'hidden';
+                }
                 elementCache[renderCommand.id.value] = {
                     exists: true,
                     element: element,
@@ -347,7 +350,6 @@
                 };
             }
 
-            let dirty = false;
             let elementData = elementCache[renderCommand.id.value];
             element = elementData.element;
             if (Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
@@ -360,12 +362,8 @@
 
             elementData.exists = true;
             // Don't get me started. Cheaper to compare the render command memory than to update HTML elements
-            if (renderCommand.commandType.value !== CLAY_RENDER_COMMAND_TYPE_SCISSOR_START && renderCommand.commandType.value !== CLAY_RENDER_COMMAND_TYPE_SCISSOR_END) {
-                dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize);
-                parentElement.nextElementIndex++;
-            } else {
-                dirty = true;
-            }
+            let dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize);
+            parentElement.nextElementIndex++;
 
             elementData.previousMemoryCommand = entireRenderCommandMemory;
             let offsetX = scissorStack.length > 0 ? scissorStack[scissorStack.length - 1].nextAllocation.x : 0;
@@ -376,7 +374,7 @@
                 element.style.height = Math.round(renderCommand.boundingBox.height.value) + 'px';
             }
 
-            switch (renderCommand.commandType.value) {
+            switch(renderCommand.commandType.value) {
                 case (CLAY_RENDER_COMMAND_TYPE_NONE): {
                     break;
                 }
@@ -384,7 +382,7 @@
                     let config = readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition);
                     let configMemory = new Uint8Array(memoryDataView.buffer.slice(renderCommand.config.value, renderCommand.config.value + config.__size));
                     let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
-                    if (linkContents.length > 0 && (window.mouseDown || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
+                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
                         window.location.href = linkContents;
                     }
                     if (!dirty && !MemoryIsDifferent(configMemory, elementData.previousMemoryConfig, config.__size)) {
@@ -475,7 +473,6 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_START): {
                     scissorStack.push({ nextAllocation: { x: renderCommand.boundingBox.x.value, y: renderCommand.boundingBox.y.value }, element, nextElementIndex: 0 });
-                    element.style.overflow = 'hidden';
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_END): {

@@ -320,6 +320,9 @@
                 }
                 element = document.createElement(elementType);
                 element.id = renderCommand.id.value;
+                if (renderCommand.commandType.value === CLAY_RENDER_COMMAND_TYPE_SCISSOR_START) {
+                    element.style.overflow = 'hidden';
+                }
                 elementCache[renderCommand.id.value] = {
                     exists: true,
                     element: element,
@@ -329,7 +332,6 @@
                 };
             }
 
-            let dirty = false;
             let elementData = elementCache[renderCommand.id.value];
             element = elementData.element;
             if (Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
@@ -342,12 +344,8 @@
 
             elementData.exists = true;
             // Don't get me started. Cheaper to compare the render command memory than to update HTML elements
-            if (renderCommand.commandType.value !== CLAY_RENDER_COMMAND_TYPE_SCISSOR_START && renderCommand.commandType.value !== CLAY_RENDER_COMMAND_TYPE_SCISSOR_END) {
-                dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize);
-                parentElement.nextElementIndex++;
-            } else {
-                dirty = true;
-            }
+            let dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize);
+            parentElement.nextElementIndex++;
 
             elementData.previousMemoryCommand = entireRenderCommandMemory;
             let offsetX = scissorStack.length > 0 ? scissorStack[scissorStack.length - 1].nextAllocation.x : 0;
@@ -457,7 +455,6 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_START): {
                     scissorStack.push({ nextAllocation: { x: renderCommand.boundingBox.x.value, y: renderCommand.boundingBox.y.value }, element, nextElementIndex: 0 });
-                    element.style.overflow = 'hidden';
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_END): {
