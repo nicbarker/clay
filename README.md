@@ -457,6 +457,12 @@ Ends declaration of element macros and calculates the results of the currrent la
 
 Returns `true` if the pointer position previously set with `Clay_SetPointerPosition` is inside the bounding box of the layout element with the provided `id`. Note: this is based on the element's position from the **last** frame. If frame-accurate pointer overlap detection is required, perhaps in the case of significant change in UI layout between frames, you can simply run your layout code twice that frame. The second call to `Clay_PointerOver` will be frame-accurate.
 
+### Clay_GetScrollContainerData
+
+`Clay_ScrollContainerData Clay_GetScrollContainerData(uint32_t id)`
+
+Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll container matching the provided ID. This function allows imperative manipulation of scroll position, allowing you to build things such as scroll bars, buttons that "jump" to somewhere in a scroll container, etc.
+
 ## Element Macros
 
 ### CLAY_CONTAINER
@@ -1434,20 +1440,20 @@ Returned by [Clay_EndLayout](#clay_endlayout), this array contains the [Clay_Ren
 
 **Fields**
 
-`.capacity` - `uint32_t`
+**`.capacity`** - `uint32_t`
 
 Represents the total capacity of the allocated memory in `.internalArray`.
 
 ---
 
-`.length` - `uint32_t`
+**`.length`** - `uint32_t`
 
 Represents the total number of `Clay_RenderCommand` elements stored consecutively at the address `.internalArray`.
 
 
 ---
 
-`.internalArray` - `Clay_RenderCommand`
+**`.internalArray`** - `Clay_RenderCommand`
 
 An array of [Clay_RenderCommand](#clay_rendercommand)s representing the calculated layout. If there was at least one render command, this array will contain elements from `.internalArray[0]` to `.internalArray[.length - 1]`.
 
@@ -1466,9 +1472,7 @@ typedef struct
 
 **Fields**
 
----
-
-`.commandType` - `Clay_RenderCommandType`
+**`.commandType`** - `Clay_RenderCommandType`
 
 An enum indicating how this render command should be handled. Possible values include:
 
@@ -1483,7 +1487,7 @@ An enum indicating how this render command should be handled. Possible values in
 
 ---
 
-`.boundingBox` - `Clay_Rectangle`
+**`.boundingBox`** - `Clay_Rectangle`
 
 ```C
 typedef struct {
@@ -1495,7 +1499,7 @@ A rectangle representing the bounding box of this render command, with `.x` and 
 
 ---
 
-`.config` - `Clay_ElementConfigUnion`
+**`.config`** - `Clay_ElementConfigUnion`
 
 A C union containing various pointers to config data, with the type dependent on `.commandType`. Possible values include:
 
@@ -1509,15 +1513,61 @@ A C union containing various pointers to config data, with the type dependent on
 
 ---
 
-`.text` - `Clay_String`
+**`.text`** - `Clay_String`
 
 Only used if `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. A `Clay_String` containing a string slice (char *chars, int length) representing text to be rendered. **Note: This string is not guaranteed to be null terminated.** Clay saves significant performance overhead by using slices when wrapping text instead of having to clone new null terminated strings. If your renderer does not support **ptr, length** style strings (e.g. Raylib), you will need to clone this to a new C string before rendering.
 
 ---
 
-`.id` - `uint32_t`
+**`.id`** - `uint32_t`
 
 The id that was originally used with the element macro that created this render command. See [CLAY_ID](#clay_id) for details.
 
+### Clay_ScrollContainerData
 
+```C
+typedef struct
+{
+    Clay_Vector2 *scrollPosition;
+    Clay_Dimensions scrollContainerDimensions;
+    Clay_Dimensions contentDimensions;
+    Clay_ScrollContainerElementConfig config;
+    bool found;
+} Clay_ScrollContainerData;
+```
 
+**Fields**
+
+**`.scrollPosition`** - `Clay_Vector2 *`
+
+A pointer to the internal scroll position of this scroll container. Mutating it will result in elements inside the scroll container shifting up / down (`.y`) or left / right (`.x`).
+
+---
+
+**`.scrollContainerDimensions`** - `Clay_Dimensions`
+
+```C
+typedef struct {
+    float width, height;
+} Clay_Dimensions;
+```
+
+Dimensions representing the outer width and height of the scroll container itself.
+
+---
+
+**`.contentDimensions`** - `Clay_Dimensions`
+
+```C
+typedef struct {
+    float width, height;
+} Clay_Dimensions;
+```
+
+Dimensions representing the inner width and height of the content _inside_ the scroll container. Scrolling is only possible when the `contentDimensions` are larger in at least one dimension than the `scrollContainerDimensions`.
+
+---
+
+**`.config`** - `Clay_ScrollContainerElementConfig`
+
+The [Clay_ScrollContainerElementConfig](#clay_scroll_config) for the matching scroll container element.
