@@ -332,17 +332,20 @@ Clay_RenderCommandArray CreateLayout(float lerpValue) {
             });
         });
     });
-    Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
-    Clay_Color scrollbarColor = (Clay_Color){225, 138, 50, 120};
-    if (scrollbarData.mouseDown) {
-        scrollbarColor = (Clay_Color){225, 138, 50, 200};
-    } else if (Clay_PointerOver(CLAY_ID("ScrollBar"))) {
-        scrollbarColor = (Clay_Color){225, 138, 50, 160};
+
+    if (!mobileScreen) {
+        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        Clay_Color scrollbarColor = (Clay_Color){225, 138, 50, 120};
+        if (scrollbarData.mouseDown) {
+            scrollbarColor = (Clay_Color){225, 138, 50, 200};
+        } else if (Clay_PointerOver(CLAY_ID("ScrollBar"))) {
+            scrollbarColor = (Clay_Color){225, 138, 50, 160};
+        }
+        float scrollHeight = scrollData.scrollContainerDimensions.height - 12;
+        CLAY_FLOATING_CONTAINER(CLAY_ID("ScrollBar"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = CLAY_ID("OuterScrollContainer"), .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}), {
+            CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10), CLAY_SIZING_FIXED((scrollHeight / scrollData.contentDimensions.height) * scrollHeight)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(5), .color = scrollbarColor), {});
+        });
     }
-    float scrollHeight = scrollData.scrollContainerDimensions.height - 12;
-    CLAY_FLOATING_CONTAINER(CLAY_ID("ScrollBar"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = CLAY_ID("OuterScrollContainer"), .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}), {
-        CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10), CLAY_SIZING_FIXED((scrollHeight / scrollData.contentDimensions.height) * scrollHeight)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(5), .color = scrollbarColor), {});
-    });
     return Clay_EndLayout((int)windowWidth, (int)windowHeight);
 }
 
