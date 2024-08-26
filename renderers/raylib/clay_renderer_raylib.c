@@ -166,7 +166,13 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                DrawRectangle((int)roundf(boundingBox.x), (int)roundf(boundingBox.y), (int)roundf(boundingBox.width), (int)roundf(boundingBox.height), CLAY_COLOR_TO_RAYLIB_COLOR(renderCommand->config.rectangleElementConfig->color));
+                Clay_RectangleElementConfig *config = renderCommand->config.rectangleElementConfig;
+                if (config->cornerRadius.topLeft > 0) {
+                    float radius = (config->cornerRadius.topLeft * 2) / (boundingBox.width > boundingBox.height) ? boundingBox.height : boundingBox.width;
+                    DrawRectangleRounded((Rectangle) { boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height }, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                } else {
+                    DrawRectangle(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                }
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {

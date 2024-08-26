@@ -400,7 +400,7 @@
                     }
                     elementData.previousMemoryConfig = configMemory;
                     let color = config.color;
-                    element.style.backgroundColor = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                    element.style.backgroundColor = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                     if (config.cornerRadius.topLeft.value > 0) {
                         element.style.borderTopLeftRadius = config.cornerRadius.topLeft.value + 'px';
                     }
@@ -424,19 +424,19 @@
                     elementData.previousMemoryConfig = configMemory;
                     if (config.left.width.value > 0) {
                         let color = config.left.color;
-                        element.style.borderLeft = `${config.left.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderLeft = `${config.left.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.right.width.value > 0) {
                         let color = config.right.color;
-                        element.style.borderRight = `${config.right.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderRight = `${config.right.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.top.width.value > 0) {
                         let color = config.top.color;
-                        element.style.borderTop = `${config.top.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderTop = `${config.top.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.bottom.width.value > 0) {
                         let color = config.bottom.color;
-                        element.style.borderBottom = `${config.bottom.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderBottom = `${config.bottom.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.cornerRadius.topLeft.value > 0) {
                         element.style.borderTopLeftRadius = config.cornerRadius.topLeft.value + 'px';

@@ -274,6 +274,16 @@ void RendererPageMobile() {
     });
 }
 
+typedef struct
+{
+    Clay_Vector2 clickOrigin;
+    Clay_Vector2 positionOrigin;
+    bool mouseDown;
+} ScrollbarData;
+
+ScrollbarData scrollbarData = (ScrollbarData) {};
+float animationLerpValue = -1.0f;
+
 Clay_RenderCommandArray CreateLayout(float lerpValue) {
     bool mobileScreen = windowWidth < 750;
     Clay_BeginLayout((int)windowWidth, (int)windowHeight);
@@ -322,10 +332,19 @@ Clay_RenderCommandArray CreateLayout(float lerpValue) {
             });
         });
     });
+    Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+    Clay_Color scrollbarColor = (Clay_Color){225, 138, 50, 120};
+    if (scrollbarData.mouseDown) {
+        scrollbarColor = (Clay_Color){225, 138, 50, 200};
+    } else if (Clay_PointerOver(CLAY_ID("ScrollBar"))) {
+        scrollbarColor = (Clay_Color){225, 138, 50, 160};
+    }
+    float scrollHeight = scrollData.scrollContainerDimensions.height - 12;
+    CLAY_FLOATING_CONTAINER(CLAY_ID("ScrollBar"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = CLAY_ID("OuterScrollContainer"), .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}), {
+        CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10), CLAY_SIZING_FIXED((scrollHeight / scrollData.contentDimensions.height) * scrollHeight)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(5), .color = scrollbarColor), {});
+    });
     return Clay_EndLayout((int)windowWidth, (int)windowHeight);
 }
-
-float animationLerpValue = -1.0f;
 
 CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(float width, float height, float mouseWheelX, float mouseWheelY, float mousePositionX, float mousePositionY, bool isTouchDown, bool isMouseDown, float deltaTime) {
     windowWidth = width;
@@ -347,6 +366,32 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
     //----------------------------------------------------------------------------------
     // Handle scroll containers
     Clay_SetPointerPosition((Clay_Vector2) {mousePositionX, mousePositionY});
+
+    if (!isMouseDown) {
+        scrollbarData.mouseDown = false;
+    }
+
+    if (isMouseDown && !scrollbarData.mouseDown && Clay_PointerOver(CLAY_ID("ScrollBar"))) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        scrollbarData.clickOrigin = (Clay_Vector2) { mousePositionX, mousePositionY };
+        scrollbarData.positionOrigin = *scrollContainerData.scrollPosition;
+        scrollbarData.mouseDown = true;
+    } else if (scrollbarData.mouseDown) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        if (scrollContainerData.contentDimensions.height > 0) {
+            Clay_Vector2 ratio = (Clay_Vector2) {
+                scrollContainerData.contentDimensions.width / scrollContainerData.scrollContainerDimensions.width,
+                scrollContainerData.contentDimensions.height / scrollContainerData.scrollContainerDimensions.height,
+            };
+            if (scrollContainerData.config.vertical) {
+                scrollContainerData.scrollPosition->y = scrollbarData.positionOrigin.y + (scrollbarData.clickOrigin.y - mousePositionY) * ratio.y;
+            }
+            if (scrollContainerData.config.horizontal) {
+                scrollContainerData.scrollPosition->x = scrollbarData.positionOrigin.x + (scrollbarData.clickOrigin.x - mousePositionX) * ratio.x;
+            }
+        }
+    }
+
     Clay_UpdateScrollContainers(isTouchDown, (Clay_Vector2) {mouseWheelX, mouseWheelY}, deltaTime);
     return CreateLayout(animationLerpValue < 0 ? (animationLerpValue + 1) : (1 - animationLerpValue));
     //----------------------------------------------------------------------------------
