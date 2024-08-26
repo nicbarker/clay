@@ -254,6 +254,11 @@
 
         document.addEventListener("mousedown", (event) => {
             window.mouseDown = true;
+            window.mouseDownThisFrame = true;
+        });
+
+        document.addEventListener("mouseup", (event) => {
+            window.mouseDown = false;
         });
 
         const importObject = {
@@ -315,6 +320,9 @@
                 }
                 element = document.createElement(elementType);
                 element.id = renderCommand.id.value;
+                if (renderCommand.commandType.value === CLAY_RENDER_COMMAND_TYPE_SCISSOR_START) {
+                    element.style.overflow = 'hidden';
+                }
                 elementCache[renderCommand.id.value] = {
                     exists: true,
                     element: element,
@@ -324,7 +332,6 @@
                 };
             }
 
-            let dirty = false;
             let elementData = elementCache[renderCommand.id.value];
             element = elementData.element;
             if (Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
@@ -337,12 +344,8 @@
 
             elementData.exists = true;
             // Don't get me started. Cheaper to compare the render command memory than to update HTML elements
-            if (renderCommand.commandType.value !== CLAY_RENDER_COMMAND_TYPE_SCISSOR_START && renderCommand.commandType.value !== CLAY_RENDER_COMMAND_TYPE_SCISSOR_END) {
-                dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize);
-                parentElement.nextElementIndex++;
-            } else {
-                dirty = true;
-            }
+            let dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize);
+            parentElement.nextElementIndex++;
 
             elementData.previousMemoryCommand = entireRenderCommandMemory;
             let offsetX = scissorStack.length > 0 ? scissorStack[scissorStack.length - 1].nextAllocation.x : 0;
@@ -361,7 +364,7 @@
                     let config = readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition);
                     let configMemory = new Uint8Array(memoryDataView.buffer.slice(renderCommand.config.value, renderCommand.config.value + config.__size));
                     let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
-                    if (linkContents.length > 0 && (window.mouseDown || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
+                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
                         window.location.href = linkContents;
                     }
                     if (!dirty && !MemoryIsDifferent(configMemory, elementData.previousMemoryConfig, config.__size)) {
@@ -377,7 +380,7 @@
                     }
                     elementData.previousMemoryConfig = configMemory;
                     let color = config.color;
-                    element.style.backgroundColor = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                    element.style.backgroundColor = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                     if (config.cornerRadius.topLeft.value > 0) {
                         element.style.borderTopLeftRadius = config.cornerRadius.topLeft.value + 'px';
                     }
@@ -401,19 +404,19 @@
                     elementData.previousMemoryConfig = configMemory;
                     if (config.left.width.value > 0) {
                         let color = config.left.color;
-                        element.style.borderLeft = `${config.left.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderLeft = `${config.left.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.right.width.value > 0) {
                         let color = config.right.color;
-                        element.style.borderRight = `${config.right.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderRight = `${config.right.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.top.width.value > 0) {
                         let color = config.top.color;
-                        element.style.borderTop = `${config.top.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderTop = `${config.top.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.bottom.width.value > 0) {
                         let color = config.bottom.color;
-                        element.style.borderBottom = `${config.bottom.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`
+                        element.style.borderBottom = `${config.bottom.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
                     if (config.cornerRadius.topLeft.value > 0) {
                         element.style.borderTopLeftRadius = config.cornerRadius.topLeft.value + 'px';
@@ -452,7 +455,6 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_START): {
                     scissorStack.push({ nextAllocation: { x: renderCommand.boundingBox.x.value, y: renderCommand.boundingBox.y.value }, element, nextElementIndex: 0 });
-                    element.style.overflow = 'hidden';
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_END): {
@@ -506,7 +508,7 @@
                     let config = readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition);
                     let color = config.color;
                     ctx.beginPath();
-                    window.canvasContext.fillStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                    window.canvasContext.fillStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                     window.canvasContext.roundRect(
                         boundingBox.x.value * scale, // x
                         boundingBox.y.value * scale, // y
@@ -517,7 +519,7 @@
                     ctx.closePath();
                     // Handle link clicks
                     let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
-                    if (linkContents.length > 0 && (window.mouseDown || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
+                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
                         window.location.href = linkContents;
                     }
                     break;
@@ -533,7 +535,7 @@
                         ctx.moveTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + config.cornerRadius.topLeft.value + halfLineWidth) * scale);
                         let color = config.top.color;
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale, (boundingBox.x.value + config.cornerRadius.topLeft.value + halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale, config.cornerRadius.topLeft.value * scale);
                         ctx.stroke();
                     }
@@ -543,7 +545,7 @@
                         let halfLineWidth = lineWidth / 2;
                         let color = config.top.color;
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + config.cornerRadius.topLeft.value + halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + boundingBox.width.value - config.cornerRadius.topRight.value - halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale);
                         ctx.stroke();
@@ -555,7 +557,7 @@
                         ctx.moveTo((boundingBox.x.value + boundingBox.width.value - config.cornerRadius.topRight.value - halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale);
                         let color = config.top.color;
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale, (boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + config.cornerRadius.topRight.value + halfLineWidth) * scale, config.cornerRadius.topRight.value * scale);
                         ctx.stroke();
                     }
@@ -565,7 +567,7 @@
                         let lineWidth = config.right.width.value;
                         let halfLineWidth = lineWidth / 2;
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + config.cornerRadius.topRight.value + halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - config.cornerRadius.topRight.value - halfLineWidth) * scale);
                         ctx.stroke();
@@ -577,7 +579,7 @@
                         let halfLineWidth = lineWidth / 2;
                         ctx.moveTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - config.cornerRadius.bottomRight.value - halfLineWidth) * scale);
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale, (boundingBox.x.value + boundingBox.width.value - config.cornerRadius.bottomRight.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale, config.cornerRadius.bottomRight.value * scale);
                         ctx.stroke();
                     }
@@ -587,7 +589,7 @@
                         let lineWidth = config.bottom.width.value;
                         let halfLineWidth = lineWidth / 2;
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + config.cornerRadius.bottomLeft.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + boundingBox.width.value - config.cornerRadius.bottomRight.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale);
                         ctx.stroke();
@@ -599,7 +601,7 @@
                         let halfLineWidth = lineWidth / 2;
                         ctx.moveTo((boundingBox.x.value + config.cornerRadius.bottomLeft.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale);
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale, (boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - config.cornerRadius.bottomLeft.value - halfLineWidth) * scale, config.cornerRadius.bottomLeft.value * scale);
                         ctx.stroke();
                     }
@@ -609,7 +611,7 @@
                         let lineWidth = config.left.width.value;
                         let halfLineWidth = lineWidth / 2;
                         ctx.lineWidth = lineWidth * scale;
-                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                        ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - config.cornerRadius.bottomLeft.value - halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + config.cornerRadius.bottomRight.value + halfLineWidth) * scale);
                         ctx.stroke();
@@ -625,7 +627,7 @@
                     ctx.font = `${fontSize}px ${fontsById[config.fontId.value]}`;
                     let color = config.textColor;
                     ctx.textBaseline = 'middle';
-                    ctx.fillStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value})`;
+                    ctx.fillStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                     ctx.fillText(textDecoder.decode(stringContents), boundingBox.x.value * scale, (boundingBox.y.value + boundingBox.height.value / 2 + 1) * scale);
                     break;
                 }
@@ -685,7 +687,7 @@
         }
         window.previousActiveRendererIndex = activeRendererIndex;
         requestAnimationFrame(renderLoop);
-        window.mouseDown = false;
+        window.mouseDownThisFrame = false;
     }
     init();
 </script>

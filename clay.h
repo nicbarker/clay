@@ -1900,7 +1900,7 @@ void Clay__CalculateFinalLayout(int screenWidth, int screenHeight) {
                     hashMapItem->boundingBox = renderCommand.boundingBox;
                 }
 
-                // Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
+                // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                 bool offscreen = currentElementBoundingBox.x > (float)screenWidth || currentElementBoundingBox.y > (float)screenHeight || currentElementBoundingBox.x + currentElementBoundingBox.width < 0 || currentElementBoundingBox.y + currentElementBoundingBox.height < 0;
                 bool shouldRender = !offscreen;
                 switch (renderCommand.commandType) {
@@ -1976,6 +1976,11 @@ void Clay__CalculateFinalLayout(int screenWidth, int screenHeight) {
                 // Borders between elements are expressed as additional rectangle render commands
                 } else if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER) {
                     Clay_Rectangle currentElementBoundingBox = (Clay_Rectangle) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+                    bool offscreen = currentElementBoundingBox.x > (float)screenWidth || currentElementBoundingBox.y > (float)screenHeight || currentElementBoundingBox.x + currentElementBoundingBox.width < 0 || currentElementBoundingBox.y + currentElementBoundingBox.height < 0;
+                    if (offscreen) {
+                        dfsBuffer.length--;
+                        continue;
+                    }
                     Clay_BorderContainerElementConfig *borderConfig = currentElement->elementConfig.borderElementConfig;
 
                     Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
