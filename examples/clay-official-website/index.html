@@ -220,6 +220,8 @@
         window.mouseWheelXThisFrame = 0;
         window.mouseWheelYThisFrame = 0;
         window.touchDown = false;
+        window.arrowKeyDownPressedThisFrame = false;
+        window.arrowKeyUpPressedThisFrame = false;
         let zeroTimeout = null;
         addEventListener("wheel", (event) => {
             window.mouseWheelXThisFrame = event.deltaX * 0.1;
@@ -259,6 +261,15 @@
 
         document.addEventListener("mouseup", (event) => {
             window.mouseDown = false;
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowDown") {
+                window.arrowKeyDownPressedThisFrame = true;
+            }
+            if (event.key === "ArrowUp") {
+                window.arrowKeyUpPressedThisFrame = true;
+            }
         });
 
         const importObject = {
@@ -665,7 +676,7 @@
         const elapsed = currentTime - previousFrameTime;
         previousFrameTime = currentTime;
         let activeRendererIndex = memoryDataView.getUint32(instance.exports.ACTIVE_RENDERER_INDEX.value, true);
-        instance.exports.UpdateDrawFrame(scratchSpaceAddress, window.innerWidth, window.innerHeight, window.mouseWheelXThisFrame, window.mouseWheelYThisFrame, window.mousePositionXThisFrame, window.mousePositionYThisFrame, window.touchDown, window.mouseDown, elapsed / 1000);
+        instance.exports.UpdateDrawFrame(scratchSpaceAddress, window.innerWidth, window.innerHeight, window.mouseWheelXThisFrame, window.mouseWheelYThisFrame, window.mousePositionXThisFrame, window.mousePositionYThisFrame, window.touchDown, window.mouseDown, window.arrowKeyDownPressedThisFrame, window.arrowKeyUpPressedThisFrame, elapsed / 1000);
         let rendererChanged = activeRendererIndex !== window.previousActiveRendererIndex;
         switch (activeRendererIndex) {
             case 0: {
@@ -688,6 +699,8 @@
         window.previousActiveRendererIndex = activeRendererIndex;
         requestAnimationFrame(renderLoop);
         window.mouseDownThisFrame = false;
+        window.arrowKeyUpPressedThisFrame = false;
+        window.arrowKeyDownPressedThisFrame = false;
     }
     init();
 </script>

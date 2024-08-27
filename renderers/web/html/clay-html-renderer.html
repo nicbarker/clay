@@ -277,6 +277,14 @@
             window.mouseDown = true;
         });
 
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowDown") {
+                console.log("arrowdown");
+            }
+            if (event.key === "ArrowUp") {
+                console.log("arrowup");
+            }
+        });
         const importObject = {
             clay: {
                 measureTextFunction: (addressOfDimensions, textToMeasure, addressOfConfig) => {

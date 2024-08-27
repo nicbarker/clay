@@ -349,7 +349,7 @@ Clay_RenderCommandArray CreateLayout(float lerpValue) {
     return Clay_EndLayout((int)windowWidth, (int)windowHeight);
 }
 
-CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(float width, float height, float mouseWheelX, float mouseWheelY, float mousePositionX, float mousePositionY, bool isTouchDown, bool isMouseDown, float deltaTime) {
+CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(float width, float height, float mouseWheelX, float mouseWheelY, float mousePositionX, float mousePositionY, bool isTouchDown, bool isMouseDown, bool arrowKeyDownPressedThisFrame, bool arrowKeyUpPressedThisFrame, float deltaTime) {
     windowWidth = width;
     windowHeight = height;
     if (deltaTime == deltaTime) { // NaN propagation can cause pain here
@@ -392,6 +392,18 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
             if (scrollContainerData.config.horizontal) {
                 scrollContainerData.scrollPosition->x = scrollbarData.positionOrigin.x + (scrollbarData.clickOrigin.x - mousePositionX) * ratio.x;
             }
+        }
+    }
+
+    if (arrowKeyDownPressedThisFrame) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        if (scrollContainerData.contentDimensions.height > 0) {
+            scrollContainerData.scrollPosition->y = scrollContainerData.scrollPosition->y - 50;
+        }
+    } else if (arrowKeyUpPressedThisFrame) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        if (scrollContainerData.contentDimensions.height > 0) {
+            scrollContainerData.scrollPosition->y = scrollContainerData.scrollPosition->y + 50;
         }
     }
 
