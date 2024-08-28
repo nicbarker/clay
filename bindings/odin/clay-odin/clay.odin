@@ -1,6 +1,7 @@
 package clay
 
 import "core:c"
+import "core:strings"
 foreign import Clay "clay.a"
 
 String :: struct {
@@ -247,6 +248,7 @@ foreign Clay {
 	Clay__ScrollElementConfigArray_Add :: proc(array: ^ClayArray(ScrollElementConfig), config: ScrollElementConfig) -> ^ScrollElementConfig ---
 	Clay__borderElementConfigs: ClayArray(BorderElementConfig)
 	Clay__BorderElementConfigArray_Add :: proc(array: ^ClayArray(BorderElementConfig), config: BorderElementConfig) -> ^BorderElementConfig ---
+	Clay__HashString :: proc(toHash: String, index: c.uint32_t) -> c.uint32_t ---
 }
 
 MinMemorySize :: proc() -> c.uint32_t {
@@ -416,10 +418,16 @@ BorderConfigOutside :: proc(outsideBorders: BorderData) -> ^BorderElementConfig 
 
 // Sizing_percent :: proc(percentOfParent) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_PERCENT, .sizePercent = percentOfParent }) -> CLAY_SIZING_PERCENT
 
-// Id :: proc(label) Clay__HashString(CLAY_STRING(label), 0)) -> CLAY_ID
+ClayString :: proc(label: string) -> String {
+	return String{chars = raw_data(label), length = cast(c.int)len(label)}
+}
 
-// Idi :: proc(label, index) Clay__HashString(CLAY_STRING(label), index)) -> CLAY_IDI
+ID :: proc(label: string) -> c.uint32_t {
+	return Clay__HashString(ClayString(label), 0)
+}
+
+IDI :: proc(label: string, index: u32) -> c.uint32_t {
+	return Clay__HashString(ClayString(label), index)
+}
 
 // _string_length :: proc(s) ((sizeof(s) / sizeof(s[0])) - sizeof(s[0]))) -> CLAY__STRING_LENGTH
-
-// String :: proc(string) (Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = string }) -> CLAY_STRING

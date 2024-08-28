@@ -23,7 +23,7 @@ main :: proc() {
 	}
 
 	if clay.Rectangle(
-		1,
+		clay.ID("Outer Container"),
 		clay.Layout(
 			{
 				sizing = {
@@ -35,7 +35,7 @@ main :: proc() {
 		),
 		clay.RectangleConfig({cornerRadius = {topLeft = 5}}),
 	) {
-		if clay.Rectangle(1, &layoutConfig, &rectangleConfig) {
+		if clay.Rectangle(clay.ID("Inner Container"), &layoutConfig, &rectangleConfig) {
 
 		}
 	}
