@@ -135,7 +135,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
     for (int j = 0; j < renderCommands.length; j++)
     {
         Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
-        Clay_Rectangle boundingBox = renderCommand->boundingBox;
+        Clay_BoundingBox boundingBox = renderCommand->boundingBox;
         switch (renderCommand->commandType)
         {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
@@ -214,7 +214,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
                 if (!customElement) continue;
                 switch (customElement->type) {
                     case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {
-                        Clay_Rectangle rootBox = renderCommands.internalArray[0].boundingBox;
+                        Clay_BoundingBox rootBox = renderCommands.internalArray[0].boundingBox;
                         float scaleValue = CLAY__MIN(CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f);
                         Ray positionRay = GetScreenToWorldPointWithZDistance((Vector2) { renderCommand->boundingBox.x + renderCommand->boundingBox.width / 2, renderCommand->boundingBox.y + (renderCommand->boundingBox.height / 2) + 20 }, Raylib_camera, (int)roundf(rootBox.width), (int)roundf(rootBox.height), 140);
                         BeginMode3D(Raylib_camera);

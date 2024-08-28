@@ -242,7 +242,7 @@ typedef struct {
 
 typedef struct {
     float x, y, width, height;
-} Clay_Rectangle;
+} Clay_BoundingBox;
 
 typedef struct {
     float width, height;
@@ -727,7 +727,7 @@ Clay_LayoutElement* Clay__LayoutElementPointerArray_RemoveSwapback(Clay__LayoutE
 
 typedef struct
 {
-    Clay_Rectangle boundingBox;
+    Clay_BoundingBox boundingBox;
     Clay_ElementConfigUnion config;
     Clay_String text; // TODO I wish there was a way to avoid having to have this on every render command
     uint32_t id;
@@ -774,7 +774,7 @@ Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, 
 typedef struct
 {
     Clay_LayoutElement *layoutElement;
-    Clay_Rectangle boundingBox;
+    Clay_BoundingBox boundingBox;
     Clay_Dimensions contentSize;
     Clay_Vector2 scrollOrigin;
     Clay_Vector2 pointerOrigin;
@@ -830,7 +830,7 @@ Clay__ScrollContainerDataInternal Clay__ScrollContainerDataInternalArray_RemoveS
 
 typedef struct
 {
-    Clay_Rectangle boundingBox;
+    Clay_BoundingBox boundingBox;
     uint32_t id;
     Clay_LayoutElement* layoutElement;
     int32_t nextIndex;
@@ -1157,7 +1157,7 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
     return measured;
 }
 
-bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_Rectangle rect) {
+bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_BoundingBox rect) {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 }
 
@@ -1776,7 +1776,7 @@ void Clay__CalculateFinalLayout(int screenWidth, int screenHeight) {
         if (parentHashMapItem) {
             Clay_FloatingElementConfig *config = root->layoutElement->elementConfig.floatingElementConfig;
             Clay_Dimensions rootDimensions = root->layoutElement->dimensions;
-            Clay_Rectangle parentBoundingBox = parentHashMapItem->boundingBox;
+            Clay_BoundingBox parentBoundingBox = parentHashMapItem->boundingBox;
             // Set X position
             Clay_Vector2 targetAttachPosition = (Clay_Vector2){};
             switch (config->attachment.parent) {
@@ -1850,7 +1850,7 @@ void Clay__CalculateFinalLayout(int screenWidth, int screenHeight) {
             if (!Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
                 Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
 
-                Clay_Rectangle currentElementBoundingBox = (Clay_Rectangle) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+                Clay_BoundingBox currentElementBoundingBox = (Clay_BoundingBox) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER) {
                     Clay_FloatingElementConfig *floatingElementConfig = currentElement->elementConfig.floatingElementConfig;
                     Clay_Dimensions expand = floatingElementConfig->expand;
@@ -1975,7 +1975,7 @@ void Clay__CalculateFinalLayout(int screenWidth, int screenHeight) {
                     });
                 // Borders between elements are expressed as additional rectangle render commands
                 } else if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER) {
-                    Clay_Rectangle currentElementBoundingBox = (Clay_Rectangle) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+                    Clay_BoundingBox currentElementBoundingBox = (Clay_BoundingBox) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
                     bool offscreen = currentElementBoundingBox.x > (float)screenWidth || currentElementBoundingBox.y > (float)screenHeight || currentElementBoundingBox.x + currentElementBoundingBox.width < 0 || currentElementBoundingBox.y + currentElementBoundingBox.height < 0;
                     if (offscreen) {
                         dfsBuffer.length--;
@@ -2122,7 +2122,7 @@ void Clay_SetPointerPosition(Clay_Vector2 position) {
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElement *currentElement = *Clay__LayoutElementPointerArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
             Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO I wish there was a way around this, maybe the fact that it's essentially a binary tree limits the cost, have to measure
-            if ((mapItem && Clay__PointIsInsideRect(position, mapItem->boundingBox)) || (!mapItem && Clay__PointIsInsideRect(position, (Clay_Rectangle) {0,0, currentElement->dimensions.width, currentElement->dimensions.height}))) {
+            if ((mapItem && Clay__PointIsInsideRect(position, mapItem->boundingBox)) || (!mapItem && Clay__PointIsInsideRect(position, (Clay_BoundingBox) {0,0, currentElement->dimensions.width, currentElement->dimensions.height}))) {
                 Clay__int32_tArray_Add(&Clay__pointerOverIds, (int)currentElement->id);
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_TEXT) {
                     dfsBuffer.length--;
