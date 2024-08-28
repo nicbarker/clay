@@ -4,6 +4,10 @@ import clay "clay-odin"
 import "core:c"
 import "core:fmt"
 
+measureText :: proc(text: [^]clay.String, config: [^]clay.TextElementConfig) -> clay.Dimensions {
+	return clay.Dimensions{20, 20}
+}
+
 main :: proc() {
 	minMemorySize: c.uint32_t = clay.MinMemorySize()
 	memory := make([^]u8, minMemorySize)
@@ -14,15 +18,28 @@ main :: proc() {
 		sizing = {width = {type = clay.SizingType.GROW}, height = {type = clay.SizingType.GROW}},
 		padding = {16, 16},
 	}
-	rectangleConfig: clay.ImageElementConfig = clay.ImageElementConfig {
+	rectangleConfig: clay.RectangleElementConfig = clay.RectangleElementConfig {
 		cornerRadius = {topLeft = 5},
 	}
 
-	if clay.Rectangle(1, &layoutConfig, &rectangleConfig) {
+	if clay.Rectangle(
+		1,
+		clay.Layout(
+			{
+				sizing = {
+					width = {type = clay.SizingType.GROW},
+					height = {type = clay.SizingType.GROW},
+				},
+				padding = {16, 16},
+			},
+		),
+		clay.RectangleConfig({cornerRadius = {topLeft = 5}}),
+	) {
 		if clay.Rectangle(1, &layoutConfig, &rectangleConfig) {
 
 		}
 	}
 
-	renderCommands: clay.RenderCommandArray = clay.EndLayout(1024, 768)
+	renderCommands: clay.ClayArray(clay.RenderCommand) = clay.EndLayout(1024, 768)
+	x: int = 5
 }
