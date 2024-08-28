@@ -47,7 +47,7 @@ CornerRadius :: struct {
 	bottomRight: c.float,
 }
 
-Border :: struct {
+BorderData :: struct {
 	width: c.uint32_t,
 	color: Color,
 }
@@ -85,26 +85,51 @@ CustomElementConfig :: struct {
 	customData: rawptr,
 }
 
-BorderContainerElementConfig :: struct {
-	left:            Border,
-	right:           Border,
-	top:             Border,
-	bottom:          Border,
-	betweenChildren: Border,
+BorderElementConfig :: struct {
+	left:            BorderData,
+	right:           BorderData,
+	top:             BorderData,
+	bottom:          BorderData,
+	betweenChildren: BorderData,
 	cornerRadius:    CornerRadius,
 }
 
-ScrollContainerElementConfig :: struct {
+ScrollElementConfig :: struct {
 	horizontal: c.bool,
 	vertical:   c.bool,
 }
 
+FloatingAttachPointType :: enum u8 {
+	LEFT_TOP,
+	LEFT_CENTER,
+	LEFT_BOTTOM,
+	CENTER_TOP,
+	CENTER_CENTER,
+	CENTER_BOTTOM,
+	RIGHT_TOP,
+	RIGHT_CENTER,
+	RIGHT_BOTTOM,
+}
+
+FloatingAttachPoints :: struct {
+	element: FloatingAttachPointType,
+	parent:  FloatingAttachPointType,
+}
+
+FloatingElementConfig :: struct {
+	offset:     Vector2,
+	expand:     Dimensions,
+	zIndex:     c.uint16_t,
+	parentId:   c.uint32_t,
+	attachment: FloatingAttachPoints,
+}
+
 ElementConfigUnion :: struct #raw_union {
-	rectangleElementConfig:       ^RectangleElementConfig,
+	rectangleElementConfig:       ^ImageElementConfig,
 	textElementConfig:            ^TextElementConfig,
 	imageElementConfig:           ^ImageElementConfig,
 	customElementConfig:          ^CustomElementConfig,
-	borderContainerElementConfig: ^BorderContainerElementConfig,
+	borderContainerElementConfig: ^BorderElementConfig,
 }
 
 RenderCommand :: struct {
@@ -127,7 +152,7 @@ ScrollContainerData :: struct {
 	scrollPosition:            ^Vector2,
 	scrollContainerDimensions: Dimensions,
 	contentDimensions:         Dimensions,
-	config:                    ScrollContainerElementConfig,
+	config:                    ScrollElementConfig,
 	// Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
 	found:                     c.bool,
 }
@@ -195,8 +220,17 @@ foreign Clay {
 	Clay_EndLayout :: proc(screenWidth: c.int, screenHeight: c.int) -> RenderCommandArray ---
 	Clay_PointerOver :: proc(id: c.uint32_t) -> c.bool ---
 	Clay_GetScrollContainerData :: proc(id: c.uint32_t) -> ScrollContainerData ---
-	Clay__CloseContainerElement :: proc() ---
+	Clay__OpenContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) ---
 	Clay__OpenRectangleElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
+	Clay__OpenTextElement :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) ---
+	Clay__OpenImageContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
+	Clay__OpenScrollContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) ---
+	Clay__OpenFloatingContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) ---
+	Clay__OpenBorderContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
+	Clay__OpenCustomElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
+	Clay__CloseContainerElement :: proc() ---
+	Clay__CloseScrollContainerElement :: proc() ---
+	Clay__CloseFloatingContainerElement :: proc() ---
 }
 
 MinMemorySize :: proc() -> c.uint32_t {
@@ -236,11 +270,72 @@ GetScrollContainerData :: proc(id: c.uint32_t) -> ScrollContainerData {
 }
 
 @(deferred_none = Clay__CloseContainerElement)
+Container :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) -> bool {
+	Clay__OpenContainerElement(id, layoutConfig)
+	return true
+}
+
+@(deferred_none = Clay__CloseContainerElement)
 Rectangle :: proc(
 	id: c.uint32_t,
 	layoutConfig: ^LayoutConfig,
 	rectangleConfig: ^RectangleElementConfig,
 ) -> bool {
 	Clay__OpenRectangleElement(id, layoutConfig, rectangleConfig)
+	return true
+}
+
+Text :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) -> bool {
+	Clay__OpenTextElement(id, text, textConfig)
+	return true
+}
+
+@(deferred_none = Clay__CloseContainerElement)
+Image :: proc(
+	id: c.uint32_t,
+	layoutConfig: ^LayoutConfig,
+	imageConfig: ^ImageElementConfig,
+) -> bool {
+	Clay__OpenImageContainerElement(id, layoutConfig, imageConfig)
+	return true
+}
+
+@(deferred_none = Clay__CloseContainerElement)
+Scroll :: proc(
+	id: c.uint32_t,
+	layoutConfig: ^LayoutConfig,
+	scrollConfig: ^ScrollElementConfig,
+) -> bool {
+	Clay__OpenScrollContainerElement(id, layoutConfig, scrollConfig)
+	return true
+}
+
+@(deferred_none = Clay__CloseFloatingContainerElement)
+Floating :: proc(
+	id: c.uint32_t,
+	layoutConfig: ^LayoutConfig,
+	floatingConfig: ^FloatingElementConfig,
+) -> bool {
+	Clay__OpenFloatingContainerElement(id, layoutConfig, floatingConfig)
+	return true
+}
+
+@(deferred_none = Clay__CloseContainerElement)
+Border :: proc(
+	id: c.uint32_t,
+	layoutConfig: ^LayoutConfig,
+	borderConfig: ^BorderElementConfig,
+) -> bool {
+	Clay__OpenBorderContainerElement(id, layoutConfig, borderConfig)
+	return true
+}
+
+@(deferred_none = Clay__CloseContainerElement)
+Custom :: proc(
+	id: c.uint32_t,
+	layoutConfig: ^LayoutConfig,
+	customConfig: ^CustomElementConfig,
+) -> bool {
+	Clay__OpenCustomElement(id, layoutConfig, customConfig)
 	return true
 }

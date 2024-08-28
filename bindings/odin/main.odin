@@ -14,7 +14,7 @@ main :: proc() {
 		sizing = {width = {type = clay.SizingType.GROW}, height = {type = clay.SizingType.GROW}},
 		padding = {16, 16},
 	}
-	rectangleConfig: clay.RectangleElementConfig = clay.RectangleElementConfig {
+	rectangleConfig: clay.ImageElementConfig = clay.ImageElementConfig {
 		cornerRadius = {topLeft = 5},
 	}
 

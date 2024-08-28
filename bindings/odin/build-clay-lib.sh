@@ -1,0 +1,1 @@
+cp ../../clay.h clay.c; clang -c -o clay.o -static clay.c -fPIC; rm clay.c
