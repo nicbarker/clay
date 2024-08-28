@@ -9,9 +9,3 @@ target_compile_options(clay_official_website PUBLIC -Wno-initializer-overrides)
 target_include_directories(clay_official_website PUBLIC .)
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-
-add_custom_command(
-        TARGET clay_official_website POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources
-        ${CMAKE_CURRENT_BINARY_DIR}/resources)

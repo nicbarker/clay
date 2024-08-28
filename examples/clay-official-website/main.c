@@ -411,3 +411,8 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
     return CreateLayout(animationLerpValue < 0 ? (animationLerpValue + 1) : (1 - animationLerpValue));
     //----------------------------------------------------------------------------------
 }
+
+// Dummy main() to please cmake - TODO get wasm working with cmake on this example
+int main() {
+    return 0;
+}
