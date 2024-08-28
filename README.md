@@ -1462,7 +1462,7 @@ An array of [Clay_RenderCommand](#clay_rendercommand)s representing the calculat
 ```C
 typedef struct
 {
-    Clay_Rectangle boundingBox;
+    Clay_BoundingBox boundingBox;
     Clay_ElementConfigUnion config;
     Clay_String text;
     uint32_t id;
@@ -1487,12 +1487,12 @@ An enum indicating how this render command should be handled. Possible values in
 
 ---
 
-**`.boundingBox`** - `Clay_Rectangle`
+**`.boundingBox`** - `Clay_BoundingBox`
 
 ```C
 typedef struct {
     float x, y, width, height;
-} Clay_Rectangle;
+} Clay_BoundingBox;
 ```
 
 A rectangle representing the bounding box of this render command, with `.x` and `.y` representing the top left corner of the element.
