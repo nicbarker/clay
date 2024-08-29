@@ -5,429 +5,423 @@ import "core:strings"
 foreign import Clay "clay.a"
 
 String :: struct {
-	length: c.int,
-	chars:  [^]c.char,
+    length: c.int,
+    chars:  [^]c.char,
 }
 
 Vector2 :: struct {
-	x: c.float,
-	y: c.float,
+    x: c.float,
+    y: c.float,
 }
 
 Dimensions :: struct {
-	width:  c.float,
-	height: c.float,
+    width:  c.float,
+    height: c.float,
 }
 
 Arena :: struct {
-	label:          String,
-	nextAllocation: c.uint64_t,
-	capacity:       c.uint64_t,
-	memory:         [^]c.char,
+    label:          String,
+    nextAllocation: c.uint64_t,
+    capacity:       c.uint64_t,
+    memory:         [^]c.char,
 }
 
 BoundingBox :: struct {
-	x:      c.float,
-	y:      c.float,
-	width:  c.float,
-	height: c.float,
+    x:      c.float,
+    y:      c.float,
+    width:  c.float,
+    height: c.float,
 }
 
 Color :: struct {
-	r: c.float,
-	g: c.float,
-	b: c.float,
-	a: c.float,
+    r: c.float,
+    g: c.float,
+    b: c.float,
+    a: c.float,
 }
 
 CornerRadius :: struct {
-	topLeft:     c.float,
-	topRight:    c.float,
-	bottomLeft:  c.float,
-	bottomRight: c.float,
+    topLeft:     c.float,
+    topRight:    c.float,
+    bottomLeft:  c.float,
+    bottomRight: c.float,
 }
 
 BorderData :: struct {
-	width: c.uint32_t,
-	color: Color,
+    width: c.uint32_t,
+    color: Color,
 }
 
 RenderCommandType :: enum u8 {
-	None,
-	Rectangle,
-	Border,
-	Text,
-	Image,
-	ScissorStart,
-	ScissorEnd,
-	Custom,
+    None,
+    Rectangle,
+    Border,
+    Text,
+    Image,
+    ScissorStart,
+    ScissorEnd,
+    Custom,
 }
 
 RectangleElementConfig :: struct {
-	color:        Color,
-	cornerRadius: CornerRadius,
+    color:        Color,
+    cornerRadius: CornerRadius,
 }
 
 TextElementConfig :: struct {
-	textColor:     Color,
-	fontId:        c.uint16_t,
-	fontSize:      c.uint16_t,
-	letterSpacing: c.uint16_t,
-	lineSpacing:   c.uint16_t,
+    textColor:     Color,
+    fontId:        c.uint16_t,
+    fontSize:      c.uint16_t,
+    letterSpacing: c.uint16_t,
+    lineSpacing:   c.uint16_t,
 }
 
 ImageElementConfig :: struct {
-	imageData:        rawptr,
-	sourceDimensions: Dimensions,
+    imageData:        rawptr,
+    sourceDimensions: Dimensions,
 }
 
 CustomElementConfig :: struct {
-	customData: rawptr,
+    customData: rawptr,
 }
 
 BorderElementConfig :: struct {
-	left:            BorderData,
-	right:           BorderData,
-	top:             BorderData,
-	bottom:          BorderData,
-	betweenChildren: BorderData,
-	cornerRadius:    CornerRadius,
+    left:            BorderData,
+    right:           BorderData,
+    top:             BorderData,
+    bottom:          BorderData,
+    betweenChildren: BorderData,
+    cornerRadius:    CornerRadius,
 }
 
 ScrollElementConfig :: struct {
-	horizontal: c.bool,
-	vertical:   c.bool,
+    horizontal: c.bool,
+    vertical:   c.bool,
 }
 
 FloatingAttachPointType :: enum u8 {
-	LEFT_TOP,
-	LEFT_CENTER,
-	LEFT_BOTTOM,
-	CENTER_TOP,
-	CENTER_CENTER,
-	CENTER_BOTTOM,
-	RIGHT_TOP,
-	RIGHT_CENTER,
-	RIGHT_BOTTOM,
+    LEFT_TOP,
+    LEFT_CENTER,
+    LEFT_BOTTOM,
+    CENTER_TOP,
+    CENTER_CENTER,
+    CENTER_BOTTOM,
+    RIGHT_TOP,
+    RIGHT_CENTER,
+    RIGHT_BOTTOM,
 }
 
 FloatingAttachPoints :: struct {
-	element: FloatingAttachPointType,
-	parent:  FloatingAttachPointType,
+    element: FloatingAttachPointType,
+    parent:  FloatingAttachPointType,
 }
 
 FloatingElementConfig :: struct {
-	offset:     Vector2,
-	expand:     Dimensions,
-	zIndex:     c.uint16_t,
-	parentId:   c.uint32_t,
-	attachment: FloatingAttachPoints,
+    offset:     Vector2,
+    expand:     Dimensions,
+    zIndex:     c.uint16_t,
+    parentId:   c.uint32_t,
+    attachment: FloatingAttachPoints,
 }
 
 ElementConfigUnion :: struct #raw_union {
-	rectangleElementConfig: ^RectangleElementConfig,
-	textElementConfig:      ^TextElementConfig,
-	imageElementConfig:     ^ImageElementConfig,
-	customElementConfig:    ^CustomElementConfig,
-	borderElementConfig:    ^BorderElementConfig,
+    rectangleElementConfig: ^RectangleElementConfig,
+    textElementConfig:      ^TextElementConfig,
+    imageElementConfig:     ^ImageElementConfig,
+    customElementConfig:    ^CustomElementConfig,
+    borderElementConfig:    ^BorderElementConfig,
 }
 
 RenderCommand :: struct {
-	boundingBox: BoundingBox,
-	config:      ElementConfigUnion,
-	text:        String,
-	id:          c.uint32_t,
-	commandType: RenderCommandType,
+    boundingBox: BoundingBox,
+    config:      ElementConfigUnion,
+    text:        String,
+    id:          c.uint32_t,
+    commandType: RenderCommandType,
 }
 
 ScrollContainerData :: struct {
-	// Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
-	// Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
-	scrollPosition:            ^Vector2,
-	scrollContainerDimensions: Dimensions,
-	contentDimensions:         Dimensions,
-	config:                    ScrollElementConfig,
-	// Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
-	found:                     c.bool,
+    // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
+    // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
+    scrollPosition:            ^Vector2,
+    scrollContainerDimensions: Dimensions,
+    contentDimensions:         Dimensions,
+    config:                    ScrollElementConfig,
+    // Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
+    found:                     c.bool,
 }
 
 SizingType :: enum u8 {
-	FIT,
-	GROW,
-	PERCENT,
+    FIT,
+    GROW,
+    PERCENT,
+}
+
+SizingConstraintsMinMax :: struct {
+    min: c.float,
+    max: c.float,
+}
+
+SizingConstraints :: struct #raw_union {
+    sizeMinMax:  SizingConstraintsMinMax,
+    sizePercent: c.float,
 }
 
 SizingAxis :: struct {
-	// Note: `min` is used for CLAY_SIZING_PERCENT, slightly different to clay.h due to lack of C anonymous unions
-	min:  c.float,
-	max:  c.float,
-	type: SizingType,
+    // Note: `min` is used for CLAY_SIZING_PERCENT, slightly different to clay.h due to lack of C anonymous unions
+    constraints: SizingConstraints,
+    type:        SizingType,
 }
 
 Sizing :: struct {
-	width:  SizingAxis,
-	height: SizingAxis,
+    width:  SizingAxis,
+    height: SizingAxis,
 }
 
 Padding :: struct {
-	x: c.uint16_t,
-	y: c.uint16_t,
+    x: c.uint16_t,
+    y: c.uint16_t,
 }
 
 LayoutDirection :: enum u8 {
-	LEFT_TO_RIGHT,
-	TOP_TO_BOTTOM,
+    LEFT_TO_RIGHT,
+    TOP_TO_BOTTOM,
 }
 
 LayoutAlignmentX :: enum u8 {
-	LEFT,
-	RIGHT,
-	CENTER,
+    LEFT,
+    RIGHT,
+    CENTER,
 }
 
 LayoutAlignmentY :: enum u8 {
-	TOP,
-	BOTTOM,
-	CENTER,
+    TOP,
+    BOTTOM,
+    CENTER,
 }
 
 ChildAlignment :: struct {
-	x: LayoutAlignmentX,
-	y: LayoutAlignmentY,
+    x: LayoutAlignmentX,
+    y: LayoutAlignmentY,
 }
 
 LayoutConfig :: struct {
-	sizing:          Sizing,
-	padding:         Padding,
-	childGap:        c.uint16_t,
-	layoutDirection: LayoutDirection,
-	childAlignment:  ChildAlignment,
+    sizing:          Sizing,
+    padding:         Padding,
+    childGap:        c.uint16_t,
+    layoutDirection: LayoutDirection,
+    childAlignment:  ChildAlignment,
 }
 
 ClayArray :: struct($type: typeid) {
-	capacity:      c.uint32_t,
-	length:        c.uint32_t,
-	internalArray: [^]type,
+    capacity:      c.uint32_t,
+    length:        c.uint32_t,
+    internalArray: [^]type,
 }
 
+@(link_prefix = "Clay_")
 foreign Clay {
-	Clay_MinMemorySize :: proc() -> c.uint32_t ---
-	Clay_CreateArenaWithCapacityAndMemory :: proc(capacity: c.uint32_t, offset: [^]u8) -> Arena ---
-	Clay_SetPointerPosition :: proc(position: Vector2) ---
-	Clay_Initialize :: proc(arena: Arena) ---
-	Clay_UpdateScrollContainers :: proc(isPointerActive: c.bool, scrollDelta: Vector2, deltaTime: c.float) ---
-	Clay_BeginLayout :: proc(screenWidth: c.int, screenHeight: c.int) ---
-	Clay_EndLayout :: proc(screenWidth: c.int, screenHeight: c.int) -> ClayArray(RenderCommand) ---
-	Clay_PointerOver :: proc(id: c.uint32_t) -> c.bool ---
-	Clay_GetScrollContainerData :: proc(id: c.uint32_t) -> ScrollContainerData ---
-	Clay_SetMeasureTextFunction :: proc(measureTextFunction: proc(text: [^]String, config: [^]TextElementConfig) -> Dimensions) ---
-	Clay__OpenContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) ---
-	Clay__OpenRectangleElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
-	Clay__OpenTextElement :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) ---
-	Clay__OpenImageElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
-	Clay__OpenScrollElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) ---
-	Clay__OpenFloatingElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) ---
-	Clay__OpenBorderElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
-	Clay__OpenCustomElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
-	Clay__CloseElementWithChildren :: proc() ---
-	Clay__CloseScrollElement :: proc() ---
-	Clay__CloseFloatingElement :: proc() ---
-	Clay__layoutConfigs: ClayArray(LayoutConfig)
-	Clay__LayoutConfigArray_Add :: proc(array: ^ClayArray(LayoutConfig), config: LayoutConfig) -> ^LayoutConfig ---
-	Clay__rectangleElementConfigs: ClayArray(RectangleElementConfig)
-	Clay__RectangleElementConfigArray_Add :: proc(array: ^ClayArray(RectangleElementConfig), config: RectangleElementConfig) -> ^RectangleElementConfig ---
-	Clay__textElementConfigs: ClayArray(TextElementConfig)
-	Clay__TextElementConfigArray_Add :: proc(array: ^ClayArray(TextElementConfig), config: TextElementConfig) -> ^TextElementConfig ---
-	Clay__imageElementConfigs: ClayArray(ImageElementConfig)
-	Clay__ImageElementConfigArray_Add :: proc(array: ^ClayArray(ImageElementConfig), config: ImageElementConfig) -> ^ImageElementConfig ---
-	Clay__floatingElementConfigs: ClayArray(FloatingElementConfig)
-	Clay__FloatingElementConfigArray_Add :: proc(array: ^ClayArray(FloatingElementConfig), config: FloatingElementConfig) -> ^FloatingElementConfig ---
-	Clay__customElementConfigs: ClayArray(CustomElementConfig)
-	Clay__CustomElementConfigArray_Add :: proc(array: ^ClayArray(CustomElementConfig), config: CustomElementConfig) -> ^CustomElementConfig ---
-	Clay__scrollElementConfigs: ClayArray(ScrollElementConfig)
-	Clay__ScrollElementConfigArray_Add :: proc(array: ^ClayArray(ScrollElementConfig), config: ScrollElementConfig) -> ^ScrollElementConfig ---
-	Clay__borderElementConfigs: ClayArray(BorderElementConfig)
-	Clay__BorderElementConfigArray_Add :: proc(array: ^ClayArray(BorderElementConfig), config: BorderElementConfig) -> ^BorderElementConfig ---
-	Clay__HashString :: proc(toHash: String, index: c.uint32_t) -> c.uint32_t ---
+    MinMemorySize :: proc() -> c.uint32_t ---
+    CreateArenaWithCapacityAndMemory :: proc(capacity: c.uint32_t, offset: [^]u8) -> Arena ---
+    SetPointerPosition :: proc(position: Vector2) ---
+    Initialize :: proc(arena: Arena) ---
+    UpdateScrollContainers :: proc(isPointerActive: c.bool, scrollDelta: Vector2, deltaTime: c.float) ---
+    BeginLayout :: proc(screenWidth: c.int, screenHeight: c.int) ---
+    EndLayout :: proc(screenWidth: c.int, screenHeight: c.int) -> ClayArray(RenderCommand) ---
+    PointerOver :: proc(id: c.uint32_t) -> c.bool ---
+    GetScrollContainerData :: proc(id: c.uint32_t) -> ScrollContainerData ---
+    SetMeasureTextFunction :: proc(measureTextFunction: proc(text: ^String, config: ^TextElementConfig) -> Dimensions) ---
+    RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: c.int32_t) -> ^RenderCommand ---
+    @(private)
+    _OpenContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) ---
+    @(private)
+    _OpenRectangleElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
+    @(private)
+    _OpenTextElement :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) ---
+    @(private)
+    _OpenImageElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
+    @(private)
+    _OpenScrollElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) ---
+    @(private)
+    _OpenFloatingElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) ---
+    @(private)
+    _OpenBorderElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
+    @(private)
+    _OpenCustomElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
+    @(private)
+    _CloseElementWithChildren :: proc() ---
+    @(private)
+    _CloseScrollElement :: proc() ---
+    @(private)
+    _CloseFloatingElement :: proc() ---
+    @(private)
+    _layoutConfigs: ClayArray(LayoutConfig)
+    @(private)
+    _LayoutConfigArray_Add :: proc(array: ^ClayArray(LayoutConfig), config: LayoutConfig) -> ^LayoutConfig ---
+    @(private)
+    _rectangleElementConfigs: ClayArray(RectangleElementConfig)
+    @(private)
+    _RectangleElementConfigArray_Add :: proc(array: ^ClayArray(RectangleElementConfig), config: RectangleElementConfig) -> ^RectangleElementConfig ---
+    @(private)
+    _textElementConfigs: ClayArray(TextElementConfig)
+    @(private)
+    _TextElementConfigArray_Add :: proc(array: ^ClayArray(TextElementConfig), config: TextElementConfig) -> ^TextElementConfig ---
+    @(private)
+    _imageElementConfigs: ClayArray(ImageElementConfig)
+    @(private)
+    _ImageElementConfigArray_Add :: proc(array: ^ClayArray(ImageElementConfig), config: ImageElementConfig) -> ^ImageElementConfig ---
+    @(private)
+    _floatingElementConfigs: ClayArray(FloatingElementConfig)
+    @(private)
+    _FloatingElementConfigArray_Add :: proc(array: ^ClayArray(FloatingElementConfig), config: FloatingElementConfig) -> ^FloatingElementConfig ---
+    @(private)
+    _customElementConfigs: ClayArray(CustomElementConfig)
+    @(private)
+    _CustomElementConfigArray_Add :: proc(array: ^ClayArray(CustomElementConfig), config: CustomElementConfig) -> ^CustomElementConfig ---
+    @(private)
+    _scrollElementConfigs: ClayArray(ScrollElementConfig)
+    @(private)
+    _ScrollElementConfigArray_Add :: proc(array: ^ClayArray(ScrollElementConfig), config: ScrollElementConfig) -> ^ScrollElementConfig ---
+    @(private)
+    _borderElementConfigs: ClayArray(BorderElementConfig)
+    @(private)
+    _BorderElementConfigArray_Add :: proc(array: ^ClayArray(BorderElementConfig), config: BorderElementConfig) -> ^BorderElementConfig ---
+    @(private)
+    _HashString :: proc(toHash: String, index: c.uint32_t) -> c.uint32_t ---
 }
 
-MinMemorySize :: proc() -> c.uint32_t {
-	return Clay_MinMemorySize()
-}
 
-CreateArenaWithCapacityAndMemory :: proc(capacity: c.uint32_t, offset: [^]u8) -> Arena {
-	return Clay_CreateArenaWithCapacityAndMemory(capacity, offset)
-}
-
-SetPointerPosition :: proc(position: Vector2) {
-	Clay_SetPointerPosition(position)
-}
-
-Initialize :: proc(arena: Arena) {
-	Clay_Initialize(arena)
-}
-
-UpdateScrollContainers :: proc(isPointerActive: c.bool, scrollDelta: Vector2, deltaTime: c.float) {
-	Clay_UpdateScrollContainers(isPointerActive, scrollDelta, deltaTime)
-}
-
-BeginLayout :: proc(screenWidth: c.int, screenHeight: c.int) {
-	Clay_BeginLayout(screenWidth, screenHeight)
-}
-
-EndLayout :: proc(screenWidth: c.int, screenHeight: c.int) -> ClayArray(RenderCommand) {
-	return Clay_EndLayout(screenWidth, screenHeight)
-}
-
-PointerOver :: proc(id: c.uint32_t) -> c.bool {
-	return Clay_PointerOver(id)
-}
-
-GetScrollContainerData :: proc(id: c.uint32_t) -> ScrollContainerData {
-	return Clay_GetScrollContainerData(id)
-}
-
-@(deferred_none = Clay__CloseElementWithChildren)
+@(require_results, deferred_none = _CloseElementWithChildren)
 Container :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) -> bool {
-	Clay__OpenContainerElement(id, layoutConfig)
-	return true
+    _OpenContainerElement(id, layoutConfig)
+    return true
 }
 
-@(deferred_none = Clay__CloseElementWithChildren)
-Rectangle :: proc(
-	id: c.uint32_t,
-	layoutConfig: ^LayoutConfig,
-	rectangleConfig: ^RectangleElementConfig,
-) -> bool {
-	Clay__OpenRectangleElement(id, layoutConfig, rectangleConfig)
-	return true
+@(require_results, deferred_none = _CloseElementWithChildren)
+Rectangle :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) -> bool {
+    _OpenRectangleElement(id, layoutConfig, rectangleConfig)
+    return true
 }
 
 Text :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) -> bool {
-	Clay__OpenTextElement(id, text, textConfig)
-	return true
+    _OpenTextElement(id, text, textConfig)
+    return true
 }
 
-@(deferred_none = Clay__CloseElementWithChildren)
-Image :: proc(
-	id: c.uint32_t,
-	layoutConfig: ^LayoutConfig,
-	imageConfig: ^ImageElementConfig,
-) -> bool {
-	Clay__OpenImageElement(id, layoutConfig, imageConfig)
-	return true
+@(require_results, deferred_none = _CloseElementWithChildren)
+Image :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) -> bool {
+    _OpenImageElement(id, layoutConfig, imageConfig)
+    return true
 }
 
-@(deferred_none = Clay__CloseScrollElement)
-Scroll :: proc(
-	id: c.uint32_t,
-	layoutConfig: ^LayoutConfig,
-	scrollConfig: ^ScrollElementConfig,
-) -> bool {
-	Clay__OpenScrollElement(id, layoutConfig, scrollConfig)
-	return true
+@(require_results, deferred_none = _CloseScrollElement)
+Scroll :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, scrollConfig: ^ScrollElementConfig) -> bool {
+    _OpenScrollElement(id, layoutConfig, scrollConfig)
+    return true
 }
 
-@(deferred_none = Clay__CloseFloatingElement)
-Floating :: proc(
-	id: c.uint32_t,
-	layoutConfig: ^LayoutConfig,
-	floatingConfig: ^FloatingElementConfig,
-) -> bool {
-	Clay__OpenFloatingElement(id, layoutConfig, floatingConfig)
-	return true
+@(require_results, deferred_none = _CloseFloatingElement)
+Floating :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, floatingConfig: ^FloatingElementConfig) -> bool {
+    _OpenFloatingElement(id, layoutConfig, floatingConfig)
+    return true
 }
 
-@(deferred_none = Clay__CloseElementWithChildren)
-Border :: proc(
-	id: c.uint32_t,
-	layoutConfig: ^LayoutConfig,
-	borderConfig: ^BorderElementConfig,
-) -> bool {
-	Clay__OpenBorderElement(id, layoutConfig, borderConfig)
-	return true
+@(require_results, deferred_none = _CloseElementWithChildren)
+Border :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, borderConfig: ^BorderElementConfig) -> bool {
+    _OpenBorderElement(id, layoutConfig, borderConfig)
+    return true
 }
 
-@(deferred_none = Clay__CloseElementWithChildren)
-Custom :: proc(
-	id: c.uint32_t,
-	layoutConfig: ^LayoutConfig,
-	customConfig: ^CustomElementConfig,
-) -> bool {
-	Clay__OpenCustomElement(id, layoutConfig, customConfig)
-	return true
+@(require_results, deferred_none = _CloseElementWithChildren)
+Custom :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, customConfig: ^CustomElementConfig) -> bool {
+    _OpenCustomElement(id, layoutConfig, customConfig)
+    return true
 }
 
 Layout :: proc(config: LayoutConfig) -> ^LayoutConfig {
-	return Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config)
+    return _LayoutConfigArray_Add(&_layoutConfigs, config)
 }
 
 RectangleConfig :: proc(config: RectangleElementConfig) -> ^RectangleElementConfig {
-	return Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config)
+    return _RectangleElementConfigArray_Add(&_rectangleElementConfigs, config)
 }
 
 TextConfig :: proc(config: TextElementConfig) -> ^TextElementConfig {
-	return Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config)
+    return _TextElementConfigArray_Add(&_textElementConfigs, config)
 }
 
 ImageConfig :: proc(config: ImageElementConfig) -> ^ImageElementConfig {
-	return Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config)
+    return _ImageElementConfigArray_Add(&_imageElementConfigs, config)
 }
 
 FloatingConfig :: proc(config: FloatingElementConfig) -> ^FloatingElementConfig {
-	return Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config)
+    return _FloatingElementConfigArray_Add(&_floatingElementConfigs, config)
 }
 
 Custom_elementConfig :: proc(config: CustomElementConfig) -> ^CustomElementConfig {
-	return Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config)
+    return _CustomElementConfigArray_Add(&_customElementConfigs, config)
 }
 
 ScrollConfig :: proc(config: ScrollElementConfig) -> ^ScrollElementConfig {
-	return Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config)
+    return _ScrollElementConfigArray_Add(&_scrollElementConfigs, config)
 }
 
 BorderConfig :: proc(config: BorderElementConfig) -> ^BorderElementConfig {
-	return Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config)
+    return _BorderElementConfigArray_Add(&_borderElementConfigs, config)
 }
 
 BorderConfigOutside :: proc(outsideBorders: BorderData) -> ^BorderElementConfig {
-	return Clay__BorderElementConfigArray_Add(
-		&Clay__borderElementConfigs,
-		(BorderElementConfig) {
-			left = outsideBorders,
-			right = outsideBorders,
-			top = outsideBorders,
-			bottom = outsideBorders,
-		},
-	)
+    return _BorderElementConfigArray_Add(
+        &_borderElementConfigs,
+        (BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders},
+    )
 }
 
-// BorderConfig_outside_radius :: proc(width, color, radius)  Clay_BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } })) -> CLAY_BORDER_CONFIG_OUTSIDE_RADIUS
+BorderConfigOutsideRadius :: proc(outsideBorders: BorderData, radius: f32) -> ^BorderElementConfig {
+    return _BorderElementConfigArray_Add(
+        &_borderElementConfigs,
+        (BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders, cornerRadius = {radius, radius, radius, radius}},
+    )
+}
 
-// BorderConfig_all :: proc(...)  Clay_BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ } })) -> CLAY_BORDER_CONFIG_ALL
+BorderConfigAll :: proc(allBorders: BorderData) -> ^BorderElementConfig {
+    return _BorderElementConfigArray_Add(
+        &_borderElementConfigs,
+        (BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders},
+    )
+}
 
-// BorderConfig_all_radius :: proc(width, color, radius)  Clay_BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ }, .cornerRadius = { radius, radius, radius, radius }})) -> CLAY_BORDER_CONFIG_ALL_RADIUS
+BorderConfigAllRadius :: proc(allBorders: BorderData, radius: f32) -> ^BorderElementConfig {
+    return _BorderElementConfigArray_Add(
+        &_borderElementConfigs,
+        (BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, cornerRadius = {radius, radius, radius, radius}},
+    )
+}
 
-// Corner_radius :: proc(radius) (Clay_CornerRadius) { radius, radius, radius, radius }) -> CLAY_CORNER_RADIUS
+SizingFit :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
+    return SizingAxis{type = SizingType.FIT, constraints = {sizeMinMax = sizeMinMax}}
+}
 
-// Sizing_fit :: proc(...) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_FIT, .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__} }) -> CLAY_SIZING_FIT
+SizingGrow :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
+    return SizingAxis{type = SizingType.GROW, constraints = {sizeMinMax = sizeMinMax}}
+}
 
-// Sizing_grow :: proc(...) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_GROW, .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__} }) -> CLAY_SIZING_GROW
+SizingFixed :: proc(size: c.float) -> SizingAxis {
+    return SizingAxis{type = SizingType.FIT, constraints = {sizeMinMax = {size, size}}}
+}
 
-// Sizing_fixed :: proc(fixedSize) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_GROW, .sizeMinMax = { fixedSize, fixedSize } }) -> CLAY_SIZING_FIXED
+SizingPercent :: proc(sizePercent: c.float) -> SizingAxis {
+    return SizingAxis{type = SizingType.PERCENT, constraints = {sizePercent = sizePercent}}
+}
 
-// Sizing_percent :: proc(percentOfParent) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_PERCENT, .sizePercent = percentOfParent }) -> CLAY_SIZING_PERCENT
-
-ClayString :: proc(label: string) -> String {
-	return String{chars = raw_data(label), length = cast(c.int)len(label)}
+MakeString :: proc(label: string) -> String {
+    return String{chars = raw_data(label), length = cast(c.int)len(label)}
 }
 
 ID :: proc(label: string) -> c.uint32_t {
-	return Clay__HashString(ClayString(label), 0)
+    return _HashString(MakeString(label), 0)
 }
 
 IDI :: proc(label: string, index: u32) -> c.uint32_t {
-	return Clay__HashString(ClayString(label), index)
+    return _HashString(MakeString(label), index)
 }
-
-// _string_length :: proc(s) ((sizeof(s) / sizeof(s[0])) - sizeof(s[0]))) -> CLAY__STRING_LENGTH
