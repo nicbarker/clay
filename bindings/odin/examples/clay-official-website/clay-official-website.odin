@@ -148,6 +148,28 @@ LandingPageMobile :: proc() {
     }
 }
 
+FeatureBlocks :: proc(widthSizing: clay.SizingAxis, outerPadding: u16) {
+    textConfig := clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_RED})
+    if clay.Container(
+        clay.ID("HFileBoxOuter"),
+        clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = widthSizing}, childAlignment = {y = .CENTER}, padding = {outerPadding, 32}, childGap = 8}),
+    ) {
+        if clay.Rectangle(clay.ID("HFileIncludeOuter"), clay.Layout({padding = {8, 4}}), clay.RectangleConfig({color = COLOR_RED, cornerRadius = clay.CornerRadiusAll(8)})) {
+            clay.Text(clay.IDI("HFileBoxText", 2), clay.MakeString("#include clay.h"), clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_LIGHT}))
+        }
+        clay.Text(clay.ID("HFileSecondLine"), clay.MakeString("~2000 lines of C99."), textConfig)
+        clay.Text(clay.IDI("HFileBoxText", 5), clay.MakeString("Zero dependencies, including no C standard library."), textConfig)
+    }
+    if clay.Container(
+        clay.ID("BringYourOwnRendererOuter"),
+        clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = widthSizing}, childAlignment = {y = .CENTER}, padding = {x = outerPadding, y = 32}, childGap = 8}),
+    ) {
+        clay.Text(clay.IDI("ZeroDependenciesText", 1), clay.MakeString("Renderer agnostic."), clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = COLOR_ORANGE}))
+        clay.Text(clay.IDI("ZeroDependenciesText", 2), clay.MakeString("Layout with clay, then render with Raylib, WebGL Canvas or even as HTML."), textConfig)
+        clay.Text(clay.IDI("ZeroDependenciesText", 3), clay.MakeString("Flexible output for easy compositing in your custom engine or environment."), textConfig)
+    }
+}
+
 FeatureBlocksDesktop :: proc() {
     if clay.Container(clay.ID("FeatureBlocksOuter"), clay.Layout({sizing = {width = clay.SizingGrow({})}})) {
         if clay.Border(
@@ -155,35 +177,7 @@ FeatureBlocksDesktop :: proc() {
             clay.Layout({sizing = {width = clay.SizingGrow({})}, childAlignment = {y = .CENTER}}),
             clay.BorderConfig({betweenChildren = {width = 2, color = COLOR_RED}}),
         ) {
-            textConfig := clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_RED})
-            if clay.Container(
-                clay.ID("HFileBoxOuter"),
-                clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingPercent(0.5)}, childAlignment = {y = .CENTER}, padding = {50, 32}, childGap = 8}),
-            ) {
-                if clay.Rectangle(
-                    clay.ID("HFileIncludeOuter"),
-                    clay.Layout({padding = {8, 4}}),
-                    clay.RectangleConfig({color = COLOR_RED, cornerRadius = clay.CornerRadiusAll(8)}),
-                ) {
-                    clay.Text(clay.IDI("HFileBoxText", 2), clay.MakeString("#include clay.h"), clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_LIGHT}))
-                }
-                clay.Text(clay.ID("HFileSecondLine"), clay.MakeString("~2000 lines of C99."), textConfig)
-                clay.Text(clay.IDI("HFileBoxText", 5), clay.MakeString("Zero dependencies, including no C standard library."), textConfig)
-            }
-            if clay.Container(
-                clay.ID("BringYourOwnRendererOuter"),
-                clay.Layout(
-                    {layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingPercent(0.5)}, childAlignment = {y = .CENTER}, padding = {x = 50, y = 32}, childGap = 8},
-                ),
-            ) {
-                clay.Text(
-                    clay.IDI("ZeroDependenciesText", 1),
-                    clay.MakeString("Renderer agnostic."),
-                    clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = COLOR_ORANGE}),
-                )
-                clay.Text(clay.IDI("ZeroDependenciesText", 2), clay.MakeString("Layout with clay, then render with Raylib, WebGL Canvas or even as HTML."), textConfig)
-                clay.Text(clay.IDI("ZeroDependenciesText", 3), clay.MakeString("Flexible output for easy compositing in your custom engine or environment."), textConfig)
-            }
+            FeatureBlocks(clay.SizingPercent(0.5), 50)
         }
     }
 }
@@ -194,29 +188,7 @@ FeatureBlocksMobile :: proc() {
         clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingGrow({})}}),
         clay.BorderConfig({betweenChildren = {width = 2, color = COLOR_RED}}),
     ) {
-        textConfig := clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_RED})
-        if clay.Container(
-            clay.ID("HFileBoxOuter"),
-            clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingGrow({})}, childAlignment = {y = .CENTER}, padding = {16, 32}, childGap = 8}),
-        ) {
-            if clay.Rectangle(clay.ID("HFileIncludeOuter"), clay.Layout({padding = {8, 4}}), clay.RectangleConfig({color = COLOR_RED, cornerRadius = clay.CornerRadiusAll(8)})) {
-                clay.Text(clay.IDI("HFileBoxText", 2), clay.MakeString("#include clay.h"), clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_LIGHT}))
-            }
-            clay.Text(clay.ID("HFileSecondLine"), clay.MakeString("~2000 lines of C99."), textConfig)
-            clay.Text(clay.IDI("HFileBoxText", 5), clay.MakeString("Zero dependencies, including no C standard library."), textConfig)
-        }
-        if clay.Container(
-            clay.ID("BringYourOwnRendererOuter"),
-            clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingGrow({})}, childAlignment = {y = .CENTER}, padding = {x = 16, y = 32}, childGap = 8}),
-        ) {
-            clay.Text(
-                clay.IDI("ZeroDependenciesText", 1),
-                clay.MakeString("Renderer agnostic."),
-                clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = COLOR_ORANGE}),
-            )
-            clay.Text(clay.IDI("ZeroDependenciesText", 2), clay.MakeString("Layout with clay, then render with Raylib, WebGL Canvas or even as HTML."), textConfig)
-            clay.Text(clay.IDI("ZeroDependenciesText", 3), clay.MakeString("Flexible output for easy compositing in your custom engine or environment."), textConfig)
-        }
+        FeatureBlocks(clay.SizingGrow({}), 16)
     }
 }
 
