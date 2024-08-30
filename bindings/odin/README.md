@@ -40,6 +40,7 @@ import clay "clay-odin"
 minMemorySize: c.uint32_t = clay.MinMemorySize()
 memory := make([^]u8, minMemorySize)
 arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
+clay.Initialize(arena)
 ``` 
 
 3. Provide a `measureText(text, config)` proc "c" with [clay.SetMeasureTextFunction(function)](https://github.com/nicbarker/clay/blob/main/README.md#clay_setmeasuretextfunction) so that clay can measure and wrap text.
