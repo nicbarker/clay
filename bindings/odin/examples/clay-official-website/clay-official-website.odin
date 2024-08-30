@@ -1,6 +1,6 @@
 package main
 
-import clay "clay-odin"
+import clay "../../clay-odin"
 import "core:c"
 import "core:fmt"
 import "vendor:raylib"
@@ -307,7 +307,7 @@ DeclarativeSyntaxPageMobile :: proc() {
 }
 
 ColorLerp :: proc(a: clay.Color, b: clay.Color, amount: f32) -> clay.Color {
-    return clay.Color{r = a.r + (b.r - a.r) * amount, g = a.g + (b.g - a.g) * amount, b = a.b + (b.b - a.b) * amount, a = a.a + (b.a - a.a) * amount}
+    return clay.Color{a.r + (b.r - a.r) * amount, a.g + (b.g - a.g) * amount, a.b + (b.b - a.b) * amount, a.a + (b.a - a.a) * amount}
 }
 
 LOREM_IPSUM_TEXT: clay.String = clay.MakeString("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")

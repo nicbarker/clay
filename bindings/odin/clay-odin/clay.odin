@@ -20,10 +20,7 @@ String :: struct {
     chars:  [^]c.char,
 }
 
-Vector2 :: struct {
-    x: c.float,
-    y: c.float,
-}
+Vector2 :: [2]c.float
 
 Dimensions :: struct {
     width:  c.float,
@@ -44,12 +41,7 @@ BoundingBox :: struct {
     height: c.float,
 }
 
-Color :: struct {
-    r: c.float,
-    g: c.float,
-    b: c.float,
-    a: c.float,
-}
+Color :: [4]c.float
 
 CornerRadius :: struct {
     topLeft:     c.float,
