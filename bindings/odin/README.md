@@ -28,7 +28,7 @@ if clay.Rectangle(clay.ID("SideBar"), clay.Layout({ layoutDirection = .TOP_TO_BO
 
 ### Quick Start
 
-1. Download the [clay-odin](link todo) directory and copy it into your project.
+1. Download the [clay-odin](https://github.com/nicbarker/clay/tree/main/bindings/odin/clay-odin) directory and copy it into your project.
 
 ```Odin
 import clay "clay-odin"
