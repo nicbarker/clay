@@ -121,20 +121,19 @@ CreateLayout :: proc() -> clay.ClayArray(clay.RenderCommand) {
 
 6. Call [clay.EndLayout(screenWidth, screenHeight)](https://github.com/nicbarker/clay/blob/main/README.md#clay_endlayout) and process the resulting [clay.RenderCommandArray](https://github.com/nicbarker/clay/blob/main/README.md#clay_rendercommandarray) in your choice of renderer.
 
-```C
-renderCommands: clay.RenderCommandArray = clay.EndLayout(windowWidth, windowHeight);
+```Odin
+renderCommands: clay.ClayArray(clay.RenderCommand) = clay.EndLayout(windowWidth, windowHeight)
 
-for i := 0; i < renderCommands.length; i += 1 {
-	renderCommand := clay.RenderCommandArray_Get(renderCommands, cast(i32)i)
-    
-    switch (renderCommand->commandType) {
-        case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-            DrawRectangle(
-                renderCommand.boundingBox,
-                renderCommand.config.rectangleElementConfig.color);
-        }
-        // ... Implement handling of other command types
-    }
+for i: u32 = 0; i < renderCommands.length; i += 1 {
+	renderCommand := clay.RenderCommandArray_Get(&renderCommands, cast(i32)i)
+
+	switch renderCommand.commandType {
+	case .Rectangle:
+		{
+			DrawRectangle(renderCommand.boundingBox, renderCommand.config.rectangleElementConfig.color)
+		}
+	// ... Implement handling of other command types
+	}
 }
 ```
 
