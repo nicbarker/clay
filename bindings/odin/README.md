@@ -2,15 +2,15 @@
 
 This directory contains bindings for the [Odin](odin-lang.org) programming language, as well as an example implementation of the [clay website](https://nicbarker.com/clay) in Odin.
 
-If you haven't taken a look at the [full documentation for clay](https://github.com/nicbarker/clay/blob/main/README.md), it's recommended that you take a look there first to familiarise yourself with the general concepts. This README is abbreviated and applies to using clay in Odin specifically.
-
-The **most notable difference** between the C API and the Odin bindings is the use of if statements to create the scope for declaring child elements. When using the equivalent of the [Element Macros](https://github.com/nicbarker/clay/blob/main/README.md#element-macros):
-
 Special thanks to
 
 - [laytan](https://github.com/laytan)
 - [Dudejoe870](https://github.com/Dudejoe870)
 - MrStevns from the Odin Discord server
+
+If you haven't taken a look at the [full documentation for clay](https://github.com/nicbarker/clay/blob/main/README.md), it's recommended that you take a look there first to familiarise yourself with the general concepts. This README is abbreviated and applies to using clay in Odin specifically.
+
+The **most notable difference** between the C API and the Odin bindings is the use of if statements to create the scope for declaring child elements. When using the equivalent of the [Element Macros](https://github.com/nicbarker/clay/blob/main/README.md#element-macros):
 
 ```C
 // C form of element macros
