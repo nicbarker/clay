@@ -5,7 +5,7 @@ import "core:math"
 import "vendor:raylib"
 
 RaylibFont :: struct {
-    fontId: u32,
+    fontId: u16,
     font:   raylib.Font,
 }
 
@@ -23,7 +23,7 @@ measureText :: proc "c" (text: ^clay.String, config: ^clay.TextElementConfig) ->
     lineTextWidth: f32 = 0
 
     textHeight: f32 = cast(f32)config.fontSize
-    fontToUse: raylib.Font = raylibFonts[config.fontId].font
+    fontToUse := raylibFonts[config.fontId].font
 
     for i := 0; i < cast(int)text.length; i += 1 {
         if (text.chars[i] == '\n') {
@@ -49,19 +49,17 @@ measureText :: proc "c" (text: ^clay.String, config: ^clay.TextElementConfig) ->
 
 clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand)) {
     for i := 0; i < cast(int)renderCommands.length; i += 1 {
-        renderCommand: ^clay.RenderCommand = clay.RenderCommandArray_Get(renderCommands, cast(i32)i)
-        boundingBox: clay.BoundingBox = renderCommand.boundingBox
+        renderCommand := clay.RenderCommandArray_Get(renderCommands, cast(i32)i)
+        boundingBox := renderCommand.boundingBox
         switch (renderCommand.commandType) 
         {
         case clay.RenderCommandType.None:
-            {
-                break
-            }
+            {}
         case clay.RenderCommandType.Text:
             {
                 // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
-                text: clay.String = renderCommand.text
-                cloned: []u8 = make([]u8, text.length + 1)
+                text := renderCommand.text
+                cloned := make([]u8, text.length + 1, context.temp_allocator)
                 copy(cloned[0:text.length], text.chars[0:text.length])
                 cloned[text.length] = 0
                 fontToUse: raylib.Font = raylibFonts[renderCommand.config.textElementConfig.fontId].font
@@ -73,14 +71,12 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand)) {
                     cast(f32)renderCommand.config.textElementConfig.letterSpacing,
                     clayColorToRaylibColor(renderCommand.config.textElementConfig.textColor),
                 )
-                delete(cloned)
-                break
             }
         case clay.RenderCommandType.Image:
             {
-                imageTexture: ^raylib.Texture2D = cast(^raylib.Texture2D)renderCommand.config.imageElementConfig.imageData
+                // TODO image handling
+                imageTexture := cast(^raylib.Texture2D)renderCommand.config.imageElementConfig.imageData
                 raylib.DrawTextureEx(imageTexture^, raylib.Vector2{boundingBox.x, boundingBox.y}, 0, boundingBox.width / cast(f32)imageTexture.width, raylib.WHITE)
-                break
             }
         case clay.RenderCommandType.ScissorStart:
             {
@@ -90,12 +86,10 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand)) {
                     cast(i32)math.round(boundingBox.width),
                     cast(i32)math.round(boundingBox.height),
                 )
-                break
             }
         case clay.RenderCommandType.ScissorEnd:
             {
                 raylib.EndScissorMode()
-                break
             }
         case clay.RenderCommandType.Rectangle:
             {
@@ -117,11 +111,10 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand)) {
                         clayColorToRaylibColor(config.color),
                     )
                 }
-                break
             }
         case clay.RenderCommandType.Border:
             {
-                config: ^clay.BorderElementConfig = renderCommand.config.borderElementConfig
+                config := renderCommand.config.borderElementConfig
                 // Left border
                 if (config.left.width > 0) {
                     raylib.DrawRectangle(
@@ -212,12 +205,10 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand)) {
                         clayColorToRaylibColor(config.bottom.color),
                     )
                 }
-                break
             }
         case clay.RenderCommandType.Custom:
             {
                 // Implement custom element rendering here
-                break
             }
         }
     }

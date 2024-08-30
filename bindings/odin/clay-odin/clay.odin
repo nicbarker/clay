@@ -398,6 +398,10 @@ BorderConfigAllRadius :: proc(allBorders: BorderData, radius: f32) -> ^BorderEle
     )
 }
 
+CornerRadiusAll :: proc(radius: f32) -> CornerRadius {
+    return CornerRadius{radius, radius, radius, radius}
+}
+
 SizingFit :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
     return SizingAxis{type = SizingType.FIT, constraints = {sizeMinMax = sizeMinMax}}
 }
