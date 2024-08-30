@@ -1,0 +1,6 @@
+{
+	"$schema": "https://raw.githubusercontent.com/DanielGavin/ols/master/misc/odinfmt.schema.json",
+	"character_width": 180,
+	"sort_imports": true,
+	"tabs": false
+}
