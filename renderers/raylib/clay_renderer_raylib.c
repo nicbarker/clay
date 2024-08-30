@@ -178,7 +178,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {
-                Clay_BorderContainerElementConfig *config = renderCommand->config.borderElementConfig;
+                Clay_BorderElementConfig *config = renderCommand->config.borderElementConfig;
                 // Left border
                 if (config->left.width > 0) {
                     DrawRectangle((int)roundf(boundingBox.x), (int)roundf(boundingBox.y + config->cornerRadius.topLeft), (int)config->left.width, (int)roundf(boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft), CLAY_COLOR_TO_RAYLIB_COLOR(config->left.color));

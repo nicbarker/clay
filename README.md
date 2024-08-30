@@ -319,7 +319,7 @@ CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL
 // ...
 CLAY_CONTAINER(id, style, {
     // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, style, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }))
+    CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }), {})
 });
 
 // Later during your rendering
@@ -690,7 +690,7 @@ When using `.parentId`, the floating container can be declared anywhere after `B
 ### CLAY_CUSTOM_ELEMENT
 **Usage**
 
-`CLAY_CUSTOM_ELEMENT(uint32_t id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customElementConfig);`
+`CLAY_CUSTOM_ELEMENT(uint32_t id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customElementConfig, children);`
 
 **Lifecycle**
 
@@ -698,7 +698,7 @@ When using `.parentId`, the floating container can be declared anywhere after `B
 
 **Notes**
 
-**CUSTOM_ELEMENT** uses [Clay_LayoutConfig](#clay_layout) for styling and layout, but has no children and allows the user to pass custom data to the renderer. 
+**CUSTOM_ELEMENT** uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and allows the user to pass custom data to the renderer. 
 
 **Examples**
 ```C
@@ -722,7 +722,7 @@ CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL
 // ...
 CLAY_CONTAINER(id, style, {
     // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, style, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }))
+    CLAY_CUSTOM_ELEMENT(id, style, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }), {})
 });
 
 // Later during your rendering
@@ -1198,7 +1198,7 @@ For example:
 
 ### CLAY_SCROLL_CONFIG
 
-**CLAY_SCROLL_CONFIG()** is a macro used to create and store `Clay_ScrollContainerElementConfig` structs, which are for configuring [CLAY_SCROLL_CONTAINER](#clay_scroll_container) elements.
+**CLAY_SCROLL_CONFIG()** is a macro used to create and store `Clay_ScrollElementConfig` structs, which are for configuring [CLAY_SCROLL_CONTAINER](#clay_scroll_container) elements.
 
 **Struct Definition (Pseudocode)**
 
@@ -1207,7 +1207,7 @@ typedef struct
 {
     bool horizontal;
     bool vertical;
-} Clay_ScrollContainerElementConfig;
+} Clay_ScrollElementConfig;
 ```
 
 As with all config macros, `CLAY_SCROLL_CONFIG()` accepts designated initializer syntax and provides default values for any unspecified struct members. 
@@ -1239,7 +1239,7 @@ CLAY_SCROLL_CONTAINER(CLAY_ID("MainContent"), &CLAY_LAYOUT_DEFAULT, CLAY_SCROLL_
 
 ### CLAY_BORDER_CONFIG
 
-**CLAY_BORDER_CONFIG()** is a macro used to create and store `Clay_BorderContainerElementConfig` structs, which are for configuring [CLAY_BORDER_CONTAINER](#clay_border_container) elements.
+**CLAY_BORDER_CONFIG()** is a macro used to create and store `Clay_BorderElementConfig` structs, which are for configuring [CLAY_BORDER_CONTAINER](#clay_border_container) elements.
 
 **Struct Definition (Pseudocode)**
 
@@ -1282,7 +1282,7 @@ typedef struct
         float bottomLeft;
         float bottomRight;
     };
-} Clay_BorderContainerElementConfig;
+} Clay_BorderElementConfig;
 ```
 
 **Usage**
@@ -1383,7 +1383,7 @@ CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL
 // ...
 CLAY_CONTAINER(id, style, {
     // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, style, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }))
+    CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }), {})
 });
 
 // Later during your rendering
@@ -1531,7 +1531,7 @@ typedef struct
     Clay_Vector2 *scrollPosition;
     Clay_Dimensions scrollContainerDimensions;
     Clay_Dimensions contentDimensions;
-    Clay_ScrollContainerElementConfig config;
+    Clay_ScrollElementConfig config;
     bool found;
 } Clay_ScrollContainerData;
 ```
@@ -1568,6 +1568,6 @@ Dimensions representing the inner width and height of the content _inside_ the s
 
 ---
 
-**`.config`** - `Clay_ScrollContainerElementConfig`
+**`.config`** - `Clay_ScrollElementConfig`
 
-The [Clay_ScrollContainerElementConfig](#clay_scroll_config) for the matching scroll container element.
+The [Clay_ScrollElementConfig](#clay_scroll_config) for the matching scroll container element.

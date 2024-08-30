@@ -1,8 +1,6 @@
 #include "../../clay.h"
 #include "../../renderers/raylib/clay_renderer_raylib.c"
 
-double windowWidth = 1024, windowHeight = 768;
-
 const uint32_t FONT_ID_BODY_24 = 0;
 const uint32_t FONT_ID_BODY_16 = 1;
 Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
@@ -33,7 +31,7 @@ void RenderDropdownTextItem() {
 }
 
 Clay_RenderCommandArray CreateLayout() {
-    Clay_BeginLayout((int)windowWidth, (int)windowHeight);
+    Clay_BeginLayout((int)GetScreenWidth(), (int)GetScreenHeight());
     CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }, .padding = { 16, 16 }, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {200, 200, 200, 255}), {
         CLAY_RECTANGLE(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {150, 150, 255, 255}), {
             CLAY_RECTANGLE(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .padding = { 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE_CONFIG(.color = {130, 130, 255, 255}), {
