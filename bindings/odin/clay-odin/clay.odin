@@ -13,6 +13,8 @@ when ODIN_OS == .Windows {
     } else {
         foreign import Clay "macos/clay.a"
     }
+} else when ODIN_ARCH == .wasm32 || ODIN_ARCH == .wasm64p32 {
+	foreign import Clay "wasm/clay.o"
 }
 
 String :: struct {
@@ -222,7 +224,7 @@ ClayArray :: struct($type: typeid) {
     internalArray: [^]type,
 }
 
-@(link_prefix = "Clay_")
+@(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
     MinMemorySize :: proc() -> c.uint32_t ---
     CreateArenaWithCapacityAndMemory :: proc(capacity: c.uint32_t, offset: [^]u8) -> Arena ---
@@ -235,64 +237,43 @@ foreign Clay {
     GetScrollContainerData :: proc(id: c.uint32_t) -> ScrollContainerData ---
     SetMeasureTextFunction :: proc(measureTextFunction: proc(text: ^String, config: ^TextElementConfig) -> Dimensions) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: c.int32_t) -> ^RenderCommand ---
-    @(private)
-    _OpenContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) ---
-    @(private)
-    _OpenRectangleElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
-    @(private)
-    _OpenTextElement :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) ---
-    @(private)
-    _OpenImageElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
-    @(private)
-    _OpenScrollElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) ---
-    @(private)
-    _OpenFloatingElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) ---
-    @(private)
-    _OpenBorderElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
-    @(private)
-    _OpenCustomElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
-    @(private)
-    _CloseElementWithChildren :: proc() ---
-    @(private)
-    _CloseScrollElement :: proc() ---
-    @(private)
-    _CloseFloatingElement :: proc() ---
-    @(private)
-    _layoutConfigs: ClayArray(LayoutConfig)
-    @(private)
-    _LayoutConfigArray_Add :: proc(array: ^ClayArray(LayoutConfig), config: LayoutConfig) -> ^LayoutConfig ---
-    @(private)
-    _rectangleElementConfigs: ClayArray(RectangleElementConfig)
-    @(private)
-    _RectangleElementConfigArray_Add :: proc(array: ^ClayArray(RectangleElementConfig), config: RectangleElementConfig) -> ^RectangleElementConfig ---
-    @(private)
-    _textElementConfigs: ClayArray(TextElementConfig)
-    @(private)
-    _TextElementConfigArray_Add :: proc(array: ^ClayArray(TextElementConfig), config: TextElementConfig) -> ^TextElementConfig ---
-    @(private)
-    _imageElementConfigs: ClayArray(ImageElementConfig)
-    @(private)
-    _ImageElementConfigArray_Add :: proc(array: ^ClayArray(ImageElementConfig), config: ImageElementConfig) -> ^ImageElementConfig ---
-    @(private)
-    _floatingElementConfigs: ClayArray(FloatingElementConfig)
-    @(private)
-    _FloatingElementConfigArray_Add :: proc(array: ^ClayArray(FloatingElementConfig), config: FloatingElementConfig) -> ^FloatingElementConfig ---
-    @(private)
-    _customElementConfigs: ClayArray(CustomElementConfig)
-    @(private)
-    _CustomElementConfigArray_Add :: proc(array: ^ClayArray(CustomElementConfig), config: CustomElementConfig) -> ^CustomElementConfig ---
-    @(private)
-    _scrollElementConfigs: ClayArray(ScrollElementConfig)
-    @(private)
-    _ScrollElementConfigArray_Add :: proc(array: ^ClayArray(ScrollElementConfig), config: ScrollElementConfig) -> ^ScrollElementConfig ---
-    @(private)
-    _borderElementConfigs: ClayArray(BorderElementConfig)
-    @(private)
-    _BorderElementConfigArray_Add :: proc(array: ^ClayArray(BorderElementConfig), config: BorderElementConfig) -> ^BorderElementConfig ---
-    @(private)
-    _HashString :: proc(toHash: String, index: c.uint32_t) -> c.uint32_t ---
 }
 
+@(private, link_prefix = "Clay_", default_calling_convention = "c")
+foreign {
+    _layoutConfigs: ClayArray(LayoutConfig)
+    _rectangleElementConfigs: ClayArray(RectangleElementConfig)
+    _textElementConfigs: ClayArray(TextElementConfig)
+    _imageElementConfigs: ClayArray(ImageElementConfig)
+    _floatingElementConfigs: ClayArray(FloatingElementConfig)
+    _customElementConfigs: ClayArray(CustomElementConfig)
+    _scrollElementConfigs: ClayArray(ScrollElementConfig)
+    _borderElementConfigs: ClayArray(BorderElementConfig)
+}
+
+@(link_prefix = "Clay_", default_calling_convention = "c", private)
+foreign Clay {
+    _OpenContainerElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) ---
+    _OpenRectangleElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
+    _OpenTextElement :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) ---
+    _OpenImageElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
+    _OpenScrollElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) ---
+    _OpenFloatingElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) ---
+    _OpenBorderElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
+    _OpenCustomElement :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
+    _CloseElementWithChildren :: proc() ---
+    _CloseScrollElement :: proc() ---
+    _CloseFloatingElement :: proc() ---
+    _LayoutConfigArray_Add :: proc(array: ^ClayArray(LayoutConfig), config: LayoutConfig) -> ^LayoutConfig ---
+    _RectangleElementConfigArray_Add :: proc(array: ^ClayArray(RectangleElementConfig), config: RectangleElementConfig) -> ^RectangleElementConfig ---
+    _TextElementConfigArray_Add :: proc(array: ^ClayArray(TextElementConfig), config: TextElementConfig) -> ^TextElementConfig ---
+    _ImageElementConfigArray_Add :: proc(array: ^ClayArray(ImageElementConfig), config: ImageElementConfig) -> ^ImageElementConfig ---
+    _FloatingElementConfigArray_Add :: proc(array: ^ClayArray(FloatingElementConfig), config: FloatingElementConfig) -> ^FloatingElementConfig ---
+    _CustomElementConfigArray_Add :: proc(array: ^ClayArray(CustomElementConfig), config: CustomElementConfig) -> ^CustomElementConfig ---
+    _ScrollElementConfigArray_Add :: proc(array: ^ClayArray(ScrollElementConfig), config: ScrollElementConfig) -> ^ScrollElementConfig ---
+    _BorderElementConfigArray_Add :: proc(array: ^ClayArray(BorderElementConfig), config: BorderElementConfig) -> ^BorderElementConfig ---
+    _HashString :: proc(toHash: String, index: c.uint32_t) -> c.uint32_t ---
+}
 
 @(require_results, deferred_none = _CloseElementWithChildren)
 Container :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig) -> bool {
