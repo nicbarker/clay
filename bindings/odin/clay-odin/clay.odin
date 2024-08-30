@@ -2,7 +2,18 @@ package clay
 
 import "core:c"
 import "core:strings"
-foreign import Clay "clay.a"
+
+when ODIN_OS == .Windows {
+    foreign import Clay "windows/clay.lib"
+} else when ODIN_OS == .Linux {
+    foreign import Clay "linux/libclay.a"
+} else when ODIN_OS == .Darwin {
+    when ODIN_ARCH == .arm64 {
+        foreign import Clay "macos-arm64/clay.a"
+    } else {
+        foreign import Clay "macos/clay.a"
+    }
+}
 
 String :: struct {
     length: c.int,
