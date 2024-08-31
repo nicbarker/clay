@@ -2,6 +2,7 @@ package main
 
 import clay "../../clay-odin"
 import "core:math"
+import "core:strings"
 import "vendor:raylib"
 
 RaylibFont :: struct {
@@ -47,7 +48,7 @@ measureText :: proc "c" (text: ^clay.String, config: ^clay.TextElementConfig) ->
     return textSize
 }
 
-clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand)) {
+clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand), allocator := context.temp_allocator) {
     for i := 0; i < cast(int)renderCommands.length; i += 1 {
         renderCommand := clay.RenderCommandArray_Get(renderCommands, cast(i32)i)
         boundingBox := renderCommand.boundingBox
@@ -58,14 +59,12 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand)) {
         case clay.RenderCommandType.Text:
             {
                 // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
-                text := renderCommand.text
-                cloned := make([]u8, text.length + 1, context.temp_allocator)
-                copy(cloned[0:text.length], text.chars[0:text.length])
-                cloned[text.length] = 0
+                text := string(renderCommand.text.chars[:renderCommand.text.length])
+                cloned := strings.clone_to_cstring(text, allocator)
                 fontToUse: raylib.Font = raylibFonts[renderCommand.config.textElementConfig.fontId].font
                 raylib.DrawTextEx(
                     fontToUse,
-                    cstring(raw_data(cloned)),
+                    cloned,
                     raylib.Vector2{boundingBox.x, boundingBox.y},
                     cast(f32)renderCommand.config.textElementConfig.fontSize,
                     cast(f32)renderCommand.config.textElementConfig.letterSpacing,

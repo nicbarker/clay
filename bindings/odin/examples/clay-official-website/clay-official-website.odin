@@ -538,6 +538,8 @@ main :: proc() {
     checkImage5 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_5.png"))
 
     for !raylib.WindowShouldClose() {
+        defer free_all(context.temp_allocator)
+        
         animationLerpValue += raylib.GetFrameTime()
         if animationLerpValue > 1 {
             animationLerpValue = animationLerpValue - 2
