@@ -110,7 +110,7 @@ CreateLayout :: proc() -> clay.ClayArray(clay.RenderCommand) {
             }
 
             // Standard Odin code like loops etc work inside components
-            for i: u32 = 0; i < 10; i += 1 {
+            for i in 0..<10 {
                 SidebarItemComponent(i)
             }
         }
@@ -135,9 +135,7 @@ for i: u32 = 0; i < renderCommands.length; i += 1 {
 
     switch renderCommand.commandType {
     case .Rectangle:
-        {
-            DrawRectangle(renderCommand.boundingBox, renderCommand.config.rectangleElementConfig.color)
-        }
+        DrawRectangle(renderCommand.boundingBox, renderCommand.config.rectangleElementConfig.color)
     // ... Implement handling of other command types
     }
 }
