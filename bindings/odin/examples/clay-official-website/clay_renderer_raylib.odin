@@ -2,7 +2,6 @@ package main
 
 import clay "../../clay-odin"
 import "core:math"
-import "core:strings"
 import "vendor:raylib"
 
 RaylibFont :: struct {
