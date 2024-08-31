@@ -287,8 +287,8 @@ Rectangle :: proc(id: c.uint32_t, layoutConfig: ^LayoutConfig, rectangleConfig: 
     return true
 }
 
-Text :: proc(id: c.uint32_t, text: String, textConfig: ^TextElementConfig) -> bool {
-    _OpenTextElement(id, text, textConfig)
+Text :: proc(id: u32, text: string, textConfig: ^TextElementConfig) -> bool {
+    _OpenTextElement(id, MakeString(text), textConfig)
     return true
 }
 

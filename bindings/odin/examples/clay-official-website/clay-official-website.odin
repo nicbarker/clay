@@ -59,16 +59,16 @@ headerTextConfig := clay.TextElementConfig {
 
 LandingPageBlob :: proc(index: u32, fontSize: u16, fontId: u16, color: clay.Color, text: clay.String, image: ^raylib.Texture2D) {
     if clay.Border(
-        clay.IDI("HeroBlob", index),
+        clay.ID("HeroBlob", index),
         clay.Layout({sizing = {width = clay.SizingGrow({max = 480})}, padding = clay.Padding{16, 16}, childGap = 16, childAlignment = clay.ChildAlignment{y = .CENTER}}),
         clay.BorderConfigOutsideRadius({2, color}, 10),
     ) {
         if clay.Image(
-            clay.IDI("CheckImage", index),
+            clay.ID("CheckImage", index),
             clay.Layout({sizing = {width = clay.SizingFixed(32)}}),
             clay.ImageConfig({imageData = image, sourceDimensions = {128, 128}}),
         ) {}
-        clay.Text(clay.IDI("HeroBlobText", index), text, clay.TextConfig({fontSize = fontSize, fontId = fontId, textColor = color}))
+        clay.Text(clay.ID("HeroBlobText", index), text, clay.TextConfig({fontSize = fontSize, fontId = fontId, textColor = color}))
     }
 }
 
@@ -155,18 +155,18 @@ FeatureBlocks :: proc(widthSizing: clay.SizingAxis, outerPadding: u16) {
         clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = widthSizing}, childAlignment = {y = .CENTER}, padding = {outerPadding, 32}, childGap = 8}),
     ) {
         if clay.Rectangle(clay.ID("HFileIncludeOuter"), clay.Layout({padding = {8, 4}}), clay.RectangleConfig({color = COLOR_RED, cornerRadius = clay.CornerRadiusAll(8)})) {
-            clay.Text(clay.IDI("HFileBoxText", 2), clay.MakeString("#include clay.h"), clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_LIGHT}))
+            clay.Text(clay.ID("HFileBoxText", 2), "#include clay.h", clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_LIGHT}))
         }
-        clay.Text(clay.ID("HFileSecondLine"), clay.MakeString("~2000 lines of C99."), textConfig)
-        clay.Text(clay.IDI("HFileBoxText", 5), clay.MakeString("Zero dependencies, including no C standard library."), textConfig)
+        clay.Text(clay.ID("HFileSecondLine"), "~2000 lines of C99.", textConfig)
+        clay.Text(clay.ID("HFileBoxText", 5), "Zero dependencies, including no C standard library.", textConfig)
     }
     if clay.Container(
         clay.ID("BringYourOwnRendererOuter"),
         clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = widthSizing}, childAlignment = {y = .CENTER}, padding = {x = outerPadding, y = 32}, childGap = 8}),
     ) {
-        clay.Text(clay.IDI("ZeroDependenciesText", 1), clay.MakeString("Renderer agnostic."), clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = COLOR_ORANGE}))
-        clay.Text(clay.IDI("ZeroDependenciesText", 2), clay.MakeString("Layout with clay, then render with Raylib, WebGL Canvas or even as HTML."), textConfig)
-        clay.Text(clay.IDI("ZeroDependenciesText", 3), clay.MakeString("Flexible output for easy compositing in your custom engine or environment."), textConfig)
+        clay.Text(clay.ID("ZeroDependenciesText", 1), "Renderer agnostic.", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = COLOR_ORANGE}))
+        clay.Text(clay.ID("ZeroDependenciesText", 2), "Layout with clay, then render with Raylib, WebGL Canvas or even as HTML.", textConfig)
+        clay.Text(clay.ID("ZeroDependenciesText", 3), "Flexible output for easy compositing in your custom engine or environment.", textConfig)
     }
 }
 
@@ -264,18 +264,18 @@ HighPerformancePage :: proc(lerpValue: f32, titleTextConfig: clay.TextElementCon
         clay.Text(clay.ID("PerformanceTextTitle"), clay.MakeString("High Performance"), clay.TextConfig(titleTextConfig))
         if clay.Container(clay.ID("SyntaxSpacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
         clay.Text(
-            clay.IDI("PerformanceTextSubTitle", 1),
-            clay.MakeString("Fast enough to recompute your entire UI every frame."),
+            clay.ID("PerformanceTextSubTitle", 1),
+            "Fast enough to recompute your entire UI every frame.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_LIGHT}),
         )
         clay.Text(
-            clay.IDI("PerformanceTextSubTitle", 2),
-            clay.MakeString("Small memory footprint (3.5mb default) with static allocation & reuse. No malloc / free."),
+            clay.ID("PerformanceTextSubTitle", 2),
+            "Small memory footprint (3.5mb default) with static allocation & reuse. No malloc / free.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_LIGHT}),
         )
         clay.Text(
-            clay.IDI("PerformanceTextSubTitle", 3),
-            clay.MakeString("Simplify animations and reactive UI design by avoiding the standard performance hacks."),
+            clay.ID("PerformanceTextSubTitle", 3),
+            "Simplify animations and reactive UI design by avoiding the standard performance hacks.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_LIGHT}),
         )
     }
@@ -343,35 +343,35 @@ RendererButtonActive :: proc(id: u32, index: i32, text: clay.String) {
     }
 }
 
-RendererButtonInactive :: proc(id: u32, index: u32, text: clay.String) {
+RendererButtonInactive :: proc(id: u32, index: u32, text: string) {
     if clay.Border(id, clay.Layout({}), clay.BorderConfigOutsideRadius({2, COLOR_RED}, 10)) {
         if clay.Rectangle(
-            clay.IDI("RendererButtonInactiveInner", index),
+            clay.ID("RendererButtonInactiveInner", index),
             clay.Layout({sizing = {width = clay.SizingFixed(300)}, padding = {16, 16}}),
             clay.RectangleConfig({color = clay.PointerOver(id) ? COLOR_LIGHT_HOVER : COLOR_LIGHT, cornerRadius = clay.CornerRadiusAll(10)}),
         ) {
-            clay.Text(clay.IDI("RendererButtonInactiveText", index), text, clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_28, textColor = COLOR_RED}))
+            clay.Text(clay.ID("RendererButtonInactiveText", index), text, clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_28, textColor = COLOR_RED}))
         }
     }
 }
 
 RendererPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizing: clay.SizingAxis) {
     if clay.Container(clay.ID("RendererLeftText"), clay.Layout({sizing = {width = widthSizing}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
-        clay.Text(clay.ID("RendererTextTitle"), clay.MakeString("Renderer & Platform Agnostic"), clay.TextConfig(titleTextConfig))
+        clay.Text(clay.ID("RendererTextTitle"), "Renderer & Platform Agnostic", clay.TextConfig(titleTextConfig))
         if clay.Container(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
         clay.Text(
-            clay.IDI("RendererTextSubTitle", 1),
-            clay.MakeString("Clay outputs a sorted array of primitive render commands, such as RECTANGLE, TEXT or IMAGE."),
+            clay.ID("RendererTextSubTitle", 1),
+            "Clay outputs a sorted array of primitive render commands, such as RECTANGLE, TEXT or IMAGE.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_RED}),
         )
         clay.Text(
-            clay.IDI("RendererTextSubTitle", 2),
-            clay.MakeString("Write your own renderer in a few hundred lines of code, or use the provided examples for Raylib, WebGL canvas and more."),
+            clay.ID("RendererTextSubTitle", 2),
+            "Write your own renderer in a few hundred lines of code, or use the provided examples for Raylib, WebGL canvas and more.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_RED}),
         )
         clay.Text(
-            clay.IDI("RendererTextSubTitle", 3),
-            clay.MakeString("There's even an HTML renderer - you're looking at it right now!"),
+            clay.ID("RendererTextSubTitle", 3),
+            "There's even an HTML renderer - you're looking at it right now!",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_RED}),
         )
     }
@@ -381,11 +381,11 @@ RendererPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizing: clay.
     ) {
         clay.Text(
             clay.ID("RendererTextRightTitle"),
-            clay.MakeString("Try changing renderer!"),
+            "Try changing renderer!",
             clay.TextConfig({fontSize = 36, fontId = FONT_ID_BODY_36, textColor = COLOR_ORANGE}),
         )
         if clay.Container(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 32})}})) {}
-        RendererButtonActive(clay.IDI("RendererSelectButtonActive", 0), 0, clay.MakeString("Raylib Renderer"))
+        RendererButtonActive(clay.ID("RendererSelectButtonActive", 0), 0, "Raylib Renderer")
     }
 }
 
@@ -443,15 +443,15 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
             clay.ID("Header"),
             clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingFixed(50)}, childAlignment = {y = .CENTER}, childGap = 24, padding = {x = 32}}),
         ) {
-            clay.Text(clay.ID("Logo"), clay.MakeString("Clay"), &headerTextConfig)
+            clay.Text(clay.ID("Logo"), "Clay", &headerTextConfig)
             if clay.Container(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({})}})) {}
 
             if (!mobileScreen) {
                 if clay.Rectangle(clay.ID("LinkExamplesOuter"), clay.Layout({}), clay.RectangleConfig({color = {0, 0, 0, 0}})) {
-                    clay.Text(clay.ID("LinkExamplesText"), clay.MakeString("Examples"), clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
+                    clay.Text(clay.ID("LinkExamplesText"), "Examples", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
                 }
                 if clay.Rectangle(clay.ID("LinkDocsOuter"), clay.Layout({}), clay.RectangleConfig({color = {0, 0, 0, 0}})) {
-                    clay.Text(clay.ID("LinkDocsText"), clay.MakeString("Docs"), clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
+                    clay.Text(clay.ID("LinkDocsText"), "Docs", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
                 }
             }
             githubButtonId: u32 = clay.ID("HeaderButtonGithub")
@@ -461,7 +461,7 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
                     clay.Layout({padding = {16, 6}}),
                     clay.RectangleConfig({cornerRadius = clay.CornerRadiusAll(10), color = clay.PointerOver(githubButtonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT}),
                 ) {
-                    clay.Text(clay.ID("LinkGithubText"), clay.MakeString("Github"), clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
+                    clay.Text(clay.ID("LinkGithubText"), "Github", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
                 }
             }
         }
