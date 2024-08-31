@@ -57,7 +57,7 @@ headerTextConfig := clay.TextElementConfig {
     textColor = {61, 26, 5, 255},
 }
 
-LandingPageBlob :: proc(index: u32, fontSize: u16, fontId: u16, color: clay.Color, text: clay.String, image: ^raylib.Texture2D) {
+LandingPageBlob :: proc(index: u32, fontSize: u16, fontId: u16, color: clay.Color, text: string, image: ^raylib.Texture2D) {
     if clay.Border(
         clay.ID("HeroBlob", index),
         clay.Layout({sizing = {width = clay.SizingGrow({max = 480})}, padding = clay.Padding{16, 16}, childGap = 16, childAlignment = clay.ChildAlignment{y = .CENTER}}),
@@ -85,13 +85,13 @@ LandingPageDesktop :: proc() {
             if clay.Container(clay.ID("LeftText"), clay.Layout({sizing = {width = clay.SizingPercent(0.55)}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
                 clay.Text(
                     clay.ID("LeftTextTitle"),
-                    clay.MakeString("Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance."),
+                    "Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance.",
                     clay.TextConfig({fontSize = 56, fontId = FONT_ID_TITLE_56, textColor = COLOR_RED}),
                 )
                 if clay.Container(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({}), height = clay.SizingFixed(32)}})) {}
                 clay.Text(
                     clay.ID("LeftTextTagline"),
-                    clay.MakeString("Clay is laying out this webpage right now!"),
+                    "Clay is laying out this webpage right now!",
                     clay.TextConfig({fontSize = 36, fontId = FONT_ID_TITLE_36, textColor = COLOR_ORANGE}),
                 )
             }
@@ -99,11 +99,11 @@ LandingPageDesktop :: proc() {
                 clay.ID("HeroImageOuter"),
                 clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingPercent(0.45)}, childAlignment = {x = .CENTER}, childGap = 16}),
             ) {
-                LandingPageBlob(1, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_5, clay.MakeString("High performance"), &checkImage5)
-                LandingPageBlob(2, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_4, clay.MakeString("Flexbox-style responsive layout"), &checkImage4)
-                LandingPageBlob(3, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_3, clay.MakeString("Declarative syntax"), &checkImage3)
-                LandingPageBlob(4, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_2, clay.MakeString("Single .h file for C/C++"), &checkImage2)
-                LandingPageBlob(5, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_1, clay.MakeString("Compile to 15kb .wasm"), &checkImage1)
+                LandingPageBlob(1, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_5, "High performance", &checkImage5)
+                LandingPageBlob(2, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_4, "Flexbox-style responsive layout", &checkImage4)
+                LandingPageBlob(3, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_3, "Declarative syntax", &checkImage3)
+                LandingPageBlob(4, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_2, "Single .h file for C/C++", &checkImage2)
+                LandingPageBlob(5, 30, FONT_ID_BODY_30, COLOR_BLOB_BORDER_1, "Compile to 15kb .wasm", &checkImage1)
             }
         }
     }
@@ -112,26 +112,24 @@ LandingPageDesktop :: proc() {
 LandingPageMobile :: proc() {
     if clay.Container(
         clay.ID("LandingPage1Mobile"),
-        clay.Layout(
-            {
-                layoutDirection = .TOP_TO_BOTTOM,
-                sizing = {width = clay.SizingGrow({}), height = clay.SizingFit({min = cast(f32)windowHeight - 70})},
-                childAlignment = {x = .CENTER, y = .CENTER},
-                padding = {16, 32},
-                childGap = 32,
-            },
-        ),
+        clay.Layout({
+            layoutDirection = .TOP_TO_BOTTOM,
+            sizing = {width = clay.SizingGrow({}), height = clay.SizingFit({min = cast(f32)windowHeight - 70})},
+            childAlignment = {x = .CENTER, y = .CENTER},
+            padding = {16, 32},
+            childGap = 32,
+        }),
     ) {
         if clay.Container(clay.ID("LeftText"), clay.Layout({sizing = {width = clay.SizingGrow({})}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
             clay.Text(
                 clay.ID("LeftTextTitle"),
-                clay.MakeString("Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance."),
+                "Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance.",
                 clay.TextConfig({fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_RED}),
             )
             if clay.Container(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({}), height = clay.SizingFixed(32)}})) {}
             clay.Text(
                 clay.ID("LeftTextTagline"),
-                clay.MakeString("Clay is laying out this webpage right now!"),
+                "Clay is laying out this webpage right now!",
                 clay.TextConfig({fontSize = 32, fontId = FONT_ID_TITLE_32, textColor = COLOR_ORANGE}),
             )
         }
@@ -139,11 +137,11 @@ LandingPageMobile :: proc() {
             clay.ID("HeroImageOuter"),
             clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingGrow({})}, childAlignment = {x = .CENTER}, childGap = 16}),
         ) {
-            LandingPageBlob(1, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_5, clay.MakeString("High performance"), &checkImage5)
-            LandingPageBlob(2, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_4, clay.MakeString("Flexbox-style responsive layout"), &checkImage4)
-            LandingPageBlob(3, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_3, clay.MakeString("Declarative syntax"), &checkImage3)
-            LandingPageBlob(4, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_2, clay.MakeString("Single .h file for C/C++"), &checkImage2)
-            LandingPageBlob(5, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_1, clay.MakeString("Compile to 15kb .wasm"), &checkImage1)
+            LandingPageBlob(1, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_5, "High performance", &checkImage5)
+            LandingPageBlob(2, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_4, "Flexbox-style responsive layout", &checkImage4)
+            LandingPageBlob(3, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_3, "Declarative syntax", &checkImage3)
+            LandingPageBlob(4, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_2, "Single .h file for C/C++", &checkImage2)
+            LandingPageBlob(5, 24, FONT_ID_BODY_24, COLOR_BLOB_BORDER_1, "Compile to 15kb .wasm", &checkImage1)
         }
     }
 }
@@ -194,21 +192,21 @@ FeatureBlocksMobile :: proc() {
 
 DeclarativeSyntaxPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizing: clay.SizingAxis) {
     if clay.Container(clay.ID("SyntaxPageLeftText"), clay.Layout({sizing = {width = widthSizing}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
-        clay.Text(clay.ID("SyntaxPageTextTitle"), clay.MakeString("Declarative Syntax"), clay.TextConfig(titleTextConfig))
+        clay.Text(clay.ID("SyntaxPageTextTitle"), "Declarative Syntax", clay.TextConfig(titleTextConfig))
         if clay.Container(clay.ID("SyntaxSpacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
         clay.Text(
             clay.ID("SyntaxPageTextSubTitle1"),
-            clay.MakeString("Flexible and readable declarative syntax with nested UI element hierarchies."),
+            "Flexible and readable declarative syntax with nested UI element hierarchies.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_28, textColor = COLOR_RED}),
         )
         clay.Text(
             clay.ID("SyntaxPageTextSubTitle2"),
-            clay.MakeString("Mix elements with standard C code like loops, conditionals and functions."),
+            "Mix elements with standard C code like loops, conditionals and functions.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_28, textColor = COLOR_RED}),
         )
         clay.Text(
             clay.ID("SyntaxPageTextSubTitle3"),
-            clay.MakeString("Create your own library of re-usable components from UI primitives like text, images and rectangles."),
+            "Create your own library of re-usable components from UI primitives like text, images and rectangles.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_28, textColor = COLOR_RED}),
         )
     }
@@ -257,11 +255,11 @@ ColorLerp :: proc(a: clay.Color, b: clay.Color, amount: f32) -> clay.Color {
     return clay.Color{a.r + (b.r - a.r) * amount, a.g + (b.g - a.g) * amount, a.b + (b.b - a.b) * amount, a.a + (b.a - a.a) * amount}
 }
 
-LOREM_IPSUM_TEXT: clay.String = clay.MakeString("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
+LOREM_IPSUM_TEXT := "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
 HighPerformancePage :: proc(lerpValue: f32, titleTextConfig: clay.TextElementConfig, widthSizing: clay.SizingAxis) {
     if clay.Container(clay.ID("PerformanceLeftText"), clay.Layout({sizing = {width = widthSizing}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
-        clay.Text(clay.ID("PerformanceTextTitle"), clay.MakeString("High Performance"), clay.TextConfig(titleTextConfig))
+        clay.Text(clay.ID("PerformanceTextTitle"), "High Performance", clay.TextConfig(titleTextConfig))
         if clay.Container(clay.ID("SyntaxSpacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
         clay.Text(
             clay.ID("PerformanceTextSubTitle", 1),
@@ -333,7 +331,7 @@ HighPerformancePageMobile :: proc(lerpValue: f32) {
     }
 }
 
-RendererButtonActive :: proc(id: u32, index: i32, text: clay.String) {
+RendererButtonActive :: proc(id: u32, index: i32, text: string) {
     if clay.Rectangle(
         id,
         clay.Layout({sizing = {width = clay.SizingFixed(300)}, padding = {16, 16}}),
@@ -407,15 +405,13 @@ RendererPageDesktop :: proc() {
 RendererPageMobile :: proc() {
     if clay.Rectangle(
         clay.ID("RendererMobile"),
-        clay.Layout(
-            {
-                layoutDirection = .TOP_TO_BOTTOM,
-                sizing = {clay.SizingGrow({}), clay.SizingFit({min = cast(f32)windowHeight - 50})},
-                childAlignment = {x = .CENTER, y = .CENTER},
-                padding = {x = 16, y = 32},
-                childGap = 32,
-            },
-        ),
+        clay.Layout({
+            layoutDirection = .TOP_TO_BOTTOM,
+            sizing = {clay.SizingGrow({}), clay.SizingFit({min = cast(f32)windowHeight - 50})},
+            childAlignment = {x = .CENTER, y = .CENTER},
+            padding = {x = 16, y = 32},
+            childGap = 32,
+        }),
         clay.RectangleConfig({color = COLOR_LIGHT}),
     ) {
         RendererPage({fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_RED}, clay.SizingGrow({}))
@@ -428,7 +424,7 @@ ScrollbarData :: struct {
     mouseDown:      bool,
 }
 
-scrollbarData: ScrollbarData = ScrollbarData{}
+scrollbarData := ScrollbarData{}
 animationLerpValue: f32 = -1.0
 
 createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
@@ -510,7 +506,7 @@ loadFont :: proc(fontId: u16, fontSize: u16, path: cstring) {
 }
 
 main :: proc() {
-    minMemorySize: c.uint32_t = clay.MinMemorySize()
+    minMemorySize: u32 = clay.MinMemorySize()
     memory := make([^]u8, minMemorySize)
     arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
     clay.SetMeasureTextFunction(measureText)

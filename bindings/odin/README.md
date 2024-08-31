@@ -37,7 +37,7 @@ import clay "clay-odin"
 2. Ask clay for how much static memory it needs using [clay.MinMemorySize()](https://github.com/nicbarker/clay/blob/main/README.md#clay_minmemorysize), create an Arena for it to use with [clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)](https://github.com/nicbarker/clay/blob/main/README.md#clay_createarenawithcapacityandmemory), and initialize it with [clay.Initialize(arena)](https://github.com/nicbarker/clay/blob/main/README.md#clay_initialize).
 
 ```Odin
-minMemorySize: c.uint32_t = clay.MinMemorySize()
+minMemorySize: u32 = clay.MinMemorySize()
 memory := make([^]u8, minMemorySize)
 arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
 clay.Initialize(arena)
@@ -77,7 +77,7 @@ sidebarItemLayout := clay.LayoutConfig {
 
 // Re-useable components are just normal functions
 SidebarItemComponent :: proc(index: u32) {
-    if clay.Rectangle(clay.IDI("SidebarBlob", index), &sidebarItemLayout, clay.RectangleConfig({color = COLOR_ORANGE})) {}
+    if clay.Rectangle(clay.ID("SidebarBlob", index), &sidebarItemLayout, clay.RectangleConfig({color = COLOR_ORANGE})) {}
 }
 
 // An example function to begin the "root" of your layout tree
