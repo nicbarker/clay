@@ -6,7 +6,7 @@ import "core:strings"
 when ODIN_OS == .Windows {
     foreign import Clay "windows/clay.lib"
 } else when ODIN_OS == .Linux {
-    foreign import Clay "linux/libclay.a"
+    foreign import Clay "linux/clay.a"
 } else when ODIN_OS == .Darwin {
     when ODIN_ARCH == .arm64 {
         foreign import Clay "macos-arm64/clay.a"
@@ -14,7 +14,7 @@ when ODIN_OS == .Windows {
         foreign import Clay "macos/clay.a"
     }
 } else when ODIN_ARCH == .wasm32 || ODIN_ARCH == .wasm64p32 {
-	foreign import Clay "wasm/clay.o"
+    foreign import Clay "wasm/clay.o"
 }
 
 String :: struct {
@@ -57,7 +57,13 @@ BorderData :: struct {
     color: Color,
 }
 
-RenderCommandType :: enum u8 {
+when ODIN_OS == .Windows {
+    EnumBackingType :: u32
+} else {
+    EnumBackingType :: u8
+}
+
+RenderCommandType :: enum EnumBackingType {
     None,
     Rectangle,
     Border,
@@ -104,7 +110,7 @@ ScrollElementConfig :: struct {
     vertical:   bool,
 }
 
-FloatingAttachPointType :: enum u8 {
+FloatingAttachPointType :: enum EnumBackingType {
     LEFT_TOP,
     LEFT_CENTER,
     LEFT_BOTTOM,
@@ -156,7 +162,7 @@ ScrollContainerData :: struct {
     found:                     bool,
 }
 
-SizingType :: enum u8 {
+SizingType :: enum EnumBackingType {
     FIT,
     GROW,
     PERCENT,
@@ -188,18 +194,18 @@ Padding :: struct {
     y: u16,
 }
 
-LayoutDirection :: enum u8 {
+LayoutDirection :: enum EnumBackingType {
     LEFT_TO_RIGHT,
     TOP_TO_BOTTOM,
 }
 
-LayoutAlignmentX :: enum u8 {
+LayoutAlignmentX :: enum EnumBackingType {
     LEFT,
     RIGHT,
     CENTER,
 }
 
-LayoutAlignmentY :: enum u8 {
+LayoutAlignmentY :: enum EnumBackingType {
     TOP,
     BOTTOM,
     CENTER,
@@ -240,7 +246,7 @@ foreign Clay {
 }
 
 @(private, link_prefix = "Clay_", default_calling_convention = "c")
-foreign {
+foreign _ {
     _layoutConfigs: ClayArray(LayoutConfig)
     _rectangleElementConfigs: ClayArray(RectangleElementConfig)
     _textElementConfigs: ClayArray(TextElementConfig)
