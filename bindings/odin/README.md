@@ -106,7 +106,7 @@ CreateLayout :: proc() -> clay.ClayArray(clay.RenderCommand) {
                     clay.Layout({sizing = {width = clay.SizingFixed(60), height = clay.SizingFixed(60)}}),
                     clay.ImageConfig({imageData = &profilePicture, sourceDimensions = {height = 60, width = 60}}),
                 ) {}
-                clay.Text(clay.ID("ProfileTitle"), clay.MakeString("Clay - UI Library"), clay.TextConfig({fontSize = 24, textColor = {255, 255, 255, 255}}))
+                clay.Text(clay.ID("ProfileTitle"), "Clay - UI Library", clay.TextConfig({fontSize = 24, textColor = {255, 255, 255, 255}}))
             }
 
             // Standard Odin code like loops etc work inside components
