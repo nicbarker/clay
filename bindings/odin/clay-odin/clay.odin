@@ -57,7 +57,13 @@ BorderData :: struct {
     color: Color,
 }
 
-RenderCommandType :: enum u8 {
+when ODIN_OS == .Windows {
+    EnumBackingType :: u32
+} else {
+    EnumBackingType :: u8
+}
+
+RenderCommandType :: enum EnumBackingType {
     None,
     Rectangle,
     Border,
@@ -104,7 +110,7 @@ ScrollElementConfig :: struct {
     vertical:   c.bool,
 }
 
-FloatingAttachPointType :: enum u8 {
+FloatingAttachPointType :: enum EnumBackingType {
     LEFT_TOP,
     LEFT_CENTER,
     LEFT_BOTTOM,
@@ -156,7 +162,7 @@ ScrollContainerData :: struct {
     found:                     c.bool,
 }
 
-SizingType :: enum u8 {
+SizingType :: enum EnumBackingType {
     FIT,
     GROW,
     PERCENT,
@@ -188,18 +194,18 @@ Padding :: struct {
     y: c.uint16_t,
 }
 
-LayoutDirection :: enum u8 {
+LayoutDirection :: enum EnumBackingType {
     LEFT_TO_RIGHT,
     TOP_TO_BOTTOM,
 }
 
-LayoutAlignmentX :: enum u8 {
+LayoutAlignmentX :: enum EnumBackingType {
     LEFT,
     RIGHT,
     CENTER,
 }
 
-LayoutAlignmentY :: enum u8 {
+LayoutAlignmentY :: enum EnumBackingType {
     TOP,
     BOTTOM,
     CENTER,
