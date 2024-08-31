@@ -231,14 +231,14 @@ DeclarativeSyntaxPageDesktop :: proc() {
             clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingGrow({})}, childAlignment = {y = .CENTER}, padding = {32, 32}, childGap = 32}),
             clay.BorderConfig({left = {2, COLOR_RED}, right = {2, COLOR_RED}}),
         ) {
-            DeclarativeSyntaxPage({fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_LIGHT}, clay.SizingGrow({}))
+            DeclarativeSyntaxPage({fontSize = 52, fontId = FONT_ID_TITLE_52, textColor = COLOR_RED}, clay.SizingPercent(0.5))
         }
     }
 }
 
 DeclarativeSyntaxPageMobile :: proc() {
     if clay.Container(
-        clay.ID("SyntaxPageDesktop"),
+        clay.ID("SyntaxPageMobile"),
         clay.Layout(
             {
                 layoutDirection = .TOP_TO_BOTTOM,
@@ -249,7 +249,7 @@ DeclarativeSyntaxPageMobile :: proc() {
             },
         ),
     ) {
-        DeclarativeSyntaxPage({fontSize = 52, fontId = FONT_ID_TITLE_52, textColor = COLOR_LIGHT}, clay.SizingGrow({}))
+        DeclarativeSyntaxPage({fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_RED}, clay.SizingGrow({}))
     }
 }
 
