@@ -31,7 +31,7 @@ void RenderDropdownTextItem() {
 }
 
 Clay_RenderCommandArray CreateLayout() {
-    Clay_BeginLayout((int)GetScreenWidth(), (int)GetScreenHeight());
+    Clay_BeginLayout();
     CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }, .padding = { 16, 16 }, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {200, 200, 200, 255}), {
         CLAY_RECTANGLE(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {150, 150, 255, 255}), {
             CLAY_RECTANGLE(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .padding = { 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE_CONFIG(.color = {130, 130, 255, 255}), {
@@ -111,7 +111,7 @@ Clay_RenderCommandArray CreateLayout() {
             CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = 6, .color = Clay_PointerOver(CLAY_ID("ScrollBar")) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150}), {});
         });
     });
-    return Clay_EndLayout(GetScreenWidth(), GetScreenHeight());
+    return Clay_EndLayout();
 }
 
 typedef struct
@@ -123,16 +123,24 @@ typedef struct
 
 ScrollbarData scrollbarData = (ScrollbarData) {};
 
+bool debugEnabled = false;
+
 void UpdateDrawFrame(void)
 {
     float mouseWheelX = 0, mouseWheelY = 0;
     Vector2 mouseWheelDelta = GetMouseWheelMoveV();
     mouseWheelX = mouseWheelDelta.x;
     mouseWheelY = mouseWheelDelta.y;
+
+    if (IsKeyPressed(KEY_D)) {
+        debugEnabled = !debugEnabled;
+        Clay_SetDebugModeEnabled(debugEnabled);
+    }
     //----------------------------------------------------------------------------------
     // Handle scroll containers
     Clay_Vector2 mousePosition = RAYLIB_VECTOR2_TO_CLAY_VECTOR2(GetMousePosition());
     Clay_SetPointerPosition(mousePosition);
+    Clay_SetLayoutDimensions((Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() });
     if (!IsMouseButtonDown(0)) {
         scrollbarData.mouseDown = false;
     }
@@ -166,6 +174,7 @@ void UpdateDrawFrame(void)
     // RENDERING ---------------------------------
 //    currentTime = GetTime();
     BeginDrawing();
+    ClearBackground(BLACK);
     Clay_Raylib_Render(renderCommands);
     EndDrawing();
 //    printf("render time: %f ms\n", (GetTime() - currentTime) * 1000);
