@@ -406,10 +406,6 @@ MakeString :: proc(label: string) -> String {
     return String{chars = raw_data(label), length = cast(c.int)len(label)}
 }
 
-ID :: proc(label: string) -> c.uint32_t {
-    return _HashString(MakeString(label), 0)
-}
-
-IDI :: proc(label: string, index: u32) -> c.uint32_t {
+ID :: proc(label: string, index: u32 = 0) -> u32 {
     return _HashString(MakeString(label), index)
 }
