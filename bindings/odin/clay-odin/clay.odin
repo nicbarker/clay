@@ -32,7 +32,7 @@ Dimensions :: struct {
 Arena :: struct {
     label:          String,
     nextAllocation: u64,
-    capacity:       u16,
+    capacity:       u64,
     memory:         [^]c.char,
 }
 
