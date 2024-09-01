@@ -919,9 +919,7 @@ void Clay__MeasureTextCacheItemArray_Set(Clay__MeasureTextCacheItemArray *array,
 #pragma endregion
 // __GENERATED__ template
 
-int32_t CLAY__INDEX_ARRAY_DEFAULT_VALUE = -1;
-
-// __GENERATED__ template array_define,array_get,array_add,array_set TYPE=int32_t NAME=Clay__int32_tArray DEFAULT_VALUE=&CLAY__INDEX_ARRAY_DEFAULT_VALUE
+// __GENERATED__ template array_define,array_get_value,array_add_value,array_set TYPE=int32_t NAME=Clay__int32_tArray DEFAULT_VALUE=-1
 #pragma region generated
 typedef struct
 {
@@ -933,15 +931,13 @@ typedef struct
 Clay__int32_tArray Clay__int32_tArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return (Clay__int32_tArray){.capacity = capacity, .length = 0, .internalArray = (int32_t *)Clay__Array_Allocate_Arena(capacity, sizeof(int32_t), CLAY__ALIGNMENT(int32_t), arena)};
 }
-int32_t *Clay__int32_tArray_Get(Clay__int32_tArray *array, int index) {
-    return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__INDEX_ARRAY_DEFAULT_VALUE;
+int32_t Clay__int32_tArray_Get(Clay__int32_tArray *array, int index) {
+    return Clay__Array_RangeCheck(index, array->length) ? array->internalArray[index] : -1;
 }
-int32_t *Clay__int32_tArray_Add(Clay__int32_tArray *array, int32_t item) {
+void Clay__int32_tArray_Add(Clay__int32_tArray *array, int32_t item) {
 	if (Clay__Array_IncrementCapacityCheck(array->length, array->capacity)) {
 		array->internalArray[array->length++] = item;
-		return &array->internalArray[array->length - 1];
 	}
-	return &CLAY__INDEX_ARRAY_DEFAULT_VALUE;
 }
 void Clay__int32_tArray_Set(Clay__int32_tArray *array, int index, int32_t value) {
 	if (index < array->capacity && index >= 0) {
@@ -1133,9 +1129,6 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
 }
 
 Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfig *config) {
-    if (text->length < 50) {
-        return Clay__MeasureText(text, config);
-    }
     uint32_t id = Clay__HashTextWithConfig(text, config);
     uint32_t hashBucket = id % Clay__measureTextHashMap.capacity;
     int32_t elementIndexPrevious = 0;
@@ -1149,6 +1142,7 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
         elementIndex = hashEntry->nextIndex;
     }
     Clay_Dimensions measured = Clay__MeasureText(text, config);
+    Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, (Clay__MeasureTextCacheItem) { .id = id, .dimensions = measured });
     if (elementIndexPrevious != 0) {
         Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndexPrevious)->nextIndex = (int32_t)Clay__measureTextHashMapInternal.length - 1;
     } else {
@@ -1292,7 +1286,7 @@ Clay_LayoutElement *Clay__OpenFloatingElement(uint32_t id, Clay_LayoutConfig *la
         .layoutElement = Clay__openLayoutElement,
         .parentId = parent->id,
         .zIndex = floatingElementConfig->zIndex,
-        .clipElementId = Clay__openClipElementStack.length > 0 ? (uint32_t)*Clay__int32_tArray_Get(&Clay__openClipElementStack, (int)Clay__openClipElementStack.length - 1) : 0,
+        .clipElementId = Clay__openClipElementStack.length > 0 ? Clay__int32_tArray_Get(&Clay__openClipElementStack, (int)Clay__openClipElementStack.length - 1) : 0,
     });
     return Clay__openLayoutElement;
 }
@@ -2203,7 +2197,7 @@ void Clay_UpdateScrollContainers(bool isPointerActive, Clay_Vector2 scrollDelta,
         scrollData->scrollPosition.y = CLAY__MAX(CLAY__MIN(scrollData->scrollPosition.y, 0), -(scrollData->contentSize.height - scrollData->layoutElement->dimensions.height));
 
         for (int j = 0; j < Clay__pointerOverIds.length; ++j) { // TODO n & m are small here but this being n*m gives me the creeps
-            if (scrollData->layoutElement->id == *Clay__int32_tArray_Get(&Clay__pointerOverIds, j)) {
+            if (scrollData->layoutElement->id == Clay__int32_tArray_Get(&Clay__pointerOverIds, j)) {
                 highestPriorityElementIndex = j;
                 highestPriorityScrollData = scrollData;
             }
@@ -2282,7 +2276,7 @@ Clay_RenderCommandArray Clay_EndLayout(int screenWidth, int screenHeight)
 CLAY_WASM_EXPORT("Clay_PointerOver")
 bool Clay_PointerOver(uint32_t id) { // TODO return priority for separating multiple results
     for (int i = 0; i < Clay__pointerOverIds.length; ++i) {
-        if (*Clay__int32_tArray_Get(&Clay__pointerOverIds, i) == id) {
+        if (Clay__int32_tArray_Get(&Clay__pointerOverIds, i) == id) {
             return true;
         }
     }
