@@ -112,13 +112,15 @@ LandingPageDesktop :: proc() {
 LandingPageMobile :: proc() {
     if clay.Container(
         clay.ID("LandingPage1Mobile"),
-        clay.Layout({
-            layoutDirection = .TOP_TO_BOTTOM,
-            sizing = {width = clay.SizingGrow({}), height = clay.SizingFit({min = cast(f32)windowHeight - 70})},
-            childAlignment = {x = .CENTER, y = .CENTER},
-            padding = {16, 32},
-            childGap = 32,
-        }),
+        clay.Layout(
+            {
+                layoutDirection = .TOP_TO_BOTTOM,
+                sizing = {width = clay.SizingGrow({}), height = clay.SizingFit({min = cast(f32)windowHeight - 70})},
+                childAlignment = {x = .CENTER, y = .CENTER},
+                padding = {16, 32},
+                childGap = 32,
+            },
+        ),
     ) {
         if clay.Container(clay.ID("LeftText"), clay.Layout({sizing = {width = clay.SizingGrow({})}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
             clay.Text(
@@ -331,7 +333,7 @@ HighPerformancePageMobile :: proc(lerpValue: f32) {
     }
 }
 
-RendererButtonActive :: proc(id: u32, index: i32, text: string) {
+RendererButtonActive :: proc(id: clay.ElementId, index: i32, text: string) {
     if clay.Rectangle(
         id,
         clay.Layout({sizing = {width = clay.SizingFixed(300)}, padding = {16, 16}}),
@@ -341,7 +343,7 @@ RendererButtonActive :: proc(id: u32, index: i32, text: string) {
     }
 }
 
-RendererButtonInactive :: proc(id: u32, index: u32, text: string) {
+RendererButtonInactive :: proc(id: clay.ElementId, index: u32, text: string) {
     if clay.Border(id, clay.Layout({}), clay.BorderConfigOutsideRadius({2, COLOR_RED}, 10)) {
         if clay.Rectangle(
             clay.ID("RendererButtonInactiveInner", index),
@@ -377,11 +379,7 @@ RendererPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizing: clay.
         clay.ID("RendererRightText"),
         clay.Layout({sizing = {width = widthSizing}, childAlignment = {x = .CENTER}, layoutDirection = .TOP_TO_BOTTOM, childGap = 16}),
     ) {
-        clay.Text(
-            clay.ID("RendererTextRightTitle"),
-            "Try changing renderer!",
-            clay.TextConfig({fontSize = 36, fontId = FONT_ID_BODY_36, textColor = COLOR_ORANGE}),
-        )
+        clay.Text(clay.ID("RendererTextRightTitle"), "Try changing renderer!", clay.TextConfig({fontSize = 36, fontId = FONT_ID_BODY_36, textColor = COLOR_ORANGE}))
         if clay.Container(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 32})}})) {}
         RendererButtonActive(clay.ID("RendererSelectButtonActive", 0), 0, "Raylib Renderer")
     }
@@ -405,13 +403,15 @@ RendererPageDesktop :: proc() {
 RendererPageMobile :: proc() {
     if clay.Rectangle(
         clay.ID("RendererMobile"),
-        clay.Layout({
-            layoutDirection = .TOP_TO_BOTTOM,
-            sizing = {clay.SizingGrow({}), clay.SizingFit({min = cast(f32)windowHeight - 50})},
-            childAlignment = {x = .CENTER, y = .CENTER},
-            padding = {x = 16, y = 32},
-            childGap = 32,
-        }),
+        clay.Layout(
+            {
+                layoutDirection = .TOP_TO_BOTTOM,
+                sizing = {clay.SizingGrow({}), clay.SizingFit({min = cast(f32)windowHeight - 50})},
+                childAlignment = {x = .CENTER, y = .CENTER},
+                padding = {x = 16, y = 32},
+                childGap = 32,
+            },
+        ),
         clay.RectangleConfig({color = COLOR_LIGHT}),
     ) {
         RendererPage({fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_RED}, clay.SizingGrow({}))
@@ -450,7 +450,7 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
                     clay.Text(clay.ID("LinkDocsText"), "Docs", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
                 }
             }
-            githubButtonId: u32 = clay.ID("HeaderButtonGithub")
+            githubButtonId: clay.ElementId = clay.ID("HeaderButtonGithub")
             if clay.Border(clay.ID("LinkGithubOuter"), clay.Layout({}), clay.BorderConfigOutsideRadius({2, COLOR_RED}, 10)) {
                 if clay.Rectangle(
                     githubButtonId,
@@ -535,14 +535,14 @@ main :: proc() {
 
     for !raylib.WindowShouldClose() {
         defer free_all(context.temp_allocator)
-        
+
         animationLerpValue += raylib.GetFrameTime()
         if animationLerpValue > 1 {
             animationLerpValue = animationLerpValue - 2
         }
         windowWidth = raylib.GetScreenWidth()
         windowHeight = raylib.GetScreenHeight()
-        clay.SetPointerPosition(transmute(clay.Vector2)raylib.GetMousePosition())
+        clay.SetPointerState(transmute(clay.Vector2)raylib.GetMousePosition(), raylib.IsMouseButtonDown(raylib.MouseButton.LEFT))
         clay.UpdateScrollContainers(false, transmute(clay.Vector2)raylib.GetMouseWheelMoveV(), raylib.GetFrameTime())
         renderCommands: clay.ClayArray(clay.RenderCommand) = createLayout(animationLerpValue < 0 ? (animationLerpValue + 1) : (1 - animationLerpValue))
         raylib.BeginDrawing()

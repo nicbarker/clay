@@ -1422,13 +1422,13 @@ switch (renderCommand->commandType) {
 
 `uint32_t CLAY_ID(char *label)`
 
-Generates a `uint32_t` string hash from the provided `char *label`. Used both to generate ids when defining element macros, as well as for referencing ids later when using utility functions such as [Clay_PointerOver](#clay-pointerover)
+Generates a `uint32_t` string id from the provided `char *label`. Used both to generate ids when defining element macros, as well as for referencing ids later when using utility functions such as [Clay_PointerOver](#clay-pointerover)
 
 ### CLAY_IDI()
 
 `uint32_t CLAY_IDI(char *label, int index)`
 
-Generates a `uint32_t` string hash from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+Generates a `uint32_t` string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
 
 ## Data Structures & Definitions
 

@@ -18,7 +18,6 @@ const Clay_Color COLOR_LIGHT = (Clay_Color) {244, 235, 230, 255};
 Clay_Color COLOR_LIGHT_HOVER = (Clay_Color) {224, 215, 210, 255};
 Clay_Color COLOR_BUTTON_HOVER = (Clay_Color) {238, 227, 225, 255};
 Clay_Color COLOR_BROWN = (Clay_Color) {61, 26, 5, 255};
-//Clay_Color COLOR_RED = (Clay_Color) {252, 67, 27, 255};
 Clay_Color COLOR_RED = (Clay_Color) {168, 66, 28, 255};
 Clay_Color COLOR_RED_HOVER = (Clay_Color) {148, 46, 8, 255};
 Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
