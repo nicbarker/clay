@@ -37,7 +37,7 @@ import clay "clay-odin"
 2. Ask clay for how much static memory it needs using [clay.MinMemorySize()](https://github.com/nicbarker/clay/blob/main/README.md#clay_minmemorysize), create an Arena for it to use with [clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)](https://github.com/nicbarker/clay/blob/main/README.md#clay_createarenawithcapacityandmemory), and initialize it with [clay.Initialize(arena)](https://github.com/nicbarker/clay/blob/main/README.md#clay_initialize).
 
 ```Odin
-minMemorySize: c.uint32_t = clay.MinMemorySize()
+minMemorySize: u32 = clay.MinMemorySize()
 memory := make([^]u8, minMemorySize)
 arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
 clay.Initialize(arena)
@@ -77,7 +77,7 @@ sidebarItemLayout := clay.LayoutConfig {
 
 // Re-useable components are just normal functions
 SidebarItemComponent :: proc(index: u32) {
-    if clay.Rectangle(clay.IDI("SidebarBlob", index), &sidebarItemLayout, clay.RectangleConfig({color = COLOR_ORANGE})) {}
+    if clay.Rectangle(clay.ID("SidebarBlob", index), &sidebarItemLayout, clay.RectangleConfig({color = COLOR_ORANGE})) {}
 }
 
 // An example function to begin the "root" of your layout tree
@@ -106,11 +106,11 @@ CreateLayout :: proc() -> clay.ClayArray(clay.RenderCommand) {
                     clay.Layout({sizing = {width = clay.SizingFixed(60), height = clay.SizingFixed(60)}}),
                     clay.ImageConfig({imageData = &profilePicture, sourceDimensions = {height = 60, width = 60}}),
                 ) {}
-                clay.Text(clay.ID("ProfileTitle"), clay.MakeString("Clay - UI Library"), clay.TextConfig({fontSize = 24, textColor = {255, 255, 255, 255}}))
+                clay.Text(clay.ID("ProfileTitle"), "Clay - UI Library", clay.TextConfig({fontSize = 24, textColor = {255, 255, 255, 255}}))
             }
 
             // Standard Odin code like loops etc work inside components
-            for i: u32 = 0; i < 10; i += 1 {
+            for i in 0..<10 {
                 SidebarItemComponent(i)
             }
         }
@@ -135,9 +135,7 @@ for i: u32 = 0; i < renderCommands.length; i += 1 {
 
     switch renderCommand.commandType {
     case .Rectangle:
-        {
-            DrawRectangle(renderCommand.boundingBox, renderCommand.config.rectangleElementConfig.color)
-        }
+        DrawRectangle(renderCommand.boundingBox, renderCommand.config.rectangleElementConfig.color)
     // ... Implement handling of other command types
     }
 }
