@@ -48,7 +48,7 @@
 
         .text {
             pointer-events: all;
-            white-space: nowrap;
+            white-space: pre;
         }
     </style>
 </head>
@@ -513,8 +513,8 @@
         let arrayOffset = memoryDataView.getUint32(scratchSpaceAddress + 8, true);
         window.canvasRoot.width = window.innerWidth * window.devicePixelRatio;
         window.canvasRoot.height = window.innerHeight * window.devicePixelRatio;
-        window.canvasRoot.style.width = window.innerWidth;
-        window.canvasRoot.style.height = window.innerHeight;
+        window.canvasRoot.style.width = window.innerWidth + 'px';
+        window.canvasRoot.style.height = window.innerHeight + 'px';
         let ctx = window.canvasContext;
         let scale = window.devicePixelRatio;
         for (let i = 0; i < length; i++, arrayOffset += renderCommandSize) {
@@ -653,13 +653,29 @@
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_START): {
+                    if (!window.configs) {
+                        window.configs = {}
+                    }
+                    if (!window.configs[renderCommand.id.value]) {
+                        window.configs[renderCommand.id.value] = true;
+                        console.log('scissor', boundingBox.x.value * scale, boundingBox.y.value * scale, boundingBox.width.value * scale, boundingBox.height.value * scale);
+                    }
+                    window.canvasContext.save();
                     window.canvasContext.beginPath();
                     window.canvasContext.rect(boundingBox.x.value * scale, boundingBox.y.value * scale, boundingBox.width.value * scale, boundingBox.height.value * scale);
                     window.canvasContext.clip();
+                    window.canvasContext.closePath();
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_END): {
                     window.canvasContext.restore();
+                    if (!window.configs) {
+                        window.configs = {}
+                    }
+                    if (!window.configs[renderCommand.id.value]) {
+                        window.configs[renderCommand.id.value] = true;
+                        console.log('end scissor');
+                    }
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_IMAGE): {

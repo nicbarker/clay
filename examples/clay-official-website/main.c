@@ -5,7 +5,7 @@
 
 double windowWidth = 1024, windowHeight = 768;
 float modelPageOneZRotation = 0;
-int ACTIVE_RENDERER_INDEX = 0;
+int ACTIVE_RENDERER_INDEX = 1;
 
 const uint32_t FONT_ID_BODY_16 = 0;
 const uint32_t FONT_ID_TITLE_56 = 1;
@@ -135,7 +135,7 @@ void DeclarativeSyntaxPageDesktop() {
                 CLAY_TEXT(CLAY_ID("SyntaxPageTextSubTitle3"), CLAY_STRING("Create your own library of re-usable components from UI primitives like text, images and rectangles."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
             });
             CLAY_CONTAINER(CLAY_ID("SyntaxPageRightImage"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.50) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER}), {
-                CLAY_IMAGE(CLAY_ID("SyntaxPageRightImage"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 568) }), CLAY_IMAGE_CONFIG(.sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING("/clay/images/declarative.png")), {});
+                CLAY_IMAGE(CLAY_ID("SyntaxPageRightImageInner"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 568) }), CLAY_IMAGE_CONFIG(.sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING("/clay/images/declarative.png")), {});
             });
         });
     });
@@ -151,7 +151,7 @@ void DeclarativeSyntaxPageMobile() {
             CLAY_TEXT(CLAY_ID("SyntaxPageTextSubTitle3"), CLAY_STRING("Create your own library of re-usable components from UI primitives like text, images and rectangles."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
         });
         CLAY_CONTAINER(CLAY_ID("SyntaxPageRightImage"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER}), {
-            CLAY_IMAGE(CLAY_ID("SyntaxPageRightImage"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 568) }), CLAY_IMAGE_CONFIG(.sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING("/clay/images/declarative.png")), {});
+            CLAY_IMAGE(CLAY_ID("SyntaxPageRightImageInner"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 568) }), CLAY_IMAGE_CONFIG(.sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING("/clay/images/declarative.png")), {});
         });
     });
 }

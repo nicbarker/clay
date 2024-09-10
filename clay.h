@@ -2574,7 +2574,7 @@ void Clay__RenderDebugLayoutSizing(Clay_ElementId baseId, Clay_SizingAxis sizing
         }
         if (sizing.sizeMinMax.max != CLAY__MAXFLOAT) {
             CLAY_TEXT(Clay__Rehash(baseId, 6), CLAY_STRING("max: "), infoTextConfig);
-            CLAY_TEXT(Clay__Rehash(baseId, 7), Clay__IntToString(sizing.sizeMinMax.min), infoTextConfig);
+            CLAY_TEXT(Clay__Rehash(baseId, 7), Clay__IntToString(sizing.sizeMinMax.max), infoTextConfig);
         }
         CLAY_TEXT(Clay__Rehash(baseId, 8), CLAY_STRING(")"), infoTextConfig);
     }
@@ -2733,12 +2733,13 @@ void Clay__RenderDebugView() {
                             CLAY_TEXT(CLAY_ID("Clay__DebugViewElementInfoLayoutDirection"), layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : CLAY_STRING("LEFT_TO_RIGHT"), infoTextConfig);
                             // .sizing
                             CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoLayoutTitle", 3), CLAY_STRING("Sizing"), infoTitleConfig);
-                            CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoSizing"), CLAY_LAYOUT(), {
-                                CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoSizingData", 1), CLAY_STRING("{ width: "), infoTextConfig);
+                            CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoSizingWidth"), CLAY_LAYOUT(), {
+                                CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoSizingData", 1), CLAY_STRING("width: "), infoTextConfig);
                                 Clay__RenderDebugLayoutSizing(CLAY_ID("Clay__DebugViewElementInfoSizingDataWidth"), layoutConfig->sizing.width, infoTextConfig);
-                                CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoSizingData", 2), CLAY_STRING(", height: "), infoTextConfig);
+                            });
+                            CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoSizingHeight"), CLAY_LAYOUT(), {
+                                CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoSizingData", 2), CLAY_STRING("height: "), infoTextConfig);
                                 Clay__RenderDebugLayoutSizing(CLAY_ID("Clay__DebugViewElementInfoSizingDataHeight"), layoutConfig->sizing.height, infoTextConfig);
-                                CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoSizingData", 3), CLAY_STRING(" }"), infoTextConfig);
                             });
                             // .padding
                             CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoLayoutTitle", 4), CLAY_STRING("Padding"), infoTitleConfig);
@@ -2802,12 +2803,12 @@ void Clay__RenderDebugView() {
                                     // .lineSpacing
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 3), CLAY_STRING("Line Spacing"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 3), Clay__IntToString(textConfig->lineSpacing), infoTextConfig);
-                                    // .lineSpacing
+                                    // .letterSpacing
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 4), CLAY_STRING("Letter Spacing"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 4), Clay__IntToString(textConfig->letterSpacing), infoTextConfig);
                                     // .lineSpacing
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 5), CLAY_STRING("Wrap Mode"), infoTitleConfig);
-                                    Clay_String wrapMode = CLAY_STRING("ALL");
+                                    Clay_String wrapMode = CLAY_STRING("WORDS");
                                     if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE) {
                                         wrapMode = CLAY_STRING("NONE");
                                     } else if (textConfig->wrapMode == CLAY_TEXT_WRAP_NEWLINES) {
@@ -2815,7 +2816,7 @@ void Clay__RenderDebugView() {
                                     }
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 5), wrapMode, infoTextConfig);
                                     // .textColor
-                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 5), CLAY_STRING("Text Color"), infoTitleConfig);
+                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 6), CLAY_STRING("Text Color"), infoTitleConfig);
                                     Clay__RenderDebugViewColor(textConfig->textColor, infoTextConfig);
                                 });
                                 break;
@@ -2845,9 +2846,9 @@ void Clay__RenderDebugView() {
                                 CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoScrollBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8), {
                                     // .vertical
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoScrollTitle", 1), CLAY_STRING("Vertical"), infoTitleConfig);
-                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoImageVerticalData", 2), scrollConfig->vertical ? CLAY_STRING("true") : CLAY_STRING("false") , infoTextConfig);
+                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoImageVerticalData", 1), scrollConfig->vertical ? CLAY_STRING("true") : CLAY_STRING("false") , infoTextConfig);
                                     // .horizontal
-                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoScrollTitle", 1), CLAY_STRING("Horizontal"), infoTitleConfig);
+                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoScrollTitle", 2), CLAY_STRING("Horizontal"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoImageVerticalData", 2), scrollConfig->horizontal ? CLAY_STRING("true") : CLAY_STRING("false") , infoTextConfig);
                                 });
                                 break;
@@ -2904,7 +2905,7 @@ void Clay__RenderDebugView() {
                                     CLAY_TEXT(CLAY_ID("Clay__DebugViewElementInfoBorderChildrenTitle"), CLAY_STRING("Border Between Children"), infoTitleConfig);
                                     Clay__RenderDebugViewBorder(5, borderConfig->betweenChildren, infoTextConfig);
                                     // .cornerRadius
-                                    CLAY_TEXT(CLAY_ID("Clay__DebugViewElementInfoBorderCornerRadiusTitle"), CLAY_STRING("Border Between Children"), infoTitleConfig);
+                                    CLAY_TEXT(CLAY_ID("Clay__DebugViewElementInfoBorderCornerRadiusTitle"), CLAY_STRING("Corner Radius"), infoTitleConfig);
                                     Clay__RenderDebugViewCornerRadius(borderConfig->cornerRadius, infoTextConfig);
                                 });
                                 break;
