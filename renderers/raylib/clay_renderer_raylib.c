@@ -102,6 +102,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
 
     float textHeight = config->fontSize;
     Font fontToUse = Raylib_fonts[config->fontId].font;
+    float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 
     for (int i = 0; i < text->length; ++i)
     {
@@ -117,7 +118,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
 
     maxTextWidth = fmax(maxTextWidth, lineTextWidth);
 
-    textSize.width = maxTextWidth / 2;
+    textSize.width = maxTextWidth * scaleFactor;
     textSize.height = textHeight;
 
     return textSize;

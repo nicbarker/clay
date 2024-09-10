@@ -86,12 +86,19 @@ RectangleElementConfig :: struct {
     cornerRadius: CornerRadius,
 }
 
+TextWrapMode :: enum EnumBackingType {
+    Words,
+    Newlines,
+    None,
+}
+
 TextElementConfig :: struct {
     textColor:     Color,
     fontId:        u16,
     fontSize:      u16,
     letterSpacing: u16,
     lineSpacing:   u16,
+    wrapMode:      TextWrapMode,
 }
 
 ImageElementConfig :: struct {
@@ -242,14 +249,16 @@ foreign Clay {
     MinMemorySize :: proc() -> u32 ---
     CreateArenaWithCapacityAndMemory :: proc(capacity: u32, offset: [^]u8) -> Arena ---
     SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
-    Initialize :: proc(arena: Arena) ---
+    Initialize :: proc(arena: Arena, layoutDimensions: Dimensions) ---
     UpdateScrollContainers :: proc(isPointerActive: bool, scrollDelta: Vector2, deltaTime: c.float) ---
-    BeginLayout :: proc(screenWidth: c.int, screenHeight: c.int) ---
-    EndLayout :: proc(screenWidth: c.int, screenHeight: c.int) -> ClayArray(RenderCommand) ---
+    SetLayoutDimensions :: proc(dimensions: Dimensions) ---
+    BeginLayout :: proc() ---
+    EndLayout :: proc() -> ClayArray(RenderCommand) ---
     PointerOver :: proc(id: ElementId) -> bool ---
     GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
     SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
+    SetDebugModeEnabled :: proc(enabled: bool) ---
 }
 
 @(private, link_prefix = "Clay_", default_calling_convention = "c")

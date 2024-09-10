@@ -63,14 +63,14 @@
     const CLAY_RENDER_COMMAND_TYPE_CUSTOM = 7;
     const GLOBAL_FONT_SCALING_FACTOR = 0.8;
     let renderCommandSize = 0;
-    let scratchSpaceAddress = 0;
+    let scratchSpaceAddress = 8;
     let heapSpaceAddress = 0;
     let memoryDataView;
     let textDecoder = new TextDecoder("utf-8");
     let previousFrameTime;
     let fontsById = [
-        'Calistoga',
         'Quicksand',
+        'Calistoga',
         'Quicksand',
         'Quicksand',
         'Quicksand',
@@ -117,6 +117,7 @@
        { name: 'fontSize', type: 'uint16_t' },
        { name: 'letterSpacing', type: 'uint16_t' },
        { name: 'lineSpacing', type: 'uint16_t' },
+       { name: 'wrapMode', type: 'uint32_t' },
        { name: 'disablePointerEvents', type: 'uint8_t' }
     ]};
     let imageConfigDefinition = { name: 'image', type: 'struct', members: [
@@ -224,7 +225,7 @@
         window.arrowKeyUpPressedThisFrame = false;
         let zeroTimeout = null;
         addEventListener("wheel", (event) => {
-            window.mouseWheelXThisFrame = event.deltaX * 0.1;
+            window.mouseWheelXThisFrame = event.deltaX * -0.1;
             window.mouseWheelYThisFrame = event.deltaY * -0.1;
             clearTimeout(zeroTimeout);
             zeroTimeout = setTimeout(() => {
@@ -270,6 +271,11 @@
             if (event.key === "ArrowUp") {
                 window.arrowKeyUpPressedThisFrame = true;
             }
+            console.log(event.key);
+            if (event.key === "d") {
+                window.dKeyPressedThisFrame = true;
+                console.log('test');
+            }
         });
 
         const importObject = {
@@ -293,7 +299,9 @@
         let arenaAddress = scratchSpaceAddress;
         window.instance = instance;
         createMainArena(arenaAddress, heapSpaceAddress);
-        instance.exports.Clay_Initialize(arenaAddress);
+        memoryDataView.setFloat32(instance.exports.__heap_base.value, window.innerWidth, true);
+        memoryDataView.setFloat32(instance.exports.__heap_base.value + 4, window.innerHeight, true);
+        instance.exports.Clay_Initialize(arenaAddress, instance.exports.__heap_base.value);
         renderCommandSize = getStructTotalSize(renderCommandDefinition);
         renderLoop();
     }
@@ -346,7 +354,7 @@
             let elementData = elementCache[renderCommand.id.value];
             element = elementData.element;
             if (Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
-                if (parentElement.nextElementIndex === 0) {
+                if (parentElement.nextElementIndex === 0 || !parentElement.element.childNodes[parentElement.nextElementIndex - 1]) {
                     parentElement.element.insertAdjacentElement('afterbegin', element);
                 } else {
                     parentElement.element.childNodes[parentElement.nextElementIndex - 1].insertAdjacentElement('afterend', element);
@@ -375,7 +383,8 @@
                     let config = readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition);
                     let configMemory = new Uint8Array(memoryDataView.buffer.slice(renderCommand.config.value, renderCommand.config.value + config.__size));
                     let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
-                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
+                    memoryDataView.setUint32(0, renderCommand.id.value, true);
+                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(0)) {
                         window.location.href = linkContents;
                     }
                     if (!dirty && !MemoryIsDifferent(configMemory, elementData.previousMemoryConfig, config.__size)) {
@@ -530,7 +539,8 @@
                     ctx.closePath();
                     // Handle link clicks
                     let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
-                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
+                    memoryDataView.setUint32(0, renderCommand.id.value, true);
+                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(0)) {
                         window.location.href = linkContents;
                     }
                     break;
@@ -676,7 +686,7 @@
         const elapsed = currentTime - previousFrameTime;
         previousFrameTime = currentTime;
         let activeRendererIndex = memoryDataView.getUint32(instance.exports.ACTIVE_RENDERER_INDEX.value, true);
-        instance.exports.UpdateDrawFrame(scratchSpaceAddress, window.innerWidth, window.innerHeight, window.mouseWheelXThisFrame, window.mouseWheelYThisFrame, window.mousePositionXThisFrame, window.mousePositionYThisFrame, window.touchDown, window.mouseDown, window.arrowKeyDownPressedThisFrame, window.arrowKeyUpPressedThisFrame, elapsed / 1000);
+        instance.exports.UpdateDrawFrame(scratchSpaceAddress, window.innerWidth, window.innerHeight, window.mouseWheelXThisFrame, window.mouseWheelYThisFrame, window.mousePositionXThisFrame, window.mousePositionYThisFrame, window.touchDown, window.mouseDown, window.arrowKeyDownPressedThisFrame, window.arrowKeyUpPressedThisFrame, window.dKeyPressedThisFrame, elapsed / 1000);
         let rendererChanged = activeRendererIndex !== window.previousActiveRendererIndex;
         switch (activeRendererIndex) {
             case 0: {
@@ -701,6 +711,7 @@
         window.mouseDownThisFrame = false;
         window.arrowKeyUpPressedThisFrame = false;
         window.arrowKeyDownPressedThisFrame = false;
+        window.dKeyPressedThisFrame = false;
     }
     init();
 </script>

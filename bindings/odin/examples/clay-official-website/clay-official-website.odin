@@ -15,7 +15,8 @@ checkImage3: raylib.Texture2D = {}
 checkImage4: raylib.Texture2D = {}
 checkImage5: raylib.Texture2D = {}
 
-FONT_ID_TITLE_56 :: 0
+FONT_ID_BODY_16 :: 0
+FONT_ID_TITLE_56 :: 9
 FONT_ID_TITLE_52 :: 1
 FONT_ID_TITLE_48 :: 2
 FONT_ID_TITLE_36 :: 3
@@ -24,7 +25,6 @@ FONT_ID_BODY_36 :: 5
 FONT_ID_BODY_30 :: 6
 FONT_ID_BODY_28 :: 7
 FONT_ID_BODY_24 :: 8
-FONT_ID_BODY_16 :: 9
 
 COLOR_LIGHT :: clay.Color{244, 235, 230, 255}
 COLOR_LIGHT_HOVER :: clay.Color{224, 215, 210, 255}
@@ -429,7 +429,7 @@ animationLerpValue: f32 = -1.0
 
 createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
     mobileScreen := windowWidth < 750
-    clay.BeginLayout(windowWidth, windowHeight)
+    clay.BeginLayout()
     if clay.Rectangle(
         clay.ID("OuterContainer"),
         clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {clay.SizingGrow({}), clay.SizingGrow({})}}),
@@ -494,7 +494,7 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
             }
         }
     }
-    return clay.EndLayout(windowWidth, windowHeight)
+    return clay.EndLayout()
 }
 
 loadFont :: proc(fontId: u16, fontSize: u16, path: cstring) {
@@ -510,7 +510,7 @@ main :: proc() {
     memory := make([^]u8, minMemorySize)
     arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
     clay.SetMeasureTextFunction(measureText)
-    clay.Initialize(arena)
+    clay.Initialize(arena, {cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()})
 
     raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE, .WINDOW_HIGHDPI, .MSAA_4X_HINT})
     raylib.InitWindow(windowWidth, windowHeight, "Raylib Odin Example")
@@ -533,6 +533,8 @@ main :: proc() {
     checkImage4 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_4.png"))
     checkImage5 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_5.png"))
 
+    debugModeEnabled: bool = false
+
     for !raylib.WindowShouldClose() {
         defer free_all(context.temp_allocator)
 
@@ -542,8 +544,13 @@ main :: proc() {
         }
         windowWidth = raylib.GetScreenWidth()
         windowHeight = raylib.GetScreenHeight()
+        if (raylib.IsKeyPressed(.D)) {
+            debugModeEnabled = !debugModeEnabled
+            clay.SetDebugModeEnabled(debugModeEnabled)
+        }
         clay.SetPointerState(transmute(clay.Vector2)raylib.GetMousePosition(), raylib.IsMouseButtonDown(raylib.MouseButton.LEFT))
         clay.UpdateScrollContainers(false, transmute(clay.Vector2)raylib.GetMouseWheelMoveV(), raylib.GetFrameTime())
+        clay.SetLayoutDimensions({cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()})
         renderCommands: clay.ClayArray(clay.RenderCommand) = createLayout(animationLerpValue < 0 ? (animationLerpValue + 1) : (1 - animationLerpValue))
         raylib.BeginDrawing()
         clayRaylibRender(&renderCommands)

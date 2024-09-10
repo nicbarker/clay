@@ -26,7 +26,7 @@ measureText :: proc "c" (text: ^clay.String, config: ^clay.TextElementConfig) ->
     textHeight := cast(f32)config.fontSize
     fontToUse := raylibFonts[config.fontId].font
 
-    for i in 0..<int(text.length) {
+    for i in 0 ..< int(text.length) {
         if (text.chars[i] == '\n') {
             maxTextWidth = max(maxTextWidth, lineTextWidth)
             lineTextWidth = 0
@@ -49,25 +49,25 @@ measureText :: proc "c" (text: ^clay.String, config: ^clay.TextElementConfig) ->
 }
 
 clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand), allocator := context.temp_allocator) {
-    for i in 0..<int(renderCommands.length) {
+    for i in 0 ..< int(renderCommands.length) {
         renderCommand := clay.RenderCommandArray_Get(renderCommands, cast(i32)i)
         boundingBox := renderCommand.boundingBox
         switch (renderCommand.commandType) {
         case clay.RenderCommandType.None:
             {}
         case clay.RenderCommandType.Text:
-                // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
-                text := string(renderCommand.text.chars[:renderCommand.text.length])
-                cloned := strings.clone_to_cstring(text, allocator)
-                fontToUse: raylib.Font = raylibFonts[renderCommand.config.textElementConfig.fontId].font
-                raylib.DrawTextEx(
-                    fontToUse,
-                    cloned,
-                    raylib.Vector2{boundingBox.x, boundingBox.y},
-                    cast(f32)renderCommand.config.textElementConfig.fontSize,
-                    cast(f32)renderCommand.config.textElementConfig.letterSpacing,
-                    clayColorToRaylibColor(renderCommand.config.textElementConfig.textColor),
-                )
+            // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
+            text := string(renderCommand.text.chars[:renderCommand.text.length])
+            cloned := strings.clone_to_cstring(text, allocator)
+            fontToUse: raylib.Font = raylibFonts[renderCommand.config.textElementConfig.fontId].font
+            raylib.DrawTextEx(
+                fontToUse,
+                cloned,
+                raylib.Vector2{boundingBox.x, boundingBox.y},
+                cast(f32)renderCommand.config.textElementConfig.fontSize,
+                cast(f32)renderCommand.config.textElementConfig.letterSpacing,
+                clayColorToRaylibColor(renderCommand.config.textElementConfig.textColor),
+            )
         case clay.RenderCommandType.Image:
             // TODO image handling
             imageTexture := cast(^raylib.Texture2D)renderCommand.config.imageElementConfig.imageData
@@ -85,20 +85,9 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand), al
             config: ^clay.RectangleElementConfig = renderCommand.config.rectangleElementConfig
             if (config.cornerRadius.topLeft > 0) {
                 radius: f32 = (config.cornerRadius.topLeft * 2) / min(boundingBox.width, boundingBox.height)
-                raylib.DrawRectangleRounded(
-                    raylib.Rectangle{boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height},
-                    radius,
-                    8,
-                    clayColorToRaylibColor(config.color),
-                )
+                raylib.DrawRectangleRounded(raylib.Rectangle{boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height}, radius, 8, clayColorToRaylibColor(config.color))
             } else {
-                raylib.DrawRectangle(
-                    cast(i32)boundingBox.x,
-                    cast(i32)boundingBox.y,
-                    cast(i32)boundingBox.width,
-                    cast(i32)boundingBox.height,
-                    clayColorToRaylibColor(config.color),
-                )
+                raylib.DrawRectangle(cast(i32)boundingBox.x, cast(i32)boundingBox.y, cast(i32)boundingBox.width, cast(i32)boundingBox.height, clayColorToRaylibColor(config.color))
             }
         case clay.RenderCommandType.Border:
             config := renderCommand.config.borderElementConfig
@@ -166,10 +155,7 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand), al
             }
             if (config.cornerRadius.bottomLeft > 0) {
                 raylib.DrawRing(
-                    raylib.Vector2 {
-                        math.round(boundingBox.x + config.cornerRadius.bottomLeft),
-                        math.round(boundingBox.y + boundingBox.height - config.cornerRadius.bottomLeft),
-                    },
+                    raylib.Vector2{math.round(boundingBox.x + config.cornerRadius.bottomLeft), math.round(boundingBox.y + boundingBox.height - config.cornerRadius.bottomLeft)},
                     math.round(config.cornerRadius.bottomLeft - cast(f32)config.top.width),
                     config.cornerRadius.bottomLeft,
                     90,
@@ -193,7 +179,7 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand), al
                 )
             }
         case clay.RenderCommandType.Custom:
-            // Implement custom element rendering here
+        // Implement custom element rendering here
         }
     }
 }
