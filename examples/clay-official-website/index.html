@@ -271,10 +271,8 @@
             if (event.key === "ArrowUp") {
                 window.arrowKeyUpPressedThisFrame = true;
             }
-            console.log(event.key);
             if (event.key === "d") {
                 window.dKeyPressedThisFrame = true;
-                console.log('test');
             }
         });
 
@@ -653,13 +651,6 @@
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_START): {
-                    if (!window.configs) {
-                        window.configs = {}
-                    }
-                    if (!window.configs[renderCommand.id.value]) {
-                        window.configs[renderCommand.id.value] = true;
-                        console.log('scissor', boundingBox.x.value * scale, boundingBox.y.value * scale, boundingBox.width.value * scale, boundingBox.height.value * scale);
-                    }
                     window.canvasContext.save();
                     window.canvasContext.beginPath();
                     window.canvasContext.rect(boundingBox.x.value * scale, boundingBox.y.value * scale, boundingBox.width.value * scale, boundingBox.height.value * scale);
@@ -669,13 +660,6 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_END): {
                     window.canvasContext.restore();
-                    if (!window.configs) {
-                        window.configs = {}
-                    }
-                    if (!window.configs[renderCommand.id.value]) {
-                        window.configs[renderCommand.id.value] = true;
-                        console.log('end scissor');
-                    }
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_IMAGE): {
