@@ -2343,7 +2343,7 @@ const Clay_Color CLAY__DEBUGVIEW_COLOR_1 = (Clay_Color) {58, 56, 52, 255};
 const Clay_Color CLAY__DEBUGVIEW_COLOR_2 = (Clay_Color) {62, 60, 58, 255};
 const Clay_Color CLAY__DEBUGVIEW_COLOR_3 = (Clay_Color) {141, 133, 135, 255};
 const Clay_Color CLAY__DEBUGVIEW_COLOR_4 = (Clay_Color) {238, 226, 231, 255};
-const Clay_Color CLAY__DEBUGVIEW_COLOR_HIGHLIGHT = (Clay_Color) {102, 80, 78, 255};
+const Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = (Clay_Color) {102, 80, 78, 255};
 const int CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
 const int CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
@@ -2383,11 +2383,11 @@ Clay_String Clay__IntToString(int integer) {
 typedef struct
 {
     uint32_t rowCount;
-    uint32_t highlightedElementRowIndex;
+    uint32_t selectedElementRowIndex;
 } Clay__RenderDebugLayoutData;
 
 // Returns row count
-Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int initialRootsLength) {
+Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialRootsLength, int32_t highlightedRowIndex) {
     Clay_ElementId outerId = CLAY_ID("Clay__DebugView_ElementOuter");
     Clay_ElementId border = CLAY_ID("Clay__DebugView_ElementOuterBorder");
     Clay_ElementId inner = CLAY_ID("Clay__DebugView_ElementInner");
@@ -2410,34 +2410,6 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int initialRoots
     Clay__RenderDebugLayoutData layoutData = {};
 
     uint32_t highlightedElementId = 0;
-    if (Clay__pointerInfo.position.x > Clay__layoutDimensions.width - (float)Clay__debugViewWidth && Clay__pointerInfo.position.x < Clay__layoutDimensions.width && Clay__pointerInfo.position.y > 0 && Clay__pointerInfo.position.y < Clay__layoutDimensions.height) {
-        for (int i = (int)Clay__pointerOverIds.length - 1; i >= 0; i--) {
-            Clay_ElementId *elementId = Clay__ElementIdArray_Get(&Clay__pointerOverIds, i);
-            if (elementId->baseId == collapseIconButton.baseId) {
-                Clay_LayoutElementHashMapItem *highlightedItem = Clay__GetHashMapItem(elementId->offset);
-                if (Clay__pointerInfo.state == CLAY__POINTER_INFO_PRESSED_THIS_FRAME) {
-                    highlightedItem->debugData->collapsed = !highlightedItem->debugData->collapsed;
-                    highlightedElementId = elementId->offset;
-                    break;
-                }
-            }
-            if (elementId->baseId == outerId.baseId) {
-                Clay_LayoutElementHashMapItem *highlightedItem = Clay__GetHashMapItem(elementId->offset);
-                if (!highlightedItem->debugData->collision) {
-                    if (Clay__pointerInfo.state == CLAY__POINTER_INFO_PRESSED_THIS_FRAME) {
-                        Clay__debugSelectedElementId = elementId->offset;
-                    }
-                    highlightedElementId = elementId->offset;
-                }
-            }
-        }
-    }
-
-    if (highlightedElementId) {
-        CLAY_FLOATING_CONTAINER(CLAY_ID("Clay__DebugView_ElementHighlight"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_FLOATING_CONFIG(.zIndex = 65535, .parentId = highlightedElementId), {
-            CLAY_RECTANGLE(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_RECTANGLE_CONFIG(.color = {168, 66, 28, 100 }), {});
-        });
-    }
 
     for (int rootIndex = 0; rootIndex < initialRootsLength; ++rootIndex) {
         dfsBuffer.length = 0;
@@ -2462,6 +2434,13 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int initialRoots
                 dfsBuffer.length--;
                 continue;
             }
+
+            if (highlightedRowIndex == layoutData.rowCount) {
+                if (Clay__pointerInfo.state == CLAY__POINTER_INFO_PRESSED_THIS_FRAME) {
+                    Clay__debugSelectedElementId = currentElement->id;
+                }
+                highlightedElementId = currentElement->id;
+            }
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_String toPrint = Clay__layoutElementIdStrings.internalArray[currentElementIndex];
             Clay_ElementId outerHash = Clay__Rehash(outerId, currentElement->id);
@@ -2474,7 +2453,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int initialRoots
             #endif
             Clay_Color outerColor = {0,0,0,0};
             if (Clay__debugSelectedElementId == currentElement->id) {
-                layoutData.highlightedElementRowIndex = layoutData.rowCount;
+                layoutData.selectedElementRowIndex = layoutData.rowCount;
             }
             CLAY_CONTAINER(outerHash, &Clay__DebugView_ScrollViewItemLayoutConfig, {
                 if (!(currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_TEXT || currentElement->children.length == 0)) {
@@ -2551,6 +2530,25 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int initialRoots
                 }
             }
         }
+    }
+
+    if (Clay__pointerInfo.state == CLAY__POINTER_INFO_PRESSED_THIS_FRAME) {
+        if (Clay__pointerInfo.position.x > Clay__layoutDimensions.width - (float)Clay__debugViewWidth && Clay__pointerInfo.position.x < Clay__layoutDimensions.width && Clay__pointerInfo.position.y > 0 && Clay__pointerInfo.position.y < Clay__layoutDimensions.height) {
+            for (int i = (int)Clay__pointerOverIds.length - 1; i >= 0; i--) {
+                Clay_ElementId *elementId = Clay__ElementIdArray_Get(&Clay__pointerOverIds, i);
+                if (elementId->baseId == collapseIconButton.baseId) {
+                    Clay_LayoutElementHashMapItem *highlightedItem = Clay__GetHashMapItem(elementId->offset);
+                    highlightedItem->debugData->collapsed = !highlightedItem->debugData->collapsed;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (highlightedElementId) {
+        CLAY_FLOATING_CONTAINER(CLAY_ID("Clay__DebugView_ElementHighlight"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_FLOATING_CONFIG(.zIndex = 65535, .parentId = highlightedElementId), {
+            CLAY_RECTANGLE(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_RECTANGLE_CONFIG(.color = {168, 66, 28, 100 }), {});
+        });
     }
     return layoutData;
 }
@@ -2658,6 +2656,9 @@ void Clay__RenderDebugView() {
         }
     }
     int32_t highlightedRow = (int32_t)((Clay__pointerInfo.position.y - scrollYOffset) / (float)CLAY__DEBUGVIEW_ROW_HEIGHT) - 1;
+    if (Clay__pointerInfo.position.x < Clay__layoutDimensions.width - (float)Clay__debugViewWidth) {
+        highlightedRow = -1;
+    }
     Clay__RenderDebugLayoutData layoutData = {};
     CLAY_FLOATING_CONTAINER(CLAY_ID("Clay__DebugView"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(Clay__debugViewWidth) , CLAY_SIZING_FIXED(Clay__layoutDimensions.height) }), CLAY_FLOATING_CONFIG(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }), {
         CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewLeftBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_FIXED(1), .height = CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_3), {});
@@ -2677,15 +2678,15 @@ void Clay__RenderDebugView() {
                     Clay_ElementId panelContentsId = CLAY_ID("Clay__DebugViewPaneOuter");
                     CLAY_FLOATING_CONTAINER(panelContentsId, CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_FLOATING_CONFIG(), {
                         CLAY_CONTAINER(CLAY_ID("Clay__DebugViewPane"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {.x = CLAY__DEBUGVIEW_OUTER_PADDING }), {
-                            layoutData = Clay__RenderDebugLayoutElementsList(initialRootsLength);
+                            layoutData = Clay__RenderDebugLayoutElementsList(initialRootsLength, highlightedRow);
                         });
                     });
                     float contentWidth = Clay__GetHashMapItem(panelContentsId.id)->layoutElement->dimensions.width;
                     CLAY_CONTAINER(CLAY_ID("Clay__DebugViewScrollPanelWidth"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_FIXED(contentWidth)}), {});
                     for (uint32_t i = 0; i < layoutData.rowCount; i++) {
                         Clay_Color rowColor = (i & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1;
-                        if (i == layoutData.highlightedElementRowIndex) {
-                            rowColor = CLAY__DEBUGVIEW_COLOR_HIGHLIGHT;
+                        if (i == layoutData.selectedElementRowIndex) {
+                            rowColor = CLAY__DEBUGVIEW_COLOR_SELECTED_ROW;
                         }
                         if (i == highlightedRow) {
                             rowColor.r *= 1.25;
