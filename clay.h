@@ -1951,9 +1951,9 @@ void Clay__CalculateFinalLayout() {
     dfsBuffer.length = 0;
     for (int i = 0; i < Clay__layoutElementTreeRoots.length; ++i) {
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, i);
+        Clay__treeNodeVisited.internalArray[dfsBuffer.length] = false;
         Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, (Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)root->layoutElementIndex) });
     }
-    Clay__treeNodeVisited.internalArray[0] = false;
     while (dfsBuffer.length > 0) {
         Clay__LayoutElementTreeNode *currentElementTreeNode = Clay__LayoutElementTreeNodeArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
         Clay_LayoutElement *currentElement = currentElementTreeNode->layoutElement;
@@ -2837,7 +2837,7 @@ void Clay__RenderDebugView() {
                                     });
                                     // Image Preview
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoImageTitle", 2), CLAY_STRING("Preview"), infoTitleConfig);
-                                    CLAY_IMAGE(CLAY_ID("Clay__DebugViewElementInfoImagePreview"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(200), CLAY_SIZING_FIXED(200) }), imageConfig, {});
+                                    CLAY_IMAGE(CLAY_ID("Clay__DebugViewElementInfoImagePreview"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = imageConfig->sourceDimensions.width) }), imageConfig, {});
                                 });
                                 break;
                             }
