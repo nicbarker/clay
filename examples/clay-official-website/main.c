@@ -5,7 +5,7 @@
 
 double windowWidth = 1024, windowHeight = 768;
 float modelPageOneZRotation = 0;
-int ACTIVE_RENDERER_INDEX = 1;
+int ACTIVE_RENDERER_INDEX = 0;
 
 const uint32_t FONT_ID_BODY_16 = 0;
 const uint32_t FONT_ID_TITLE_56 = 1;
@@ -230,14 +230,14 @@ void RendererPageDesktop() {
         CLAY_BORDER_CONTAINER(CLAY_ID("RendererPage"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }, .childAlignment = { 0, CLAY_ALIGN_Y_CENTER }, .padding = { 32, 32 }, .childGap = 32), CLAY_BORDER_CONFIG(.left = { 2, COLOR_RED }, .right = { 2, COLOR_RED }), {
             CLAY_CONTAINER(CLAY_ID("RendererLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8), {
                 CLAY_TEXT(CLAY_ID("RendererTextTitle"), CLAY_STRING("Renderer & Platform Agnostic"), CLAY_TEXT_CONFIG(.fontSize = 52, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_RED));
-                CLAY_CONTAINER(CLAY_ID("RendererSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) }), {});
+                CLAY_CONTAINER(CLAY_ID("RendererSpacerLeft"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) }), {});
                 CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 1), CLAY_STRING("Clay outputs a sorted array of primitive render commands, such as RECTANGLE, TEXT or IMAGE."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
                 CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 2), CLAY_STRING("Write your own renderer in a few hundred lines of code, or use the provided examples for Raylib, WebGL canvas and more."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
                 CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 3), CLAY_STRING("There's even an HTML renderer - you're looking at it right now!"), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
             });
             CLAY_CONTAINER(CLAY_ID("RendererRightText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .childAlignment = {CLAY_ALIGN_X_CENTER}, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16), {
                 CLAY_TEXT(CLAY_ID("RendererTextRightTitle"), CLAY_STRING("Try changing renderer!"), CLAY_TEXT_CONFIG(.fontSize = 36, .fontId = FONT_ID_BODY_36, .textColor = COLOR_ORANGE));
-                CLAY_CONTAINER(CLAY_ID("RendererSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) }), {});
+                CLAY_CONTAINER(CLAY_ID("RendererSpacerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) }), {});
                 if (ACTIVE_RENDERER_INDEX == 0) {
                     RendererButtonActive(CLAY_IDI("RendererSelectButtonActive", 0), 0, CLAY_STRING("HTML Renderer"));
                     RendererButtonInactive(CLAY_ID("RendererSelectButtonCanvas"), 1, CLAY_STRING("Canvas Renderer"));
@@ -254,14 +254,14 @@ void RendererPageMobile() {
     CLAY_RECTANGLE(CLAY_ID("RendererMobile"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}, .padding = {.x = 16, 32}, .childGap = 32), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT), {
         CLAY_CONTAINER(CLAY_ID("RendererLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8), {
             CLAY_TEXT(CLAY_ID("RendererTextTitle"), CLAY_STRING("Renderer & Platform Agnostic"), CLAY_TEXT_CONFIG(.fontSize = 48, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_RED));
-            CLAY_CONTAINER(CLAY_ID("RendererSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) }), {});
+            CLAY_CONTAINER(CLAY_ID("RendererSpacerLeft"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) }), {});
             CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 1), CLAY_STRING("Clay outputs a sorted array of primitive render commands, such as RECTANGLE, TEXT or IMAGE."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
             CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 2), CLAY_STRING("Write your own renderer in a few hundred lines of code, or use the provided examples for Raylib, WebGL canvas and more."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
             CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 3), CLAY_STRING("There's even an HTML renderer - you're looking at it right now!"), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
         });
         CLAY_CONTAINER(CLAY_ID("RendererRightText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16), {
             CLAY_TEXT(CLAY_ID("RendererTextRightTitle"), CLAY_STRING("Try changing renderer!"), CLAY_TEXT_CONFIG(.fontSize = 36, .fontId = FONT_ID_BODY_36, .textColor = COLOR_ORANGE));
-            CLAY_CONTAINER(CLAY_ID("RendererSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) }), {});
+            CLAY_CONTAINER(CLAY_ID("RendererSpacerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) }), {});
             if (ACTIVE_RENDERER_INDEX == 0) {
                 RendererButtonActive(CLAY_IDI("RendererSelectButtonActive", 0), 0, CLAY_STRING("HTML Renderer"));
                 RendererButtonInactive(CLAY_ID("RendererSelectButtonCanvas"), 1, CLAY_STRING("Canvas Renderer"));
@@ -283,8 +283,7 @@ typedef struct
 ScrollbarData scrollbarData = (ScrollbarData) {};
 float animationLerpValue = -1.0f;
 
-Clay_RenderCommandArray CreateLayout(float lerpValue) {
-    bool mobileScreen = windowWidth < 750;
+Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
     Clay_BeginLayout();
     CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT), {
         CLAY_CONTAINER(CLAY_ID("Header"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(50) }, .childAlignment = { 0, CLAY_ALIGN_Y_CENTER }, .childGap = 24, .padding = { 32 }), {
@@ -415,7 +414,11 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
     }
 
     Clay_UpdateScrollContainers(isTouchDown, (Clay_Vector2) {mouseWheelX, mouseWheelY}, deltaTime);
-    return CreateLayout(animationLerpValue < 0 ? (animationLerpValue + 1) : (1 - animationLerpValue));
+    bool isMobileScreen = windowWidth < 750;
+    if (debugModeEnabled) {
+        isMobileScreen = windowWidth < 950;
+    }
+    return CreateLayout(isMobileScreen, animationLerpValue < 0 ? (animationLerpValue + 1) : (1 - animationLerpValue));
     //----------------------------------------------------------------------------------
 }
 

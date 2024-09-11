@@ -332,7 +332,9 @@
                         }
                         break;
                     }
-                    case CLAY_RENDER_COMMAND_TYPE_IMAGE: { elementType = 'img'; break; }
+                    case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
+                        elementType = 'img'; break;
+                    }
                     default: break;
                 }
                 element = document.createElement(elementType);
@@ -352,10 +354,10 @@
             let elementData = elementCache[renderCommand.id.value];
             element = elementData.element;
             if (Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
-                if (parentElement.nextElementIndex === 0 || !parentElement.element.childNodes[parentElement.nextElementIndex - 1]) {
+                if (parentElement.nextElementIndex === 0) {
                     parentElement.element.insertAdjacentElement('afterbegin', element);
                 } else {
-                    parentElement.element.childNodes[parentElement.nextElementIndex - 1].insertAdjacentElement('afterend', element);
+                    parentElement.element.childNodes[Math.min(parentElement.nextElementIndex - 1, parentElement.element.childNodes.length - 1)].insertAdjacentElement('afterend', element);
                 }
             }
 
