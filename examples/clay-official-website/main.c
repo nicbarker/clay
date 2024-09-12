@@ -273,6 +273,22 @@ void RendererPageMobile() {
     });
 }
 
+void DebuggerPageDesktop() {
+    CLAY_RECTANGLE(CLAY_ID("DebuggerDesktop"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 82, 32}, .childGap = 64), CLAY_RECTANGLE_CONFIG(.color = COLOR_RED), {
+        CLAY_CONTAINER(CLAY_ID("DebuggerLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8), {
+            CLAY_TEXT(CLAY_ID("DebuggerTextTitle"), CLAY_STRING("Integrated Debug Tools"), CLAY_TEXT_CONFIG(.fontSize = 52, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT));
+            CLAY_CONTAINER(CLAY_ID("DebuggerSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) }), {});
+            CLAY_TEXT(CLAY_IDI("DebuggerTextSubTitle", 1), CLAY_STRING("Clay includes built in \"Chrome Inspector\"-style debug tooling."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
+            CLAY_TEXT(CLAY_IDI("DebuggerTextSubTitle", 2), CLAY_STRING("View your layout hierarchy and config in real time."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
+            CLAY_CONTAINER(CLAY_ID("DebuggerPageSpacer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(32) }), {});
+            CLAY_TEXT(CLAY_ID("DebuggerTagline"), CLAY_STRING("Press the \"d\" key to try it out now!"), CLAY_TEXT_CONFIG(.fontSize = 32, .fontId = FONT_ID_TITLE_36, .textColor = COLOR_ORANGE));
+        });
+        CLAY_CONTAINER(CLAY_ID("DebuggerRightImageOuter"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.50) }, .childAlignment = {CLAY_ALIGN_X_CENTER}), {
+            CLAY_IMAGE(CLAY_ID("DebuggerPageRightImageInner"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 558) }), CLAY_IMAGE_CONFIG(.sourceDimensions = {1620, 1474}, .sourceURL = CLAY_STRING("/clay/images/debugger.png")), {});
+        });
+    });
+}
+
 typedef struct
 {
     Clay_Vector2 clickOrigin;
@@ -325,6 +341,7 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
                         DeclarativeSyntaxPageDesktop();
                         HighPerformancePageDesktop(lerpValue);
                         RendererPageDesktop();
+                        DebuggerPageDesktop();
                     }
                 });
             });
