@@ -371,7 +371,7 @@ The supported directives are:
 - `CLAY_DISABLE_CULLING` - Disables [Visibility Culling](#visibility-culling) of render commands.
 - `CLAY_WASM` - Required when targeting Web Assembly.
 - `CLAY_OVERFLOW_TRAP` - By default, clay will continue to allow function calls without crashing even when it exhausts all its available pre-allocated memory.  This can produce erroneous layout results that are difficult to interpret. If `CLAY_OVERFLOW_TRAP` is defined, clay will raise a `SIGTRAP` signal that will be caught by your debugger. Relies on `signal.h` being available in your environment.
-- `CLAY_DEBUG` - Used for debugging clay's internal implementation. Useful if you want to modify or debug clay, or learn how things work. It enables a number of debug features such as preserving source strings for has IDs to make debugging easier.
+- `CLAY_DEBUG` - Used for debugging clay's internal implementation. Useful if you want to modify or debug clay, or learn how things work. It enables a number of debug features such as preserving source strings for hash IDs to make debugging easier.
 - `CLAY_EXTEND_CONFIG_RECTANGLE` - Provide additional struct members to `CLAY_RECTANGLE_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_TEXT` - Provide additional struct members to `CLAY_TEXT_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_IMAGE` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
@@ -394,7 +394,7 @@ To enable the debug tools, use the function `Clay_SetDebugModeEnabled(bool enabl
 
 The debug tooling by default will render as a panel to the right side of the screen, compressing your layout by its width. The default width is 400 and is currently configurable via the direct mutation of the internal variable `Clay__debugViewWidth`, however this is an internal API and is potentially subject to change.
 
-
+<img width="1506" alt="Screenshot 2024-09-12 at 12 54 03 PM" src="https://github.com/user-attachments/assets/2d122658-3305-4e27-88d6-44f08c0cb4e6">
 
 _The official Clay website with debug tooling visible_
 
