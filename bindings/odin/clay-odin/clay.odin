@@ -241,7 +241,7 @@ foreign Clay {
     EndLayout :: proc(screenWidth: c.int, screenHeight: c.int) -> ClayArray(RenderCommand) ---
     PointerOver :: proc(id: u32) -> bool ---
     GetScrollContainerData :: proc(id: u32) -> ScrollContainerData ---
-    SetMeasureTextFunction :: proc(measureTextFunction: proc(text: ^String, config: ^TextElementConfig) -> Dimensions) ---
+    SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
 }
 
@@ -263,8 +263,8 @@ foreign Clay {
     _OpenRectangleElement :: proc(id: u32, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
     _OpenTextElement :: proc(id: u32, text: String, textConfig: ^TextElementConfig) ---
     _OpenImageElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
-    _OpenScrollElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) ---
-    _OpenFloatingElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) ---
+    _OpenScrollElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) -> rawptr ---
+    _OpenFloatingElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) -> rawptr ---
     _OpenBorderElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
     _OpenCustomElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
     _CloseElementWithChildren :: proc() ---
