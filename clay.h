@@ -1211,6 +1211,7 @@ uint32_t Clay__dynamicElementIndex = 0;
 bool Clay__debugModeEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
 uint32_t Clay__debugViewWidth = 400;
+Clay_Color Clay__debugViewHighlightColor = (Clay_Color) { 168, 66, 28, 100 };
 uint32_t Clay__generation = 0;
 uint64_t Clay__arenaResetOffset = 0;
 Clay_Arena Clay__internalArena;
@@ -2547,7 +2548,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
 
     if (highlightedElementId) {
         CLAY_FLOATING_CONTAINER(CLAY_ID("Clay__DebugView_ElementHighlight"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_FLOATING_CONFIG(.zIndex = 65535, .parentId = highlightedElementId), {
-            CLAY_RECTANGLE(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_RECTANGLE_CONFIG(.color = {168, 66, 28, 100 }), {});
+            CLAY_RECTANGLE(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_RECTANGLE_CONFIG(.color = Clay__debugViewHighlightColor), {});
         });
     }
     return layoutData;

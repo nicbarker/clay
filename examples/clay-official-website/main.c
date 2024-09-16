@@ -389,8 +389,9 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
             ACTIVE_RENDERER_INDEX = 1;
         }
     }
-    //----------------------------------------------------------------------------------
-    // Handle scroll containers
+
+    Clay__debugViewHighlightColor = (Clay_Color) {105,210,231, 120};
+
     Clay_SetPointerState((Clay_Vector2) {mousePositionX, mousePositionY}, isMouseDown);
 
     if (!isMouseDown) {
