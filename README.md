@@ -371,7 +371,7 @@ The supported directives are:
 - `CLAY_DISABLE_CULLING` - Disables [Visibility Culling](#visibility-culling) of render commands.
 - `CLAY_WASM` - Required when targeting Web Assembly.
 - `CLAY_OVERFLOW_TRAP` - By default, clay will continue to allow function calls without crashing even when it exhausts all its available pre-allocated memory.  This can produce erroneous layout results that are difficult to interpret. If `CLAY_OVERFLOW_TRAP` is defined, clay will raise a `SIGTRAP` signal that will be caught by your debugger. Relies on `signal.h` being available in your environment.
-- `CLAY_DEBUG` - Used for debugging clay's internal implementation. Useful if you want to modify or debug clay, or learn how things work. It enables a number of debug features such as preserving source strings for has IDs to make debugging easier.
+- `CLAY_DEBUG` - Used for debugging clay's internal implementation. Useful if you want to modify or debug clay, or learn how things work. It enables a number of debug features such as preserving source strings for hash IDs to make debugging easier.
 - `CLAY_EXTEND_CONFIG_RECTANGLE` - Provide additional struct members to `CLAY_RECTANGLE_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_TEXT` - Provide additional struct members to `CLAY_TEXT_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_IMAGE` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
@@ -383,6 +383,20 @@ Clay is usable out of the box as a `.h` include in both C99 and C++ with designa
 There are also supported bindings for other languages, including:
 
 - [Odin Bindings](https://github.com/nicbarker/clay/tree/main/bindings/odin)
+
+### Debug Tools
+
+Clay includes built-in UI debugging tools, similar to the "inspector" in browsers such as Chrome or Firefox. These tools are included in `clay.h`, and work by injecting additional render commands into the output [Clay_RenderCommandArray](#clay_rendercommandarray).
+
+As long as the renderer that you're using works correctly, no additional setup or configuration is required to use the debug tools.
+
+To enable the debug tools, use the function `Clay_SetDebugModeEnabled(bool enabled)`. This boolean is persistent and does not need to be set every frame.
+
+The debug tooling by default will render as a panel to the right side of the screen, compressing your layout by its width. The default width is 400 and is currently configurable via the direct mutation of the internal variable `Clay__debugViewWidth`, however this is an internal API and is potentially subject to change.
+
+<img width="1506" alt="Screenshot 2024-09-12 at 12 54 03 PM" src="https://github.com/user-attachments/assets/2d122658-3305-4e27-88d6-44f08c0cb4e6">
+
+_The official Clay website with debug tooling visible_
 
 # API
 
@@ -1422,13 +1436,13 @@ switch (renderCommand->commandType) {
 
 `uint32_t CLAY_ID(char *label)`
 
-Generates a `uint32_t` string hash from the provided `char *label`. Used both to generate ids when defining element macros, as well as for referencing ids later when using utility functions such as [Clay_PointerOver](#clay-pointerover)
+Generates a `uint32_t` string id from the provided `char *label`. Used both to generate ids when defining element macros, as well as for referencing ids later when using utility functions such as [Clay_PointerOver](#clay-pointerover)
 
 ### CLAY_IDI()
 
 `uint32_t CLAY_IDI(char *label, int index)`
 
-Generates a `uint32_t` string hash from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+Generates a `uint32_t` string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
 
 ## Data Structures & Definitions
 

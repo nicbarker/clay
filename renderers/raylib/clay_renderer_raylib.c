@@ -102,6 +102,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
 
     float textHeight = config->fontSize;
     Font fontToUse = Raylib_fonts[config->fontId].font;
+    float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 
     for (int i = 0; i < text->length; ++i)
     {
@@ -117,7 +118,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
 
     maxTextWidth = fmax(maxTextWidth, lineTextWidth);
 
-    textSize.width = maxTextWidth / 2;
+    textSize.width = maxTextWidth * scaleFactor;
     textSize.height = textHeight;
 
     return textSize;
@@ -170,7 +171,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                 Clay_RectangleElementConfig *config = renderCommand->config.rectangleElementConfig;
                 if (config->cornerRadius.topLeft > 0) {
-                    float radius = (config->cornerRadius.topLeft * 2) / (boundingBox.width > boundingBox.height) ? boundingBox.height : boundingBox.width;
+                    float radius = (config->cornerRadius.topLeft * 2) / (float)((boundingBox.width > boundingBox.height) ? boundingBox.height : boundingBox.width);
                     DrawRectangleRounded((Rectangle) { boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height }, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 } else {
                     DrawRectangle(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));

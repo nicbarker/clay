@@ -57,6 +57,13 @@ BorderData :: struct {
     color: Color,
 }
 
+ElementId :: struct {
+    id:       u32,
+    offset:   u32,
+    baseId:   u32,
+    stringId: String,
+}
+
 when ODIN_OS == .Windows {
     EnumBackingType :: u32
 } else {
@@ -79,12 +86,19 @@ RectangleElementConfig :: struct {
     cornerRadius: CornerRadius,
 }
 
+TextWrapMode :: enum EnumBackingType {
+    Words,
+    Newlines,
+    None,
+}
+
 TextElementConfig :: struct {
     textColor:     Color,
     fontId:        u16,
     fontSize:      u16,
     letterSpacing: u16,
     lineSpacing:   u16,
+    wrapMode:      TextWrapMode,
 }
 
 ImageElementConfig :: struct {
@@ -234,15 +248,17 @@ ClayArray :: struct($type: typeid) {
 foreign Clay {
     MinMemorySize :: proc() -> u32 ---
     CreateArenaWithCapacityAndMemory :: proc(capacity: u32, offset: [^]u8) -> Arena ---
-    SetPointerPosition :: proc(position: Vector2) ---
-    Initialize :: proc(arena: Arena) ---
+    SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
+    Initialize :: proc(arena: Arena, layoutDimensions: Dimensions) ---
     UpdateScrollContainers :: proc(isPointerActive: bool, scrollDelta: Vector2, deltaTime: c.float) ---
-    BeginLayout :: proc(screenWidth: c.int, screenHeight: c.int) ---
-    EndLayout :: proc(screenWidth: c.int, screenHeight: c.int) -> ClayArray(RenderCommand) ---
-    PointerOver :: proc(id: u32) -> bool ---
-    GetScrollContainerData :: proc(id: u32) -> ScrollContainerData ---
+    SetLayoutDimensions :: proc(dimensions: Dimensions) ---
+    BeginLayout :: proc() ---
+    EndLayout :: proc() -> ClayArray(RenderCommand) ---
+    PointerOver :: proc(id: ElementId) -> bool ---
+    GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
     SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
+    SetDebugModeEnabled :: proc(enabled: bool) ---
 }
 
 @(private, link_prefix = "Clay_", default_calling_convention = "c")
@@ -259,14 +275,14 @@ foreign _ {
 
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
 foreign Clay {
-    _OpenContainerElement :: proc(id: u32, layoutConfig: ^LayoutConfig) ---
-    _OpenRectangleElement :: proc(id: u32, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
-    _OpenTextElement :: proc(id: u32, text: String, textConfig: ^TextElementConfig) ---
-    _OpenImageElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
-    _OpenScrollElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) -> rawptr ---
-    _OpenFloatingElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) -> rawptr ---
-    _OpenBorderElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
-    _OpenCustomElement :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
+    _OpenContainerElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig) ---
+    _OpenRectangleElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) ---
+    _OpenTextElement :: proc(id: ElementId, text: String, textConfig: ^TextElementConfig) ---
+    _OpenImageElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) ---
+    _OpenScrollElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig, imageConfig: ^ScrollElementConfig) ---
+    _OpenFloatingElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig, imageConfig: ^FloatingElementConfig) ---
+    _OpenBorderElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig, imageConfig: ^BorderElementConfig) ---
+    _OpenCustomElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig, imageConfig: ^CustomElementConfig) ---
     _CloseElementWithChildren :: proc() ---
     _CloseScrollElement :: proc() ---
     _CloseFloatingElement :: proc() ---
@@ -278,52 +294,52 @@ foreign Clay {
     _CustomElementConfigArray_Add :: proc(array: ^ClayArray(CustomElementConfig), config: CustomElementConfig) -> ^CustomElementConfig ---
     _ScrollElementConfigArray_Add :: proc(array: ^ClayArray(ScrollElementConfig), config: ScrollElementConfig) -> ^ScrollElementConfig ---
     _BorderElementConfigArray_Add :: proc(array: ^ClayArray(BorderElementConfig), config: BorderElementConfig) -> ^BorderElementConfig ---
-    _HashString :: proc(toHash: String, index: u32) -> u32 ---
+    _HashString :: proc(toHash: String, index: u32) -> ElementId ---
 }
 
 @(require_results, deferred_none = _CloseElementWithChildren)
-Container :: proc(id: u32, layoutConfig: ^LayoutConfig) -> bool {
+Container :: proc(id: ElementId, layoutConfig: ^LayoutConfig) -> bool {
     _OpenContainerElement(id, layoutConfig)
     return true
 }
 
 @(require_results, deferred_none = _CloseElementWithChildren)
-Rectangle :: proc(id: u32, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) -> bool {
+Rectangle :: proc(id: ElementId, layoutConfig: ^LayoutConfig, rectangleConfig: ^RectangleElementConfig) -> bool {
     _OpenRectangleElement(id, layoutConfig, rectangleConfig)
     return true
 }
 
-Text :: proc(id: u32, text: string, textConfig: ^TextElementConfig) -> bool {
+Text :: proc(id: ElementId, text: string, textConfig: ^TextElementConfig) -> bool {
     _OpenTextElement(id, MakeString(text), textConfig)
     return true
 }
 
 @(require_results, deferred_none = _CloseElementWithChildren)
-Image :: proc(id: u32, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) -> bool {
+Image :: proc(id: ElementId, layoutConfig: ^LayoutConfig, imageConfig: ^ImageElementConfig) -> bool {
     _OpenImageElement(id, layoutConfig, imageConfig)
     return true
 }
 
 @(require_results, deferred_none = _CloseScrollElement)
-Scroll :: proc(id: u32, layoutConfig: ^LayoutConfig, scrollConfig: ^ScrollElementConfig) -> bool {
+Scroll :: proc(id: ElementId, layoutConfig: ^LayoutConfig, scrollConfig: ^ScrollElementConfig) -> bool {
     _OpenScrollElement(id, layoutConfig, scrollConfig)
     return true
 }
 
 @(require_results, deferred_none = _CloseFloatingElement)
-Floating :: proc(id: u32, layoutConfig: ^LayoutConfig, floatingConfig: ^FloatingElementConfig) -> bool {
+Floating :: proc(id: ElementId, layoutConfig: ^LayoutConfig, floatingConfig: ^FloatingElementConfig) -> bool {
     _OpenFloatingElement(id, layoutConfig, floatingConfig)
     return true
 }
 
 @(require_results, deferred_none = _CloseElementWithChildren)
-Border :: proc(id: u32, layoutConfig: ^LayoutConfig, borderConfig: ^BorderElementConfig) -> bool {
+Border :: proc(id: ElementId, layoutConfig: ^LayoutConfig, borderConfig: ^BorderElementConfig) -> bool {
     _OpenBorderElement(id, layoutConfig, borderConfig)
     return true
 }
 
 @(require_results, deferred_none = _CloseElementWithChildren)
-Custom :: proc(id: u32, layoutConfig: ^LayoutConfig, customConfig: ^CustomElementConfig) -> bool {
+Custom :: proc(id: ElementId, layoutConfig: ^LayoutConfig, customConfig: ^CustomElementConfig) -> bool {
     _OpenCustomElement(id, layoutConfig, customConfig)
     return true
 }
@@ -412,6 +428,6 @@ MakeString :: proc(label: string) -> String {
     return String{chars = raw_data(label), length = cast(c.int)len(label)}
 }
 
-ID :: proc(label: string, index: u32 = 0) -> u32 {
+ID :: proc(label: string, index: u32 = 0) -> ElementId {
     return _HashString(MakeString(label), index)
 }

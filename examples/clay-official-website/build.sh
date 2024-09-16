@@ -2,6 +2,7 @@ mkdir -p build/clay                                                       \
 && clang                                                                  \
 -Os                                                                       \
 -DCLAY_WASM                                                               \
+-DCLAY_DEBUG                                                               \
 -mbulk-memory                                                             \
 --target=wasm32                                                           \
 -nostdlib                                                                 \

@@ -51,7 +51,7 @@
 
         .text {
             pointer-events: all;
-            white-space: nowrap;
+            white-space: pre;
         }
     </style>
 </head>
@@ -279,12 +279,13 @@
 
         document.addEventListener("keydown", (event) => {
             if (event.key === "ArrowDown") {
-                console.log("arrowdown");
+                window.arrowKeyDownPressedThisFrame = true;
             }
             if (event.key === "ArrowUp") {
-                console.log("arrowup");
+                window.arrowKeyUpPressedThisFrame = true;
             }
         });
+
         const importObject = {
             clay: {
                 measureTextFunction: (addressOfDimensions, textToMeasure, addressOfConfig) => {
@@ -361,7 +362,7 @@
             let elementData = elementCache[renderCommand.id.value];
             element = elementData.element;
             if (Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
-                if (parentElement.nextElementIndex === 0) {
+                if (parentElement.nextElementIndex === 0 || !parentElement.element.childNodes[parentElement.nextElementIndex - 1]) {
                     parentElement.element.insertAdjacentElement('afterbegin', element);
                 } else {
                     parentElement.element.childNodes[parentElement.nextElementIndex - 1].insertAdjacentElement('afterend', element);
@@ -390,7 +391,8 @@
                     let config = readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition);
                     let configMemory = new Uint8Array(memoryDataView.buffer.slice(renderCommand.config.value, renderCommand.config.value + config.__size));
                     let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
-                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(renderCommand.id.value)) {
+                    memoryDataView.setUint32(0, renderCommand.id.value, true);
+                    if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(0)) {
                         window.location.href = linkContents;
                     }
                     if (!dirty && !MemoryIsDifferent(configMemory, elementData.previousMemoryConfig, config.__size)) {
