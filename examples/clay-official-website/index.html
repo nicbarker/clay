@@ -13,6 +13,7 @@
             padding: 0;
             margin: 0;
             pointer-events: none;
+            background: rgb(244, 235, 230);
         }
         /* Import the font using @font-face */
         @font-face {
@@ -213,6 +214,18 @@
         instance.exports.Clay_CreateArenaWithCapacityAndMemory(arenaStructAddress, memorySize, arenaMemoryAddress);
     }
     async function init() {
+        await new Promise((resolve, reject) => {
+            // repeatedly poll check
+            const poller = setInterval(async () => {
+                await Promise.all(fontsById.map(f => document.fonts.load(`12px "${f}"`)));
+                console.log(`12px "${fontsById[0]}"`);
+                if (document.fonts.check(`12px "${fontsById[0]}"`)) {
+                    clearInterval(poller);
+                    resolve(true);
+                }
+            }, 10);
+            setTimeout(() => {clearInterval(poller); resolve()}, 1000);
+        });
         window.htmlRoot = document.body.appendChild(document.createElement('div'));
         window.canvasRoot = document.body.appendChild(document.createElement('canvas'));
         window.canvasContext = window.canvasRoot.getContext("2d");
