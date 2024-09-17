@@ -194,13 +194,13 @@ int main(void) {
         .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
         .fontId = FONT_ID_BODY_24,
     };
-	SetTextureFilter(Raylib_fonts[FONT_ID_BODY_24].font.texture, TEXTURE_FILTER_TRILINEAR);
+	SetTextureFilter(Raylib_fonts[FONT_ID_BODY_24].font.texture, TEXTURE_FILTER_BILINEAR);
 
     Raylib_fonts[FONT_ID_BODY_16] = (Raylib_Font) {
         .font = LoadFontEx("resources/Roboto-Regular.ttf", 32, 0, 400),
         .fontId = FONT_ID_BODY_16,
     };
-    SetTextureFilter(Raylib_fonts[FONT_ID_BODY_16].font.texture, TEXTURE_FILTER_TRILINEAR);
+    SetTextureFilter(Raylib_fonts[FONT_ID_BODY_16].font.texture, TEXTURE_FILTER_BILINEAR);
 
     //--------------------------------------------------------------------------------------
 
