@@ -1445,6 +1445,44 @@ Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char 
 
 ## Data Structures & Definitions
 
+### Clay_ElementId
+
+```C
+typedef struct {
+    uint32_t id;
+    uint32_t offset;
+    uint32_t baseId;
+    Clay_String stringId;
+} Clay_ElementId;
+```
+
+Returned by [CLAY_ID](#clay_id) and [CLAY_IDI](#clay_idi), this struct contains a hash id, as well as the source string that was used to generate it.
+
+**Fields**
+
+**`.id`** - `uint32_t`
+
+A unique ID derived from the string passed to [CLAY_ID](#clay_id) or [CLAY_IDI](#clay_idi).
+
+---
+
+**`.offset`** - `uint32_t`
+
+If this id was generated using [CLAY_IDI](#clay_idi), `.offset` is the value passed as the second argument. For [CLAY_ID](#clay_id), this will always be `0`.
+
+---
+
+**`.baseId`** - `uint32_t`
+
+If this id was generated using [CLAY_IDI](#clay_idi), `.baseId` is the hash of the base string passed, **before it is additionally hashed with `.offset`**. For [CLAY_ID](#clay_id), this will always be the same as `.id`.
+
+---
+
+**`.stringId`** - `Clay_String`
+
+Stores the original string that was passed in when [CLAY_ID](#clay_id) or [CLAY_IDI](#clay_idi) were called.
+
+
 ### Clay_RenderCommandArray
 
 ```C
