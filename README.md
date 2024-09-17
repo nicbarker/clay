@@ -24,14 +24,14 @@ _An example GUI application built with clay_
 #include "clay.h"
 ```
 
-2. Ask clay for how much static memory it needs using [Clay_MinMemorySize()](#clay_minmemorysize), create an Arena for it to use with [Clay_CreateArenaWithCapacityAndMemory(size, void *memory)](#clay_createarenawithcapacityandmemory), and initialize it with [Clay_Initialize(arena)](#clay_initialize).
+2. Ask clay for how much static memory it needs using [Clay_MinMemorySize()](#clay_minmemorysize), create an Arena for it to use with [Clay_CreateArenaWithCapacityAndMemory(size, void *memory)](#clay_createarenawithcapacityandmemory), and initialize it with [Clay_Initialize(arena, dimensions)](#clay_initialize).
 
 ```C
 // Note: malloc is only used here as an example, any allocator that provides
 // a pointer to addressable memory of at least totalMemorySize will work
 uint64_t totalMemorySize = Clay_MinMemorySize();
 Clay_Arena arena = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-Clay_Initialize(arena);
+Clay_Initialize(arena, (Clay_Dimensions) { screenWidth, screenHeight });
 ``` 
 
 3. Provide a `MeasureText(text, config)` function pointer with [Clay_SetMeasureTextFunction(function)](#clay_setmeasuretextfunction) so that clay can measure and wrap text.
@@ -45,16 +45,30 @@ static inline Clay_Dimensions MeasureText(Clay_String *text, Clay_TextElementCon
 
 // Tell clay how to measure text
 Clay_SetMeasureTextFunction(MeasureText);
-``` 
+```
 
-4. **Optional** - Call [Clay_SetPointerPosition(pointerPosition)](#clay_setpointerposition) if you want to use mouse interactions.
+4. **Optional** - Call [Clay_SetLayoutDimensions(dimensions)](#clay_setlayoutdimensions) if the window size of your application has changed.
+
+```C
+// Update internal layout dimensions
+Clay_SetLayoutDimensions((Clay_Dimensions) { screenWidth, screenHeight }, isMouseDown);
+```
+
+5. **Optional** - Call [Clay_SetPointerPosition(pointerPosition, isPointerDown)](#clay_setpointerposition) if you want to use mouse interactions.
 
 ```C
 // Update internal pointer position for handling mouseover / click / touch events
-Clay_SetPointerPosition((Clay_Vector2) { mousePositionX, mousePositionY });
+Clay_SetPointerPosition((Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
 ```
 
-5. Call [Clay_BeginLayout(screenWidth, screenHeight)](#clay_beginlayout) and declare your layout using the provided macros.
+6. **Optional** - Call [Clay_UpdateScrollContainers(enableDragScrolling, scrollDelta, deltaTime)](#clay_updatescrollcontainers) if you want to use clay's built in scrolling containers.
+
+```C
+// Update internal pointer position for handling mouseover / click / touch events
+Clay_UpdateScrollContainers(true, (Clay_Vector2) { mouseWheelX, mouseWheelY }, deltaTime);
+```
+
+7. Call [Clay_BeginLayout()](#clay_beginlayout) and declare your layout using the provided macros.
 
 ```C
 const Clay_Color COLOR_LIGHT = (Clay_Color) {224, 215, 210, 255};
@@ -73,7 +87,7 @@ void SidebarItemComponent(int index) {
 
 // An example function to begin the "root" of your layout tree
 Clay_RenderCommandArray CreateLayout() {
-    Clay_BeginLayout(windowWidth, windowHeight);
+    Clay_BeginLayout();
 
     // An example of laying out a UI with a fixed width sidebar and flexible width main content
     CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {250,250,255,255}) {
@@ -95,7 +109,7 @@ Clay_RenderCommandArray CreateLayout() {
 });
 ```
 
-6. Call [Clay_EndLayout(screenWidth, screenHeight)](#clay_endlayout) and process the resulting [Clay_RenderCommandArray](#clay_rendercommandarray) in your choice of renderer.
+8. Call [Clay_EndLayout()](#clay_endlayout) and process the resulting [Clay_RenderCommandArray](#clay_rendercommandarray) in your choice of renderer.
 
 ```C
 Clay_RenderCommandArray renderCommands = Clay_EndLayout(windowWidth, windowHeight);
@@ -120,12 +134,13 @@ The above example, rendered correctly will look something like the following:
 
 In summary, the general order of steps is:
 
-1. [Clay_SetPointerPosition(pointerPosition)](#clay_setpointerposition)
-2. [Clay_UpdateScrollContainers(isPointerActive, scrollDelta, deltaTime)](#clay_updatescrollcontainers)
-3. [Clay_BeginLayout(screenWidth, screenHeight)](#clay_beginlayout)
-4. Declare your layout with the provided [Element Macros](#element-macros)
-5. [Clay_EndLayout(screenWidth, screenHeight)](#clay_endlayout)
-6. Render the results using the outputted [Clay_RenderCommandArray](#clay_rendercommandarray)
+1. [Clay_SetLayoutDimensions(dimensions)](#clay_setdimensions)	
+2. [Clay_SetPointerPosition(pointerPosition, isPointerDown)](#clay_setpointerposition)
+3. [Clay_UpdateScrollContainers(enableDragScrolling, scrollDelta, deltaTime)](#clay_updatescrollcontainers)
+4. [Clay_BeginLayout()](#clay_beginlayout)
+5. Declare your layout with the provided [Element Macros](#element-macros)
+6. [Clay_EndLayout()](#clay_endlayout)
+7. Render the results using the outputted [Clay_RenderCommandArray](#clay_rendercommandarray)
 
 ## High Level Documentation
 
@@ -264,7 +279,7 @@ Clay_Vector2 mousePosition = { x, y };
 Clay_SetPointerPosition(mousePosition);
 // Clay_UpdateScrollContainers needs to be called before Clay_BeginLayout for the position to avoid a 1 frame delay
 Clay_UpdateScrollContainers(
-    true, // Did the mouse click or touch occur this frame?
+    true, // Enable drag scrolling
     scrollDelta, // Clay_Vector2 scrollwheel / trackpad scroll x and y delta this frame
     float deltaTime, // Time since last frame in seconds as a float e.g. 8ms is 0.008f
 );
@@ -414,7 +429,7 @@ _The official Clay website with debug tooling visible_
 `Clay_MinMemorySize` -> `Clay_CreateArenaWithCapacityAndMemory` -> `Clay_SetMeasureTextFunction` -> `Clay_Initialize`
 
 **Each Frame**
-`Clay_SetPointerPosition` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY_CONTAINER() etc...` -> `Clay_EndLayout`
+`Clay_SetLayoutDimensions` -> `Clay_SetPointerPosition` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY_CONTAINER() etc...` -> `Clay_EndLayout`
 
 ### Clay_MinMemorySize
 
@@ -440,35 +455,41 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 
 ### Clay_Initialize
 
-`void Clay_Initialize(Clay_Arena arena)`
+`void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions)`
 
-Takes a `Clay_Arena` and initializes the internal memory mapping.
+Initializes the internal memory mapping, and sets the internal dimensions for layout.
+
+### Clay_SetLayoutDimensions
+
+`void Clay_SetLayoutDimensions(Clay_Dimensions dimensions)`
+
+Sets the internal layout dimensions. Cheap enough to be called every frame with your screen dimensions to automatically respond to window resizing, etc.
 
 ### Clay_SetPointerPosition
 
-`void Clay_SetPointerPosition(Clay_Vector2 position)`
+`void Clay_SetPointerPosition(Clay_Vector2 position, bool isPointerDown)`
 
-Sets the internal pointer position (i.e. current mouse / touch position) and recalculates overlap info, which is used for mouseover / click calculation (via [Clay_PointerOver](#clay_pointerover) and updating scroll containers with [Clay_UpdateScrollContainers](#clay_updatescrollcontainers)
+Sets the internal pointer position and state (i.e. current mouse / touch position) and recalculates overlap info, which is used for mouseover / click calculation (via [Clay_PointerOver](#clay_pointerover) and updating scroll containers with [Clay_UpdateScrollContainers](#clay_updatescrollcontainers). **isPointerDown should represent the current state this frame, e.g. it should be `true` for the entire duration the left mouse button is held down.** Clay has internal handling for detecting click / touch start & end.
 
 ### Clay_UpdateScrollContainers
 
-`void Clay_UpdateScrollContainers(bool isPointerActive, Clay_Vector2 scrollDelta, float deltaTime)`
+`void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDelta, float deltaTime)`
 
-This function handles scrolling of containers. It responds to both `scrollDelta`, which represents mouse wheel or trackpad scrolling this frame, as well as "touch scrolling" on mobile devices.
+This function handles scrolling of containers. It responds to both `scrollDelta`, which represents mouse wheel or trackpad scrolling this frame, as well as "touch scrolling" on mobile devices, or "drag scrolling" with a mouse or similar device.
 
-Touch scrolling only occurs if the `isPointerActive` parameter is `true`, **and** [Clay_SetPointerPosition](#clay_setpointerposition) has been called this frame. As a result, you can simply always call it with `false` as the first argument if you want to disable touch scrolling.
+Touch / drag scrolling only occurs if the `enableDragScrolling` parameter is `true`, **and** [Clay_SetPointerPosition](#clay_setpointerposition) has been called this frame. As a result, you can simply always call it with `false` as the first argument if you want to disable touch scrolling.
 
 `deltaTime` is the time **in seconds** since the last frame (e.g. 0.016 is **16 milliseconds**), and is used to normalize & smooth scrolling across different refresh rates.
 
 ### Clay_BeginLayout
 
-`void Clay_BeginLayout(int screenWidth, int screenHeight)`
+`void Clay_BeginLayout()`
 
-Prepares clay to calculate a new layout. Called each frame / layout **before** any of the [Element Macros](#element-macros). `screenWidth` and `screenHeight` don't neccessarily have to be the screen or window height - you can use clay to lay out an arbitrary sub-section of a window.
+Prepares clay to calculate a new layout. Called each frame / layout **before** any of the [Element Macros](#element-macros).
 
 ### Clay_EndLayout
 
-`Clay_RenderCommandArray Clay_EndLayout(int screenWidth, int screenHeight)`
+`Clay_RenderCommandArray Clay_EndLayout()`
 
 Ends declaration of element macros and calculates the results of the currrent layout. Renders a [Clay_RenderCommandArray](#clay_rendercommandarrray) containing the results of the layout calculation.
 
@@ -696,7 +717,7 @@ for (int i = 0; i < 1000; i++) {
 }
 // Note the use of "parentId".
 // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("Option", 2) .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER }), {
+CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER }), {
     CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
 });
 ```
@@ -1127,7 +1148,7 @@ All floating elements (as well as their entire child hierarchies) will be sorted
 
 **`.parentId`** - `uint32_t`
 
-`CLAY_FLOATING_CONFIG(.parentId = CLAY_ID("HeaderButton"))`
+`CLAY_FLOATING_CONFIG(.parentId = CLAY_ID("HeaderButton").id)`
 
 By default, floating containers will "attach" to the parent element that they are declared inside. However, there are cases where this limitation could cause significant performance or ergonomics problems. `.parentId` allows you to specify a `CLAY_ID().id` to attach the floating container to. The parent element with the matching id can be declared anywhere in the hierarchy, it doesn't need to be declared before or after the floating container in particular.  
 
