@@ -963,6 +963,11 @@ Clay_TextElementConfig {
     uint16_t fontSize;
     uint16_t letterSpacing;
     uint16_t lineSpacing;
+    Clay_TextElementConfigWrapMode wrapMode {
+    	CLAY_TEXT_WRAP_WORDS (default),
+	CLAY_TEXT_WRAP_NEWLINES,
+	CLAY_TEXT_WRAP_NONE,
+    };
 
     #ifdef CLAY_EXTEND_CONFIG_TEXT
         // Contents of CLAY_EXTEND_CONFIG_TEXT will be pasted here
@@ -1018,6 +1023,22 @@ Font size is generally thought of as `x pixels tall`, but interpretation is left
 `CLAY_TEXT_CONFIG(.lineSpacing = 1)`
 
 `.lineSpacing` results in **vertical** white space between lines of text (from both `\n` characters and text wrapping) and will affect layout of parents and siblings.
+
+---
+
+**`.wrapMode`**
+
+`CLAY_TEXT_CONFIG(.wrapMode = CLAY_TEXT_WRAP_NONE)`
+
+`.wrapMode` specifies under what conditions text should [wrap](https://en.wikipedia.org/wiki/Line_wrap_and_word_wrap).
+
+Available options are:
+
+- `CLAY_TEXT_WRAP_WORDS` (default) - Text will wrap on whitespace characters as container width shrinks, preserving whole words.
+- `CLAY_TEXT_WRAP_NEWLINES` -  will only wrap when encountering newline characters.
+- `CLAY_TEXT_WRAP_NONE` - Text will never wrap even if its container is compressed beyond the text measured width.
+
+---
 
 **Example Usage**
 ```C
