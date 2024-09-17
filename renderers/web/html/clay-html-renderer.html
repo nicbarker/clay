@@ -233,6 +233,7 @@
         instance.exports.Clay_CreateArenaWithCapacityAndMemory(arenaStructAddress, memorySize, arenaMemoryAddress);
     }
     async function init() {
+        await Promise.all(fontsById.map(f => document.fonts.load(`12px "${f}"`)));
         window.htmlRoot = document.body.appendChild(document.createElement('div'));
         window.canvasRoot = document.body.appendChild(document.createElement('canvas'));
         window.canvasContext = window.canvasRoot.getContext("2d");

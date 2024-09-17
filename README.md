@@ -203,7 +203,7 @@ See the [Full API](#api) for details on the specific config macros.
 
 ### Element IDs
 
-All element macros take a `uint32_t` ID as their first argument. Clay provides the [CLAY_ID()](#clay_id) macro to generate these IDs as string hashes:
+All element macros take a `Clay_ElementId` ID as their first argument. Clay provides the [CLAY_ID()](#clay_id) macro to generate these IDs as string hashes:
 ```C
 // Will always produce the same ID from the same input string
 CLAY_CONTAINER(CLAY_ID("OuterContainer"), style, {});
@@ -227,7 +227,7 @@ Clay provides a very simple unified API for handling mouse and pointer interacti
 
 All pointer interactions depend on the function `void Clay_SetPointerPosition(Clay_Vector2 position)` being called after each mouse position update and before any other clay functions.
 
-The function `bool Clay_PointerOver(uint32_t id)` takes an element id that was used during layout creation and returns a bool representing whether the current pointer position is within its bounding box. 
+The function `bool Clay_PointerOver(Clay_ElementId id)` takes an element id that was used during layout creation and returns a bool representing whether the current pointer position is within its bounding box. 
 ```C
 // Reminder: Clay_SetPointerPosition must be called before functions that rely on pointer position otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
@@ -246,7 +246,7 @@ Querying `Clay_PointerOver` also works _during_ layout construction, and can be 
 Clay_Vector2 mousePosition = { x, y };
 Clay_SetPointerPosition(mousePosition);
 // ...
-uint32_t buttonId = CLAY_ID("HeaderButton");
+Clay_ElementId buttonId = CLAY_ID("HeaderButton");
 // An orange button that turns blue when hovered
 CLAY_CONTAINER(buttonId, CLAY_LAYOUT(.backgroundColor = Clay_PointerOver(buttonId) ? COLOR_BLUE : COLOR_ORANGE), {
     CLAY_TEXT(CLAY_IDI("Button", index), text, &headerTextConfig);
@@ -474,13 +474,13 @@ Ends declaration of element macros and calculates the results of the currrent la
 
 ### Clay_PointerOver
 
-`bool Clay_PointerOver(uint32_t id)`
+`bool Clay_PointerOver(Clay_ElementId id)`
 
 Returns `true` if the pointer position previously set with `Clay_SetPointerPosition` is inside the bounding box of the layout element with the provided `id`. Note: this is based on the element's position from the **last** frame. If frame-accurate pointer overlap detection is required, perhaps in the case of significant change in UI layout between frames, you can simply run your layout code twice that frame. The second call to `Clay_PointerOver` will be frame-accurate.
 
 ### Clay_GetScrollContainerData
 
-`Clay_ScrollContainerData Clay_GetScrollContainerData(uint32_t id)`
+`Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id)`
 
 Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll container matching the provided ID. This function allows imperative manipulation of scroll position, allowing you to build things such as scroll bars, buttons that "jump" to somewhere in a scroll container, etc.
 
@@ -489,7 +489,7 @@ Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll con
 ### CLAY_CONTAINER
 **Usage**
 
-`CLAY_CONTAINER(uint32_t id, Clay_LayoutConfig *layoutConfig, children);`
+`CLAY_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, children);`
 
 **Lifecycle**
 
@@ -517,7 +517,7 @@ CLAY_CONTAINER(CLAY_ID("SideBar"), CLAY_LAYOUT(.padding = {16, 16}), {
 ### CLAY_TEXT
 **Usage**
 
-`CLAY_TEXT(uint32_t id, Clay_String textContents, Clay_TextElementConfig *textConfig);`
+`CLAY_TEXT(Clay_ElementId id, Clay_String textContents, Clay_TextElementConfig *textConfig);`
 
 **Lifecycle**
 
@@ -549,7 +549,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 ### CLAY_IMAGE
 **Usage**
 
-`CLAY_IMAGE(id, layoutConfig, imageConfig, children);`
+`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig, children);`
 
 **Lifecycle**
 
@@ -557,7 +557,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 
 **Notes**
 
-**IMAGE_CONTAINER** is a used to layout images, and can optionally have children.It uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and [Clay_ImageElementConfig](#clay_image_config) to configure image specific options.
+**IMAGE_CONTAINER** is a used to layout images, and can optionally have children. It uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and [Clay_ImageElementConfig](#clay_image_config) to configure image specific options.
 
 **Examples**
 
@@ -577,7 +577,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 ### CLAY_SCROLL_CONTAINER
 **Usage**
 
-`CLAY_SCROLL_CONTAINER(id, layoutConfig, scrollConfig, children);`
+`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig, children);`
 
 **Lifecycle**
 
@@ -607,7 +607,7 @@ Scroll containers will result in two render commands:
 ### CLAY_BORDER_CONTAINER
 **Usage**
 
-`CLAY_BORDER_CONTAINER(id, layoutConfig, borderConfig, children);`
+`CLAY_BORDER_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *borderConfig, children);`
 
 **Lifecycle**
 
@@ -646,7 +646,7 @@ Rendering of borders and rounded corners is left up to the user. See the provide
 ### CLAY_FLOATING_CONTAINER
 **Usage**
 
-`CLAY_FLOATING_CONTAINER(id, layoutConfig, floatingConfig, children)`
+`CLAY_FLOATING_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig, children);`
 
 **Lifecycle**
 
@@ -707,11 +707,10 @@ When using `.parentId`, the floating container can be declared anywhere after `B
 
 `CLAY_FLOATING_CONTAINER` elements will not generate any render commands.
 
-
 ### CLAY_CUSTOM_ELEMENT
 **Usage**
 
-`CLAY_CUSTOM_ELEMENT(uint32_t id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customElementConfig, children);`
+`CLAY_CUSTOM_ELEMENT(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig, children);`
 
 **Lifecycle**
 
@@ -1130,7 +1129,7 @@ All floating elements (as well as their entire child hierarchies) will be sorted
 
 `CLAY_FLOATING_CONFIG(.parentId = CLAY_ID("HeaderButton"))`
 
-By default, floating containers will "attach" to the parent element that they are declared inside. However, there are cases where this limitation could cause significant performance or ergonomics problems. `.parentId` allows you to specify a `CLAY_ID()` to attach the floating container to. The parent element with the matching id can be declared anywhere in the hierarchy, it doesn't need to be declared before or after the floating container in particular.  
+By default, floating containers will "attach" to the parent element that they are declared inside. However, there are cases where this limitation could cause significant performance or ergonomics problems. `.parentId` allows you to specify a `CLAY_ID().id` to attach the floating container to. The parent element with the matching id can be declared anywhere in the hierarchy, it doesn't need to be declared before or after the floating container in particular.  
 
 Consider the following case:
 ```C
@@ -1188,7 +1187,7 @@ CLAY_CONTAINER(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT, {
 });
 
 // Any other point in the hierarchy
-CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex)), {
+CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex).id), {
     // Tooltip contents...
 });
 ```
@@ -1434,15 +1433,15 @@ switch (renderCommand->commandType) {
 
 ### CLAY_ID
 
-`uint32_t CLAY_ID(char *label)`
+`Clay_ElementId CLAY_ID(char *label)`
 
-Generates a `uint32_t` string id from the provided `char *label`. Used both to generate ids when defining element macros, as well as for referencing ids later when using utility functions such as [Clay_PointerOver](#clay-pointerover)
+Generates a [Clay_ElementId](#clay_elementid) from the provided `char *label`. Used both to generate ids when defining element macros, as well as for referencing ids later when using utility functions such as [Clay_PointerOver](#clay-pointerover)
 
 ### CLAY_IDI()
 
-`uint32_t CLAY_IDI(char *label, int index)`
+`Clay_ElementId CLAY_IDI(char *label, int index)`
 
-Generates a `uint32_t` string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
 
 ## Data Structures & Definitions
 
