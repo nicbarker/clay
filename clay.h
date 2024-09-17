@@ -3037,7 +3037,7 @@ void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions) {
 }
 
 CLAY_WASM_EXPORT("Clay_UpdateScrollContainers")
-void Clay_UpdateScrollContainers(bool isPointerActive, Clay_Vector2 scrollDelta, float deltaTime) {
+void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDelta, float deltaTime) {
     // Don't apply scroll events to ancestors of the inner element
     int32_t highestPriorityElementIndex = -1;
     Clay__ScrollContainerDataInternal *highestPriorityScrollData = CLAY__NULL;
