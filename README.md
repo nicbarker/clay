@@ -54,11 +54,11 @@ Clay_SetMeasureTextFunction(MeasureText);
 Clay_SetLayoutDimensions((Clay_Dimensions) { screenWidth, screenHeight }, isMouseDown);
 ```
 
-5. **Optional** - Call [Clay_SetPointerPosition(pointerPosition, isPointerDown)](#clay_setpointerposition) if you want to use mouse interactions.
+5. **Optional** - Call [Clay_SetPointerState(pointerPosition, isPointerDown)](#clay_setpointerstate) if you want to use mouse interactions.
 
 ```C
 // Update internal pointer position for handling mouseover / click / touch events
-Clay_SetPointerPosition((Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
+Clay_SetPointerState((Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
 ```
 
 6. **Optional** - Call [Clay_UpdateScrollContainers(enableDragScrolling, scrollDelta, deltaTime)](#clay_updatescrollcontainers) if you want to use clay's built in scrolling containers.
@@ -135,7 +135,7 @@ The above example, rendered correctly will look something like the following:
 In summary, the general order of steps is:
 
 1. [Clay_SetLayoutDimensions(dimensions)](#clay_setdimensions)	
-2. [Clay_SetPointerPosition(pointerPosition, isPointerDown)](#clay_setpointerposition)
+2. [Clay_SetPointerState(pointerPosition, isPointerDown)](#clay_setpointerstate)
 3. [Clay_UpdateScrollContainers(enableDragScrolling, scrollDelta, deltaTime)](#clay_updatescrollcontainers)
 4. [Clay_BeginLayout()](#clay_beginlayout)
 5. Declare your layout with the provided [Element Macros](#element-macros)
@@ -240,13 +240,13 @@ This ID is used for querying mouse / pointer events, and will be forwarded to th
 
 Clay provides a very simple unified API for handling mouse and pointer interactions, with specific handling left to user code.
 
-All pointer interactions depend on the function `void Clay_SetPointerPosition(Clay_Vector2 position)` being called after each mouse position update and before any other clay functions.
+All pointer interactions depend on the function `void Clay_SetPointerState(Clay_Vector2 position)` being called after each mouse position update and before any other clay functions.
 
 The function `bool Clay_PointerOver(Clay_ElementId id)` takes an element id that was used during layout creation and returns a bool representing whether the current pointer position is within its bounding box. 
 ```C
-// Reminder: Clay_SetPointerPosition must be called before functions that rely on pointer position otherwise it will have no effect
+// Reminder: Clay_SetPointerState must be called before functions that rely on pointer position otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
-Clay_SetPointerPosition(mousePosition);
+Clay_SetPointerState(mousePosition);
 // ...
 // If profile picture was clicked
 if (mouseButtonDown(0) && Clay_PointerOver(CLAY_ID("ProfilePicture"))) {
@@ -257,9 +257,9 @@ if (mouseButtonDown(0) && Clay_PointerOver(CLAY_ID("ProfilePicture"))) {
 Querying `Clay_PointerOver` also works _during_ layout construction, and can be used as a convenient way for applying "hover" states, for example:
 
 ```C
-// Reminder: Clay_SetPointerPosition must be called before functions that rely on pointer position otherwise it will have no effect
+// Reminder: Clay_SetPointerState must be called before functions that rely on pointer position otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
-Clay_SetPointerPosition(mousePosition);
+Clay_SetPointerState(mousePosition);
 // ...
 Clay_ElementId buttonId = CLAY_ID("HeaderButton");
 // An orange button that turns blue when hovered
@@ -274,9 +274,9 @@ If this is an issue for you, performing layout twice per frame with the same dat
 
 Scrolling containers are defined with the `CLAY_SCROLL_CONTAINER` element macro and function just like normal containers, however to make scroll containers respond to mouse wheel and scroll events, two functions need to be called:
 ```C
-// Reminder: Clay_SetPointerPosition must be called before Clay_UpdateScrollContainers otherwise it will have no effect
+// Reminder: Clay_SetPointerState must be called before Clay_UpdateScrollContainers otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
-Clay_SetPointerPosition(mousePosition);
+Clay_SetPointerState(mousePosition);
 // Clay_UpdateScrollContainers needs to be called before Clay_BeginLayout for the position to avoid a 1 frame delay
 Clay_UpdateScrollContainers(
     true, // Enable drag scrolling
@@ -429,7 +429,7 @@ _The official Clay website with debug tooling visible_
 `Clay_MinMemorySize` -> `Clay_CreateArenaWithCapacityAndMemory` -> `Clay_SetMeasureTextFunction` -> `Clay_Initialize`
 
 **Each Frame**
-`Clay_SetLayoutDimensions` -> `Clay_SetPointerPosition` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY_CONTAINER() etc...` -> `Clay_EndLayout`
+`Clay_SetLayoutDimensions` -> `Clay_SetPointerState` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY_CONTAINER() etc...` -> `Clay_EndLayout`
 
 ### Clay_MinMemorySize
 
@@ -465,9 +465,9 @@ Initializes the internal memory mapping, and sets the internal dimensions for la
 
 Sets the internal layout dimensions. Cheap enough to be called every frame with your screen dimensions to automatically respond to window resizing, etc.
 
-### Clay_SetPointerPosition
+### Clay_SetPointerState
 
-`void Clay_SetPointerPosition(Clay_Vector2 position, bool isPointerDown)`
+`void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown)`
 
 Sets the internal pointer position and state (i.e. current mouse / touch position) and recalculates overlap info, which is used for mouseover / click calculation (via [Clay_PointerOver](#clay_pointerover) and updating scroll containers with [Clay_UpdateScrollContainers](#clay_updatescrollcontainers). **isPointerDown should represent the current state this frame, e.g. it should be `true` for the entire duration the left mouse button is held down.** Clay has internal handling for detecting click / touch start & end.
 
@@ -477,7 +477,7 @@ Sets the internal pointer position and state (i.e. current mouse / touch positio
 
 This function handles scrolling of containers. It responds to both `scrollDelta`, which represents mouse wheel or trackpad scrolling this frame, as well as "touch scrolling" on mobile devices, or "drag scrolling" with a mouse or similar device.
 
-Touch / drag scrolling only occurs if the `enableDragScrolling` parameter is `true`, **and** [Clay_SetPointerPosition](#clay_setpointerposition) has been called this frame. As a result, you can simply always call it with `false` as the first argument if you want to disable touch scrolling.
+Touch / drag scrolling only occurs if the `enableDragScrolling` parameter is `true`, **and** [Clay_SetPointerState](#clay_setpointerstate) has been called this frame. As a result, you can simply always call it with `false` as the first argument if you want to disable touch scrolling.
 
 `deltaTime` is the time **in seconds** since the last frame (e.g. 0.016 is **16 milliseconds**), and is used to normalize & smooth scrolling across different refresh rates.
 
@@ -497,7 +497,7 @@ Ends declaration of element macros and calculates the results of the currrent la
 
 `bool Clay_PointerOver(Clay_ElementId id)`
 
-Returns `true` if the pointer position previously set with `Clay_SetPointerPosition` is inside the bounding box of the layout element with the provided `id`. Note: this is based on the element's position from the **last** frame. If frame-accurate pointer overlap detection is required, perhaps in the case of significant change in UI layout between frames, you can simply run your layout code twice that frame. The second call to `Clay_PointerOver` will be frame-accurate.
+Returns `true` if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the layout element with the provided `id`. Note: this is based on the element's position from the **last** frame. If frame-accurate pointer overlap detection is required, perhaps in the case of significant change in UI layout between frames, you can simply run your layout code twice that frame. The second call to `Clay_PointerOver` will be frame-accurate.
 
 ### Clay_GetScrollContainerData
 
@@ -602,13 +602,13 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 
 **Lifecycle**
 
-`Clay_SetPointerPosition()` -> `Clay_UpdateScrollContainers()` -> `Clay_BeginLayout()` -> `CLAY_SCROLL_CONTAINER()` -> `Clay_EndLayout()` 
+`Clay_SetPointerState()` -> `Clay_UpdateScrollContainers()` -> `Clay_BeginLayout()` -> `CLAY_SCROLL_CONTAINER()` -> `Clay_EndLayout()` 
 
 **Notes**
 
 **SCROLL_CONTAINER** creates a masked container that allows layout of children to extend beyond its boundaries. It uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and [Clay_ScrollElementConfig](#clay_scroll_config) to configure scroll specific options.
 
-Note: In order to process scrolling based on pointer position and mouse wheel or touch interactions, you must call `Clay_SetPointerPosition()` and `Clay_UpdateScrollContainers()` _before_ calling `BeginLayout`.
+Note: In order to process scrolling based on pointer position and mouse wheel or touch interactions, you must call `Clay_SetPointerState()` and `Clay_UpdateScrollContainers()` _before_ calling `BeginLayout`.
 
 **Examples**
 
