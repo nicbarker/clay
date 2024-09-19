@@ -167,7 +167,7 @@ void UpdateDrawFrame(void)
         }
     }
 
-    Clay_UpdateScrollContainers(false, (Clay_Vector2) {mouseWheelX, mouseWheelY}, GetFrameTime());
+    Clay_UpdateScrollContainers(true, (Clay_Vector2) {mouseWheelX, mouseWheelY}, GetFrameTime());
     // Generate the auto layout for rendering
     double currentTime = GetTime();
     Clay_RenderCommandArray renderCommands = CreateLayout();
