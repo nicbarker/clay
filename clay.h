@@ -1,6 +1,16 @@
 #pragma once
 // VERSION: 0.11
 
+/*
+    NOTE: In order to use this library you must define
+    the following macro in exactly one file, _before_ including clay.h:
+
+    #define CLAY_IMPLEMENTATION
+    #include "clay.h"
+
+    See the examples folder for details.
+*/
+
 #include "stdint.h"
 #include "stdbool.h"
 #include "stddef.h"
