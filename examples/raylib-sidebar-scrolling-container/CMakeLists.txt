@@ -18,8 +18,7 @@ FetchContent_MakeAvailable(raylib)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(clay_examples_raylib_sidebar_scrolling_container main.c
-tu.c)
+add_executable(clay_examples_raylib_sidebar_scrolling_container main.c)
 
 target_compile_options(clay_examples_raylib_sidebar_scrolling_container PUBLIC)
 target_include_directories(clay_examples_raylib_sidebar_scrolling_container PUBLIC .)
