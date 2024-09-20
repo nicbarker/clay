@@ -261,18 +261,6 @@ foreign Clay {
     SetDebugModeEnabled :: proc(enabled: bool) ---
 }
 
-@(private, link_prefix = "Clay_", default_calling_convention = "c")
-foreign _ {
-    _layoutConfigs: ClayArray(LayoutConfig)
-    _rectangleElementConfigs: ClayArray(RectangleElementConfig)
-    _textElementConfigs: ClayArray(TextElementConfig)
-    _imageElementConfigs: ClayArray(ImageElementConfig)
-    _floatingElementConfigs: ClayArray(FloatingElementConfig)
-    _customElementConfigs: ClayArray(CustomElementConfig)
-    _scrollElementConfigs: ClayArray(ScrollElementConfig)
-    _borderElementConfigs: ClayArray(BorderElementConfig)
-}
-
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
 foreign Clay {
     _OpenContainerElement :: proc(id: ElementId, layoutConfig: ^LayoutConfig) ---
@@ -286,14 +274,14 @@ foreign Clay {
     _CloseElementWithChildren :: proc() ---
     _CloseScrollElement :: proc() ---
     _CloseFloatingElement :: proc() ---
-    _LayoutConfigArray_Add :: proc(array: ^ClayArray(LayoutConfig), config: LayoutConfig) -> ^LayoutConfig ---
-    _RectangleElementConfigArray_Add :: proc(array: ^ClayArray(RectangleElementConfig), config: RectangleElementConfig) -> ^RectangleElementConfig ---
-    _TextElementConfigArray_Add :: proc(array: ^ClayArray(TextElementConfig), config: TextElementConfig) -> ^TextElementConfig ---
-    _ImageElementConfigArray_Add :: proc(array: ^ClayArray(ImageElementConfig), config: ImageElementConfig) -> ^ImageElementConfig ---
-    _FloatingElementConfigArray_Add :: proc(array: ^ClayArray(FloatingElementConfig), config: FloatingElementConfig) -> ^FloatingElementConfig ---
-    _CustomElementConfigArray_Add :: proc(array: ^ClayArray(CustomElementConfig), config: CustomElementConfig) -> ^CustomElementConfig ---
-    _ScrollElementConfigArray_Add :: proc(array: ^ClayArray(ScrollElementConfig), config: ScrollElementConfig) -> ^ScrollElementConfig ---
-    _BorderElementConfigArray_Add :: proc(array: ^ClayArray(BorderElementConfig), config: BorderElementConfig) -> ^BorderElementConfig ---
+    _StoreLayoutConfig :: proc(config: LayoutConfig) -> ^LayoutConfig ---
+    _StoreRectangleElementConfig :: proc(config: RectangleElementConfig) -> ^RectangleElementConfig ---
+    _StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
+    _StoreImageElementConfig :: proc(config: ImageElementConfig) -> ^ImageElementConfig ---
+    _StoreFloatingElementConfig :: proc(config: FloatingElementConfig) -> ^FloatingElementConfig ---
+    _StoreCustomElementConfig :: proc(config: CustomElementConfig) -> ^CustomElementConfig ---
+    _StoreScrollElementConfig :: proc(config: ScrollElementConfig) -> ^ScrollElementConfig ---
+    _StoreBorderElementConfig :: proc(config: BorderElementConfig) -> ^BorderElementConfig ---
     _HashString :: proc(toHash: String, index: u32) -> ElementId ---
 }
 
@@ -345,61 +333,53 @@ Custom :: proc(id: ElementId, layoutConfig: ^LayoutConfig, customConfig: ^Custom
 }
 
 Layout :: proc(config: LayoutConfig) -> ^LayoutConfig {
-    return _LayoutConfigArray_Add(&_layoutConfigs, config)
+    return _StoreLayoutConfig(config)
 }
 
 RectangleConfig :: proc(config: RectangleElementConfig) -> ^RectangleElementConfig {
-    return _RectangleElementConfigArray_Add(&_rectangleElementConfigs, config)
+    return _StoreRectangleElementConfig(config)
 }
 
 TextConfig :: proc(config: TextElementConfig) -> ^TextElementConfig {
-    return _TextElementConfigArray_Add(&_textElementConfigs, config)
+    return _StoreTextElementConfig(config)
 }
 
 ImageConfig :: proc(config: ImageElementConfig) -> ^ImageElementConfig {
-    return _ImageElementConfigArray_Add(&_imageElementConfigs, config)
+    return _StoreImageElementConfig(config)
 }
 
 FloatingConfig :: proc(config: FloatingElementConfig) -> ^FloatingElementConfig {
-    return _FloatingElementConfigArray_Add(&_floatingElementConfigs, config)
+    return _StoreFloatingElementConfig(config)
 }
 
-Custom_elementConfig :: proc(config: CustomElementConfig) -> ^CustomElementConfig {
-    return _CustomElementConfigArray_Add(&_customElementConfigs, config)
+CustomConfig :: proc(config: CustomElementConfig) -> ^CustomElementConfig {
+    return _StoreCustomElementConfig(config)
 }
 
 ScrollConfig :: proc(config: ScrollElementConfig) -> ^ScrollElementConfig {
-    return _ScrollElementConfigArray_Add(&_scrollElementConfigs, config)
+    return _StoreScrollElementConfig(config)
 }
 
 BorderConfig :: proc(config: BorderElementConfig) -> ^BorderElementConfig {
-    return _BorderElementConfigArray_Add(&_borderElementConfigs, config)
+    return _StoreBorderElementConfig(config)
 }
 
 BorderConfigOutside :: proc(outsideBorders: BorderData) -> ^BorderElementConfig {
-    return _BorderElementConfigArray_Add(
-        &_borderElementConfigs,
-        (BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders},
-    )
+    return _StoreBorderElementConfig((BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders})
 }
 
 BorderConfigOutsideRadius :: proc(outsideBorders: BorderData, radius: f32) -> ^BorderElementConfig {
-    return _BorderElementConfigArray_Add(
-        &_borderElementConfigs,
+    return _StoreBorderElementConfig(
         (BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders, cornerRadius = {radius, radius, radius, radius}},
     )
 }
 
 BorderConfigAll :: proc(allBorders: BorderData) -> ^BorderElementConfig {
-    return _BorderElementConfigArray_Add(
-        &_borderElementConfigs,
-        (BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders},
-    )
+    return _StoreBorderElementConfig((BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders})
 }
 
 BorderConfigAllRadius :: proc(allBorders: BorderData, radius: f32) -> ^BorderElementConfig {
-    return _BorderElementConfigArray_Add(
-        &_borderElementConfigs,
+    return _StoreBorderElementConfig(
         (BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, cornerRadius = {radius, radius, radius, radius}},
     )
 }

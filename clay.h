@@ -1,8 +1,415 @@
 #pragma once
-// VERSION: 0.10
+// VERSION: 0.11
 
-#ifndef CLAY_IMPLEMENTATION
-#define CLAY_IMPLEMENTATION
+#include "stdint.h"
+#include "stdbool.h"
+#include "stddef.h"
+
+// -----------------------------------------
+// HEADER DECLARATIONS ---------------------
+// -----------------------------------------
+
+#ifndef CLAY_HEADER
+#define CLAY_HEADER
+
+// Public Macro API ------------------------
+
+#define CLAY_LAYOUT(...) Clay__StoreLayoutConfig((Clay_LayoutConfig) {__VA_ARGS__ })
+
+#define CLAY_RECTANGLE_CONFIG(...) Clay__StoreRectangleElementConfig((Clay_RectangleElementConfig) {__VA_ARGS__ })
+
+#define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig((Clay_TextElementConfig) {__VA_ARGS__ })
+
+#define CLAY_IMAGE_CONFIG(...) Clay__StoreImageElementConfig((Clay_ImageElementConfig) {__VA_ARGS__ })
+
+#define CLAY_FLOATING_CONFIG(...) Clay__StoreFloatingElementConfig((Clay_FloatingElementConfig) {__VA_ARGS__ })
+
+#define CLAY_CUSTOM_ELEMENT_CONFIG(...) Clay__StoreCustomElementConfig((Clay_CustomElementConfig) {__VA_ARGS__ })
+
+#define CLAY_SCROLL_CONFIG(...) Clay__StoreScrollElementConfig((Clay_ScrollElementConfig) {__VA_ARGS__ })
+
+#define CLAY_BORDER_CONFIG(...)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig ) { __VA_ARGS__ })
+
+#define CLAY_BORDER_CONFIG_OUTSIDE(...)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ } })
+
+#define CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig ) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } })
+
+#define CLAY_BORDER_CONFIG_ALL(...)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ } })
+
+#define CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ }, .cornerRadius = { radius, radius, radius, radius }})
+
+#define CLAY_CORNER_RADIUS(radius) (Clay_CornerRadius) { radius, radius, radius, radius }
+
+#define CLAY_SIZING_FIT(...) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_FIT, .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__} }
+
+#define CLAY_SIZING_GROW(...) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_GROW, .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__} }
+
+#define CLAY_SIZING_FIXED(fixedSize) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_GROW, .sizeMinMax = { fixedSize, fixedSize } }
+
+#define CLAY_SIZING_PERCENT(percentOfParent) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_PERCENT, .sizePercent = (percentOfParent) }
+
+#define CLAY_ID(label) Clay__HashString(CLAY_STRING(label), 0)
+
+#define CLAY_IDI(label, index) Clay__HashString(CLAY_STRING(label), index)
+
+#define CLAY_ID_AUTO (Clay_ElementId) { .stringId = CLAY_STRING("Auto Generated ID"), .id = Clay__RehashWithNumber(Clay__dynamicElementIndexBaseHash.id, Clay__dynamicElementIndex++) }
+
+#define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
+
+#define CLAY_STRING(string) (Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = (string) }
+
+// Publicly visible layout element macros -----------------------------------------------------
+#define CLAY_CONTAINER(id, layoutConfig, children)  \
+    Clay__OpenContainerElement(id, layoutConfig);   \
+    children                                        \
+    Clay__CloseElementWithChildren()
+
+#define CLAY_RECTANGLE(id, layoutConfig, rectangleConfig, children)     \
+    Clay__OpenRectangleElement(id, layoutConfig, rectangleConfig);      \
+    children                                                            \
+    Clay__CloseElementWithChildren()
+
+#define CLAY_TEXT(id, text, textConfig) Clay__OpenTextElement(id, text, textConfig)
+
+#define CLAY_IMAGE(id, layoutConfig, imageConfig, children)         \
+    Clay__OpenImageElement(id, layoutConfig, imageConfig);          \
+    children                                                        \
+    Clay__CloseElementWithChildren()
+
+#define CLAY_SCROLL_CONTAINER(id, layoutConfig, scrollConfig, children)     \
+    Clay__OpenScrollElement(id, layoutConfig, scrollConfig);                \
+    children                                                                \
+    Clay__CloseScrollElement()
+
+#define CLAY_FLOATING_CONTAINER(id, layoutConfig, floatingConfig, children)   \
+    Clay__OpenFloatingElement(id, layoutConfig, floatingConfig);              \
+    children                                                                  \
+    Clay__CloseFloatingElement()
+
+#define CLAY_BORDER_CONTAINER(id, layoutConfig, borderConfig, children)  \
+    Clay__OpenBorderElement(id, layoutConfig, borderConfig);             \
+    children                                                             \
+    Clay__CloseElementWithChildren()
+
+#define CLAY_CUSTOM_ELEMENT(id, layoutConfig, customElementConfig, children)    \
+    Clay__OpenCustomElement(id, layoutConfig, customElementConfig);             \
+    children                                                                    \
+    Clay__CloseElementWithChildren()
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Utility Structs -------------------------
+// Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
+// but it is also used to represent slices.
+typedef struct {
+    int length;
+    const char *chars;
+} Clay_String;
+
+typedef struct {
+    Clay_String label;
+    uint64_t nextAllocation;
+    uint64_t capacity;
+    char *memory;
+} Clay_Arena;
+
+typedef struct {
+    float width, height;
+} Clay_Dimensions;
+
+typedef struct {
+    float x, y;
+} Clay_Vector2;
+
+typedef struct {
+    float r, g, b, a;
+} Clay_Color;
+
+typedef struct {
+    float x, y, width, height;
+} Clay_BoundingBox;
+
+// baseId + offset = id
+typedef struct {
+    uint32_t id;
+    uint32_t offset;
+    uint32_t baseId;
+    Clay_String stringId;
+} Clay_ElementId;
+
+typedef struct {
+    float topLeft;
+    float topRight;
+    float bottomLeft;
+    float bottomRight;
+} Clay_CornerRadius;
+
+// Element Configs ---------------------------
+// Layout
+typedef enum __attribute__((__packed__)) {
+    CLAY_LEFT_TO_RIGHT,
+    CLAY_TOP_TO_BOTTOM,
+} Clay_LayoutDirection;
+
+typedef enum __attribute__((__packed__)) {
+    CLAY_ALIGN_X_LEFT,
+    CLAY_ALIGN_X_RIGHT,
+    CLAY_ALIGN_X_CENTER,
+} Clay_LayoutAlignmentX;
+
+typedef enum __attribute__((__packed__)) {
+    CLAY_ALIGN_Y_TOP,
+    CLAY_ALIGN_Y_BOTTOM,
+    CLAY_ALIGN_Y_CENTER,
+} Clay_LayoutAlignmentY;
+
+typedef enum __attribute__((__packed__)) {
+    CLAY__SIZING_TYPE_FIT,
+    CLAY__SIZING_TYPE_GROW,
+    CLAY__SIZING_TYPE_PERCENT,
+} Clay__SizingType;
+
+typedef struct {
+    Clay_LayoutAlignmentX x;
+    Clay_LayoutAlignmentY y;
+} Clay_ChildAlignment;
+
+typedef struct {
+    float min;
+    float max;
+} Clay_SizingMinMax;
+
+typedef struct {
+    union {
+        Clay_SizingMinMax sizeMinMax;
+        float sizePercent;
+    };
+    Clay__SizingType type;
+} Clay_SizingAxis;
+
+typedef struct {
+    Clay_SizingAxis width;
+    Clay_SizingAxis height;
+} Clay_Sizing;
+
+typedef struct {
+    uint16_t x;
+    uint16_t y;
+} Clay_Padding;
+
+typedef struct {
+    Clay_Sizing sizing;
+    Clay_Padding padding;
+    uint16_t childGap;
+    Clay_LayoutDirection layoutDirection;
+    Clay_ChildAlignment childAlignment;
+} Clay_LayoutConfig;
+
+// Rectangle
+typedef struct {
+    Clay_Color color;
+    Clay_CornerRadius cornerRadius;
+    #ifdef CLAY_EXTEND_CONFIG_RECTANGLE
+    CLAY_EXTEND_CONFIG_RECTANGLE
+    #endif
+} Clay_RectangleElementConfig;
+
+// Text
+typedef enum
+{
+    CLAY_TEXT_WRAP_WORDS,
+    CLAY_TEXT_WRAP_NEWLINES,
+    CLAY_TEXT_WRAP_NONE,
+} Clay_TextElementConfigWrapMode;
+
+typedef struct
+{
+    Clay_Color textColor;
+    uint16_t fontId;
+    uint16_t fontSize;
+    uint16_t letterSpacing;
+    uint16_t lineSpacing;
+    Clay_TextElementConfigWrapMode wrapMode;
+    #ifdef CLAY_EXTEND_CONFIG_TEXT
+    CLAY_EXTEND_CONFIG_TEXT
+    #endif
+} Clay_TextElementConfig;
+
+// Image
+typedef struct
+{
+    void * imageData;
+    Clay_Dimensions sourceDimensions;
+    #ifdef CLAY_EXTEND_CONFIG_IMAGE
+    CLAY_EXTEND_CONFIG_IMAGE
+    #endif
+} Clay_ImageElementConfig;
+
+// Floating
+typedef enum __attribute__((__packed__)) {
+    CLAY_ATTACH_POINT_LEFT_TOP,
+    CLAY_ATTACH_POINT_LEFT_CENTER,
+    CLAY_ATTACH_POINT_LEFT_BOTTOM,
+    CLAY_ATTACH_POINT_CENTER_TOP,
+    CLAY_ATTACH_POINT_CENTER_CENTER,
+    CLAY_ATTACH_POINT_CENTER_BOTTOM,
+    CLAY_ATTACH_POINT_RIGHT_TOP,
+    CLAY_ATTACH_POINT_RIGHT_CENTER,
+    CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+} Clay_FloatingAttachPointType;
+
+typedef struct
+{
+    Clay_FloatingAttachPointType element;
+    Clay_FloatingAttachPointType parent;
+} Clay_FloatingAttachPoints;
+
+typedef struct
+{
+    Clay_Vector2 offset;
+    Clay_Dimensions expand;
+    uint16_t zIndex;
+    uint32_t parentId;
+    Clay_FloatingAttachPoints attachment;
+} Clay_FloatingElementConfig;
+
+// Custom
+typedef struct
+{
+    #ifndef CLAY_EXTEND_CONFIG_CUSTOM
+    void* customData;
+    #else
+    CLAY_EXTEND_CONFIG_CUSTOM
+    #endif
+} Clay_CustomElementConfig;
+
+// Scroll
+typedef struct
+{
+    bool horizontal;
+    bool vertical;
+} Clay_ScrollElementConfig;
+
+// Border
+typedef struct
+{
+    uint32_t width;
+    Clay_Color color;
+} Clay_Border;
+
+typedef struct
+{
+    Clay_Border left;
+    Clay_Border right;
+    Clay_Border top;
+    Clay_Border bottom;
+    Clay_Border betweenChildren;
+    Clay_CornerRadius cornerRadius;
+} Clay_BorderElementConfig;
+
+typedef union
+{
+    Clay_RectangleElementConfig *rectangleElementConfig;
+    Clay_TextElementConfig *textElementConfig;
+    Clay_ImageElementConfig *imageElementConfig;
+    Clay_FloatingElementConfig *floatingElementConfig;
+    Clay_CustomElementConfig *customElementConfig;
+    Clay_ScrollElementConfig *scrollElementConfig;
+    Clay_BorderElementConfig *borderElementConfig;
+} Clay_ElementConfigUnion;
+
+// Miscellaneous Structs & Enums ---------------------------------
+typedef struct
+{
+    // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
+    // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
+    Clay_Vector2 *scrollPosition;
+    Clay_Dimensions scrollContainerDimensions;
+    Clay_Dimensions contentDimensions;
+    Clay_ScrollElementConfig config;
+    // Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
+    bool found;
+} Clay_ScrollContainerData;
+
+typedef enum {
+    CLAY_RENDER_COMMAND_TYPE_NONE,
+    CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+    CLAY_RENDER_COMMAND_TYPE_BORDER,
+    CLAY_RENDER_COMMAND_TYPE_TEXT,
+    CLAY_RENDER_COMMAND_TYPE_IMAGE,
+    CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
+    CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
+    CLAY_RENDER_COMMAND_TYPE_CUSTOM,
+} Clay_RenderCommandType;
+
+typedef struct
+{
+    Clay_BoundingBox boundingBox;
+    Clay_ElementConfigUnion config;
+    Clay_String text; // TODO I wish there was a way to avoid having to have this on every render command
+    uint32_t id;
+    Clay_RenderCommandType commandType;
+} Clay_RenderCommand;
+
+typedef struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_RenderCommand *internalArray;
+} Clay_RenderCommandArray;
+
+// Function Forward Declarations ---------------------------------
+// Public API functions
+uint32_t Clay_MinMemorySize();
+Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset);
+void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
+void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions);
+void Clay_UpdateScrollContainers(bool isPointerActive, Clay_Vector2 scrollDelta, float deltaTime);
+void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
+void Clay_BeginLayout();
+Clay_RenderCommandArray Clay_EndLayout();
+bool Clay_PointerOver(Clay_ElementId id);
+Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
+void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config));
+Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
+void Clay_SetDebugModeEnabled(bool enabled);
+
+void Clay_OpenContainerElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig);
+void Clay_OpenRectangleElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_RectangleElementConfig *rectangleConfig);
+void Clay_OpenTextElement(Clay_ElementId id, Clay_String *text, Clay_TextElementConfig *textConfig);
+void Clay_OpenImageElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig);
+void Clay_OpenScrollElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *imageConfig);
+void Clay_OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *imageConfig);
+void Clay_OpenBorderElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *imageConfig);
+void Clay_OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *imageConfig);
+void Clay_CloseElementWithChildren();
+void Clay_CloseScrollElement();
+void Clay_CloseFloatingElement();
+
+// Internal API functions required by macros
+Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
+Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config);
+Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config);
+Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config);
+Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config);
+Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config);
+Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
+Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
+Clay_ElementId Clay_HashString(Clay_String toHash, uint32_t index);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
+// -----------------------------------------
+// IMPLEMENTATION --------------------------
+// -----------------------------------------
+#ifdef CLAY_IMPLEMENTATION
+#undef CLAY_IMPLEMENTATION
 
 #ifdef CLAY_WASM
 #define CLAY_WASM_EXPORT(name) __attribute__((export_name(name)))
@@ -10,9 +417,6 @@
 #define CLAY_WASM_EXPORT(null)
 #endif
 
-#include "stdint.h"
-#include "stdbool.h"
-#include "stddef.h"
 #ifdef CLAY_OVERFLOW_TRAP
     #include "signal.h"
 #endif
@@ -34,108 +438,10 @@
 
 #define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
 
-// Publicly visible config macros -----------------------------------------------------
-
-#define CLAY_LAYOUT(...) Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, (Clay_LayoutConfig) {__VA_ARGS__ })
-
-#define CLAY_RECTANGLE_CONFIG(...) Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, (Clay_RectangleElementConfig) {__VA_ARGS__ })
-
-#define CLAY_TEXT_CONFIG(...) Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, (Clay_TextElementConfig) {__VA_ARGS__ })
-
-#define CLAY_IMAGE_CONFIG(...) Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, (Clay_ImageElementConfig) {__VA_ARGS__ })
-
-#define CLAY_FLOATING_CONFIG(...) Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, (Clay_FloatingElementConfig) {__VA_ARGS__ })
-
-#define CLAY_CUSTOM_ELEMENT_CONFIG(...) Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, (Clay_CustomElementConfig) {__VA_ARGS__ })
-
-#define CLAY_SCROLL_CONFIG(...) Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, (Clay_ScrollElementConfig) {__VA_ARGS__ })
-
-#define CLAY_BORDER_CONFIG(...)  Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { __VA_ARGS__ })
-
-#define CLAY_BORDER_CONFIG_OUTSIDE(...)  Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ } })
-
-#define CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(width, color, radius)  Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } })
-
-#define CLAY_BORDER_CONFIG_ALL(...)  Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ } })
-
-#define CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)  Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, (Clay_BorderElementConfig ) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ }, .cornerRadius = { radius, radius, radius, radius }})
-
-#define CLAY_CORNER_RADIUS(radius) (Clay_CornerRadius) { radius, radius, radius, radius }
-
-#define CLAY_SIZING_FIT(...) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_FIT, .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__} }
-
-#define CLAY_SIZING_GROW(...) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_GROW, .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__} }
-
-#define CLAY_SIZING_FIXED(fixedSize) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_GROW, .sizeMinMax = { fixedSize, fixedSize } }
-
-#define CLAY_SIZING_PERCENT(percentOfParent) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_PERCENT, .sizePercent = percentOfParent }
-
-#define CLAY_ID(label) Clay__HashString(CLAY_STRING(label), 0)
-
-#define CLAY_IDI(label, index) Clay__HashString(CLAY_STRING(label), index)
-
-#define CLAY_ID_AUTO (Clay_ElementId) { .stringId = CLAY_STRING("Auto Generated ID"), .id = Clay__RehashWithNumber(Clay__dynamicElementIndexBaseHash.id, Clay__dynamicElementIndex++) }
-
-#define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof(s[0])) - sizeof(s[0]))
-
-#define CLAY_STRING(string) (Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = string }
-
-// Publicly visible layout element macros -----------------------------------------------------
-#define CLAY_CONTAINER(id, layoutConfig, children)  \
-    Clay__OpenContainerElement(id, layoutConfig);   \
-    children                                        \
-    Clay__CloseElementWithChildren()
-
-#define CLAY_RECTANGLE(id, layoutConfig, rectangleConfig, children)     \
-    Clay__OpenRectangleElement(id, layoutConfig, rectangleConfig);      \
-    children                                                            \
-    Clay__CloseElementWithChildren()
-
-#define CLAY_TEXT(id, text, textConfig) Clay__OpenTextElement(id, text, textConfig)
-
-#define CLAY_IMAGE(id, layoutConfig, imageConfig, children)         \
-    Clay__OpenImageElement(id, layoutConfig, imageConfig); \
-    children                                                        \
-    Clay__CloseElementWithChildren()
-
-#define CLAY_SCROLL_CONTAINER(id, layoutConfig, scrollConfig, children)     \
-    Clay__OpenScrollElement(id, layoutConfig, scrollConfig);                \
-    children                                                                \
-    Clay__CloseScrollElement()
-
-#define CLAY_FLOATING_CONTAINER(id, layoutConfig, floatingConfig, children)   \
-    Clay__OpenFloatingElement(id, layoutConfig, floatingConfig);     \
-    children                                                                  \
-    Clay__CloseFloatingElement()
-
-#define CLAY_BORDER_CONTAINER(id, layoutConfig, borderConfig, children)  \
-    Clay__OpenBorderElement(id, layoutConfig, borderConfig);    \
-    children                                                             \
-    Clay__CloseElementWithChildren()
-
-#define CLAY_CUSTOM_ELEMENT(id, layoutConfig, customElementConfig, children)    \
-    Clay__OpenCustomElement(id, layoutConfig, customElementConfig);             \
-    children                                                                    \
-    Clay__CloseElementWithChildren()
-
 bool Clay__warningsEnabled = true;
-
-// Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
-// but it is also used to represent slices.
-typedef struct {
-    int length;
-    const char *chars;
-} Clay_String;
 
 Clay_String CLAY__SPACECHAR = (Clay_String) { .length = 1, .chars = " " };
 Clay_String CLAY__STRING_DEFAULT = (Clay_String) { .length = 0, .chars = "" };
-
-typedef struct {
-    Clay_String label;
-    uint64_t nextAllocation;
-    uint64_t capacity;
-    char *memory;
-} Clay_Arena;
 
 typedef struct
 {
@@ -253,14 +559,6 @@ Clay__BoolArray Clay__BoolArray_Allocate_Arena(uint32_t capacity, Clay_Arena *ar
 #pragma endregion
 // __GENERATED__ template
 
-// baseId + offset = id
-typedef struct {
-    uint32_t id;
-    uint32_t offset;
-    uint32_t baseId;
-    Clay_String stringId;
-} Clay_ElementId;
-
 Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = (Clay_ElementId) {};
 
 // __GENERATED__ template array_define,array_get,array_add TYPE=Clay_ElementId NAME=Clay__ElementIdArray DEFAULT_VALUE=&CLAY__ELEMENT_ID_DEFAULT
@@ -288,56 +586,6 @@ Clay_ElementId *Clay__ElementIdArray_Add(Clay__ElementIdArray *array, Clay_Eleme
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct {
-    float r, g, b, a;
-} Clay_Color;
-
-typedef struct {
-    float x, y, width, height;
-} Clay_BoundingBox;
-
-typedef struct {
-    float width, height;
-} Clay_Dimensions;
-
-typedef struct {
-    float x, y;
-} Clay_Vector2;
-
-typedef enum __attribute__((__packed__)) {
-    CLAY_LEFT_TO_RIGHT,
-    CLAY_TOP_TO_BOTTOM,
-} Clay_LayoutDirection;
-
-typedef enum __attribute__((__packed__)) {
-    CLAY_ALIGN_X_LEFT,
-    CLAY_ALIGN_X_RIGHT,
-    CLAY_ALIGN_X_CENTER,
-} Clay_LayoutAlignmentX;
-
-typedef enum __attribute__((__packed__)) {
-    CLAY_ALIGN_Y_TOP,
-    CLAY_ALIGN_Y_BOTTOM,
-    CLAY_ALIGN_Y_CENTER,
-} Clay_LayoutAlignmentY;
-
-typedef enum __attribute__((__packed__)) {
-    CLAY__SIZING_TYPE_FIT,
-    CLAY__SIZING_TYPE_GROW,
-    CLAY__SIZING_TYPE_PERCENT,
-} Clay__SizingType;
-
-typedef enum {
-    CLAY_RENDER_COMMAND_TYPE_NONE,
-    CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-    CLAY_RENDER_COMMAND_TYPE_BORDER,
-    CLAY_RENDER_COMMAND_TYPE_TEXT,
-    CLAY_RENDER_COMMAND_TYPE_IMAGE,
-    CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-    CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
-    CLAY_RENDER_COMMAND_TYPE_CUSTOM,
-} Clay_RenderCommandType;
-
 typedef enum __attribute__((__packed__)) {
     CLAY__LAYOUT_ELEMENT_TYPE_CONTAINER,
     CLAY__LAYOUT_ELEMENT_TYPE_RECTANGLE,
@@ -359,67 +607,6 @@ Clay_RenderCommandType Clay__LayoutElementTypeToRenderCommandType[] = {
     [CLAY__LAYOUT_ELEMENT_TYPE_TEXT] = CLAY_RENDER_COMMAND_TYPE_TEXT,
     [CLAY__LAYOUT_ELEMENT_TYPE_CUSTOM] = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
 };
-
-typedef enum __attribute__((__packed__)) {
-    CLAY_ATTACH_POINT_LEFT_TOP,
-    CLAY_ATTACH_POINT_LEFT_CENTER,
-    CLAY_ATTACH_POINT_LEFT_BOTTOM,
-    CLAY_ATTACH_POINT_CENTER_TOP,
-    CLAY_ATTACH_POINT_CENTER_CENTER,
-    CLAY_ATTACH_POINT_CENTER_BOTTOM,
-    CLAY_ATTACH_POINT_RIGHT_TOP,
-    CLAY_ATTACH_POINT_RIGHT_CENTER,
-    CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-} Clay_FloatingAttachPointType;
-
-typedef struct
-{
-    Clay_FloatingAttachPointType element;
-    Clay_FloatingAttachPointType parent;
-} Clay_FloatingAttachPoints;
-
-typedef struct {
-    Clay_LayoutAlignmentX x;
-    Clay_LayoutAlignmentY y;
-} Clay_ChildAlignment;
-
-typedef struct {
-    float min;
-    float max;
-} Clay_SizingMinMax;
-
-typedef struct {
-    union {
-        Clay_SizingMinMax sizeMinMax;
-        float sizePercent;
-    };
-    Clay__SizingType type;
-} Clay_SizingAxis;
-
-typedef struct {
-    Clay_SizingAxis width;
-    Clay_SizingAxis height;
-} Clay_Sizing;
-
-typedef struct {
-    uint16_t x;
-    uint16_t y;
-} Clay_Padding;
-
-typedef struct {
-    float topLeft;
-    float topRight;
-    float bottomLeft;
-    float bottomRight;
-} Clay_CornerRadius;
-
-typedef struct {
-    Clay_Sizing sizing;
-    Clay_Padding padding;
-    uint16_t childGap;
-    Clay_LayoutDirection layoutDirection;
-    Clay_ChildAlignment childAlignment;
-} Clay_LayoutConfig;
 
 Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = (Clay_LayoutConfig){};
 
@@ -445,14 +632,6 @@ Clay_LayoutConfig *Clay__LayoutConfigArray_Add(Clay__LayoutConfigArray *array, C
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct {
-    Clay_Color color;
-    Clay_CornerRadius cornerRadius;
-    #ifdef CLAY_EXTEND_CONFIG_RECTANGLE
-    CLAY_EXTEND_CONFIG_RECTANGLE
-    #endif
-} Clay_RectangleElementConfig;
-
 Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = (Clay_RectangleElementConfig){0};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_RectangleElementConfig NAME=Clay__RectangleElementConfigArray DEFAULT_VALUE=&CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT
@@ -476,26 +655,6 @@ Clay_RectangleElementConfig *Clay__RectangleElementConfigArray_Add(Clay__Rectang
 }
 #pragma endregion
 // __GENERATED__ template
-
-typedef enum
-{
-    CLAY_TEXT_WRAP_WORDS,
-    CLAY_TEXT_WRAP_NEWLINES,
-    CLAY_TEXT_WRAP_NONE,
-} Clay_TextElementConfigWrapMode;
-
-typedef struct
-{
-    Clay_Color textColor;
-    uint16_t fontId;
-    uint16_t fontSize;
-    uint16_t letterSpacing;
-    uint16_t lineSpacing;
-    Clay_TextElementConfigWrapMode wrapMode;
-    #ifdef CLAY_EXTEND_CONFIG_TEXT
-    CLAY_EXTEND_CONFIG_TEXT
-    #endif
-} Clay_TextElementConfig;
 
 Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = (Clay_TextElementConfig) {};
 
@@ -521,15 +680,6 @@ Clay_TextElementConfig *Clay__TextElementConfigArray_Add(Clay__TextElementConfig
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
-    void * imageData;
-    Clay_Dimensions sourceDimensions;
-    #ifdef CLAY_EXTEND_CONFIG_IMAGE
-    CLAY_EXTEND_CONFIG_IMAGE
-    #endif
-} Clay_ImageElementConfig;
-
 Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = (Clay_ImageElementConfig) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_ImageElementConfig NAME=Clay__ImageElementConfigArray DEFAULT_VALUE=&CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT
@@ -553,15 +703,6 @@ Clay_ImageElementConfig *Clay__ImageElementConfigArray_Add(Clay__ImageElementCon
 }
 #pragma endregion
 // __GENERATED__ template
-
-typedef struct
-{
-    Clay_Vector2 offset;
-    Clay_Dimensions expand;
-    uint16_t zIndex;
-    uint32_t parentId;
-    Clay_FloatingAttachPoints attachment;
-} Clay_FloatingElementConfig;
 
 Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = (Clay_FloatingElementConfig) {};
 
@@ -587,15 +728,6 @@ Clay_FloatingElementConfig *Clay__FloatingElementConfigArray_Add(Clay__FloatingE
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
-    #ifndef CLAY_EXTEND_CONFIG_CUSTOM
-    void* customData;
-    #else
-    CLAY_EXTEND_CONFIG_CUSTOM
-    #endif
-} Clay_CustomElementConfig;
-
 Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = (Clay_CustomElementConfig) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_CustomElementConfig NAME=Clay__CustomElementConfigArray DEFAULT_VALUE=&CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT
@@ -619,12 +751,6 @@ Clay_CustomElementConfig *Clay__CustomElementConfigArray_Add(Clay__CustomElement
 }
 #pragma endregion
 // __GENERATED__ template
-
-typedef struct
-{
-    bool horizontal;
-    bool vertical;
-} Clay_ScrollElementConfig;
 
 Clay_ScrollElementConfig CLAY__SCROLL_CONTAINER_ELEMENT_CONFIG_DEFAULT = (Clay_ScrollElementConfig ) {};
 
@@ -683,22 +809,6 @@ Clay__TextElementData *Clay__TextElementDataArray_Add(Clay__TextElementDataArray
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
-    uint32_t width;
-    Clay_Color color;
-} Clay_Border;
-
-typedef struct
-{
-    Clay_Border left;
-    Clay_Border right;
-    Clay_Border top;
-    Clay_Border bottom;
-    Clay_Border betweenChildren;
-    Clay_CornerRadius cornerRadius;
-} Clay_BorderElementConfig;
-
 Clay_BorderElementConfig CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT = (Clay_BorderElementConfig ) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_BorderElementConfig NAME=Clay__BorderElementConfigArray DEFAULT_VALUE=&CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT
@@ -728,17 +838,6 @@ typedef struct
     int32_t *elements;
     uint16_t length;
 } Clay__LayoutElementChildren;
-
-typedef union
-{
-    Clay_RectangleElementConfig *rectangleElementConfig;
-    Clay_TextElementConfig *textElementConfig;
-    Clay_ImageElementConfig *imageElementConfig;
-    Clay_FloatingElementConfig *floatingElementConfig;
-    Clay_CustomElementConfig *customElementConfig;
-    Clay_ScrollElementConfig *scrollElementConfig;
-    Clay_BorderElementConfig *borderElementConfig;
-} Clay_ElementConfigUnion;
 
 typedef struct t_Clay_LayoutElement
 {
@@ -818,26 +917,10 @@ Clay_LayoutElement* Clay__LayoutElementPointerArray_RemoveSwapback(Clay__LayoutE
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
-    Clay_BoundingBox boundingBox;
-    Clay_ElementConfigUnion config;
-    Clay_String text; // TODO I wish there was a way to avoid having to have this on every render command
-    uint32_t id;
-    Clay_RenderCommandType commandType;
-} Clay_RenderCommand;
-
 Clay_RenderCommand CLAY__RENDER_COMMAND_DEFAULT = (Clay_RenderCommand) {};
 
 // __GENERATED__ template array_define TYPE=Clay_RenderCommand NAME=Clay_RenderCommandArray
 #pragma region generated
-typedef struct
-{
-	uint32_t capacity;
-	uint32_t length;
-	Clay_RenderCommand *internalArray;
-} Clay_RenderCommandArray;
-
 Clay_RenderCommandArray Clay_RenderCommandArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return (Clay_RenderCommandArray){.capacity = capacity, .length = 0, .internalArray = (Clay_RenderCommand *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_RenderCommand), CLAY__ALIGNMENT(Clay_RenderCommand), arena)};
 }
@@ -2325,19 +2408,14 @@ void Clay__CalculateFinalLayout() {
     }
 }
 
-typedef struct
-{
-    // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
-    // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
-    Clay_Vector2 *scrollPosition;
-    Clay_Dimensions scrollContainerDimensions;
-    Clay_Dimensions contentDimensions;
-    Clay_ScrollElementConfig config;
-    // Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
-    bool found;
-} Clay_ScrollContainerData;
-
-Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
+inline Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) { return Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
+inline Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) { return Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
+inline Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) { return Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
+inline Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) { return Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
+inline Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) { return Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
+inline Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) { return Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
+inline Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) { return Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
+inline Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) { return Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
 const Clay_Color CLAY__DEBUGVIEW_COLOR_1 = (Clay_Color) {58, 56, 52, 255};
