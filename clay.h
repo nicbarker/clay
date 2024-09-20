@@ -46,7 +46,7 @@
 
 #define CLAY_BORDER_CONFIG_ALL(...)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ } })
 
-#define CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ }, .cornerRadius = { radius, radius, radius, radius }})
+#define CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = { radius, radius, radius, radius }})
 
 #define CLAY_CORNER_RADIUS(radius) (Clay_CornerRadius) { radius, radius, radius, radius }
 
