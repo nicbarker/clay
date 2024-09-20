@@ -1,5 +1,7 @@
 mkdir -p build/clay                                                       \
 && clang                                                                  \
+-Wall                                                                     \
+-WError                                                                   \
 -Os                                                                       \
 -DCLAY_WASM                                                               \
 -mbulk-memory                                                             \

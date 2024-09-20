@@ -22,6 +22,12 @@
 #ifndef CLAY_HEADER
 #define CLAY_HEADER
 
+#ifdef CLAY_WASM
+#define CLAY_WASM_EXPORT(name) __attribute__((export_name(name)))
+#else
+#define CLAY_WASM_EXPORT(null)
+#endif
+
 // Public Macro API ------------------------
 
 #define CLAY_LAYOUT(...) Clay__StoreLayoutConfig((Clay_LayoutConfig) {__VA_ARGS__ })
@@ -217,6 +223,8 @@ typedef struct {
     Clay_ChildAlignment childAlignment;
 } Clay_LayoutConfig;
 
+extern Clay_LayoutConfig CLAY_LAYOUT_DEFAULT;
+
 // Rectangle
 typedef struct {
     Clay_Color color;
@@ -386,17 +394,17 @@ void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_Str
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
 
-void Clay_OpenContainerElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig);
-void Clay_OpenRectangleElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_RectangleElementConfig *rectangleConfig);
-void Clay_OpenTextElement(Clay_ElementId id, Clay_String *text, Clay_TextElementConfig *textConfig);
-void Clay_OpenImageElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig);
-void Clay_OpenScrollElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *imageConfig);
-void Clay_OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *imageConfig);
-void Clay_OpenBorderElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *imageConfig);
-void Clay_OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *imageConfig);
-void Clay_CloseElementWithChildren();
-void Clay_CloseScrollElement();
-void Clay_CloseFloatingElement();
+void Clay__OpenContainerElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig);
+void Clay__OpenRectangleElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_RectangleElementConfig *rectangleConfig);
+void Clay__OpenTextElement(Clay_ElementId id, Clay_String text, Clay_TextElementConfig *textConfig);
+void Clay__OpenImageElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig);
+void Clay__OpenScrollElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *imageConfig);
+void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *imageConfig);
+void Clay__OpenBorderElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *imageConfig);
+void Clay__OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *imageConfig);
+void Clay__CloseElementWithChildren();
+void Clay__CloseScrollElement();
+void Clay__CloseFloatingElement();
 
 // Internal API functions required by macros
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
@@ -407,7 +415,10 @@ Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingEleme
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config);
 Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
-Clay_ElementId Clay_HashString(Clay_String toHash, uint32_t index);
+Clay_ElementId Clay__HashString(Clay_String toHash, uint32_t index);
+
+extern Clay_Color Clay__debugViewHighlightColor;
+extern uint32_t Clay__debugViewWidth;
 
 #ifdef __cplusplus
 }
@@ -420,12 +431,6 @@ Clay_ElementId Clay_HashString(Clay_String toHash, uint32_t index);
 // -----------------------------------------
 #ifdef CLAY_IMPLEMENTATION
 #undef CLAY_IMPLEMENTATION
-
-#ifdef CLAY_WASM
-#define CLAY_WASM_EXPORT(name) __attribute__((export_name(name)))
-#else
-#define CLAY_WASM_EXPORT(null)
-#endif
 
 #ifdef CLAY_OVERFLOW_TRAP
     #include "signal.h"
