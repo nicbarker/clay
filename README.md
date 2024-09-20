@@ -18,9 +18,11 @@ _An example GUI application built with clay_
 
 ## Quick Start
 
-1. Download or clone clay.h and include it.
+1. Download or clone clay.h and include it after defining `CLAY_IMPLEMENTATION` in one file.
 
 ```C
+// Must be defined in one file, _before_ #include "clay.h"
+#define CLAY_IMPLEMENTATION
 #include "clay.h"
 ```
 
