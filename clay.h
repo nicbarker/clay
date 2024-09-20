@@ -384,7 +384,7 @@ uint32_t Clay_MinMemorySize();
 Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset);
 void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
 void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions);
-void Clay_UpdateScrollContainers(bool isPointerActive, Clay_Vector2 scrollDelta, float deltaTime);
+void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDelta, float deltaTime);
 void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
 void Clay_BeginLayout();
 Clay_RenderCommandArray Clay_EndLayout();
@@ -398,10 +398,10 @@ void Clay__OpenContainerElement(Clay_ElementId id, Clay_LayoutConfig *layoutConf
 void Clay__OpenRectangleElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_RectangleElementConfig *rectangleConfig);
 void Clay__OpenTextElement(Clay_ElementId id, Clay_String text, Clay_TextElementConfig *textConfig);
 void Clay__OpenImageElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig);
-void Clay__OpenScrollElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *imageConfig);
-void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *imageConfig);
-void Clay__OpenBorderElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *imageConfig);
-void Clay__OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *imageConfig);
+void Clay__OpenScrollElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig);
+void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig);
+void Clay__OpenBorderElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *borderConfig);
+void Clay__OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig);
 void Clay__CloseElementWithChildren();
 void Clay__CloseScrollElement();
 void Clay__CloseFloatingElement();
@@ -415,7 +415,7 @@ Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingEleme
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config);
 Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
-Clay_ElementId Clay__HashString(Clay_String toHash, uint32_t index);
+Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -1570,8 +1570,8 @@ void Clay__OpenBorderElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig,
     Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER, layoutConfig, (Clay_ElementConfigUnion){ .borderElementConfig = borderConfig });
 }
 
-void Clay__OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customElementConfig) {
-    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_CUSTOM, layoutConfig, (Clay_ElementConfigUnion) { .customElementConfig = customElementConfig });
+void Clay__OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig) {
+    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_CUSTOM, layoutConfig, (Clay_ElementConfigUnion) { .customElementConfig = customConfig });
 }
 
 void Clay__OpenScrollElement(Clay_ElementId elementId, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig) {
@@ -1591,26 +1591,26 @@ void Clay__OpenScrollElement(Clay_ElementId elementId, Clay_LayoutConfig *layout
     }
 }
 
-void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingElementConfig) {
+void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig) {
     Clay_LayoutElement *parent = Clay__openLayoutElement;
-    uint32_t originalParentId = floatingElementConfig->parentId;
-    if (floatingElementConfig->parentId == 0) {
-        Clay_FloatingElementConfig newConfig = *floatingElementConfig;
+    uint32_t originalParentId = floatingConfig->parentId;
+    if (floatingConfig->parentId == 0) {
+        Clay_FloatingElementConfig newConfig = *floatingConfig;
         newConfig.parentId = Clay__openLayoutElement->id;
-        floatingElementConfig = Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, newConfig);
+        floatingConfig = Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, newConfig);
     } else {
-        Clay_LayoutElementHashMapItem *parentItem = Clay__GetHashMapItem(floatingElementConfig->parentId);
+        Clay_LayoutElementHashMapItem *parentItem = Clay__GetHashMapItem(floatingConfig->parentId);
         if (!parentItem) {
             Clay__WarningArray_Add(&Clay_warnings, (Clay__Warning) { CLAY_STRING("Clay Warning: Couldn't find parent container to attach floating container to.") });
         } else {
             parent = parentItem->layoutElement;
         }
     }
-    Clay__OpenElementWithParent(id, CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER, layoutConfig, (Clay_ElementConfigUnion) { .floatingElementConfig = floatingElementConfig });
+    Clay__OpenElementWithParent(id, CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER, layoutConfig, (Clay_ElementConfigUnion) { .floatingElementConfig = floatingConfig });
     Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, (Clay__LayoutElementTreeRoot) {
         .layoutElementIndex = Clay__layoutElements.length - 1,
         .parentId = parent->id,
-        .zIndex = floatingElementConfig->zIndex,
+        .zIndex = floatingConfig->zIndex,
         .clipElementId = originalParentId == 0 ? (Clay__openClipElementStack.length > 0 ? Clay__int32_tArray_Get(&Clay__openClipElementStack, (int)Clay__openClipElementStack.length - 1) : 0) : 0,
     });
 }
