@@ -64,9 +64,13 @@
 
 #define CLAY_SIZING_PERCENT(percentOfParent) (Clay_SizingAxis) { .type = CLAY__SIZING_TYPE_PERCENT, .sizePercent = (percentOfParent) }
 
-#define CLAY_ID(label) Clay__HashString(CLAY_STRING(label), 0)
+#define CLAY_ID(label) Clay__HashString(CLAY_STRING(label), 0, 0)
 
-#define CLAY_IDI(label, index) Clay__HashString(CLAY_STRING(label), index)
+#define CLAY_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, 0)
+
+#define CLAY_LOCAL_ID(label) CLAY_LOCAL_IDI(label, 0)
+
+#define CLAY_LOCAL_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, Clay__GetParentId())
 
 #define CLAY_ID_AUTO (Clay_ElementId) { .stringId = CLAY_STRING("Auto Generated ID"), .id = Clay__RehashWithNumber(Clay__dynamicElementIndexBaseHash.id, Clay__dynamicElementIndex++) }
 
@@ -415,7 +419,8 @@ Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingEleme
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config);
 Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
-Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset);
+Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
+uint32_t Clay__GetParentId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -1355,9 +1360,9 @@ Clay__DebugElementDataArray Clay__debugElementData;
 
 Clay_String LAST_HASH;
 
-Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset) {
+Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const uint32_t seed) {
     uint32_t hash = 0;
-    uint32_t base = 0;
+    uint32_t base = seed;
 
     for (int i = 0; i < key.length; i++) {
         base += key.chars[i];
@@ -1380,6 +1385,10 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset) {
     LAST_HASH.length = (int)offset;
     #endif
     return (Clay_ElementId) { .stringId = key, .id = hash + 1, .offset = offset, .baseId = base + 1 }; // Reserve the hash result of zero as "null id"
+}
+
+uint32_t Clay__GetParentId(void) {
+    return Clay__openLayoutElement ? Clay__openLayoutElement->id : 0;
 }
 
 Clay_ElementId Clay__Rehash(Clay_ElementId elementId, uint32_t number) {
