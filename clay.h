@@ -70,7 +70,7 @@
 
 #define CLAY_LOCAL_ID(label) CLAY_LOCAL_IDI(label, 0)
 
-#define CLAY_LOCAL_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, Clay__GetParentId())
+#define CLAY_LOCAL_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, Clay__GetOpenLayoutElementId())
 
 #define CLAY_ID_AUTO (Clay_ElementId) { .stringId = CLAY_STRING("Auto Generated ID"), .id = Clay__RehashWithNumber(Clay__dynamicElementIndexBaseHash.id, Clay__dynamicElementIndex++) }
 
@@ -420,7 +420,7 @@ Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConf
 Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
-uint32_t Clay__GetParentId(void);
+uint32_t Clay__GetOpenLayoutElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -1387,7 +1387,7 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
     return (Clay_ElementId) { .stringId = key, .id = hash + 1, .offset = offset, .baseId = base + 1 }; // Reserve the hash result of zero as "null id"
 }
 
-uint32_t Clay__GetParentId(void) {
+uint32_t Clay__GetOpenLayoutElementId(void) {
     return Clay__openLayoutElement ? Clay__openLayoutElement->id : 0;
 }
 
