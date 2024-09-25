@@ -2433,11 +2433,11 @@ inline Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElem
 inline Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) { return Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
-const Clay_Color CLAY__DEBUGVIEW_COLOR_1 = (Clay_Color) {58, 56, 52, 255};
-const Clay_Color CLAY__DEBUGVIEW_COLOR_2 = (Clay_Color) {62, 60, 58, 255};
-const Clay_Color CLAY__DEBUGVIEW_COLOR_3 = (Clay_Color) {141, 133, 135, 255};
-const Clay_Color CLAY__DEBUGVIEW_COLOR_4 = (Clay_Color) {238, 226, 231, 255};
-const Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = (Clay_Color) {102, 80, 78, 255};
+#define CLAY__DEBUGVIEW_COLOR_1 (Clay_Color) {58, 56, 52, 255}
+#define CLAY__DEBUGVIEW_COLOR_2 (Clay_Color) {62, 60, 58, 255}
+#define CLAY__DEBUGVIEW_COLOR_3 (Clay_Color) {141, 133, 135, 255}
+#define CLAY__DEBUGVIEW_COLOR_4 (Clay_Color) {238, 226, 231, 255}
+#define CLAY__DEBUGVIEW_COLOR_SELECTED_ROW (Clay_Color) {102, 80, 78, 255}
 const int CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
 const int CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
