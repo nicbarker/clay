@@ -3125,6 +3125,9 @@ void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions) {
     for (int i = 0; i < Clay__layoutElementsHashMap.capacity; ++i) {
         Clay__layoutElementsHashMap.internalArray[i] = -1;
     }
+    for (int i = 0; i < Clay__measureTextHashMap.capacity; ++i) {
+        Clay__measureTextHashMap.internalArray[i] = 0;
+    }
     Clay__measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
     Clay__layoutDimensions = layoutDimensions;
 }
