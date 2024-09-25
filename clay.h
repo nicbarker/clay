@@ -68,11 +68,9 @@
 
 #define CLAY_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, 0)
 
-#define CLAY_LOCAL_ID(label) CLAY_LOCAL_IDI(label, 0)
+#define CLAY_ID_LOCAL(label) CLAY_IDI_LOCAL(label, 0)
 
-#define CLAY_LOCAL_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, Clay__GetOpenLayoutElementId())
-
-#define CLAY_ID_AUTO (Clay_ElementId) { .stringId = CLAY_STRING("Auto Generated ID"), .id = Clay__RehashWithNumber(Clay__dynamicElementIndexBaseHash.id, Clay__dynamicElementIndex++) }
+#define CLAY_IDI_LOCAL(label, index) Clay__HashString(CLAY_STRING(label), index, Clay__GetOpenLayoutElementId())
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
@@ -2692,44 +2690,44 @@ void Clay__RenderDebugViewElementConfigHeader(Clay_String elementId, Clay_String
 }
 
 void Clay__RenderDebugViewColor(Clay_Color color, Clay_TextElementConfig *textConfig) {
-    CLAY_CONTAINER(CLAY_ID_AUTO, CLAY_LAYOUT(.childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), {
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING("{ r: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(color.r), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(", g: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(color.g), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(", b: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(color.b), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(", a: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(color.a), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(" }"), textConfig);
-        CLAY_CONTAINER(CLAY_ID_AUTO, CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10) }), {});
-        CLAY_BORDER_CONTAINER(CLAY_ID_AUTO, CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)}), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_4, 4), {
-            CLAY_RECTANGLE(CLAY_ID_AUTO, CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(4), .color = color), {});
+    CLAY_CONTAINER(CLAY_ID_LOCAL("Color"), CLAY_LAYOUT(.childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), {
+        CLAY_TEXT(CLAY_ID_LOCAL("Red"), CLAY_STRING("{ r: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("RedValue"), Clay__IntToString(color.r), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("Green"), CLAY_STRING(", g: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("GreenValue"), Clay__IntToString(color.g), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("Blue"), CLAY_STRING(", b: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("BlueValue"), Clay__IntToString(color.b), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("Alpha"), CLAY_STRING(", a: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("AlphaValue"), Clay__IntToString(color.a), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("Brace"), CLAY_STRING(" }"), textConfig);
+        CLAY_CONTAINER(CLAY_ID_LOCAL("Spacer"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10) }), {});
+        CLAY_BORDER_CONTAINER(CLAY_ID_LOCAL("PreviewBorder"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)}), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_4, 4), {
+            CLAY_RECTANGLE(CLAY_ID_LOCAL("PreviewBackground"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(4), .color = color), {});
         });
     });
 }
 
 void Clay__RenderDebugViewCornerRadius(Clay_CornerRadius cornerRadius, Clay_TextElementConfig *textConfig) {
-    CLAY_CONTAINER(CLAY_ID_AUTO, CLAY_LAYOUT(.childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), {
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING("{ topLeft: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(cornerRadius.topLeft), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(", topRight: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(cornerRadius.topRight), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(", bottomLeft: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(cornerRadius.bottomLeft), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(", bottomRight: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(cornerRadius.bottomRight), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(" }"), textConfig);
+    CLAY_CONTAINER(CLAY_ID_LOCAL("CornerRadius"), CLAY_LAYOUT(.childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), {
+        CLAY_TEXT(CLAY_ID_LOCAL("TopLeftLabel"), CLAY_STRING("{ topLeft: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("TopLeft"), Clay__IntToString(cornerRadius.topLeft), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("TopRightLabel"), CLAY_STRING(", topRight: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("TopRight"), Clay__IntToString(cornerRadius.topRight), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("BottomLeftLabel"), CLAY_STRING(", bottomLeft: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("BottomLeft"), Clay__IntToString(cornerRadius.bottomLeft), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("BottomRightLabel"), CLAY_STRING(", bottomRight: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("BottomRight"), Clay__IntToString(cornerRadius.bottomRight), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("Brace"), CLAY_STRING(" }"), textConfig);
     });
 }
 
 void Clay__RenderDebugViewBorder(int index, Clay_Border border, Clay_TextElementConfig *textConfig) {
-    CLAY_CONTAINER(CLAY_ID_AUTO, CLAY_LAYOUT(.childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), {
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING("{ width: "), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, Clay__IntToString(border.width), textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(", color: "), textConfig);
+    CLAY_CONTAINER(CLAY_ID_LOCAL("BorderConfig"), CLAY_LAYOUT(.childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), {
+        CLAY_TEXT(CLAY_ID_LOCAL("WidthLabel"), CLAY_STRING("{ width: "), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("Width"), Clay__IntToString(border.width), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("ColorLabel"), CLAY_STRING(", color: "), textConfig);
         Clay__RenderDebugViewColor(border.color, textConfig);
-        CLAY_TEXT(CLAY_ID_AUTO, CLAY_STRING(" }"), textConfig);
+        CLAY_TEXT(CLAY_ID_LOCAL("Color"), CLAY_STRING(" }"), textConfig);
     });
 }
 
