@@ -16,33 +16,29 @@ const uint32_t FONT_ID_TITLE_36 = 4;
 const uint32_t FONT_ID_MONOSPACE_24 = 5;
 
 const Clay_Color COLOR_LIGHT = (Clay_Color) {244, 235, 230, 255};
-Clay_Color COLOR_LIGHT_HOVER = (Clay_Color) {224, 215, 210, 255};
-Clay_Color COLOR_BUTTON_HOVER = (Clay_Color) {238, 227, 225, 255};
-Clay_Color COLOR_BROWN = (Clay_Color) {61, 26, 5, 255};
-Clay_Color COLOR_RED = (Clay_Color) {168, 66, 28, 255};
-Clay_Color COLOR_RED_HOVER = (Clay_Color) {148, 46, 8, 255};
-Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
-Clay_Color COLOR_BLUE = (Clay_Color) {111, 173, 162, 255};
-Clay_Color COLOR_TEAL = (Clay_Color) {111, 173, 162, 255};
-Clay_Color COLOR_BLUE_DARK = (Clay_Color) {2, 32, 82, 255};
+const Clay_Color COLOR_LIGHT_HOVER = (Clay_Color) {224, 215, 210, 255};
+const Clay_Color COLOR_RED = (Clay_Color) {168, 66, 28, 255};
+const Clay_Color COLOR_RED_HOVER = (Clay_Color) {148, 46, 8, 255};
+const Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
+const Clay_Color COLOR_BLUE = (Clay_Color) {111, 173, 162, 255};
 
 // Colors for top stripe
-Clay_Color COLOR_TOP_BORDER_1 = (Clay_Color) {168, 66, 28, 255};
-Clay_Color COLOR_TOP_BORDER_2 = (Clay_Color) {223, 110, 44, 255};
-Clay_Color COLOR_TOP_BORDER_3 = (Clay_Color) {225, 138, 50, 255};
-Clay_Color COLOR_TOP_BORDER_4 = (Clay_Color) {236, 189, 80, 255};
-Clay_Color COLOR_TOP_BORDER_5 = (Clay_Color) {240, 213, 137, 255};
+const Clay_Color COLOR_TOP_BORDER_1 = (Clay_Color) {168, 66, 28, 255};
+const Clay_Color COLOR_TOP_BORDER_2 = (Clay_Color) {223, 110, 44, 255};
+const Clay_Color COLOR_TOP_BORDER_3 = (Clay_Color) {225, 138, 50, 255};
+const Clay_Color COLOR_TOP_BORDER_4 = (Clay_Color) {236, 189, 80, 255};
+const Clay_Color COLOR_TOP_BORDER_5 = (Clay_Color) {240, 213, 137, 255};
 
-Clay_Color COLOR_BLOB_BORDER_1 = (Clay_Color) {168, 66, 28, 255};
-Clay_Color COLOR_BLOB_BORDER_2 = (Clay_Color) {203, 100, 44, 255};
-Clay_Color COLOR_BLOB_BORDER_3 = (Clay_Color) {225, 138, 50, 255};
-Clay_Color COLOR_BLOB_BORDER_4 = (Clay_Color) {236, 159, 70, 255};
-Clay_Color COLOR_BLOB_BORDER_5 = (Clay_Color) {240, 189, 100, 255};
+const Clay_Color COLOR_BLOB_BORDER_1 = (Clay_Color) {168, 66, 28, 255};
+const Clay_Color COLOR_BLOB_BORDER_2 = (Clay_Color) {203, 100, 44, 255};
+const Clay_Color COLOR_BLOB_BORDER_3 = (Clay_Color) {225, 138, 50, 255};
+const Clay_Color COLOR_BLOB_BORDER_4 = (Clay_Color) {236, 159, 70, 255};
+const Clay_Color COLOR_BLOB_BORDER_5 = (Clay_Color) {240, 189, 100, 255};
 
 #define RAYLIB_VECTOR2_TO_CLAY_VECTOR2(vector) (Clay_Vector2) { .x = vector.x, .y = vector.y }
 
-Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} };
-Clay_TextElementConfig blobTextConfig = (Clay_TextElementConfig) { .fontId = FONT_ID_BODY_24, .fontSize = 30, .textColor = COLOR_LIGHT };
+Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = 2, .fontSize = 24, .textColor = {61, 26, 5, 255} };
+Clay_TextElementConfig blobTextConfig = (Clay_TextElementConfig) { .fontId = 2, .fontSize = 30, .textColor = {244, 235, 230, 255} };
 
 void LandingPageBlob(int index, int fontSize, Clay_Color color, Clay_String text, Clay_String imageURL) {
     CLAY_BORDER_CONTAINER(CLAY_IDI("HeroBlob", index), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 480) }, .padding = {16, 16}, .childGap = 16, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, color, 10), {
