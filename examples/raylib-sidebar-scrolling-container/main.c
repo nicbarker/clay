@@ -4,14 +4,14 @@
 
 const uint32_t FONT_ID_BODY_24 = 0;
 const uint32_t FONT_ID_BODY_16 = 1;
-Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
-Clay_Color COLOR_BLUE = (Clay_Color) {111, 173, 162, 255};
+#define COLOR_ORANGE (Clay_Color) {225, 138, 50, 255}
+#define COLOR_BLUE (Clay_Color) {111, 173, 162, 255}
 
 Texture2D profilePicture;
 #define RAYLIB_VECTOR2_TO_CLAY_VECTOR2(vector) (Clay_Vector2) { .x = vector.x, .y = vector.y }
 
 Clay_String profileText = CLAY_STRING("Profile Page one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen");
-Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = FONT_ID_BODY_16, .fontSize = 16, .textColor = {0,0,0,255} };
+Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = 1, .fontSize = 16, .textColor = {0,0,0,255} };
 
 // Examples of re-usable "Components"
 void RenderHeaderButton(uint16_t index, Clay_String text) {

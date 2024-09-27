@@ -1307,7 +1307,7 @@ typedef struct
 
 Clay__PointerInfo Clay__pointerInfo = (Clay__PointerInfo) { -1, -1 };
 Clay_Dimensions Clay__layoutDimensions = (Clay_Dimensions){};
-Clay_ElementId Clay__dynamicElementIndexBaseHash = (Clay_ElementId) { .id = 128476991, .stringId = CLAY_STRING("Auto ID") };
+Clay_ElementId Clay__dynamicElementIndexBaseHash = (Clay_ElementId) { .id = 128476991, .stringId = { .chars = "Auto ID", .length = 8 } };
 uint32_t Clay__dynamicElementIndex = 0;
 bool Clay__debugModeEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
@@ -2440,15 +2440,15 @@ inline Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElem
 inline Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) { return Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
-#define CLAY__DEBUGVIEW_COLOR_1 (Clay_Color) {58, 56, 52, 255}
-#define CLAY__DEBUGVIEW_COLOR_2 (Clay_Color) {62, 60, 58, 255}
-#define CLAY__DEBUGVIEW_COLOR_3 (Clay_Color) {141, 133, 135, 255}
-#define CLAY__DEBUGVIEW_COLOR_4 (Clay_Color) {238, 226, 231, 255}
-#define CLAY__DEBUGVIEW_COLOR_SELECTED_ROW (Clay_Color) {102, 80, 78, 255}
+Clay_Color CLAY__DEBUGVIEW_COLOR_1 = (Clay_Color) {58, 56, 52, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_2 = (Clay_Color) {62, 60, 58, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_3 = (Clay_Color) {141, 133, 135, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_4 = (Clay_Color) {238, 226, 231, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = (Clay_Color) {102, 80, 78, 255};
 const int CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
 const int CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
-Clay_TextElementConfig Clay__DebugView_TextNameConfig = (Clay_TextElementConfig) {.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_4, .wrapMode = CLAY_TEXT_WRAP_NONE };
+Clay_TextElementConfig Clay__DebugView_TextNameConfig = (Clay_TextElementConfig) {.fontSize = 16, .textColor = {238, 226, 231, 255}, .wrapMode = CLAY_TEXT_WRAP_NONE };
 Clay_LayoutConfig Clay__DebugView_ScrollViewItemLayoutConfig = (Clay_LayoutConfig) {};
 
 Clay_String Clay__IntToString(int integer) {
