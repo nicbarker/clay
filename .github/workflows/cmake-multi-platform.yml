@@ -59,6 +59,7 @@ jobs:
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: "_deps"
+        key: "_deps"
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
