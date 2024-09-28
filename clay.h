@@ -455,9 +455,9 @@ extern uint32_t Clay__debugViewWidth;
 #ifdef __cplusplus
 #define CLAY__ALIGNMENT(type) alignof(type)
 #define CLAY__INIT(type) type
-#elif
+#else
 #define CLAY__INIT(type) (type)
-#define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; } a, a.x))
+#define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
 #endif
 
 bool Clay__warningsEnabled = true;
