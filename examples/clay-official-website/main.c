@@ -44,7 +44,7 @@ void LandingPageBlob(int index, int fontSize, Clay_Color color, Clay_String text
     CLAY_BORDER_CONTAINER(CLAY_IDI("HeroBlob", index), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 480) }, .padding = {16, 16}, .childGap = 16, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, color, 10)) {
         CLAY_IMAGE(CLAY_IDI("CheckImage", index), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(32) }), CLAY_IMAGE_CONFIG(.sourceDimensions = { 128, 128 }, .sourceURL = imageURL)) {}
         CLAY_TEXT(CLAY_IDI("HeroBlobText", index), text, CLAY_TEXT_CONFIG(.fontSize = fontSize, .fontId = FONT_ID_BODY_24, .textColor = color));
-    };
+    }
 }
 
 void LandingPageDesktop() {
@@ -54,7 +54,7 @@ void LandingPageDesktop() {
                 CLAY_TEXT(CLAY_ID("LeftTextTitle"), CLAY_STRING("Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance."), CLAY_TEXT_CONFIG(.fontSize = 56, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_RED));
                 CLAY_CONTAINER(CLAY_ID("LandingPageSpacer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(32) })) {}
                 CLAY_TEXT(CLAY_ID("LeftTextTagline"), CLAY_STRING("Clay is laying out this webpage right now!"), CLAY_TEXT_CONFIG(.fontSize = 36, .fontId = FONT_ID_TITLE_36, .textColor = COLOR_ORANGE));
-            };
+            }
             CLAY_CONTAINER(CLAY_ID("HeroImageOuter"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_PERCENT(0.45f) }, .childAlignment = { CLAY_ALIGN_X_CENTER }, .childGap = 16)) {
                 LandingPageBlob(1, 32, COLOR_BLOB_BORDER_5, CLAY_STRING("High performance"), CLAY_STRING("/clay/images/check_5.png"));
                 LandingPageBlob(2, 32, COLOR_BLOB_BORDER_4, CLAY_STRING("Flexbox-style responsive layout"), CLAY_STRING("/clay/images/check_4.png"));
@@ -188,7 +188,7 @@ void HighPerformancePageDesktop(float lerpValue) {
 
 void HighPerformancePageMobile(float lerpValue) {
     CLAY_RECTANGLE(CLAY_ID("PerformanceMobile"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 16, 32}, .childGap = 32), CLAY_RECTANGLE_CONFIG(.color = COLOR_RED)) {
-        CLAY_CONTAINER(CLAY_ID("PerformanceLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8) {
+        CLAY_CONTAINER(CLAY_ID("PerformanceLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8)) {
             CLAY_TEXT(CLAY_ID("PerformanceTextTitle"), CLAY_STRING("High Performance"), CLAY_TEXT_CONFIG(.fontSize = 48, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT));
             CLAY_CONTAINER(CLAY_ID("PerformanceSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) })) {}
             CLAY_TEXT(CLAY_IDI("PerformanceTextSubTitle", 1), CLAY_STRING("Fast enough to recompute your entire UI every frame."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
@@ -196,11 +196,11 @@ void HighPerformancePageMobile(float lerpValue) {
             CLAY_TEXT(CLAY_IDI("PerformanceTextSubTitle", 3), CLAY_STRING("Simplify animations and reactive UI design by avoiding the standard performance hacks."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
         }
         CLAY_CONTAINER(CLAY_ID("PerformanceRightImageOuter"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .childAlignment = {CLAY_ALIGN_X_CENTER})) {
-            CLAY_BORDER_CONTAINER(CLAY_ID(""), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(400) }), CLAY_BORDER_CONFIG_ALL(.width = 2, .color = COLOR_LIGHT) {
-                CLAY_RECTANGLE(CLAY_ID("AnimationDemoContainerLeft"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.35f + 0.3f * lerpValue), CLAY_SIZING_GROW() }, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = ColorLerp(COLOR_RED, COLOR_ORANGE, lerpValue)) {
+            CLAY_BORDER_CONTAINER(CLAY_ID(""), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(400) }), CLAY_BORDER_CONFIG_ALL(.width = 2, .color = COLOR_LIGHT)) {
+                CLAY_RECTANGLE(CLAY_ID("AnimationDemoContainerLeft"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.35f + 0.3f * lerpValue), CLAY_SIZING_GROW() }, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = ColorLerp(COLOR_RED, COLOR_ORANGE, lerpValue))) {
                     CLAY_TEXT(CLAY_ID("AnimationDemoTextLeft"), LOREM_IPSUM_TEXT, CLAY_TEXT_CONFIG(.fontSize = 24, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT));
                 }
-                CLAY_RECTANGLE(CLAY_ID("AnimationDemoContainerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER},  .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = ColorLerp(COLOR_ORANGE, COLOR_RED, lerpValue)) {
+                CLAY_RECTANGLE(CLAY_ID("AnimationDemoContainerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER},  .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = ColorLerp(COLOR_ORANGE, COLOR_RED, lerpValue))) {
                     CLAY_TEXT(CLAY_ID("AnimationDemoTextRight"), LOREM_IPSUM_TEXT, CLAY_TEXT_CONFIG(.fontSize = 24, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT));
                 }
             }
@@ -209,14 +209,14 @@ void HighPerformancePageMobile(float lerpValue) {
 }
 
 void RendererButtonActive(Clay_ElementId id, int index, Clay_String text) {
-    CLAY_RECTANGLE(id, CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300) }, .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = Clay_PointerOver(id) ? COLOR_RED_HOVER : COLOR_RED, .cornerRadius = CLAY_CORNER_RADIUS(10)) {
+    CLAY_RECTANGLE(id, CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300) }, .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = Clay_PointerOver(id) ? COLOR_RED_HOVER : COLOR_RED, .cornerRadius = CLAY_CORNER_RADIUS(10))) {
         CLAY_TEXT(CLAY_ID("RendererButtonActiveText"), text, CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
     }
 }
 
 void RendererButtonInactive(Clay_ElementId id, int index, Clay_String text) {
-    CLAY_BORDER_CONTAINER(id, CLAY_LAYOUT(), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, COLOR_RED, 10) {
-        CLAY_RECTANGLE(CLAY_IDI("RendererButtonInactiveInner", index), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300) }, .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = Clay_PointerOver(id) ? COLOR_LIGHT_HOVER : COLOR_LIGHT, .cornerRadius = CLAY_CORNER_RADIUS(10), .cursorPointer = true) {
+    CLAY_BORDER_CONTAINER(id, CLAY_LAYOUT(), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, COLOR_RED, 10)) {
+        CLAY_RECTANGLE(CLAY_IDI("RendererButtonInactiveInner", index), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300) }, .padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = Clay_PointerOver(id) ? COLOR_LIGHT_HOVER : COLOR_LIGHT, .cornerRadius = CLAY_CORNER_RADIUS(10), .cursorPointer = true)) {
             CLAY_TEXT(CLAY_IDI("RendererButtonInactiveText", index), text, CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
         }
     }
@@ -225,14 +225,14 @@ void RendererButtonInactive(Clay_ElementId id, int index, Clay_String text) {
 void RendererPageDesktop() {
     CLAY_CONTAINER(CLAY_ID("RendererPageDesktop"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 50})) {
         CLAY_BORDER_CONTAINER(CLAY_ID("RendererPage"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }, .childAlignment = { 0, CLAY_ALIGN_Y_CENTER }, .padding = { 32, 32 }, .childGap = 32), CLAY_BORDER_CONFIG(.left = { 2, COLOR_RED }, .right = { 2, COLOR_RED })) {
-            CLAY_CONTAINER(CLAY_ID("RendererLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8) {
+            CLAY_CONTAINER(CLAY_ID("RendererLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8)) {
                 CLAY_TEXT(CLAY_ID("RendererTextTitle"), CLAY_STRING("Renderer & Platform Agnostic"), CLAY_TEXT_CONFIG(.fontSize = 52, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_RED));
                 CLAY_CONTAINER(CLAY_ID("RendererSpacerLeft"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) })) {}
                 CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 1), CLAY_STRING("Clay outputs a sorted array of primitive render commands, such as RECTANGLE, TEXT or IMAGE."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
                 CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 2), CLAY_STRING("Write your own renderer in a few hundred lines of code, or use the provided examples for Raylib, WebGL canvas and more."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
                 CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 3), CLAY_STRING("There's even an HTML renderer - you're looking at it right now!"), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
             }
-            CLAY_CONTAINER(CLAY_ID("RendererRightText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .childAlignment = {CLAY_ALIGN_X_CENTER}, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16) {
+            CLAY_CONTAINER(CLAY_ID("RendererRightText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .childAlignment = {CLAY_ALIGN_X_CENTER}, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16)) {
                 CLAY_TEXT(CLAY_ID("RendererTextRightTitle"), CLAY_STRING("Try changing renderer!"), CLAY_TEXT_CONFIG(.fontSize = 36, .fontId = FONT_ID_BODY_36, .textColor = COLOR_ORANGE));
                 CLAY_CONTAINER(CLAY_ID("RendererSpacerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) })) {}
                 if (ACTIVE_RENDERER_INDEX == 0) {
@@ -248,15 +248,15 @@ void RendererPageDesktop() {
 }
 
 void RendererPageMobile() {
-    CLAY_RECTANGLE(CLAY_ID("RendererMobile"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}, .padding = {.x = 16, 32}, .childGap = 32), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT) {
-        CLAY_CONTAINER(CLAY_ID("RendererLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8) {
+    CLAY_RECTANGLE(CLAY_ID("RendererMobile"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}, .padding = {.x = 16, 32}, .childGap = 32), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT)) {
+        CLAY_CONTAINER(CLAY_ID("RendererLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8)) {
             CLAY_TEXT(CLAY_ID("RendererTextTitle"), CLAY_STRING("Renderer & Platform Agnostic"), CLAY_TEXT_CONFIG(.fontSize = 48, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_RED));
             CLAY_CONTAINER(CLAY_ID("RendererSpacerLeft"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) })) {}
             CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 1), CLAY_STRING("Clay outputs a sorted array of primitive render commands, such as RECTANGLE, TEXT or IMAGE."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
             CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 2), CLAY_STRING("Write your own renderer in a few hundred lines of code, or use the provided examples for Raylib, WebGL canvas and more."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
             CLAY_TEXT(CLAY_IDI("RendererTextSubTitle", 3), CLAY_STRING("There's even an HTML renderer - you're looking at it right now!"), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
         }
-        CLAY_CONTAINER(CLAY_ID("RendererRightText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16) {
+        CLAY_CONTAINER(CLAY_ID("RendererRightText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16)) {
             CLAY_TEXT(CLAY_ID("RendererTextRightTitle"), CLAY_STRING("Try changing renderer!"), CLAY_TEXT_CONFIG(.fontSize = 36, .fontId = FONT_ID_BODY_36, .textColor = COLOR_ORANGE));
             CLAY_CONTAINER(CLAY_ID("RendererSpacerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) })) {}
             if (ACTIVE_RENDERER_INDEX == 0) {
@@ -271,8 +271,8 @@ void RendererPageMobile() {
 }
 
 void DebuggerPageDesktop() {
-    CLAY_RECTANGLE(CLAY_ID("DebuggerDesktop"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 82, 32}, .childGap = 64), CLAY_RECTANGLE_CONFIG(.color = COLOR_RED) {
-        CLAY_CONTAINER(CLAY_ID("DebuggerLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8) {
+    CLAY_RECTANGLE(CLAY_ID("DebuggerDesktop"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT(.min = windowHeight - 50) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 82, 32}, .childGap = 64), CLAY_RECTANGLE_CONFIG(.color = COLOR_RED)) {
+        CLAY_CONTAINER(CLAY_ID("DebuggerLeftText"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.5) }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8)) {
             CLAY_TEXT(CLAY_ID("DebuggerTextTitle"), CLAY_STRING("Integrated Debug Tools"), CLAY_TEXT_CONFIG(.fontSize = 52, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT));
             CLAY_CONTAINER(CLAY_ID("DebuggerSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 16) })) {}
             CLAY_TEXT(CLAY_IDI("DebuggerTextSubTitle", 1), CLAY_STRING("Clay includes built in \"Chrome Inspector\"-style debug tooling."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
@@ -293,12 +293,12 @@ typedef struct
     bool mouseDown;
 } ScrollbarData;
 
-ScrollbarData scrollbarData = (ScrollbarData)) {};
+ScrollbarData scrollbarData = (ScrollbarData) {};
 float animationLerpValue = -1.0f;
 
 Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
     Clay_BeginLayout();
-    CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT) {
+    CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT)) {
         CLAY_CONTAINER(CLAY_ID("Header"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(50) }, .childAlignment = { 0, CLAY_ALIGN_Y_CENTER }, .childGap = 24, .padding = { 32 })) {
             CLAY_TEXT(CLAY_ID("Logo"), CLAY_STRING("Clay"), &headerTextConfig);
             CLAY_CONTAINER(CLAY_ID("Spacer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() })) {}
@@ -306,25 +306,25 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
             if (!mobileScreen) {
                 CLAY_RECTANGLE(CLAY_ID("LinkExamplesOuter"), &CLAY_LAYOUT_DEFAULT, CLAY_RECTANGLE_CONFIG(.link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples"), .color = {0,0,0,0})) {
                     CLAY_TEXT(CLAY_ID("LinkExamplesText"), CLAY_STRING("Examples"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
-                };
+                }
                 CLAY_RECTANGLE(CLAY_ID("LinkDocsOuter"), &CLAY_LAYOUT_DEFAULT, CLAY_RECTANGLE_CONFIG(.link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md"), .color = {0,0,0,0})) {
                     CLAY_TEXT(CLAY_ID("LinkDocsText"), CLAY_STRING("Docs"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
-                };
+                }
             }
             Clay_ElementId githubButtonId = CLAY_ID("HeaderButtonGithub");
-            CLAY_BORDER_CONTAINER(CLAY_ID("LinkGithubOuter"), CLAY_LAYOUT(), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, COLOR_RED, 10) {
-                CLAY_RECTANGLE(githubButtonId, CLAY_LAYOUT(.padding = {16, 6}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(10), .link = CLAY_STRING("https://github.com/nicbarker/clay"), .color = Clay_PointerOver(githubButtonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT) {
+            CLAY_BORDER_CONTAINER(CLAY_ID("LinkGithubOuter"), CLAY_LAYOUT(), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, COLOR_RED, 10)) {
+                CLAY_RECTANGLE(githubButtonId, CLAY_LAYOUT(.padding = {16, 6}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(10), .link = CLAY_STRING("https://github.com/nicbarker/clay"), .color = Clay_PointerOver(githubButtonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT)) {
                     CLAY_TEXT(CLAY_ID("LinkGithubText"), CLAY_STRING("Github"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
-                };
-            };
-        };
+                }
+            }
+        }
         CLAY_RECTANGLE(CLAY_ID("TopBorder1"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(4) }), CLAY_RECTANGLE_CONFIG(.color = COLOR_TOP_BORDER_5)) {}
         CLAY_RECTANGLE(CLAY_ID("TopBorder2"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(4) }), CLAY_RECTANGLE_CONFIG(.color = COLOR_TOP_BORDER_4)) {}
         CLAY_RECTANGLE(CLAY_ID("TopBorder3"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(4) }), CLAY_RECTANGLE_CONFIG(.color = COLOR_TOP_BORDER_3)) {}
         CLAY_RECTANGLE(CLAY_ID("TopBorder4"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(4) }), CLAY_RECTANGLE_CONFIG(.color = COLOR_TOP_BORDER_2)) {}
         CLAY_RECTANGLE(CLAY_ID("TopBorder5"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(4) }), CLAY_RECTANGLE_CONFIG(.color = COLOR_TOP_BORDER_1)) {}
-        CLAY_RECTANGLE(CLAY_ID("ScrollContainerBackgroundRectangle"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT) {
-            CLAY_SCROLL_CONTAINER(CLAY_ID("OuterScrollContainer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_SCROLL_CONFIG(.vertical = true) {
+        CLAY_RECTANGLE(CLAY_ID("ScrollContainerBackgroundRectangle"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT)) {
+            CLAY_SCROLL_CONTAINER(CLAY_ID("OuterScrollContainer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_SCROLL_CONFIG(.vertical = true)) {
                 CLAY_BORDER_CONTAINER(CLAY_ID("ScrollContainerInner"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW() }), CLAY_BORDER_CONFIG(.betweenChildren = {2, COLOR_RED})) {
                     if (mobileScreen) {
                         LandingPageMobile();
@@ -340,10 +340,10 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
                         RendererPageDesktop();
                         DebuggerPageDesktop();
                     }
-                };
-            };
-        };
-    };
+                }
+            }
+        }
+    }
 
     if (!mobileScreen) {
         Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
@@ -356,7 +356,7 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
         float scrollHeight = scrollData.scrollContainerDimensions.height - 12;
         CLAY_FLOATING_CONTAINER(CLAY_ID("ScrollBar"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = CLAY_ID("OuterScrollContainer").id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP})) {
             CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10), CLAY_SIZING_FIXED((scrollHeight / scrollData.contentDimensions.height) * scrollHeight)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(5), .color = scrollbarColor)) {}
-        };
+        }
     }
     return Clay_EndLayout();
 }

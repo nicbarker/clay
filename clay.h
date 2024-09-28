@@ -1297,7 +1297,7 @@ typedef struct
     Clay__PointerInfoMouseDownState state;
 } Clay__PointerInfo;
 
-Clay__PointerInfo Clay__pointerInfo = (Clay__PointerInfo) { -1, -1 };
+Clay__PointerInfo Clay__pointerInfo = (Clay__PointerInfo) { .position = {-1, -1} };
 Clay_Dimensions Clay__layoutDimensions = (Clay_Dimensions){};
 Clay_ElementId Clay__dynamicElementIndexBaseHash = (Clay_ElementId) { .id = 128476991, .stringId = { .chars = "Auto ID", .length = 8 } };
 uint32_t Clay__dynamicElementIndex = 0;
@@ -1961,7 +1961,7 @@ void Clay__CalculateFinalLayout() {
         };
         // Short circuit all wrap calculations if wrap mode is none
         if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE || (containerElement->dimensions.width == textElementData->preferredDimensions.width)) {
-            Clay_LayoutElement *newTextLayoutElement = Clay_LayoutElementArray_Add(&Clay__layoutElements, (Clay_LayoutElement) {
+            Clay_LayoutElementArray_Add(&Clay__layoutElements, (Clay_LayoutElement) {
                 .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                 .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
                 .text = text,
@@ -1974,7 +1974,6 @@ void Clay__CalculateFinalLayout() {
             continue;
         }
         containerElement->dimensions.height = 0;
-        float fontSize = containerElement->elementConfig.textElementConfig->fontSize;
         int lineStartIndex = 0;
         int wordStartIndex = 0;
         int wordEndIndex = 0;
@@ -2018,7 +2017,7 @@ void Clay__CalculateFinalLayout() {
                     wordStartIndex = lineStartIndex;
                     wordEndIndex = lineStartIndex;
                 }
-                Clay_LayoutElement *newTextLayoutElement = Clay_LayoutElementArray_Add(&Clay__layoutElements, (Clay_LayoutElement) {
+                Clay_LayoutElementArray_Add(&Clay__layoutElements, (Clay_LayoutElement) {
                     .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                     .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
                     .text = stringToRender,
@@ -2344,7 +2343,7 @@ void Clay__CalculateFinalLayout() {
                                         .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
                                         .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         .boundingBox = { currentElementBoundingBox.x + borderOffset.x, currentElementBoundingBox.y, (float)borderConfig->betweenChildren.width, currentElement->dimensions.height },
-                                        .config = CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color)
+                                        .config = { CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color) }
                                     });
                                 }
                                 borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap / 2);
@@ -2357,7 +2356,7 @@ void Clay__CalculateFinalLayout() {
                                         .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
                                         .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + borderOffset.y, currentElement->dimensions.width, (float)borderConfig->betweenChildren.width },
-                                        .config = CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color)
+                                        .config = { CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color) }
                                     });
                                 }
                                 borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap / 2);
@@ -2534,8 +2533,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 }
                 highlightedElementId = currentElement->id;
             }
+
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
-            Clay_String toPrint = Clay__layoutElementIdStrings.internalArray[currentElementIndex];
             Clay_ElementId outerHash = Clay__Rehash(outerId, currentElement->id);
             Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
             Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
@@ -2544,7 +2543,6 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             #elif
                 bool offscreen = false;
             #endif
-            Clay_Color outerColor = {0,0,0,0};
             if (Clay__debugSelectedElementId == currentElement->id) {
                 layoutData.selectedElementRowIndex = layoutData.rowCount;
             }
