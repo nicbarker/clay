@@ -2061,7 +2061,7 @@ void Clay__CalculateFinalLayout() {
     for (int i = 0; i < Clay__layoutElementTreeRoots.length; ++i) {
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, i);
         Clay__treeNodeVisited.internalArray[dfsBuffer.length] = false;
-        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, (Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)root->layoutElementIndex) });
+        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)root->layoutElementIndex) });
     }
     while (dfsBuffer.length > 0) {
         Clay__LayoutElementTreeNode *currentElementTreeNode = Clay__LayoutElementTreeNodeArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
@@ -2076,7 +2076,7 @@ void Clay__CalculateFinalLayout() {
             // Add the children to the DFS buffer (needs to be pushed in reverse so that stack traversal is in correct layout order)
             for (int i = 0; i < currentElement->children.length; i++) {
                 Clay__treeNodeVisited.internalArray[dfsBuffer.length] = false;
-                Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, (Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]) }); // TODO fix before release
+                Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]) }); // TODO fix before release
             }
             continue;
         }
@@ -2124,7 +2124,7 @@ void Clay__CalculateFinalLayout() {
             Clay_Dimensions rootDimensions = rootElement->dimensions;
             Clay_BoundingBox parentBoundingBox = parentHashMapItem->boundingBox;
             // Set X position
-            Clay_Vector2 targetAttachPosition = (Clay_Vector2){};
+            Clay_Vector2 targetAttachPosition = CLAY__INIT(Clay_Vector2){};
             switch (config->attachment.parent) {
                 case CLAY_ATTACH_POINT_LEFT_TOP:
                 case CLAY_ATTACH_POINT_LEFT_CENTER:
@@ -2176,14 +2176,14 @@ void Clay__CalculateFinalLayout() {
         if (root->clipElementId) {
             Clay_LayoutElementHashMapItem *clipHashMapItem = Clay__GetHashMapItem(root->clipElementId);
             if (clipHashMapItem) {
-                Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
                 });
             }
         }
-        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, (Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = CLAY__INIT(Clay_Vector2) { .x = (float)rootElement->layoutConfig->padding.x, .y = (float)rootElement->layoutConfig->padding.y } });
+        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = CLAY__INIT(Clay_Vector2) { .x = (float)rootElement->layoutConfig->padding.x, .y = (float)rootElement->layoutConfig->padding.y } });
 
         Clay__treeNodeVisited.internalArray[0] = false;
         while (dfsBuffer.length > 0) {
@@ -2209,7 +2209,7 @@ void Clay__CalculateFinalLayout() {
                 Clay__ScrollContainerDataInternal *scrollContainerData = CLAY__NULL;
                 // Apply scroll offsets to container
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER) {
-                    Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
                        .boundingBox = currentElementBoundingBox,
                         .id = Clay__RehashWithNumber(currentElement->id, 10),
                        .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
@@ -2410,7 +2410,7 @@ void Clay__CalculateFinalLayout() {
 
                     // DFS buffer elements need to be added in reverse because stack traversal happens backwards
                     uint32_t newNodeIndex = dfsBuffer.length - 1 - i;
-                    dfsBuffer.internalArray[newNodeIndex] = (Clay__LayoutElementTreeNode) {
+                    dfsBuffer.internalArray[newNodeIndex] = CLAY__INIT(Clay__LayoutElementTreeNode) {
                         .layoutElement = childElement,
                         .position = CLAY__INIT(Clay_Vector2) { childPosition.x, childPosition.y },
                         .nextChildOffset = CLAY__INIT(Clay_Vector2) { .x = (float)childElement->layoutConfig->padding.x, .y = (float)childElement->layoutConfig->padding.y },
@@ -3173,8 +3173,8 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
             }
             scrollData->pointerScrollActive = false;
 
-            scrollData->pointerOrigin = (Clay_Vector2){0,0};
-            scrollData->scrollOrigin = (Clay_Vector2){0,0};
+            scrollData->pointerOrigin = CLAY__INIT(Clay_Vector2){0,0};
+            scrollData->scrollOrigin = CLAY__INIT(Clay_Vector2){0,0};
             scrollData->momentumTime = 0;
         }
 
@@ -3215,7 +3215,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
         }
         // Handle click / touch scroll
         if (isPointerActive) {
-            highestPriorityScrollData->scrollMomentum = (Clay_Vector2){0};
+            highestPriorityScrollData->scrollMomentum = CLAY__INIT(Clay_Vector2){0};
             if (!highestPriorityScrollData->pointerScrollActive) {
                 highestPriorityScrollData->pointerOrigin = Clay__pointerInfo.position;
                 highestPriorityScrollData->scrollOrigin = highestPriorityScrollData->scrollPosition;
