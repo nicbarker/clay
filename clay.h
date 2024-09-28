@@ -1309,7 +1309,7 @@ typedef struct
     Clay__PointerInfoMouseDownState state;
 } Clay__PointerInfo;
 
-Clay__PointerInfo Clay__pointerInfo = (Clay__PointerInfo) { .position = {-1, -1} };
+Clay__PointerInfo Clay__pointerInfo = CLAY__INIT(Clay__PointerInfo) { .position = {-1, -1} };
 Clay_Dimensions Clay__layoutDimensions = CLAY__INIT(Clay_Dimensions){};
 Clay_ElementId Clay__dynamicElementIndexBaseHash = CLAY__INIT(Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
 uint32_t Clay__dynamicElementIndex = 0;
@@ -1386,7 +1386,7 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
     LAST_HASH = key;
     LAST_HASH.length = (int)offset;
     #endif
-    return CLAY__INIT(Clay_ElementId) { .stringId = key, .id = hash + 1, .offset = offset, .baseId = base + 1 }; // Reserve the hash result of zero as "null id"
+    return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = offset, .baseId = base + 1, .stringId = key }; // Reserve the hash result of zero as "null id"
 }
 
 uint32_t Clay__GetOpenLayoutElementId(void) {
@@ -1460,7 +1460,7 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
         elementIndex = hashEntry->nextIndex;
     }
     Clay_Dimensions measured = Clay__MeasureText(text, config);
-    Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, (Clay__MeasureTextCacheItem) { .id = id, .dimensions = measured });
+    Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, (Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id });
     if (elementIndexPrevious != 0) {
         Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndexPrevious)->nextIndex = (int32_t)Clay__measureTextHashMapInternal.length - 1;
     } else {
@@ -1474,7 +1474,7 @@ bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_BoundingBox rect) {
 }
 
 Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Clay_LayoutElement* layoutElement) {
-    Clay_LayoutElementHashMapItem item = (Clay_LayoutElementHashMapItem) { .elementId = elementId, .layoutElement = layoutElement, .nextIndex = -1, .generation = Clay__generation + 1 };
+    Clay_LayoutElementHashMapItem item = CLAY__INIT(Clay_LayoutElementHashMapItem) { .elementId = elementId, .layoutElement = layoutElement, .nextIndex = -1, .generation = Clay__generation + 1 };
     uint32_t hashBucket = elementId.id % Clay__layoutElementsHashMap.capacity;
     int32_t hashItemPrevious = -1;
     int32_t hashItemIndex = Clay__layoutElementsHashMap.internalArray[hashBucket];
@@ -1500,7 +1500,7 @@ Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Cl
         hashItemIndex = hashItem->nextIndex;
     }
     Clay_LayoutElementHashMapItem *hashItem = Clay__LayoutElementHashMapItemArray_Add(&Clay__layoutElementsHashMapInternal, item);
-    hashItem->debugData = Clay__DebugElementDataArray_Add(&Clay__debugElementData, (Clay__DebugElementData) {});
+    hashItem->debugData = Clay__DebugElementDataArray_Add(&Clay__debugElementData, CLAY__INIT(Clay__DebugElementData) {});
     if (hashItemPrevious != -1) {
         Clay__LayoutElementHashMapItemArray_Get(&Clay__layoutElementsHashMapInternal, hashItemPrevious)->nextIndex = (int32_t)Clay__layoutElementsHashMapInternal.length - 1;
     } else {
@@ -1523,16 +1523,16 @@ Clay_LayoutElementHashMapItem *Clay__GetHashMapItem(uint32_t id) {
 }
 
 Clay_LayoutElement *Clay__OpenElementWithParent(Clay_ElementId elementId, Clay__LayoutElementType commandType, Clay_LayoutConfig* layoutConfig, Clay_ElementConfigUnion elementConfig) {
-    Clay_LayoutElement layoutElement = (Clay_LayoutElement) {
+    Clay_LayoutElement layoutElement = CLAY__INIT(Clay_LayoutElement) {
         #ifdef CLAY_DEBUG
         .name = elementId.stringId,
         #endif
-        .id = elementId.id,
-        .elementType = commandType,
-        .minDimensions = CLAY__INIT(Clay_Dimensions) { (float)layoutConfig->padding.x * 2, (float)layoutConfig->padding.y * 2 },
         .children = (Clay__LayoutElementChildren) { .length = 0 },
+        .minDimensions = CLAY__INIT(Clay_Dimensions) { (float)layoutConfig->padding.x * 2, (float)layoutConfig->padding.y * 2 },
         .layoutConfig = layoutConfig,
         .elementConfig = elementConfig,
+        .id = elementId.id,
+        .elementType = commandType,
     };
 
     if (layoutConfig->sizing.width.type != CLAY__SIZING_TYPE_PERCENT) {
@@ -1598,7 +1598,7 @@ void Clay__OpenScrollElement(Clay_ElementId elementId, Clay_LayoutConfig *layout
         }
     }
     if (!scrollOffset) {
-        Clay__ScrollContainerDataInternalArray_Add(&Clay__scrollContainerDatas, (Clay__ScrollContainerDataInternal){.elementId = elementId.id, .layoutElement = scrollElement, .scrollOrigin = {-1,-1}, .openThisFrame = true});
+        Clay__ScrollContainerDataInternalArray_Add(&Clay__scrollContainerDatas, CLAY__INIT(Clay__ScrollContainerDataInternal){.layoutElement = scrollElement, .scrollOrigin = {-1,-1}, .elementId = elementId.id, .openThisFrame = true});
     }
 }
 
