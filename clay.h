@@ -581,7 +581,7 @@ Clay__BoolArray Clay__BoolArray_Allocate_Arena(uint32_t capacity, Clay_Arena *ar
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = (Clay_ElementId) {};
+Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = CLAY__INIT(Clay_ElementId) {};
 
 // __GENERATED__ template array_define,array_get,array_add TYPE=Clay_ElementId NAME=Clay__ElementIdArray DEFAULT_VALUE=&CLAY__ELEMENT_ID_DEFAULT
 #pragma region generated
@@ -630,7 +630,7 @@ Clay_RenderCommandType Clay__LayoutElementTypeToRenderCommandType[] = {
     CLAY_RENDER_COMMAND_TYPE_CUSTOM,
 };
 
-Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = (Clay_LayoutConfig){};
+Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = CLAY__INIT(Clay_LayoutConfig){};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_LayoutConfig NAME=Clay__LayoutConfigArray DEFAULT_VALUE=&CLAY_LAYOUT_DEFAULT
 #pragma region generated
@@ -654,7 +654,7 @@ Clay_LayoutConfig *Clay__LayoutConfigArray_Add(Clay__LayoutConfigArray *array, C
 #pragma endregion
 // __GENERATED__ template
 
-Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = (Clay_RectangleElementConfig){{0}};
+Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_RectangleElementConfig){{0}};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_RectangleElementConfig NAME=Clay__RectangleElementConfigArray DEFAULT_VALUE=&CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -678,7 +678,7 @@ Clay_RectangleElementConfig *Clay__RectangleElementConfigArray_Add(Clay__Rectang
 #pragma endregion
 // __GENERATED__ template
 
-Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = (Clay_TextElementConfig) {};
+Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_TextElementConfig) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_TextElementConfig NAME=Clay__TextElementConfigArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -702,7 +702,7 @@ Clay_TextElementConfig *Clay__TextElementConfigArray_Add(Clay__TextElementConfig
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = (Clay_ImageElementConfig) {};
+Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ImageElementConfig) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_ImageElementConfig NAME=Clay__ImageElementConfigArray DEFAULT_VALUE=&CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -726,7 +726,7 @@ Clay_ImageElementConfig *Clay__ImageElementConfigArray_Add(Clay__ImageElementCon
 #pragma endregion
 // __GENERATED__ template
 
-Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = (Clay_FloatingElementConfig) {};
+Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_FloatingElementConfig) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_FloatingElementConfig NAME=Clay__FloatingElementConfigArray DEFAULT_VALUE=&CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -750,7 +750,7 @@ Clay_FloatingElementConfig *Clay__FloatingElementConfigArray_Add(Clay__FloatingE
 #pragma endregion
 // __GENERATED__ template
 
-Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = (Clay_CustomElementConfig) {};
+Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_CustomElementConfig) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_CustomElementConfig NAME=Clay__CustomElementConfigArray DEFAULT_VALUE=&CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -774,7 +774,7 @@ Clay_CustomElementConfig *Clay__CustomElementConfigArray_Add(Clay__CustomElement
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ScrollElementConfig CLAY__SCROLL_CONTAINER_ELEMENT_CONFIG_DEFAULT = (Clay_ScrollElementConfig ) {};
+Clay_ScrollElementConfig CLAY__SCROLL_CONTAINER_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ScrollElementConfig ) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_ScrollElementConfig NAME=Clay__ScrollElementConfigArray DEFAULT_VALUE=&CLAY__SCROLL_CONTAINER_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -804,7 +804,7 @@ typedef struct
     Clay_Dimensions preferredDimensions;
 } Clay__TextElementData;
 
-Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = (Clay__TextElementData) {};
+Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = CLAY__INIT(Clay__TextElementData) {};
 
 // __GENERATED__ template array_define,array_get,array_add TYPE=Clay__TextElementData NAME=Clay__TextElementDataArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_DATA_DEFAULT
 #pragma region generated
@@ -831,7 +831,7 @@ Clay__TextElementData *Clay__TextElementDataArray_Add(Clay__TextElementDataArray
 #pragma endregion
 // __GENERATED__ template
 
-Clay_BorderElementConfig CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT = (Clay_BorderElementConfig ) {};
+Clay_BorderElementConfig CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_BorderElementConfig ) {};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_BorderElementConfig NAME=Clay__BorderElementConfigArray DEFAULT_VALUE=&CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -878,7 +878,7 @@ typedef struct t_Clay_LayoutElement
     Clay__LayoutElementType elementType;
 } Clay_LayoutElement;
 
-Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = (Clay_LayoutElement) {};
+Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = CLAY__INIT(Clay_LayoutElement) {};
 
 // __GENERATED__ template array_define,array_add,array_get TYPE=Clay_LayoutElement NAME=Clay_LayoutElementArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_DEFAULT
 #pragma region generated
@@ -939,7 +939,7 @@ Clay_LayoutElement* Clay__LayoutElementPointerArray_RemoveSwapback(Clay__LayoutE
 #pragma endregion
 // __GENERATED__ template
 
-Clay_RenderCommand CLAY__RENDER_COMMAND_DEFAULT = (Clay_RenderCommand) {};
+Clay_RenderCommand CLAY__RENDER_COMMAND_DEFAULT = CLAY__INIT(Clay_RenderCommand) {};
 
 // __GENERATED__ template array_define TYPE=Clay_RenderCommand NAME=Clay_RenderCommandArray
 #pragma region generated
@@ -985,7 +985,7 @@ typedef struct
     bool pointerScrollActive;
 } Clay__ScrollContainerDataInternal;
 
-Clay__ScrollContainerDataInternal CLAY__SCROLL_CONTAINER_DEFAULT = (Clay__ScrollContainerDataInternal) {};
+Clay__ScrollContainerDataInternal CLAY__SCROLL_CONTAINER_DEFAULT = CLAY__INIT(Clay__ScrollContainerDataInternal) {};
 
 // __GENERATED__ template define,array_add,array_get TYPE=Clay__ScrollContainerDataInternal NAME=Clay__ScrollContainerDataInternalArray DEFAULT_VALUE=&CLAY__SCROLL_CONTAINER_DEFAULT
 #pragma region generated
@@ -1032,7 +1032,7 @@ typedef struct
     bool collapsed;
 } Clay__DebugElementData;
 
-Clay__DebugElementData CLAY__DEBUG_ELEMENT_DATA_DEFAULT = (Clay__DebugElementData) {};
+Clay__DebugElementData CLAY__DEBUG_ELEMENT_DATA_DEFAULT = CLAY__INIT(Clay__DebugElementData) {};
 
 // __GENERATED__ template array_define,array_add,array_get TYPE=Clay__DebugElementData NAME=Clay__DebugElementDataArray DEFAULT_VALUE=&CLAY__DEBUG_ELEMENT_DATA_DEFAULT
 #pragma region generated
@@ -1069,7 +1069,7 @@ typedef struct
     Clay__DebugElementData *debugData;
 } Clay_LayoutElementHashMapItem;
 
-Clay_LayoutElementHashMapItem CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT = (Clay_LayoutElementHashMapItem) { .layoutElement = &CLAY__LAYOUT_ELEMENT_DEFAULT };
+Clay_LayoutElementHashMapItem CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT = CLAY__INIT(Clay_LayoutElementHashMapItem) { .layoutElement = &CLAY__LAYOUT_ELEMENT_DEFAULT };
 
 // __GENERATED__ template array_define,array_get,array_add TYPE=Clay_LayoutElementHashMapItem NAME=Clay__LayoutElementHashMapItemArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT
 #pragma region generated
@@ -1103,7 +1103,7 @@ typedef struct
     int32_t nextIndex;
 } Clay__MeasureTextCacheItem;
 
-Clay__MeasureTextCacheItem CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT = (Clay__MeasureTextCacheItem) { };
+Clay__MeasureTextCacheItem CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT = CLAY__INIT(Clay__MeasureTextCacheItem) { };
 
 // __GENERATED__ template array_define,array_get,array_add,array_set TYPE=Clay__MeasureTextCacheItem NAME=Clay__MeasureTextCacheItemArray DEFAULT_VALUE=&CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT
 #pragma region generated
@@ -1188,7 +1188,7 @@ typedef struct
     Clay_Vector2 nextChildOffset;
 } Clay__LayoutElementTreeNode;
 
-Clay__LayoutElementTreeNode CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT = (Clay__LayoutElementTreeNode) {};
+Clay__LayoutElementTreeNode CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT = CLAY__INIT(Clay__LayoutElementTreeNode) {};
 
 // __GENERATED__ template array_define,array_add,array_get TYPE=Clay__LayoutElementTreeNode NAME=Clay__LayoutElementTreeNodeArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT
 #pragma region generated
@@ -1223,7 +1223,7 @@ typedef struct
     uint32_t zIndex;
 } Clay__LayoutElementTreeRoot;
 
-Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = (Clay__LayoutElementTreeRoot) {};
+Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = CLAY__INIT(Clay__LayoutElementTreeRoot) {};
 
 // __GENERATED__ template array_define,array_add,array_get TYPE=Clay__LayoutElementTreeRoot NAME=Clay__LayoutElementTreeRootArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT
 #pragma region generated
@@ -1270,7 +1270,7 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
         buffer->internalArray[buffer->length + i] = string.chars[i];
     }
     buffer->length += string.length;
-    return (Clay_String) { .length = string.length, .chars = (const char *)(buffer->internalArray + buffer->length - string.length) };
+    return CLAY__INIT(Clay_String) { .length = string.length, .chars = (const char *)(buffer->internalArray + buffer->length - string.length) };
 }
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_String NAME=Clay__StringArray DEFAULT_VALUE=&CLAY__STRING_DEFAULT
@@ -1310,8 +1310,8 @@ typedef struct
 } Clay__PointerInfo;
 
 Clay__PointerInfo Clay__pointerInfo = (Clay__PointerInfo) { .position = {-1, -1} };
-Clay_Dimensions Clay__layoutDimensions = (Clay_Dimensions){};
-Clay_ElementId Clay__dynamicElementIndexBaseHash = (Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
+Clay_Dimensions Clay__layoutDimensions = CLAY__INIT(Clay_Dimensions){};
+Clay_ElementId Clay__dynamicElementIndexBaseHash = CLAY__INIT(Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
 uint32_t Clay__dynamicElementIndex = 0;
 bool Clay__debugModeEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
@@ -1386,7 +1386,7 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
     LAST_HASH = key;
     LAST_HASH.length = (int)offset;
     #endif
-    return (Clay_ElementId) { .stringId = key, .id = hash + 1, .offset = offset, .baseId = base + 1 }; // Reserve the hash result of zero as "null id"
+    return CLAY__INIT(Clay_ElementId) { .stringId = key, .id = hash + 1, .offset = offset, .baseId = base + 1 }; // Reserve the hash result of zero as "null id"
 }
 
 uint32_t Clay__GetOpenLayoutElementId(void) {
@@ -1402,7 +1402,7 @@ Clay_ElementId Clay__Rehash(Clay_ElementId elementId, uint32_t number) {
     id += (id << 3);
     id ^= (id >> 11);
     id += (id << 15);
-    return (Clay_ElementId) { .id = id, .offset = number, .baseId = elementId.baseId, .stringId = elementId.stringId };
+    return CLAY__INIT(Clay_ElementId) { .id = id, .offset = number, .baseId = elementId.baseId, .stringId = elementId.stringId };
 }
 
 uint32_t Clay__RehashWithNumber(uint32_t id, uint32_t number) {
@@ -1989,12 +1989,12 @@ void Clay__CalculateFinalLayout() {
         int lineStartIndex = 0;
         int wordStartIndex = 0;
         int wordEndIndex = 0;
-        Clay_Dimensions lineDimensions = (Clay_Dimensions){};
+        Clay_Dimensions lineDimensions = CLAY__INIT(Clay_Dimensions){};
         float spaceWidth = Clay__MeasureText(&CLAY__SPACECHAR, textConfig).width; // todo may as well cache it somewhere
         while (wordStartIndex <= text.length) {
             if (text.chars[wordEndIndex] == ' ' || (text.chars[wordEndIndex] == '\n' && textConfig->wrapMode <= CLAY_TEXT_WRAP_NEWLINES) || wordEndIndex == text.length) {
-                Clay_String stringToRender = (Clay_String) { .length = wordEndIndex - lineStartIndex, .chars = text.chars + lineStartIndex };
-                Clay_String wordToMeasure = (Clay_String) { .length = wordEndIndex - wordStartIndex, .chars = text.chars + wordStartIndex };
+                Clay_String stringToRender = CLAY__INIT(Clay_String) { .length = wordEndIndex - lineStartIndex, .chars = text.chars + lineStartIndex };
+                Clay_String wordToMeasure = CLAY__INIT(Clay_String) { .length = wordEndIndex - wordStartIndex, .chars = text.chars + wordStartIndex };
                 // Clip off trailing spaces and newline characters
                 Clay_Dimensions wordDimensions = Clay__MeasureTextCached(&wordToMeasure, textConfig);
                 lineDimensions.width = lineDimensions.width + wordDimensions.width + spaceWidth;
@@ -2005,7 +2005,7 @@ void Clay__CalculateFinalLayout() {
                     lineDimensions.width -= spaceWidth;
                     // We can wrap at the most recent word start
                     if (wordStartIndex != lineStartIndex) {
-                        stringToRender = (Clay_String) { .length = wordStartIndex - lineStartIndex - 1, .chars = text.chars + lineStartIndex };
+                        stringToRender = CLAY__INIT(Clay_String) { .length = wordStartIndex - lineStartIndex - 1, .chars = text.chars + lineStartIndex };
                         lineDimensions.width -= (wordDimensions.width + spaceWidth);
                         lineStartIndex = wordStartIndex;
                         wordStartIndex = lineStartIndex;
@@ -2456,7 +2456,7 @@ Clay_LayoutConfig Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__INIT(Clay_L
 
 Clay_String Clay__IntToString(int integer) {
     if (integer == 0) {
-        return (Clay_String) { .length = 1, .chars = "0" };
+        return CLAY__INIT(Clay_String) { .length = 1, .chars = "0" };
     }
     char *chars = (char *)(Clay__dynamicStringData.internalArray + Clay__dynamicStringData.length);
     int length = 0;
@@ -2481,7 +2481,7 @@ Clay_String Clay__IntToString(int integer) {
         chars[k] = temp;
     }
     Clay__dynamicStringData.length += length;
-    return (Clay_String) { .length = length, .chars = chars };
+    return CLAY__INIT(Clay_String) { .length = length, .chars = chars };
 }
 
 typedef struct
@@ -2583,8 +2583,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                         }
                     }
                     CLAY_TEXT(Clay__Rehash(elementNameId, currentElement->id), Clay__layoutElementIdStrings.internalArray[currentElementIndex], offscreen ? CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_3) : &Clay__DebugView_TextNameConfig);
-                    Clay_String elementTypeName = (Clay_String){};
-                    Clay_Color elementTypeColor = (Clay_Color){};
+                    Clay_String elementTypeName = CLAY__INIT(Clay_String){};
+                    Clay_Color elementTypeColor = CLAY__INIT(Clay_Color){};
                     switch (currentElement->elementType) {
                         case CLAY__LAYOUT_ELEMENT_TYPE_RECTANGLE: elementTypeName = CLAY_STRING("Rectangle"); elementTypeColor = (CLAY__INIT(Clay_Color) {243,134,48,255}); break;
                         case CLAY__LAYOUT_ELEMENT_TYPE_CONTAINER: elementTypeName = CLAY_STRING("Container"); elementTypeColor = (CLAY__INIT(Clay_Color) {53,92,125, 255}); break;
@@ -2612,7 +2612,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 CLAY_RECTANGLE(Clay__Rehash(textContentsOuterId, currentElement->id), CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE_CONFIG()) {
                     CLAY_CONTAINER(Clay__Rehash(elementTextSpacer, currentElement->id), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16)})) {}
                     CLAY_TEXT(CLAY_IDI("Clay__DebugView_TextOpenQuote", currentElement->id), CLAY_STRING("\""), rawTextConfig);
-                    CLAY_TEXT(Clay__Rehash(textContentsId, currentElement->id), currentElement->text.length > 40 ? ((Clay_String) { .chars = currentElement->text.chars, .length = 40 }) : currentElement->text, rawTextConfig);
+                    CLAY_TEXT(Clay__Rehash(textContentsId, currentElement->id), currentElement->text.length > 40 ? (CLAY__INIT(Clay_String) { .chars = currentElement->text.chars, .length = 40 }) : currentElement->text, rawTextConfig);
                     if (currentElement->text.length > 40) {
                         CLAY_TEXT(CLAY_IDI("Clay__DebugView_TextEllipsis", currentElement->id), CLAY_STRING("..."), rawTextConfig);
                     }
