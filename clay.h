@@ -80,7 +80,7 @@
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
-#define CLAY_STRING(string) (Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = (string) }
+#define CLAY_STRING(string) CLAY__INIT(Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = (string) }
 
 static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
 
