@@ -111,7 +111,7 @@ Clay_RenderCommandArray CreateLayout() {
         }
         Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("MainContent"));
         CLAY_FLOATING_CONTAINER(CLAY_ID("ScrollBar"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height }, .zIndex = 1, .parentId = CLAY_ID("MainContent").id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP})) {
-            CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = 6, .color = Clay_PointerOver(CLAY_ID("ScrollBar")) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150})) {}
+            CLAY_RECTANGLE(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = {6}, .color = Clay_PointerOver(CLAY_ID("ScrollBar")) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150})) {}
         };
     };
     return Clay_EndLayout();

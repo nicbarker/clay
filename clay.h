@@ -76,7 +76,7 @@
 
 #define CLAY_STRING(string) (Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = (string) }
 
-int CLAY__ELEMENT_DEFINITION_LATCH = 0;
+static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
 
 #define CLAY__ELEMENT_INTERNAL(open, close, ...) \
 	for (\
