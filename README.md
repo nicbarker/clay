@@ -84,7 +84,7 @@ Clay_LayoutConfig sidebarItemLayout = (Clay_LayoutConfig) {
 
 // Re-useable components are just normal functions
 void SidebarItemComponent(int index) {
-    CLAY_RECTANGLE(CLAY_IDI("SidebarBlob", index), sidebarItemLayout, CLAY_RECTANGLE_CONFIG(.color = COLOR_ORANGE), {});
+    CLAY_RECTANGLE(CLAY_IDI("SidebarBlob", index), sidebarItemLayout, CLAY_RECTANGLE_CONFIG(.color = COLOR_ORANGE)) {};
 }
 
 // An example function to begin the "root" of your layout tree
@@ -92,21 +92,21 @@ Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
 
     // An example of laying out a UI with a fixed width sidebar and flexible width main content
-    CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {250,250,255,255}) {
-        CLAY_RECTANGLE(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT), {
-            CLAY_RECTANGLE(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE_CONFIG(.color = COLOR_RED), {
-                CLAY_IMAGE(CLAY_ID("ProfilePicture"), CLAY_LAYOUT( .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }), CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .height = 60, .width = 60), {});
+    CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {250,250,255,255})) {
+        CLAY_RECTANGLE(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT)) {
+            CLAY_RECTANGLE(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE_CONFIG(.color = COLOR_RED)) {
+                CLAY_IMAGE(CLAY_ID("ProfilePicture"), CLAY_LAYOUT( .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }), CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .height = 60, .width = 60)) {}
                 CLAY_TEXT(CLAY_ID("ProfileTitle"), CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG(.fontSize = 24, .textColor = {255, 255, 255, 255}));
-            });
+            }
 
             // Standard C code like loops etc work inside components
             for (int i = 0; i < 5; i++) {
                 SidebarItemComponent(i);
             }
-        });
+        }
 
-        CLAY_RECTANGLE(CLAY_ID("MainContent"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT), {});
-    });
+        CLAY_RECTANGLE(CLAY_ID("MainContent"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT)) {}
+    }
     // ...
 });
 ```
@@ -149,26 +149,26 @@ In summary, the general order of steps is:
 ### Building UI Hierarchies
 Clay UI hierarchies are built using C macros that allow _nested_ declarations, similar to other declarative UI systems like HTML.
 
-This means that child elements are declared _inside_ their parent elements. The common way to do this with clay element macros is to pass a block: `{}` as the `children` argument, and define child components inside the braces.
+This means that child elements are declared _inside_ their parent elements. Clay element macros work by opening a block: `{}` after calling the element macro (exactly like you would with an `if` statement or `for` loop), and declaring child components inside the braces.
 ```C
 // Parent element
-CLAY_CONTAINER(id, layout, {
+CLAY_CONTAINER(id, layout) {
     // Child element 1
     CLAY_TEXT(id, text, config);
     // Child element 2
-    CLAY_RECTANGLE(id, layout, config, {
+    CLAY_RECTANGLE(id, layout, config) {
         // etc
-    });
-});
+    }
+}
 ```
 
 However, unlike HTML and other declarative DSLs, these macros are just C. As a result, you can use arbitrary C code such as loops, functions and conditions inside your layout declaration code:
 ```C
 // Re-usable "components" are just functions that declare more UI
 void ButtonComponent(Clay_String buttonText) {
-    CLAY_RECTANGLE(id, layout, config, {
+    CLAY_RECTANGLE(id, layout, config) {
         CLAY_TEXT(id, buttonText, config);
-    });
+    }
 }
 
 // Parent element
@@ -179,9 +179,9 @@ CLAY_CONTAINER(id, layout, {
     }
     // Only render this element if we're on a mobile screen
     if (isMobileScreen) {
-        CLAY_CONTAINER(id, layout, {
+        CLAY_CONTAINER(id, layout) {
             // etc
-        });
+        }
     }
     // Re-usable components
     ButtonComponent(CLAY_STRING("Click me!"));
@@ -192,9 +192,9 @@ CLAY_CONTAINER(id, layout, {
 ### Configuring Layout and Styling UI Elements
 Many of the element macros in Clay take a `Clay_LayoutConfig` as the second argument. Clay provides a convenience macro, [CLAY_LAYOUT()](#clay_layout) for easy construction of element styles.
 ```C
-CLAY_CONTAINER(id, CLAY_LAYOUT(.padding = {.x = 8, .y = 8}, .backgroundColor = {120, 120, 120, 255}), {
+CLAY_CONTAINER(id, CLAY_LAYOUT(.padding = {.x = 8, .y = 8}, .backgroundColor = {120, 120, 120, 255})) {
     // ...
-});
+}
 ```
 This macro isn't magic - all it's doing is wrapping the standard designated initializer syntax and adding the result to an internal array. e.g. `(Clay_LayoutConfig) { .padding = { .x = 8, .y = 8 } ...`.
 
@@ -205,9 +205,9 @@ A `Clay_LayoutConfig` struct can be defined in file scope or elsewhere, as long 
 // Define a style in the global / file scope
 Clay_LayoutConfig reusableStyle = (Clay_LayoutConfig) {.backgroundColor = {120, 120, 120, 255}};
 
-CLAY_CONTAINER(id, &reusableStyle, {
+CLAY_CONTAINER(id, &reusableStyle) {
     // ...
-});
+}
 ```
 
 Some of the other element macros, such as [CLAY_TEXT()](#clay_text) and [CLAY_RECTANGLE()](#clay_rectangle) take an element-specific config object as their 3rd argument. These config objects also have convenience macros for constructing them, generally of the form [CLAY_TEXT_CONFIG()](#clay_text_config) or [CLAY_RECTANGLE_CONFIG()](#clay_rectangle_config):
@@ -223,14 +223,14 @@ See the [Full API](#api) for details on the specific config macros.
 All element macros take a `Clay_ElementId` ID as their first argument. Clay provides the [CLAY_ID()](#clay_id) macro to generate these IDs as string hashes:
 ```C
 // Will always produce the same ID from the same input string
-CLAY_CONTAINER(CLAY_ID("OuterContainer"), style, {});
+CLAY_CONTAINER(CLAY_ID("OuterContainer"), style) {}
 ```  
 
 To avoid having to construct dynamic strings at runtime to differentiate ids, clay provides the [CLAY_IDI(string, index)](#clay_idi) macro to generate different ids from a single input string. Think of IDI as "**ID** + **I**ndex"
 ```C
 // This is the equivalent of calling CLAY_ID("Item0"), CLAY_ID("Item1") etc
 for (int index = 0; index < items.length; index++) {
-    CLAY_CONTAINER(CLAY_IDI("Item", index), style, {});
+    CLAY_CONTAINER(CLAY_IDI("Item", index), style) {}
 }
 ```
 
@@ -265,9 +265,9 @@ Clay_SetPointerState(mousePosition);
 // ...
 Clay_ElementId buttonId = CLAY_ID("HeaderButton");
 // An orange button that turns blue when hovered
-CLAY_CONTAINER(buttonId, CLAY_LAYOUT(.backgroundColor = Clay_PointerOver(buttonId) ? COLOR_BLUE : COLOR_ORANGE), {
+CLAY_CONTAINER(buttonId, CLAY_LAYOUT(.backgroundColor = Clay_PointerOver(buttonId) ? COLOR_BLUE : COLOR_ORANGE)) {
     CLAY_TEXT(CLAY_IDI("Button", index), text, &headerTextConfig);
-});
+}
 ```
 Note that the bounding box queried by `Clay_PointerOver` is from the last frame. This shouldn't make a difference except in the case of animations that move at high speed.
 If this is an issue for you, performing layout twice per frame with the same data will give you the correct interaction the second time.
@@ -303,11 +303,11 @@ A classic example use case for floating elements is tooltips and modals.
 ```C
 // The two text elements will be laid out top to bottom, and the floating container
 // will be attached to "Outer"
-CLAY_CONTAINER(CLAY_ID("Outer"), CLAY_LAYOUT(.layoutDirection = TOP_TO_BOTTOM), {
+CLAY_CONTAINER(CLAY_ID("Outer"), CLAY_LAYOUT(.layoutDirection = TOP_TO_BOTTOM)) {
     CLAY_TEXT(CLAY_ID("Button"), text, &headerTextConfig);
-    CLAY_FLOATING_TEXT(CLAY_ID("Tooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG);
+    CLAY_FLOATING(CLAY_ID("Tooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG) {}
     CLAY_TEXT(CLAY_ID("Button"), text, &headerTextConfig);
-});
+}
 ```
 
 More specific details can be found in the full [Floating Container API](#clay_floating_container).
@@ -334,10 +334,10 @@ typedef struct t_CustomElementData {
 Model myModel = Load3DModel(filePath);
 CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
 // ...
-CLAY_CONTAINER(id, style, {
+CLAY_CONTAINER(id, style) {
     // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }), {})
-});
+    CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
+}
 
 // Later during your rendering
 switch (renderCommand->commandType) {
@@ -512,7 +512,7 @@ Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll con
 ### CLAY_CONTAINER
 **Usage**
 
-`CLAY_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, children);`
+`CLAY_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig);`
 
 **Lifecycle**
 
@@ -525,12 +525,12 @@ Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll con
 **Examples**
 ```C
 // Define a container with 16px of x and y padding
-CLAY_CONTAINER(CLAY_ID("SideBar"), CLAY_LAYOUT(.padding = {16, 16}), {
+CLAY_CONTAINER(CLAY_ID("SideBar"), CLAY_LAYOUT(.padding = {16, 16})) {
     // A nested child container
-    CLAY_CONTAINER(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16), {
+    CLAY_CONTAINER(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16)) {
         // Children laid out top to bottom
-    });
-});
+    }
+}
 ```
 
 **Rendering**
@@ -572,7 +572,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 ### CLAY_IMAGE
 **Usage**
 
-`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig, children);`
+`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig);`
 
 **Lifecycle**
 
@@ -588,7 +588,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 // Load an image somewhere in your code
 Image profilePicture = LoadImage("profilePicture.png");
 // ..
-CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .height = 60, .width = 60), {});
+CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .height = 60, .width = 60)) {}
 // Rendering example
 Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
 ```
@@ -600,7 +600,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 ### CLAY_SCROLL_CONTAINER
 **Usage**
 
-`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig, children);`
+`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig);`
 
 **Lifecycle**
 
@@ -615,10 +615,10 @@ Note: In order to process scrolling based on pointer position and mouse wheel or
 **Examples**
 
 ```C
-CLAY_SCROLL_CONTAINER(CLAY_ID("MainContent"), &CLAY_LAYOUT_DEFAULT, CLAY_SCROLL_CONFIG(.vertical = true), {
+CLAY_SCROLL_CONTAINER(CLAY_ID("MainContent"), &CLAY_LAYOUT_DEFAULT, CLAY_SCROLL_CONFIG(.vertical = true)) {
     // Create child content with a fixed height of 5000
-    CLAY_CONTAINER(CLAY_ID("ScrollInner"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(5000) }), {});
-});
+    CLAY_CONTAINER(CLAY_ID("ScrollInner"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(5000) })) {}
+}
 ```
 
 **Rendering**
@@ -630,7 +630,7 @@ Scroll containers will result in two render commands:
 ### CLAY_BORDER_CONTAINER
 **Usage**
 
-`CLAY_BORDER_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *borderConfig, children);`
+`CLAY_BORDER_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *borderConfig);`
 
 **Lifecycle**
 
@@ -644,21 +644,21 @@ Scroll containers will result in two render commands:
 
 ```C
 // 300x300 container with a 1px red border around all the edges
-CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300)}), CLAY_BORDER_CONFIG_OUTSIDE(.color = COLOR_RED, .width = 1), {
+CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300)}), CLAY_BORDER_CONFIG_OUTSIDE(.color = COLOR_RED, .width = 1)) {
     // ...
-});
+}
 
 // Container with a 3px yellow bottom border
-CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), &CLAY_LAYOUT_DEFAULT, CLAY_BORDER_CONFIG(.bottom = { .color = COLOR_YELLOW, .width = 3 }), {
+CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), &CLAY_LAYOUT_DEFAULT, CLAY_BORDER_CONFIG(.bottom = { .color = COLOR_YELLOW, .width = 3 })) {
     // ...
-});
+}
 
 // Container with a 5px curved border around the edges, and a 5px blue border between all children laid out top to bottom
-CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_BORDER_CONFIG_ALL_RADIUS({ .color = COLOR_BLUE, .width = 5 }), {
+CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_BORDER_CONFIG_ALL_RADIUS({ .color = COLOR_BLUE, .width = 5 })) {
     // Child
     // -- border will be here --
     // Child
-});
+}
 ```
 
 **Rendering**
@@ -669,7 +669,7 @@ Rendering of borders and rounded corners is left up to the user. See the provide
 ### CLAY_FLOATING_CONTAINER
 **Usage**
 
-`CLAY_FLOATING_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig, children);`
+`CLAY_FLOATING_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig);`
 
 **Lifecycle**
 
@@ -695,33 +695,33 @@ Floating elements use [Clay_LayoutConfig](#clay_layout) for styling and layout, 
 
 ```C
 // Horizontal container with three option buttons
-CLAY_CONTAINER(CLAY_ID("OptionsList"), CLAY_LAYOUT(.childGap = 16), {
-    CLAY_RECTANGLE(CLAY_IDI("Option", 1), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE), {
+CLAY_CONTAINER(CLAY_ID("OptionsList"), CLAY_LAYOUT(.childGap = 16)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 1), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 1), CLAY_STRING("Option 1"), CLAY_TEXT_CONFIG());
-    });
-    CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE), {
+    }
+    CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 2), CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
         // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-        CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP }), {
+        CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP })) {
             CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
-        });
-    });
-    CLAY_RECTANGLE(CLAY_IDI("Option", 3), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE), {
+        }
+    }
+    CLAY_RECTANGLE(CLAY_IDI("Option", 3), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 3), CLAY_STRING("Option 3"), CLAY_TEXT_CONFIG());
-    });
-});
+    }
+}
 
 // Floating containers can also be declared elsewhere in a layout, to avoid branching or polluting other UI
 for (int i = 0; i < 1000; i++) {
-    CLAY_CONTAINER(CLAY_IDI("Option", i + 1), &CLAY_LAYOUT_DEFAULT, {}) {
+    CLAY_CONTAINER(CLAY_IDI("Option", i + 1), &CLAY_LAYOUT_DEFAULT) {
         // ...
     }
 }
 // Note the use of "parentId".
 // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER }), {
+CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER })) {
     CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
-});
+}
 ```
 
 When using `.parentId`, the floating container can be declared anywhere after `BeginLayout` and before `EndLayout`. The target element matching the `.parentId` doesn't need to exist when `CLAY_FLOATING_CONTAINER` is called.
@@ -733,7 +733,7 @@ When using `.parentId`, the floating container can be declared anywhere after `B
 ### CLAY_CUSTOM_ELEMENT
 **Usage**
 
-`CLAY_CUSTOM_ELEMENT(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig, children);`
+`CLAY_CUSTOM_ELEMENT(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig);`
 
 **Lifecycle**
 
@@ -763,10 +763,10 @@ typedef struct t_CustomElementData {
 Model myModel = Load3DModel(filePath);
 CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
 // ...
-CLAY_CONTAINER(id, style, {
+CLAY_CONTAINER(id, style) {
     // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, style, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }), {})
-});
+    CLAY_CUSTOM_ELEMENT(id, style, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
+}
 
 // Later during your rendering
 switch (renderCommand->commandType) {
@@ -896,9 +896,9 @@ Controls how final width and height of element are calculated. The same configur
 **Example Usage**
 
 ```C
-CLAY_CONTAINER(CLAY_ID("Button"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), {
+CLAY_CONTAINER(CLAY_ID("Button"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16)) {
     // Children will be laid out vertically with 16px of padding around and between
-});
+}
 ``` 
 
 ### CLAY_RECTANGLE_CONFIG
@@ -1098,7 +1098,7 @@ Used to perform **aspect ratio scaling** on the image element. As of this versio
 // Load an image somewhere in your code
 Image profilePicture = LoadImage("profilePicture.png");
 // Note that when rendering, .imageData will be void* type.
-CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .sourceDimensions = { 60, 60 }), {});
+CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .sourceDimensions = { 60, 60 })) {}
 
 // OR ----------------
 
@@ -1114,7 +1114,7 @@ typedef struct t_Image {
 } Image;
 
 // You can now use CLAY_IMAGE_CONFIG with your custom type and still have type safety & code completion
-CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.image = { .format = IMAGE_FORMAT_RGBA, .internalData = &imageData }, .sourceDimensions = { 60, 60 }), {});
+CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.image = { .format = IMAGE_FORMAT_RGBA, .internalData = &imageData }, .sourceDimensions = { 60, 60 })) {}
 ```
 
 ### CLAY_FLOATING_CONFIG
@@ -1178,62 +1178,62 @@ By default, floating containers will "attach" to the parent element that they ar
 Consider the following case:
 ```C
 // Load an image somewhere in your code
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT, {
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 1) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */);
+        CLAY_FLOATING_CONTAINER(/* floating config... */)
     }
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 2) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */);
+        CLAY_FLOATING_CONTAINER(/* floating config... */)
     }
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 3) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */);
+        CLAY_FLOATING_CONTAINER(/* floating config... */)
     }
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 4) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */);
+        CLAY_FLOATING_CONTAINER(/* floating config... */)
     }
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 5) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */);
+        CLAY_FLOATING_CONTAINER(/* floating config... */)
     }
-});
+}
 ```
 
 The definition of the above UI is significantly polluted by the need to conditionally render floating tooltips as a child of many possible elements. The alternative, using `parentId`, looks like this:
 
 ```C
 // Load an image somewhere in your code
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT, {
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
-});
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT, {
+}
+CLAY_CONTAINER(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
-});
+}
 
 // Any other point in the hierarchy
-CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex).id), {
+CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex).id)) {
     // Tooltip contents...
-});
+}
 ```
 
 ---
@@ -1295,10 +1295,10 @@ Enables or disables vertical scrolling for this container element.
 **Examples**
 
 ```C
-CLAY_SCROLL_CONTAINER(CLAY_ID("MainContent"), &CLAY_LAYOUT_DEFAULT, CLAY_SCROLL_CONFIG(.vertical = true), {
+CLAY_SCROLL_CONTAINER(CLAY_ID("MainContent"), &CLAY_LAYOUT_DEFAULT, CLAY_SCROLL_CONFIG(.vertical = true)) {
     // Create child content with a fixed height of 5000
-    CLAY_CONTAINER(CLAY_ID("ScrollInner"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(5000) }), {});
-});
+    CLAY_CONTAINER(CLAY_ID("ScrollInner"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(5000) })) {}
+}
 ```
 
 ### CLAY_BORDER_CONFIG
@@ -1445,10 +1445,10 @@ typedef struct t_CustomElementData {
 Model myModel = Load3DModel(filePath);
 CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
 // ...
-CLAY_CONTAINER(id, style, {
+CLAY_CONTAINER(id, style) {
     // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }), {})
-});
+    CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
+}
 
 // Later during your rendering
 switch (renderCommand->commandType) {
