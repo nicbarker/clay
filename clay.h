@@ -1460,7 +1460,7 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
         elementIndex = hashEntry->nextIndex;
     }
     Clay_Dimensions measured = Clay__MeasureText(text, config);
-    Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, (Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id });
+    Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id });
     if (elementIndexPrevious != 0) {
         Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndexPrevious)->nextIndex = (int32_t)Clay__measureTextHashMapInternal.length - 1;
     } else {
@@ -1527,7 +1527,7 @@ Clay_LayoutElement *Clay__OpenElementWithParent(Clay_ElementId elementId, Clay__
         #ifdef CLAY_DEBUG
         .name = elementId.stringId,
         #endif
-        .children = (Clay__LayoutElementChildren) { .length = 0 },
+        .children = CLAY__INIT(Clay__LayoutElementChildren) { .length = 0 },
         .minDimensions = CLAY__INIT(Clay_Dimensions) { (float)layoutConfig->padding.x * 2, (float)layoutConfig->padding.y * 2 },
         .layoutConfig = layoutConfig,
         .elementConfig = elementConfig,
@@ -1565,24 +1565,24 @@ Clay_LayoutElement *Clay__OpenElement(Clay_ElementId id, Clay__LayoutElementType
 }
 
 void Clay__OpenContainerElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig) {
-    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_CONTAINER, layoutConfig, (Clay_ElementConfigUnion){ CLAY__NULL });
+    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_CONTAINER, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { CLAY__NULL });
 }
 
 void Clay__OpenRectangleElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_RectangleElementConfig *rectangleConfig) {
-    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_RECTANGLE, layoutConfig, (Clay_ElementConfigUnion) { .rectangleElementConfig = rectangleConfig });
+    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_RECTANGLE, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = rectangleConfig });
 }
 
 void Clay__OpenImageElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig) {
-    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_IMAGE, layoutConfig, (Clay_ElementConfigUnion) { .imageElementConfig = imageConfig });
+    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_IMAGE, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = imageConfig });
     Clay__LayoutElementPointerArray_Add(&Clay__imageElementPointers, Clay__openLayoutElement);
 }
 
 void Clay__OpenBorderElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *borderConfig) {
-    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER, layoutConfig, (Clay_ElementConfigUnion){ .borderElementConfig = borderConfig });
+    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = borderConfig });
 }
 
 void Clay__OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig) {
-    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_CUSTOM, layoutConfig, (Clay_ElementConfigUnion) { .customElementConfig = customConfig });
+    Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_CUSTOM, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = customConfig });
 }
 
 void Clay__OpenScrollElement(Clay_ElementId elementId, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig) {
@@ -1617,7 +1617,7 @@ void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfi
             parent = parentItem->layoutElement;
         }
     }
-    Clay__OpenElementWithParent(id, CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER, layoutConfig, (Clay_ElementConfigUnion) { .floatingElementConfig = floatingConfig });
+    Clay__OpenElementWithParent(id, CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = floatingConfig });
     Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, (Clay__LayoutElementTreeRoot) {
         .layoutElementIndex = Clay__layoutElements.length - 1,
         .parentId = parent->id,
@@ -1692,7 +1692,7 @@ void Clay__CloseElement() {
 }
 
 void Clay__OpenTextElement(Clay_ElementId id, Clay_String text, Clay_TextElementConfig *textConfig) {
-    Clay_LayoutElement *internalElement = Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_TEXT, &CLAY_LAYOUT_DEFAULT, (Clay_ElementConfigUnion) { .textElementConfig = textConfig });
+    Clay_LayoutElement *internalElement = Clay__OpenElement(id, CLAY__LAYOUT_ELEMENT_TYPE_TEXT, &CLAY_LAYOUT_DEFAULT, CLAY__INIT(Clay_ElementConfigUnion) { .textElementConfig = textConfig });
     Clay_Dimensions textMeasured = Clay__MeasureTextCached(&text, textConfig);
     internalElement->dimensions.width = textMeasured.width;
     internalElement->dimensions.height = textMeasured.height;
@@ -1967,7 +1967,7 @@ void Clay__CalculateFinalLayout() {
         containerElement->layoutConfig = Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, *containerElement->layoutConfig);
         containerElement->layoutConfig->layoutDirection = CLAY_TOP_TO_BOTTOM;
         containerElement->layoutConfig->childGap = textConfig->lineSpacing;
-        containerElement->children = (Clay__LayoutElementChildren) { // Note: this overwrites the text property
+        containerElement->children = CLAY__INIT(Clay__LayoutElementChildren) { // Note: this overwrites the text property
             .length = 0,
             .elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length]
         };
