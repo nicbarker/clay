@@ -113,6 +113,14 @@ static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
     Clay__CloseElementWithChildren()
 
 #ifdef __cplusplus
+#define CLAY__ALIGNMENT(type) alignof(type)
+#define CLAY__INIT(type) type
+#else
+#define CLAY__INIT(type) (type)
+#define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -451,14 +459,6 @@ extern uint32_t Clay__debugViewWidth;
 
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
-
-#ifdef __cplusplus
-#define CLAY__ALIGNMENT(type) alignof(type)
-#define CLAY__INIT(type) type
-#else
-#define CLAY__INIT(type) (type)
-#define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
-#endif
 
 bool Clay__warningsEnabled = true;
 
