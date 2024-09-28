@@ -58,7 +58,7 @@ jobs:
       uses: actions/cache@v4.0.2
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
-        path: "/home/runner/work/clay/clay/build/_deps/raylib-subbuild"
+        path: "/home/runner/work/clay/clay/build/_deps"
         # An explicit key for restoring and saving the cache
         key: "_deps"
 
