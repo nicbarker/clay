@@ -219,8 +219,8 @@ typedef struct {
     Clay_Sizing sizing;
     Clay_Padding padding;
     uint16_t childGap;
-    Clay_LayoutDirection layoutDirection;
     Clay_ChildAlignment childAlignment;
+    Clay_LayoutDirection layoutDirection;
 } Clay_LayoutConfig;
 
 extern Clay_LayoutConfig CLAY_LAYOUT_DEFAULT;
@@ -2510,7 +2510,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
     Clay_ElementId textContentsOuterId = CLAY_ID("Clay__DebugView_ElementTextContentsOuter");
     Clay_ElementId textContentsId = CLAY_ID("Clay__DebugView_ElementTextContents");
     Clay__int32_tArray dfsBuffer = Clay__reusableElementIndexBuffer;
-    Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__INIT(Clay_LayoutConfig) { .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT) }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }, .childGap = 6};
+    Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__INIT(Clay_LayoutConfig) { .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT) }, .childGap = 6, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }};
     Clay__RenderDebugLayoutData layoutData = {};
 
     uint32_t highlightedElementId = 0;
@@ -2522,7 +2522,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
         Clay__treeNodeVisited.internalArray[0] = false;
         if (rootIndex > 0) {
             CLAY_CONTAINER(CLAY_IDI("Clay__DebugView_EmptyRowOuter", rootIndex), CLAY_LAYOUT(.sizing = {.width = CLAY_SIZING_GROW()}, .padding = {CLAY__DEBUGVIEW_INDENT_WIDTH / 2})) {
-                CLAY_BORDER_CONTAINER(CLAY_IDI("Clay__DebugView_EmptyRow", rootIndex), CLAY_LAYOUT(.sizing = {.height = CLAY_SIZING_FIXED((float)CLAY__DEBUGVIEW_ROW_HEIGHT), .width = CLAY_SIZING_GROW()}), CLAY_BORDER_CONFIG(.top = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 } )) {}
+                CLAY_BORDER_CONTAINER(CLAY_IDI("Clay__DebugView_EmptyRow", rootIndex), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED((float)CLAY__DEBUGVIEW_ROW_HEIGHT) }), CLAY_BORDER_CONFIG(.top = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 } )) {}
             }
             layoutData.rowCount++;
         }
@@ -2561,7 +2561,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             CLAY_CONTAINER(outerHash, &Clay__DebugView_ScrollViewItemLayoutConfig) {
                 if (!(currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_TEXT || currentElement->children.length == 0)) {
                     CLAY_BORDER_CONTAINER(Clay__Rehash(collapseIconButton, currentElement->id), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(16), CLAY_SIZING_FIXED(16)}, .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_3, 4)) {
-                        CLAY_TEXT(Clay__Rehash(collapseIcon, currentElement->id), (currentElementData && currentElementData->debugData->collapsed) ? CLAY_STRING("+") : CLAY_STRING("-"), CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_4));
+                        CLAY_TEXT(Clay__Rehash(collapseIcon, currentElement->id), (currentElementData && currentElementData->debugData->collapsed) ? CLAY_STRING("+") : CLAY_STRING("-"), CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16));
                     }
                 } else {
                     CLAY_CONTAINER(Clay__Rehash(collapseIconButton, currentElement->id), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(16), CLAY_SIZING_FIXED(16)}, .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER})) {
@@ -2572,17 +2572,17 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                     if (currentElementData) {
                         if (currentElementData->debugData->collision) {
                             CLAY_BORDER_CONTAINER(Clay__Rehash(elementOffscreenBorderId, currentElement->id), CLAY_LAYOUT(.padding = { 8, 2 }), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, ((Clay_Color){177, 147, 8, 255}), 4)) {
-                                CLAY_TEXT(Clay__Rehash(elementDuplicateWarning, currentElement->id), CLAY_STRING("Duplicate ID"), CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_3));
+                                CLAY_TEXT(Clay__Rehash(elementDuplicateWarning, currentElement->id), CLAY_STRING("Duplicate ID"), CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16));
                             }
                         }
 
                         if (offscreen) {
                             CLAY_BORDER_CONTAINER(Clay__Rehash(elementOffscreenBorderId, currentElement->id), CLAY_LAYOUT(.padding = { 8, 2 }), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_3, 4)) {
-                                CLAY_TEXT(Clay__Rehash(elementDuplicateWarning, currentElement->id), CLAY_STRING("Offscreen"), CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_3));
+                                CLAY_TEXT(Clay__Rehash(elementDuplicateWarning, currentElement->id), CLAY_STRING("Offscreen"), CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16));
                             }
                         }
                     }
-                    CLAY_TEXT(Clay__Rehash(elementNameId, currentElement->id), Clay__layoutElementIdStrings.internalArray[currentElementIndex], offscreen ? CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_3) : &Clay__DebugView_TextNameConfig);
+                    CLAY_TEXT(Clay__Rehash(elementNameId, currentElement->id), Clay__layoutElementIdStrings.internalArray[currentElementIndex], offscreen ? CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16) : &Clay__DebugView_TextNameConfig);
                     Clay_String elementTypeName = CLAY__INIT(Clay_String){};
                     Clay_Color elementTypeColor = CLAY__INIT(Clay_Color){};
                     switch (currentElement->elementType) {
@@ -2599,7 +2599,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                     backgroundColor.a = 90;
                     CLAY_BORDER_CONTAINER(Clay__Rehash(elementTypeBorderId, currentElement->id), &CLAY_LAYOUT_DEFAULT, CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, elementTypeColor, 4)) {
                         CLAY_RECTANGLE(Clay__Rehash(elementTypeInnerRectId, currentElement->id), CLAY_LAYOUT(.padding = { 8, 2 }), CLAY_RECTANGLE_CONFIG(.color = backgroundColor, .cornerRadius = CLAY_CORNER_RADIUS(4))) {
-                            CLAY_TEXT(Clay__Rehash(elementTypeTextId, currentElement->id), elementTypeName, CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4));
+                            CLAY_TEXT(Clay__Rehash(elementTypeTextId, currentElement->id), elementTypeName, CLAY_TEXT_CONFIG(.textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16));
                         }
                     }
                 }
@@ -2608,11 +2608,11 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             // Render the text contents below the element as a non-interactive row
             if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_TEXT) {
                 layoutData.rowCount++;
-                Clay_TextElementConfig *rawTextConfig = offscreen ? CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_3) : &Clay__DebugView_TextNameConfig;
+                Clay_TextElementConfig *rawTextConfig = offscreen ? CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16) : &Clay__DebugView_TextNameConfig;
                 CLAY_RECTANGLE(Clay__Rehash(textContentsOuterId, currentElement->id), CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE_CONFIG()) {
                     CLAY_CONTAINER(Clay__Rehash(elementTextSpacer, currentElement->id), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16)})) {}
                     CLAY_TEXT(CLAY_IDI("Clay__DebugView_TextOpenQuote", currentElement->id), CLAY_STRING("\""), rawTextConfig);
-                    CLAY_TEXT(Clay__Rehash(textContentsId, currentElement->id), currentElement->text.length > 40 ? (CLAY__INIT(Clay_String) { .chars = currentElement->text.chars, .length = 40 }) : currentElement->text, rawTextConfig);
+                    CLAY_TEXT(Clay__Rehash(textContentsId, currentElement->id), currentElement->text.length > 40 ? (CLAY__INIT(Clay_String) { .length = 40, .chars = currentElement->text.chars }) : currentElement->text, rawTextConfig);
                     if (currentElement->text.length > 40) {
                         CLAY_TEXT(CLAY_IDI("Clay__DebugView_TextEllipsis", currentElement->id), CLAY_STRING("..."), rawTextConfig);
                     }
@@ -2620,7 +2620,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 }
             } else if (currentElement->children.length > 0) {
                 Clay__OpenContainerElement(Clay__Rehash(paddingOffset, currentElement->id), CLAY_LAYOUT(.padding = { 8 }));
-                Clay__OpenBorderElement(Clay__Rehash(border, currentElement->id), CLAY_LAYOUT(.layoutDirection = CLAY_LEFT_TO_RIGHT), CLAY_BORDER_CONFIG(.left = { .color = CLAY__DEBUGVIEW_COLOR_3, .width = 1}));
+                Clay__OpenBorderElement(Clay__Rehash(border, currentElement->id), CLAY_LAYOUT(.layoutDirection = CLAY_LEFT_TO_RIGHT), CLAY_BORDER_CONFIG(.left = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }));
                 CLAY_CONTAINER(Clay__Rehash(spacerId, currentElement->id), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED( CLAY__DEBUGVIEW_INDENT_WIDTH)}, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT })) {}
                 Clay__OpenContainerElement(Clay__Rehash(inner, currentElement->id), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM));
             }
@@ -2683,10 +2683,10 @@ void Clay__RenderDebugLayoutSizing(Clay_ElementId baseId, Clay_SizingAxis sizing
 
 void Clay__RenderDebugViewElementConfigHeader(Clay_String elementId, Clay_String title) {
     CLAY_RECTANGLE(CLAY_IDI("Clay__DebugViewElementConfigItemBorder", 1), CLAY_LAYOUT(.sizing = {.width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(1)}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_3)) {}
-    CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementConfigItemHeader"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING})) {
-        CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementConfigTitle", 1), title, CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_4, .wrapMode = CLAY_TEXT_WRAP_NONE));
+    CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementConfigItemHeader"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER})) {
+        CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementConfigTitle", 1), title, CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE));
         CLAY_CONTAINER(CLAY_IDI("Clay__DebugViewElementConfigTitleSpacer", 1), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() })) {}
-        CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementConfigTitle", 2), elementId, CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_3, .wrapMode = CLAY_TEXT_WRAP_NONE));
+        CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementConfigTitle", 2), elementId, CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE));
     }
     CLAY_RECTANGLE(CLAY_IDI("Clay__DebugViewElementConfigItemBorder", 2), CLAY_LAYOUT(.sizing = {.width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(1)}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_3)) {}
 }
@@ -2704,7 +2704,7 @@ void Clay__RenderDebugViewColor(Clay_Color color, Clay_TextElementConfig *textCo
         CLAY_TEXT(CLAY_ID_LOCAL("Brace"), CLAY_STRING(" }"), textConfig);
         CLAY_CONTAINER(CLAY_ID_LOCAL("Spacer"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10) })) {}
         CLAY_BORDER_CONTAINER(CLAY_ID_LOCAL("PreviewBorder"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)}), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_4, 4)) {
-            CLAY_RECTANGLE(CLAY_ID_LOCAL("PreviewBackground"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(4), .color = color)) {}
+            CLAY_RECTANGLE(CLAY_ID_LOCAL("PreviewBackground"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)}), CLAY_RECTANGLE_CONFIG(.color = color, .cornerRadius = CLAY_CORNER_RADIUS(4))) {}
         }
     }
 }
@@ -2747,8 +2747,8 @@ void Clay__RenderDebugView() {
 
     uint32_t initialRootsLength = Clay__layoutElementTreeRoots.length;
     uint32_t initialElementsLength = Clay__layoutElements.length;
-    Clay_TextElementConfig *infoTextConfig = CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_4, .wrapMode = CLAY_TEXT_WRAP_NONE);
-    Clay_TextElementConfig *infoTitleConfig = CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_3, .wrapMode = CLAY_TEXT_WRAP_NONE);
+    Clay_TextElementConfig *infoTextConfig = CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE);
+    Clay_TextElementConfig *infoTitleConfig = CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE);
     uint32_t scrollId = CLAY_ID("Clay__DebugViewOuterScrollPane").id;
     float scrollYOffset = 0;
     for (int i = 0; i < Clay__scrollContainerDatas.length; ++i) {
@@ -2765,27 +2765,27 @@ void Clay__RenderDebugView() {
     Clay__RenderDebugLayoutData layoutData = {};
     CLAY_FLOATING_CONTAINER(CLAY_ID("Clay__DebugView"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(Clay__layoutDimensions.height) }), CLAY_FLOATING_CONFIG(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER })) {
         CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewLeftBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_FIXED(1), .height = CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_3)) {}
-        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewInner"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()})) {
-            CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewTopHeaderOuter"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_2)) {
+        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewInner"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .layoutDirection = CLAY_TOP_TO_BOTTOM )) {
+            CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewTopHeaderOuter"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_2)) {
                 CLAY_TEXT(CLAY_IDI("Clay__DebugViewTopHeaderId", 1), CLAY_STRING("Clay Debug Tools"), infoTextConfig);
                 CLAY_CONTAINER(CLAY_ID("Clay__DebugViewTopHeaderSpacer"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() })) {}
                 CLAY_BORDER_CONTAINER(CLAY_ID("Clay__DebugViewTopHeaderCloseButtonOuter"), &CLAY_LAYOUT_DEFAULT, CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(1, ((Clay_Color){217,91,67,255}), 4)) {
                     CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewTopHeaderCloseButtonInner"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}), CLAY_RECTANGLE_CONFIG(.color = ((Clay_Color){217,91,67,80}))) {
-                        CLAY_TEXT(CLAY_ID("Clay__DebugViewTopHeaderCloseButtonText"), CLAY_STRING("x"), CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_4));
+                        CLAY_TEXT(CLAY_ID("Clay__DebugViewTopHeaderCloseButtonText"), CLAY_STRING("x"), CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16));
                     }
                 }
             }
             CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewTopHeaderBorder"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(1)}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_3)) {}
-            CLAY_SCROLL_CONTAINER(CLAY_ID("Clay__DebugViewOuterScrollPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_SCROLL_CONFIG(.vertical = true, .horizontal = true)) {
-                CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewPaneBackground"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_RECTANGLE_CONFIG(.color = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1)) {
+            CLAY_SCROLL_CONTAINER(CLAY_ID("Clay__DebugViewOuterScrollPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_SCROLL_CONFIG(.horizontal = true, .vertical = true)) {
+                CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewPaneBackground"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_RECTANGLE_CONFIG(.color = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1)) {
                     Clay_ElementId panelContentsId = CLAY_ID("Clay__DebugViewPaneOuter");
                     CLAY_FLOATING_CONTAINER(panelContentsId, CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_FLOATING_CONFIG()) {
-                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewPane"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {.x = CLAY__DEBUGVIEW_OUTER_PADDING })) {
+                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {.x = CLAY__DEBUGVIEW_OUTER_PADDING }, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                             layoutData = Clay__RenderDebugLayoutElementsList((int32_t)initialRootsLength, highlightedRow);
                         }
                     }
                     float contentWidth = Clay__GetHashMapItem(panelContentsId.id)->layoutElement->dimensions.width;
-                    CLAY_CONTAINER(CLAY_ID("Clay__DebugViewScrollPanelWidth"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_FIXED(contentWidth)})) {}
+                    CLAY_CONTAINER(CLAY_ID("Clay__DebugViewScrollPanelWidth"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(contentWidth)}, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {}
                     for (uint32_t i = 0; i < layoutData.rowCount; i++) {
                         Clay_Color rowColor = (i & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1;
                         if (i == layoutData.selectedElementRowIndex) {
@@ -2796,7 +2796,7 @@ void Clay__RenderDebugView() {
                             rowColor.g *= 1.25f;
                             rowColor.b *= 1.25f;
                         }
-                        CLAY_RECTANGLE(CLAY_IDI("Clay__DebugViewStripe", i), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}), CLAY_RECTANGLE_CONFIG(.color = rowColor)) {}
+                        CLAY_RECTANGLE(CLAY_IDI("Clay__DebugViewStripe", i), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_RECTANGLE_CONFIG(.color = rowColor)) {}
                     }
                 }
             }
@@ -2804,8 +2804,8 @@ void Clay__RenderDebugView() {
             if (Clay__debugSelectedElementId != 0) {
                 Clay_LayoutElementHashMapItem *selectedItem = Clay__GetHashMapItem(Clay__debugSelectedElementId);
                 CLAY_SCROLL_CONTAINER(CLAY_ID("Clay__DebugViewInfoScrollPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(300)}, .childGap = 6), CLAY_SCROLL_CONFIG(.vertical = true)) {
-                    CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewElementInfoPane"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_2)) {
-                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoItemHeader"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING})) {
+                    CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewElementInfoPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_2)) {
+                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoItemHeader"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER})) {
                             CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoTitleId", 1), CLAY_STRING("Layout Config"), infoTextConfig);
                             CLAY_CONTAINER(CLAY_IDI("Clay__DebugViewElementInfoTitleSpacer", 1), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW() })) {}
                             CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoTitle", 2), selectedItem->elementId.stringId, infoTitleConfig);
@@ -2817,7 +2817,7 @@ void Clay__RenderDebugView() {
                         }
                         // Clay_LayoutConfig debug info
                         CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewElementInfoTopBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(1)}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_3)) {}
-                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoLayoutBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8)) {
+                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoLayoutBody"), CLAY_LAYOUT(.padding = {8, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                             // .boundingBox
                             CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoLayoutTitle", 1), CLAY_STRING("Bounding Box"), infoTitleConfig);
                             CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoLayoutBoundingBox"), CLAY_LAYOUT()) {
@@ -2884,7 +2884,7 @@ void Clay__RenderDebugView() {
                             case CLAY__LAYOUT_ELEMENT_TYPE_RECTANGLE: {
                                 Clay_RectangleElementConfig *rectangleConfig = selectedItem->layoutElement->elementConfig.rectangleElementConfig;
                                 Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, CLAY_STRING("Rectangle Element Config"));
-                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoRectangleBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8)) {
+                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoRectangleBody"), CLAY_LAYOUT(.padding = {8, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                                     // .color
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleColorTitle", 1), CLAY_STRING("Color"), infoTitleConfig);
                                     Clay__RenderDebugViewColor(rectangleConfig->color, infoTextConfig);
@@ -2897,7 +2897,7 @@ void Clay__RenderDebugView() {
                             case CLAY__LAYOUT_ELEMENT_TYPE_TEXT: {
                                 Clay_TextElementConfig *textConfig = selectedItem->layoutElement->elementConfig.textElementConfig;
                                 Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, CLAY_STRING("Text Element Config"));
-                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoRectangleBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8)) {
+                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoRectangleBody"), CLAY_LAYOUT(.padding = {8, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                                     // .fontSize
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 1), CLAY_STRING("Font Size"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 1), Clay__IntToString(textConfig->fontSize), infoTextConfig);
@@ -2928,7 +2928,7 @@ void Clay__RenderDebugView() {
                             case CLAY__LAYOUT_ELEMENT_TYPE_IMAGE: {
                                 Clay_ImageElementConfig *imageConfig = selectedItem->layoutElement->elementConfig.imageElementConfig;
                                 Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, CLAY_STRING("Image Element Config"));
-                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoImageBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8)) {
+                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoImageBody"), CLAY_LAYOUT(.padding = {8, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                                     // .sourceDimensions
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoImageTitle", 1), CLAY_STRING("Source Dimensions"), infoTitleConfig);
                                     CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoImageDimensions"), CLAY_LAYOUT()) {
@@ -2947,7 +2947,7 @@ void Clay__RenderDebugView() {
                             case CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER: {
                                 Clay_ScrollElementConfig *scrollConfig = selectedItem->layoutElement->elementConfig.scrollElementConfig;
                                 Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, CLAY_STRING("Scroll Element Config"));
-                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoScrollBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8)) {
+                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoScrollBody"), CLAY_LAYOUT(.padding = {8, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                                     // .vertical
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoScrollTitle", 1), CLAY_STRING("Vertical"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoImageVerticalData", 1), scrollConfig->vertical ? CLAY_STRING("true") : CLAY_STRING("false") , infoTextConfig);
@@ -2960,7 +2960,7 @@ void Clay__RenderDebugView() {
                             case CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER: {
                                 Clay_FloatingElementConfig *floatingConfig = selectedItem->layoutElement->elementConfig.floatingElementConfig;
                                 Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, CLAY_STRING("Floating Element Config"));
-                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoScrollBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8)) {
+                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoScrollBody"), CLAY_LAYOUT(.padding = {8, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                                     // .offset
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoFloatingTitle", 1), CLAY_STRING("Offset"), infoTitleConfig);
                                     CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoFloatingOffset"), CLAY_LAYOUT()) {
@@ -2992,7 +2992,7 @@ void Clay__RenderDebugView() {
                             case CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER: {
                                 Clay_BorderElementConfig *borderConfig = selectedItem->layoutElement->elementConfig.borderElementConfig;
                                 Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, CLAY_STRING("Border Element Config"));
-                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoBorderBody"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8}, .childGap = 8)) {
+                                CLAY_CONTAINER(CLAY_ID("Clay__DebugViewElementInfoBorderBody"), CLAY_LAYOUT(.padding = {8, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM)) {
                                     // .left
                                     CLAY_TEXT(CLAY_ID("Clay__DebugViewElementInfoBorderLeftTitle"), CLAY_STRING("Left Border"), infoTitleConfig);
                                     Clay__RenderDebugViewBorder(1, borderConfig->left, infoTextConfig);
@@ -3022,17 +3022,17 @@ void Clay__RenderDebugView() {
                     }
                 }
             } else {
-                CLAY_SCROLL_CONTAINER(CLAY_ID("Clay__DebugViewWarningsScrollPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(300)}, .childGap = 6), CLAY_SCROLL_CONFIG(.vertical = true, .horizontal = true)) {
-                    Clay_TextElementConfig *warningConfig = CLAY_TEXT_CONFIG(.fontSize = 16, .textColor = CLAY__DEBUGVIEW_COLOR_4, .wrapMode = CLAY_TEXT_WRAP_NONE);
-                    CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewWarningsPane"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_2)) {
-                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewWarningItemHeader"), CLAY_LAYOUT(.sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childGap = 8)) {
+                CLAY_SCROLL_CONTAINER(CLAY_ID("Clay__DebugViewWarningsScrollPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(300)}, .childGap = 6), CLAY_SCROLL_CONFIG(.horizontal = true, .vertical = true)) {
+                    Clay_TextElementConfig *warningConfig = CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE);
+                    CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewWarningsPane"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_2)) {
+                        CLAY_CONTAINER(CLAY_ID("Clay__DebugViewWarningItemHeader"), CLAY_LAYOUT(.sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childGap = 8, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} )) {
                             CLAY_TEXT(CLAY_ID("Clay__DebugViewWarningsTitle"), CLAY_STRING("Warnings"), warningConfig);
                         }
                         CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewWarningsTopBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(1)}), CLAY_RECTANGLE_CONFIG(.color = {200, 200, 200, 255})) {}
                         int previousWarningsLength = (int)Clay_warnings.length;
                         for (int i = 0; i < previousWarningsLength; i++) {
                             Clay__Warning warning = Clay_warnings.internalArray[i];
-                            CLAY_CONTAINER(CLAY_IDI("Clay__DebugViewWarningItem", i), CLAY_LAYOUT(.sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childGap = 8)) {
+                            CLAY_CONTAINER(CLAY_IDI("Clay__DebugViewWarningItem", i), CLAY_LAYOUT(.sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childGap = 8, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER})) {
                                 CLAY_TEXT(CLAY_IDI("Clay__DebugViewWarningText", i), warning.baseMessage, warningConfig);
                                 if (warning.dynamicMessage.length > 0) {
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewWarningTextDynamic", i), warning.dynamicMessage, warningConfig);
