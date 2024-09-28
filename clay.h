@@ -29,7 +29,7 @@
 #endif
 
 #ifdef _MSC_VER
-#define CLAY_PACKED_ENUM
+#define CLAY_PACKED_ENUM : uint8_t
 #else
 #define CLAY_PACKED_ENUM __attribute__((__packed__))
 #endif
