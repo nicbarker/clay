@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
-project(clay_examples_raylib_sidebar_scrolling_container C)
+project(clay_examples_raylib_sidebar_scrolling_container)
+
+target_compile_options(clay_examples_raylib_sidebar_scrolling_container PUBLIC -Wall -Werror -Wno-unknown-pragmas)
 
 # Adding Raylib
 include(FetchContent)
@@ -17,13 +19,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
-set(CMAKE_C_STANDARD 99)
-
 add_executable(clay_examples_raylib_sidebar_scrolling_container main.c multi-compilation-unit.c)
 
-if(!MSVC)
-target_compile_options(clay_examples_raylib_sidebar_scrolling_container PUBLIC -Wall -Werror -Wno-unknown-pragmas)
-endif()
 target_include_directories(clay_examples_raylib_sidebar_scrolling_container PUBLIC .)
 
 target_link_libraries(clay_examples_raylib_sidebar_scrolling_container PUBLIC raylib)

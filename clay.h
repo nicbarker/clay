@@ -452,7 +452,11 @@ extern uint32_t Clay__debugViewWidth;
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
+#ifdef __cplusplus
+#define CLAY__ALIGNMENT(type) alignof(type)
+#elif
+#define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; } a, a.x))
+#endif
 
 bool Clay__warningsEnabled = true;
 
@@ -614,14 +618,14 @@ typedef enum CLAY_PACKED_ENUM {
 } Clay__LayoutElementType;
 
 Clay_RenderCommandType Clay__LayoutElementTypeToRenderCommandType[] = {
-    [CLAY__LAYOUT_ELEMENT_TYPE_CONTAINER] = CLAY_RENDER_COMMAND_TYPE_NONE,
-    [CLAY__LAYOUT_ELEMENT_TYPE_RECTANGLE] = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-    [CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER] = CLAY_RENDER_COMMAND_TYPE_NONE,
-    [CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER] = CLAY_RENDER_COMMAND_TYPE_NONE,
-    [CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER] = CLAY_RENDER_COMMAND_TYPE_BORDER,
-    [CLAY__LAYOUT_ELEMENT_TYPE_IMAGE] = CLAY_RENDER_COMMAND_TYPE_IMAGE,
-    [CLAY__LAYOUT_ELEMENT_TYPE_TEXT] = CLAY_RENDER_COMMAND_TYPE_TEXT,
-    [CLAY__LAYOUT_ELEMENT_TYPE_CUSTOM] = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
+    CLAY_RENDER_COMMAND_TYPE_NONE,
+    CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+    CLAY_RENDER_COMMAND_TYPE_NONE,
+    CLAY_RENDER_COMMAND_TYPE_NONE,
+    CLAY_RENDER_COMMAND_TYPE_BORDER,
+    CLAY_RENDER_COMMAND_TYPE_IMAGE,
+    CLAY_RENDER_COMMAND_TYPE_TEXT,
+    CLAY_RENDER_COMMAND_TYPE_CUSTOM,
 };
 
 Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = (Clay_LayoutConfig){};
@@ -1414,7 +1418,7 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
     union {
         float fontSize;
         uint32_t bits;
-    } fontSizeBits = { .fontSize = config->fontSize };
+    } fontSizeBits = { .fontSize = (float)config->fontSize };
     uint32_t hash = 0;
     uint64_t pointerAsNumber = (uint64_t)text->chars;
 
@@ -1615,8 +1619,8 @@ void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfi
     Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, (Clay__LayoutElementTreeRoot) {
         .layoutElementIndex = Clay__layoutElements.length - 1,
         .parentId = parent->id,
+        .clipElementId = (uint32_t)(originalParentId == 0 ? (Clay__openClipElementStack.length > 0 ? Clay__int32_tArray_Get(&Clay__openClipElementStack, (int)Clay__openClipElementStack.length - 1) : 0) : 0),
         .zIndex = floatingConfig->zIndex,
-        .clipElementId = originalParentId == 0 ? (Clay__openClipElementStack.length > 0 ? Clay__int32_tArray_Get(&Clay__openClipElementStack, (int)Clay__openClipElementStack.length - 1) : 0) : 0,
     });
 }
 
@@ -2757,7 +2761,7 @@ void Clay__RenderDebugView() {
         highlightedRow = -1;
     }
     Clay__RenderDebugLayoutData layoutData = {};
-    CLAY_FLOATING_CONTAINER(CLAY_ID("Clay__DebugView"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED(Clay__debugViewWidth) , CLAY_SIZING_FIXED(Clay__layoutDimensions.height) }), CLAY_FLOATING_CONFIG(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER })) {
+    CLAY_FLOATING_CONTAINER(CLAY_ID("Clay__DebugView"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(Clay__layoutDimensions.height) }), CLAY_FLOATING_CONFIG(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER })) {
         CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewLeftBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_FIXED(1), .height = CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_3)) {}
         CLAY_CONTAINER(CLAY_ID("Clay__DebugViewInner"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()})) {
             CLAY_RECTANGLE(CLAY_ID("Clay__DebugViewTopHeaderOuter"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}), CLAY_RECTANGLE_CONFIG(.color = CLAY__DEBUGVIEW_COLOR_2)) {
