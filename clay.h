@@ -28,6 +28,12 @@
 #define CLAY_WASM_EXPORT(null)
 #endif
 
+#ifdef MSC_VER
+#define CLAY_PACKED_ENUM : unsigned char
+#else
+#define CLAY_PACKED_ENUM __attribute__((__packed__))
+#endif
+
 // Public Macro API ------------------------
 
 #define CLAY_LAYOUT(...) Clay__StoreLayoutConfig((Clay_LayoutConfig) {__VA_ARGS__ })
@@ -158,24 +164,24 @@ typedef struct {
 
 // Element Configs ---------------------------
 // Layout
-typedef enum __attribute__((__packed__)) {
+typedef enum CLAY_PACKED_ENUM {
     CLAY_LEFT_TO_RIGHT,
     CLAY_TOP_TO_BOTTOM,
 } Clay_LayoutDirection;
 
-typedef enum __attribute__((__packed__)) {
+typedef enum CLAY_PACKED_ENUM {
     CLAY_ALIGN_X_LEFT,
     CLAY_ALIGN_X_RIGHT,
     CLAY_ALIGN_X_CENTER,
 } Clay_LayoutAlignmentX;
 
-typedef enum __attribute__((__packed__)) {
+typedef enum CLAY_PACKED_ENUM {
     CLAY_ALIGN_Y_TOP,
     CLAY_ALIGN_Y_BOTTOM,
     CLAY_ALIGN_Y_CENTER,
 } Clay_LayoutAlignmentY;
 
-typedef enum __attribute__((__packed__)) {
+typedef enum CLAY_PACKED_ENUM {
     CLAY__SIZING_TYPE_FIT,
     CLAY__SIZING_TYPE_GROW,
     CLAY__SIZING_TYPE_PERCENT,
@@ -260,7 +266,7 @@ typedef struct
 } Clay_ImageElementConfig;
 
 // Floating
-typedef enum __attribute__((__packed__)) {
+typedef enum CLAY_PACKED_ENUM {
     CLAY_ATTACH_POINT_LEFT_TOP,
     CLAY_ATTACH_POINT_LEFT_CENTER,
     CLAY_ATTACH_POINT_LEFT_BOTTOM,
@@ -596,7 +602,7 @@ Clay_ElementId *Clay__ElementIdArray_Add(Clay__ElementIdArray *array, Clay_Eleme
 #pragma endregion
 // __GENERATED__ template
 
-typedef enum __attribute__((__packed__)) {
+typedef enum CLAY_PACKED_ENUM {
     CLAY__LAYOUT_ELEMENT_TYPE_CONTAINER,
     CLAY__LAYOUT_ELEMENT_TYPE_RECTANGLE,
     CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER,
