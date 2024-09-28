@@ -28,12 +28,6 @@
 #define CLAY_WASM_EXPORT(null)
 #endif
 
-#ifdef _MSC_VER
-#define CLAY_PACKED_ENUM : uint8_t
-#else
-#define CLAY_PACKED_ENUM __attribute__((__packed__))
-#endif
-
 // Public Macro API ------------------------
 
 #define CLAY_LAYOUT(...) Clay__StoreLayoutConfig(CLAY__INIT(Clay_LayoutConfig) {__VA_ARGS__ })
@@ -113,11 +107,13 @@ static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
     Clay__CloseElementWithChildren()
 
 #ifdef __cplusplus
-#define CLAY__ALIGNMENT(type) alignof(type)
 #define CLAY__INIT(type) type
+#define CLAY__ALIGNMENT(type) alignof(type)
+#define CLAY_PACKED_ENUM : uint8_t
 #else
 #define CLAY__INIT(type) (type)
 #define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
+#define CLAY_PACKED_ENUM __attribute__((__packed__))
 #endif
 
 #ifdef __cplusplus
