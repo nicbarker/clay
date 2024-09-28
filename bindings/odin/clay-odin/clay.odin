@@ -282,7 +282,8 @@ foreign Clay {
     _StoreCustomElementConfig :: proc(config: CustomElementConfig) -> ^CustomElementConfig ---
     _StoreScrollElementConfig :: proc(config: ScrollElementConfig) -> ^ScrollElementConfig ---
     _StoreBorderElementConfig :: proc(config: BorderElementConfig) -> ^BorderElementConfig ---
-    _HashString :: proc(toHash: String, index: u32) -> ElementId ---
+    _HashString :: proc(toHash: String, index: u32, seed: u32) -> ElementId ---
+    _GetOpenLayoutElementId :: proc() -> u32 ---
 }
 
 @(require_results, deferred_none = _CloseElementWithChildren)
@@ -409,5 +410,9 @@ MakeString :: proc(label: string) -> String {
 }
 
 ID :: proc(label: string, index: u32 = 0) -> ElementId {
-    return _HashString(MakeString(label), index)
+    return _HashString(MakeString(label), index, 0)
+}
+
+IDLocal :: proc(label: string, index: u32 = 0) -> ElementId {
+    return _HashString(MakeString(label), index, _GetOpenLayoutElementId())
 }

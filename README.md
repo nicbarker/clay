@@ -84,7 +84,7 @@ Clay_LayoutConfig sidebarItemLayout = (Clay_LayoutConfig) {
 
 // Re-useable components are just normal functions
 void SidebarItemComponent(int index) {
-    CLAY_RECTANGLE(CLAY_IDI("SidebarBlob", index), sidebarItemLayout, CLAY_RECTANGLE_CONFIG(.color = COLOR_ORANGE)) {};
+    CLAY_RECTANGLE(CLAY_IDI("SidebarBlob", index), sidebarItemLayout, CLAY_RECTANGLE_CONFIG(.color = COLOR_ORANGE)) {}
 }
 
 // An example function to begin the "root" of your layout tree
