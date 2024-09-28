@@ -38,37 +38,37 @@
 
 #define CLAY_LAYOUT(...) Clay__StoreLayoutConfig(CLAY__INIT(Clay_LayoutConfig) {__VA_ARGS__ })
 
-#define CLAY_RECTANGLE_CONFIG(...) Clay__StoreRectangleElementConfig((Clay_RectangleElementConfig) {__VA_ARGS__ })
+#define CLAY_RECTANGLE_CONFIG(...) Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {__VA_ARGS__ })
 
-#define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig((Clay_TextElementConfig) {__VA_ARGS__ })
+#define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__INIT(Clay_TextElementConfig) {__VA_ARGS__ })
 
-#define CLAY_IMAGE_CONFIG(...) Clay__StoreImageElementConfig((Clay_ImageElementConfig) {__VA_ARGS__ })
+#define CLAY_IMAGE_CONFIG(...) Clay__StoreImageElementConfig(CLAY__INIT(Clay_ImageElementConfig) {__VA_ARGS__ })
 
-#define CLAY_FLOATING_CONFIG(...) Clay__StoreFloatingElementConfig((Clay_FloatingElementConfig) {__VA_ARGS__ })
+#define CLAY_FLOATING_CONFIG(...) Clay__StoreFloatingElementConfig(CLAY__INIT(Clay_FloatingElementConfig) {__VA_ARGS__ })
 
-#define CLAY_CUSTOM_ELEMENT_CONFIG(...) Clay__StoreCustomElementConfig((Clay_CustomElementConfig) {__VA_ARGS__ })
+#define CLAY_CUSTOM_ELEMENT_CONFIG(...) Clay__StoreCustomElementConfig(CLAY__INIT(Clay_CustomElementConfig) {__VA_ARGS__ })
 
-#define CLAY_SCROLL_CONFIG(...) Clay__StoreScrollElementConfig((Clay_ScrollElementConfig) {__VA_ARGS__ })
+#define CLAY_SCROLL_CONFIG(...) Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig) {__VA_ARGS__ })
 
-#define CLAY_BORDER_CONFIG(...)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { __VA_ARGS__ })
+#define CLAY_BORDER_CONFIG(...)  Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { __VA_ARGS__ })
 
-#define CLAY_BORDER_CONFIG_OUTSIDE(...)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ } })
+#define CLAY_BORDER_CONFIG_OUTSIDE(...)  Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ } })
 
-#define CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } })
+#define CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } })
 
-#define CLAY_BORDER_CONFIG_ALL(...)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ } })
+#define CLAY_BORDER_CONFIG_ALL(...)  Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { __VA_ARGS__ }, .right = { __VA_ARGS__ }, .top = { __VA_ARGS__ }, .bottom = { __VA_ARGS__ }, .betweenChildren = { __VA_ARGS__ } })
 
-#define CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig((Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = { radius, radius, radius, radius }})
+#define CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)  Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = { radius, radius, radius, radius }})
 
-#define CLAY_CORNER_RADIUS(radius) (Clay_CornerRadius) { radius, radius, radius, radius }
+#define CLAY_CORNER_RADIUS(radius) CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius }
 
-#define CLAY_SIZING_FIT(...) (Clay_SizingAxis) { .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__}, .type = CLAY__SIZING_TYPE_FIT }
+#define CLAY_SIZING_FIT(...) CLAY__INIT(Clay_SizingAxis) { .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__}, .type = CLAY__SIZING_TYPE_FIT }
 
-#define CLAY_SIZING_GROW(...) (Clay_SizingAxis) { .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__}, .type = CLAY__SIZING_TYPE_GROW }
+#define CLAY_SIZING_GROW(...) CLAY__INIT(Clay_SizingAxis) { .sizeMinMax = (Clay_SizingMinMax) {__VA_ARGS__}, .type = CLAY__SIZING_TYPE_GROW }
 
-#define CLAY_SIZING_FIXED(fixedSize) (Clay_SizingAxis) { .sizeMinMax = { fixedSize, fixedSize }, .type = CLAY__SIZING_TYPE_GROW }
+#define CLAY_SIZING_FIXED(fixedSize) CLAY__INIT(Clay_SizingAxis) { .sizeMinMax = { fixedSize, fixedSize }, .type = CLAY__SIZING_TYPE_GROW }
 
-#define CLAY_SIZING_PERCENT(percentOfParent) (Clay_SizingAxis) { .sizePercent = (percentOfParent), .type = CLAY__SIZING_TYPE_PERCENT }
+#define CLAY_SIZING_PERCENT(percentOfParent) CLAY__INIT(Clay_SizingAxis) { .sizePercent = (percentOfParent), .type = CLAY__SIZING_TYPE_PERCENT }
 
 #define CLAY_ID(label) Clay__HashString(CLAY_STRING(label), 0, 0)
 
