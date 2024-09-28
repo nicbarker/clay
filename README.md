@@ -394,12 +394,14 @@ The supported directives are:
 - `CLAY_EXTEND_CONFIG_IMAGE` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_CUSTOM` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
 
-### Bindings
+### Bindings for non C
 
-Clay is usable out of the box as a `.h` include in both C99 and C++ with designated initializer support.
+Clay is usable out of the box as a `.h` include in both C99 and C++20 with designated initializer support.
 There are also supported bindings for other languages, including:
 
 - [Odin Bindings](https://github.com/nicbarker/clay/tree/main/bindings/odin)
+
+Unfortunately clay does **not** support Microsoft C11 or C17 via MSVC at this time.
 
 ### Debug Tools
 

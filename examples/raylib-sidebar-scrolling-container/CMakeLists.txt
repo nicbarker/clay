@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(clay_examples_raylib_sidebar_scrolling_container C)
+set(CMAKE_C_STANDARD 99)
 
 # Adding Raylib
 include(FetchContent)
@@ -16,8 +17,6 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(raylib)
-
-set(CMAKE_C_STANDARD 99)
 
 add_executable(clay_examples_raylib_sidebar_scrolling_container main.c multi-compilation-unit.c)
 
