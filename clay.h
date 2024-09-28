@@ -1586,7 +1586,7 @@ void Clay__OpenCustomElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfig,
 }
 
 void Clay__OpenScrollElement(Clay_ElementId elementId, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig) {
-    Clay_LayoutElement *scrollElement = Clay__OpenElement(elementId, CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER, layoutConfig, (Clay_ElementConfigUnion){ .scrollElementConfig = scrollConfig });
+    Clay_LayoutElement *scrollElement = Clay__OpenElement(elementId, CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = scrollConfig });
     Clay__int32_tArray_Add(&Clay__openClipElementStack, (int)scrollElement->id);
     Clay__ScrollContainerDataInternal *scrollOffset = CLAY__NULL;
     for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
@@ -1618,7 +1618,7 @@ void Clay__OpenFloatingElement(Clay_ElementId id, Clay_LayoutConfig *layoutConfi
         }
     }
     Clay__OpenElementWithParent(id, CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER, layoutConfig, CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = floatingConfig });
-    Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, (Clay__LayoutElementTreeRoot) {
+    Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
         .layoutElementIndex = Clay__layoutElements.length - 1,
         .parentId = parent->id,
         .clipElementId = (uint32_t)(originalParentId == 0 ? (Clay__openClipElementStack.length > 0 ? Clay__int32_tArray_Get(&Clay__openClipElementStack, (int)Clay__openClipElementStack.length - 1) : 0) : 0),
@@ -1698,7 +1698,7 @@ void Clay__OpenTextElement(Clay_ElementId id, Clay_String text, Clay_TextElement
     internalElement->dimensions.height = textMeasured.height;
     internalElement->text = text;
     internalElement->minDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured.height, .height = textMeasured.height }; // TODO not sure this is the best way to decide min width for text
-    Clay__TextElementDataArray_Add(&Clay__textElementData, (Clay__TextElementData) { .preferredDimensions = textMeasured, .elementIndex = Clay__layoutElements.length - 1});
+    Clay__TextElementDataArray_Add(&Clay__textElementData, CLAY__INIT(Clay__TextElementData) { .elementIndex = Clay__layoutElements.length - 1, .preferredDimensions = textMeasured });
     Clay__CloseElement();
 }
 
@@ -1968,18 +1968,18 @@ void Clay__CalculateFinalLayout() {
         containerElement->layoutConfig->layoutDirection = CLAY_TOP_TO_BOTTOM;
         containerElement->layoutConfig->childGap = textConfig->lineSpacing;
         containerElement->children = CLAY__INIT(Clay__LayoutElementChildren) { // Note: this overwrites the text property
+            .elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length],
             .length = 0,
-            .elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length]
         };
         // Short circuit all wrap calculations if wrap mode is none
         if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE || (containerElement->dimensions.width == textElementData->preferredDimensions.width)) {
-            Clay_LayoutElementArray_Add(&Clay__layoutElements, (Clay_LayoutElement) {
+            Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
+                .text = text,
+                .dimensions = textElementData->preferredDimensions,
+                .layoutConfig = &CLAY_LAYOUT_DEFAULT,
+                .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                 .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                 .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
-                .text = text,
-                .layoutConfig = &CLAY_LAYOUT_DEFAULT,
-                .elementConfig.textElementConfig = containerElement->elementConfig.textElementConfig,
-                .dimensions = textElementData->preferredDimensions,
             });
             containerElement->children.length++;
             Clay__int32_tArray_Add(&Clay__layoutElementChildren, (int32_t)Clay__layoutElements.length - 1);
@@ -2029,13 +2029,13 @@ void Clay__CalculateFinalLayout() {
                     wordStartIndex = lineStartIndex;
                     wordEndIndex = lineStartIndex;
                 }
-                Clay_LayoutElementArray_Add(&Clay__layoutElements, (Clay_LayoutElement) {
+                Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
+                    .text = stringToRender,
+                    .dimensions = { lineDimensions.width, lineDimensions.height },
+                    .layoutConfig = &CLAY_LAYOUT_DEFAULT,
+                    .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                     .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                     .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
-                    .text = stringToRender,
-                    .layoutConfig = &CLAY_LAYOUT_DEFAULT,
-                    .elementConfig.textElementConfig = containerElement->elementConfig.textElementConfig,
-                    .dimensions = { lineDimensions.width, lineDimensions.height },
                 });
                 containerElement->dimensions.height += lineDimensions.height + (float)(containerElement->children.length > 0 ? textConfig->lineSpacing : 0);
                 containerElement->children.length++;
@@ -2177,9 +2177,9 @@ void Clay__CalculateFinalLayout() {
             Clay_LayoutElementHashMapItem *clipHashMapItem = Clay__GetHashMapItem(root->clipElementId);
             if (clipHashMapItem) {
                 Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                    .boundingBox = clipHashMapItem->boundingBox,
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-                    .boundingBox = clipHashMapItem->boundingBox,
                 });
             }
         }
@@ -2210,9 +2210,9 @@ void Clay__CalculateFinalLayout() {
                 // Apply scroll offsets to container
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER) {
                     Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                       .boundingBox = currentElementBoundingBox,
                         .id = Clay__RehashWithNumber(currentElement->id, 10),
                        .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-                       .boundingBox = currentElementBoundingBox,
                     });
 
                     // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
@@ -2234,11 +2234,11 @@ void Clay__CalculateFinalLayout() {
                 }
 
                 // Create the render command for this element
-                Clay_RenderCommand renderCommand = (Clay_RenderCommand) {
+                Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
+                    .boundingBox = currentElementBoundingBox,
+                    .config = currentElement->elementConfig,
                     .id = currentElement->id,
                     .commandType = Clay__LayoutElementTypeToRenderCommandType[currentElement->elementType],
-                    .boundingBox = currentElementBoundingBox,
-                    .config = currentElement->elementConfig
                 };
 
                 Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(currentElement->id);
@@ -2319,7 +2319,7 @@ void Clay__CalculateFinalLayout() {
             } else {
                 // DFS is returning upwards backwards
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER) {
-                    Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
                         .id = Clay__RehashWithNumber(currentElement->id, 11),
                        .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
                     });
@@ -2337,11 +2337,11 @@ void Clay__CalculateFinalLayout() {
                     #endif
                     Clay_BorderElementConfig *borderConfig = currentElement->elementConfig.borderElementConfig;
 
-                    Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                        .boundingBox = currentElementBoundingBox,
+                        .config = currentElement->elementConfig,
                         .id = currentElement->id,
                         .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
-                        .boundingBox = currentElementBoundingBox,
-                        .config = currentElement->elementConfig
                     });
 
                     // Render border elements between children
@@ -2351,11 +2351,11 @@ void Clay__CalculateFinalLayout() {
                             for (int i = 0; i < currentElement->children.length; ++i) {
                                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
                                 if (i > 0) {
-                                    Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                                        .boundingBox = { currentElementBoundingBox.x + borderOffset.x, currentElementBoundingBox.y, (float)borderConfig->betweenChildren.width, currentElement->dimensions.height },
+                                        .config = { CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color) },
                                         .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
                                         .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-                                        .boundingBox = { currentElementBoundingBox.x + borderOffset.x, currentElementBoundingBox.y, (float)borderConfig->betweenChildren.width, currentElement->dimensions.height },
-                                        .config = { CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color) }
                                     });
                                 }
                                 borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap / 2);
@@ -2364,11 +2364,11 @@ void Clay__CalculateFinalLayout() {
                             for (int i = 0; i < currentElement->children.length; ++i) {
                                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
                                 if (i > 0) {
-                                    Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) {
+                                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                                        .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + borderOffset.y, currentElement->dimensions.width, (float)borderConfig->betweenChildren.width },
+                                        .config = { CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color) },
                                         .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
                                         .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-                                        .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + borderOffset.y, currentElement->dimensions.width, (float)borderConfig->betweenChildren.width },
-                                        .config = { CLAY_RECTANGLE_CONFIG(.color = borderConfig->betweenChildren.color) }
                                     });
                                 }
                                 borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap / 2);
@@ -2428,7 +2428,7 @@ void Clay__CalculateFinalLayout() {
         }
 
         if (root->clipElementId) {
-            Clay_RenderCommandArray_Add(&Clay__renderCommands, (Clay_RenderCommand) { .id = Clay__RehashWithNumber(rootElement->id, 11), .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
+            Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) { .id = Clay__RehashWithNumber(rootElement->id, 11), .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
         }
     }
 }
@@ -3267,7 +3267,7 @@ void Clay_BeginLayout() {
     Clay_LayoutElement rootLayoutElement = (Clay_LayoutElement){.layoutConfig = CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED((rootDimensions.width)), CLAY_SIZING_FIXED(rootDimensions.height)}), .id = rootElementId.id, };
     Clay__openLayoutElement = Clay_LayoutElementArray_Add(&Clay__layoutElements, rootLayoutElement);
     Clay__LayoutElementPointerArray_Add(&Clay__openLayoutElementStack, Clay__openLayoutElement);
-    Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, (Clay__LayoutElementTreeRoot) { .layoutElementIndex = Clay__layoutElements.length - 1 });
+    Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) { .layoutElementIndex = Clay__layoutElements.length - 1 });
     Clay__StringArray_Add(&Clay__layoutElementIdStrings, CLAY_STRING("Clay__RootContainer"));
     Clay__AddHashMapItem(rootElementId, Clay__openLayoutElement);
 }
