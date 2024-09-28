@@ -454,14 +454,16 @@ extern uint32_t Clay__debugViewWidth;
 
 #ifdef __cplusplus
 #define CLAY__ALIGNMENT(type) alignof(type)
+#define CLAY__INIT(type) type
 #elif
+#define CLAY__INIT(type) (type)
 #define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; } a, a.x))
 #endif
 
 bool Clay__warningsEnabled = true;
 
-Clay_String CLAY__SPACECHAR = (Clay_String) { .length = 1, .chars = " " };
-Clay_String CLAY__STRING_DEFAULT = (Clay_String) { .length = 0, .chars = "" };
+Clay_String CLAY__SPACECHAR = CLAY__INIT(Clay_String) { .length = 1, .chars = " " };
+Clay_String CLAY__STRING_DEFAULT = CLAY__INIT(Clay_String) { .length = 0, .chars = "" };
 
 typedef struct
 {
@@ -652,7 +654,7 @@ Clay_LayoutConfig *Clay__LayoutConfigArray_Add(Clay__LayoutConfigArray *array, C
 #pragma endregion
 // __GENERATED__ template
 
-Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = (Clay_RectangleElementConfig){0};
+Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = (Clay_RectangleElementConfig){{0}};
 
 // __GENERATED__ template array_define,array_add TYPE=Clay_RectangleElementConfig NAME=Clay__RectangleElementConfigArray DEFAULT_VALUE=&CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
