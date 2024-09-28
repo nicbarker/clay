@@ -28,8 +28,8 @@
 #define CLAY_WASM_EXPORT(null)
 #endif
 
-#ifdef _MSC_VER
-#define CLAY_PACKED_ENUM : unsigned char
+#ifdef MSC_VER
+#define CLAY_PACKED_ENUM
 #else
 #define CLAY_PACKED_ENUM __attribute__((__packed__))
 #endif
