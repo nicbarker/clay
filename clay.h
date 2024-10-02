@@ -3091,8 +3091,9 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1));
             Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO I wish there was a way around this, maybe the fact that it's essentially a binary tree limits the cost, have to measure
-            if ((mapItem && Clay__PointIsInsideRect(position, mapItem->boundingBox)) || (!mapItem && Clay__PointIsInsideRect(position, CLAY__INIT(Clay_BoundingBox) {0,0, currentElement->dimensions.width, currentElement->dimensions.height}))) {
+            if (mapItem && Clay__PointIsInsideRect(position, mapItem->boundingBox)) {
                 Clay__ElementIdArray_Add(&Clay__pointerOverIds, mapItem->elementId);
+
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_TEXT) {
                     dfsBuffer.length--;
                     continue;
