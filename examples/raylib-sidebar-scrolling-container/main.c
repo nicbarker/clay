@@ -15,8 +15,8 @@ Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = 1
 
 // Examples of re-usable "Components"
 void RenderHeaderButton(uint16_t index, Clay_String text) {
-    Clay_ElementId buttonId = CLAY_IDI("HeaderButton", index);
-    CLAY(buttonId, CLAY_LAYOUT(.padding = {16, 8}), CLAY_RECTANGLE(.color = Clay_PointerOver(buttonId) ? COLOR_BLUE : COLOR_ORANGE)) {
+    Clay_ElementId buttonId = Clay__HashString(CLAY_STRING("HeaderButton"), index, 0);
+    CLAY(Clay__AttachId(buttonId), CLAY_LAYOUT(.padding = {16, 8}), CLAY_RECTANGLE(.color = Clay_PointerOver(buttonId) ? COLOR_BLUE : COLOR_ORANGE)) {
         CLAY_TEXT(text, &headerTextConfig);
     }
 }
