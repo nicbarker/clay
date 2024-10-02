@@ -3093,7 +3093,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO I wish there was a way around this, maybe the fact that it's essentially a binary tree limits the cost, have to measure
             if ((mapItem && Clay__PointIsInsideRect(position, mapItem->boundingBox)) || (!mapItem && Clay__PointIsInsideRect(position, CLAY__INIT(Clay_BoundingBox) {0,0, currentElement->dimensions.width, currentElement->dimensions.height}))) {
             	if (mapItem) {
-            		Clay__ElementIdArray_Add(&Clay__pointerOverIds, mapItem->elementId);
+                    Clay__ElementIdArray_Add(&Clay__pointerOverIds, mapItem->elementId);
              	}
 
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_TEXT) {
