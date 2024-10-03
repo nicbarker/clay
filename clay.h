@@ -1599,9 +1599,9 @@ void Clay__ElementPostConfiguration() {
                     }
                 }
                 Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
-                    .layoutElementIndex = Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 1),
+                    .layoutElementIndex = (uint32_t)Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 1),
                     .parentId = floatingConfig->parentId,
-                    .clipElementId = clipElementId,
+                    .clipElementId = (uint32_t)clipElementId,
                     .zIndex = floatingConfig->zIndex,
                 });
                 break;
@@ -2832,7 +2832,7 @@ void Clay__RenderDebugView() {
     }
     Clay__RenderDebugLayoutData layoutData = {};
     CLAY(CLAY_ID("Clay__DebugView"),
-        CLAY_FLOATING(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }, .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id),
+        CLAY_FLOATING(.parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }),
         CLAY_LAYOUT(.sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(Clay__layoutDimensions.height) }, .layoutDirection = CLAY_TOP_TO_BOTTOM),
         CLAY_BORDER(.bottom = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 })
     ) {
