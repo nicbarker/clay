@@ -144,6 +144,8 @@ In summary, the general order of steps is:
 6. [Clay_EndLayout()](#clay_endlayout)
 7. Render the results using the outputted [Clay_RenderCommandArray](#clay_rendercommandarray)
 
+For help starting out or to discuss clay, considering joining [the discord server.](https://discord.gg/b4FTWkxdvT)
+
 ## High Level Documentation
 
 ### Building UI Hierarchies
