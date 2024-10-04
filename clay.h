@@ -252,7 +252,7 @@ typedef struct
     uint16_t fontId;
     uint16_t fontSize;
     uint16_t letterSpacing;
-    uint16_t lineSpacing;
+    uint16_t lineHeight;
     Clay_TextElementConfigWrapMode wrapMode;
     #ifdef CLAY_EXTEND_CONFIG_TEXT
     CLAY_EXTEND_CONFIG_TEXT
@@ -1965,7 +1965,6 @@ void Clay__CalculateFinalLayout() {
         // Clone the style config to prevent pollution of other elements that share this config
         containerElement->layoutConfig = Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, *containerElement->layoutConfig);
         containerElement->layoutConfig->layoutDirection = CLAY_TOP_TO_BOTTOM;
-        containerElement->layoutConfig->childGap = textConfig->lineSpacing;
         containerElement->children = CLAY__INIT(Clay__LayoutElementChildren) { // Note: this overwrites the text property
             .elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length],
             .length = 0,
@@ -1975,7 +1974,7 @@ void Clay__CalculateFinalLayout() {
             Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
                 .text = text,
                 .dimensions = textElementData->preferredDimensions,
-                .layoutConfig = &CLAY_LAYOUT_DEFAULT,
+                .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(textConfig->lineHeight) }),
                 .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                 .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                 .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
@@ -2031,12 +2030,12 @@ void Clay__CalculateFinalLayout() {
                 Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
                     .text = stringToRender,
                     .dimensions = { lineDimensions.width, lineDimensions.height },
-                    .layoutConfig = &CLAY_LAYOUT_DEFAULT,
+                    .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(textConfig->lineHeight) }),
                     .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                     .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                     .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
                 });
-                containerElement->dimensions.height += lineDimensions.height + (float)(containerElement->children.length > 0 ? textConfig->lineSpacing : 0);
+                containerElement->dimensions.height += textConfig->lineHeight != 0 ? textConfig->lineHeight : lineDimensions.height;
                 containerElement->children.length++;
                 lineDimensions = CLAY__INIT(Clay_Dimensions) {};
                 Clay__int32_tArray_Add(&Clay__layoutElementChildren, (int32_t)Clay__layoutElements.length - 1);
@@ -2903,9 +2902,9 @@ void Clay__RenderDebugView() {
                                     // .fontId
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 2), CLAY_STRING("Font ID"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 2), Clay__IntToString(textConfig->fontId), infoTextConfig);
-                                    // .lineSpacing
-                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 3), CLAY_STRING("Line Spacing"), infoTitleConfig);
-                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 3), Clay__IntToString(textConfig->lineSpacing), infoTextConfig);
+                                    // .lineHeight
+                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 3), CLAY_STRING("Line Height"), infoTitleConfig);
+                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 3), textConfig->lineHeight == 0 ? CLAY_STRING("Auto") : Clay__IntToString(textConfig->lineHeight), infoTextConfig);
                                     // .letterSpacing
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 4), CLAY_STRING("Letter Spacing"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 4), Clay__IntToString(textConfig->letterSpacing), infoTextConfig);

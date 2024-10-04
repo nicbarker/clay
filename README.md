@@ -968,7 +968,7 @@ Clay_TextElementConfig {
     uint16_t fontId;
     uint16_t fontSize;
     uint16_t letterSpacing;
-    uint16_t lineSpacing;
+    uint16_t lineHeight;
     Clay_TextElementConfigWrapMode wrapMode {
     	CLAY_TEXT_WRAP_WORDS (default),
 	CLAY_TEXT_WRAP_NEWLINES,
@@ -1024,11 +1024,11 @@ Font size is generally thought of as `x pixels tall`, but interpretation is left
 
 ---
 
-**`.lineSpacing`**
+**`.lineHeight`**
 
-`CLAY_TEXT_CONFIG(.lineSpacing = 1)`
+`CLAY_TEXT_CONFIG(.lineHeight = 20)`
 
-`.lineSpacing` results in **vertical** white space between lines of text (from both `\n` characters and text wrapping) and will affect layout of parents and siblings.
+`.lineHeight` - when non zero - forcibly sets the `height` of each wrapped line of text to `.lineheight` pixels tall. Will affect the layout of both parents and siblings. A value of `0` will use the measured height of the font.
 
 ---
 
