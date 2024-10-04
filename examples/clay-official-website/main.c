@@ -311,6 +311,12 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
                     CLAY_TEXT(CLAY_ID("LinkDocsText"), CLAY_STRING("Docs"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
                 }
             }
+            Clay_ElementId discordButtonId = CLAY_ID("HeaderButtonDiscord");
+            CLAY_BORDER_CONTAINER(CLAY_ID("LinkDiscordOuter"), CLAY_LAYOUT(), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, COLOR_RED, 10)) {
+                CLAY_RECTANGLE(discordButtonId, CLAY_LAYOUT(.padding = {16, 6}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(10), .link = CLAY_STRING("https://discord.gg/b4FTWkxdvT"), .color = Clay_PointerOver(discordButtonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT)) {
+                    CLAY_TEXT(CLAY_ID("LinkDiscordText"), CLAY_STRING("Discord"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
+                }
+            }
             Clay_ElementId githubButtonId = CLAY_ID("HeaderButtonGithub");
             CLAY_BORDER_CONTAINER(CLAY_ID("LinkGithubOuter"), CLAY_LAYOUT(), CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(2, COLOR_RED, 10)) {
                 CLAY_RECTANGLE(githubButtonId, CLAY_LAYOUT(.padding = {16, 6}), CLAY_RECTANGLE_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(10), .link = CLAY_STRING("https://github.com/nicbarker/clay"), .color = Clay_PointerOver(githubButtonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT)) {
