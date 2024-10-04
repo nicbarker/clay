@@ -3182,14 +3182,14 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
         if ((scrollData->scrollMomentum.x > -0.1f && scrollData->scrollMomentum.x < 0.1f) || scrollOccurred) {
             scrollData->scrollMomentum.x = 0;
         }
-        scrollData->scrollPosition.x = CLAY__MAX(CLAY__MIN(scrollData->scrollPosition.x, 0), -(scrollData->contentSize.width - scrollData->layoutElement->dimensions.width));
+        scrollData->scrollPosition.x = CLAY__MIN(CLAY__MAX(scrollData->scrollPosition.x, -(CLAY__MAX(scrollData->contentSize.width - scrollData->layoutElement->dimensions.width, 0))), 0);
 
         scrollData->scrollPosition.y += scrollData->scrollMomentum.y;
         scrollData->scrollMomentum.y *= 0.95f;
         if ((scrollData->scrollMomentum.y > -0.1f && scrollData->scrollMomentum.y < 0.1f) || scrollOccurred) {
             scrollData->scrollMomentum.y = 0;
         }
-        scrollData->scrollPosition.y = CLAY__MAX(CLAY__MIN(scrollData->scrollPosition.y, 0), -(scrollData->contentSize.height - scrollData->layoutElement->dimensions.height));
+        scrollData->scrollPosition.y = CLAY__MIN(CLAY__MAX(scrollData->scrollPosition.y, -(CLAY__MAX(scrollData->contentSize.height - scrollData->layoutElement->dimensions.height, 0))), 0);
 
         for (int j = 0; j < Clay__pointerOverIds.length; ++j) { // TODO n & m are small here but this being n*m gives me the creeps
             if (scrollData->layoutElement->id == Clay__ElementIdArray_Get(&Clay__pointerOverIds, j)->id) {
