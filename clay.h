@@ -70,7 +70,7 @@
 
 #define CLAY_ID_LOCAL(label) CLAY_IDI_LOCAL(label, 0)
 
-#define CLAY_IDI_LOCAL(label, index) Clay__HashString(CLAY_STRING(label), index, Clay__GetOpenLayoutElement()->id)
+#define CLAY_IDI_LOCAL(label, index) Clay__AttachId(Clay__HashString(CLAY_STRING(label), Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 2))->children.length, Clay__GetOpenLayoutElement()->id))
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
@@ -444,7 +444,7 @@ void Clay__CloseElement();
 // Internal API functions required by macros
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
 void Clay__ElementPostConfiguration();
-void Clay__AttachId(Clay_ElementId id);
+Clay_ElementId Clay__AttachId(Clay_ElementId id);
 void Clay__AttachLayoutConfig(Clay_LayoutConfig *config);
 void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type);
 Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config);
@@ -1304,7 +1304,7 @@ Clay__PointerInfo Clay__pointerInfo = CLAY__INIT(Clay__PointerInfo) { .position 
 Clay_Dimensions Clay__layoutDimensions = CLAY__INIT(Clay_Dimensions){};
 Clay_ElementId Clay__dynamicElementIndexBaseHash = CLAY__INIT(Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
 uint32_t Clay__dynamicElementIndex = 0;
-bool Clay__debugModeEnabled = true;
+bool Clay__debugModeEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
 uint32_t Clay__debugViewWidth = 400;
 Clay_Color Clay__debugViewHighlightColor = CLAY__INIT(Clay_Color) { 168, 66, 28, 100 };
@@ -1581,7 +1581,6 @@ void Clay__ElementPostConfiguration() {
                 Clay_FloatingElementConfig *floatingConfig = config->config.floatingElementConfig;
                 // This looks dodgy but because of the auto generated root element the depth of the tree will always be at least 2 here
                 Clay_LayoutElement *hierarchicalParent = Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 2));
-                uint32_t originalParentId = floatingConfig->parentId;
                 int clipElementId = 0;
                 if (floatingConfig->parentId == 0) {
                     // If no parent id was specified, attach to the elements direct hierarchical parent
@@ -2493,7 +2492,7 @@ void Clay__CalculateFinalLayout() {
     }
 }
 
-void Clay__AttachId(Clay_ElementId elementId) {
+Clay_ElementId Clay__AttachId(Clay_ElementId elementId) {
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     openLayoutElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, openLayoutElement);
@@ -2501,6 +2500,7 @@ void Clay__AttachId(Clay_ElementId elementId) {
     #ifdef CLAY_DEBUG
     openLayoutElement->name = elementId.stringId;
     #endif
+    return elementId;
 }
 void Clay__AttachLayoutConfig(Clay_LayoutConfig *config) {
     Clay__GetOpenLayoutElement()->layoutConfig = config;
@@ -3243,10 +3243,6 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
             scrollData->pointerOrigin = CLAY__INIT(Clay_Vector2){0,0};
             scrollData->scrollOrigin = CLAY__INIT(Clay_Vector2){0,0};
             scrollData->momentumTime = 0;
-        }
-
-        if (scrollData->scrollMomentum.y > 0) {
-            int x = 0;
         }
 
         // Apply existing momentum
