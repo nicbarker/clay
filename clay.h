@@ -1968,7 +1968,7 @@ void Clay__CalculateFinalLayout() {
             .length = 0,
         };
         // Short circuit all wrap calculations if wrap mode is none
-        if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE || (containerElement->dimensions.width == textElementData->preferredDimensions.width)) {
+        if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE || (containerElement->dimensions.width == textElementData->preferredDimensions.width && textConfig->wrapMode != CLAY_TEXT_WRAP_NEWLINES)) {
             Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
                 .text = text,
                 .dimensions = textElementData->preferredDimensions,
