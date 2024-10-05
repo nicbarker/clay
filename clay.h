@@ -252,7 +252,7 @@ typedef struct
     uint16_t fontId;
     uint16_t fontSize;
     uint16_t letterSpacing;
-    uint16_t lineSpacing;
+    uint16_t lineHeight;
     Clay_TextElementConfigWrapMode wrapMode;
     #ifdef CLAY_EXTEND_CONFIG_TEXT
     CLAY_EXTEND_CONFIG_TEXT
@@ -1965,17 +1965,18 @@ void Clay__CalculateFinalLayout() {
         // Clone the style config to prevent pollution of other elements that share this config
         containerElement->layoutConfig = Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, *containerElement->layoutConfig);
         containerElement->layoutConfig->layoutDirection = CLAY_TOP_TO_BOTTOM;
-        containerElement->layoutConfig->childGap = textConfig->lineSpacing;
         containerElement->children = CLAY__INIT(Clay__LayoutElementChildren) { // Note: this overwrites the text property
             .elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length],
             .length = 0,
         };
         // Short circuit all wrap calculations if wrap mode is none
         if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE || (containerElement->dimensions.width == textElementData->preferredDimensions.width && textConfig->wrapMode != CLAY_TEXT_WRAP_NEWLINES)) {
+            float lineHeight = textConfig->lineHeight != 0 ? textConfig->lineHeight : textElementData->preferredDimensions.height;
             Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
                 .text = text,
-                .dimensions = textElementData->preferredDimensions,
-                .layoutConfig = &CLAY_LAYOUT_DEFAULT,
+                .dimensions = { textElementData->preferredDimensions.width, lineHeight },
+                .minDimensions = textElementData->preferredDimensions,
+                .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(lineHeight) }),
                 .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                 .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                 .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
@@ -2028,15 +2029,17 @@ void Clay__CalculateFinalLayout() {
                     wordStartIndex = lineStartIndex;
                     wordEndIndex = lineStartIndex;
                 }
+                float lineHeight = textConfig->lineHeight != 0 ? textConfig->lineHeight : lineDimensions.height;
                 Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
                     .text = stringToRender,
-                    .dimensions = { lineDimensions.width, lineDimensions.height },
-                    .layoutConfig = &CLAY_LAYOUT_DEFAULT,
+                    .dimensions = { lineDimensions.width, lineHeight },
+                    .minDimensions = { lineDimensions.width, lineDimensions.height },
+                    .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(lineHeight) }),
                     .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                     .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                     .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
                 });
-                containerElement->dimensions.height += lineDimensions.height + (float)(containerElement->children.length > 0 ? textConfig->lineSpacing : 0);
+                containerElement->dimensions.height += lineHeight;
                 containerElement->children.length++;
                 lineDimensions = CLAY__INIT(Clay_Dimensions) {};
                 Clay__int32_tArray_Add(&Clay__layoutElementChildren, (int32_t)Clay__layoutElements.length - 1);
@@ -2259,6 +2262,9 @@ void Clay__CalculateFinalLayout() {
                     }
                     case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                         renderCommand.text = currentElement->text;
+                        if (currentElement->minDimensions.height != currentElement->dimensions.height) {
+                            renderCommand.boundingBox.y += (currentElement->dimensions.height - currentElement->minDimensions.height) / 2;
+                        }
                         break;
                     }
                     case CLAY_RENDER_COMMAND_TYPE_BORDER: { // We render borders on close because they need to render above children
@@ -2903,9 +2909,9 @@ void Clay__RenderDebugView() {
                                     // .fontId
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 2), CLAY_STRING("Font ID"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 2), Clay__IntToString(textConfig->fontId), infoTextConfig);
-                                    // .lineSpacing
-                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 3), CLAY_STRING("Line Spacing"), infoTitleConfig);
-                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 3), Clay__IntToString(textConfig->lineSpacing), infoTextConfig);
+                                    // .lineHeight
+                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 3), CLAY_STRING("Line Height"), infoTitleConfig);
+                                    CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 3), textConfig->lineHeight == 0 ? CLAY_STRING("Auto") : Clay__IntToString(textConfig->lineHeight), infoTextConfig);
                                     // .letterSpacing
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontTitle", 4), CLAY_STRING("Letter Spacing"), infoTitleConfig);
                                     CLAY_TEXT(CLAY_IDI("Clay__DebugViewElementInfoRectangleFontBody", 4), Clay__IntToString(textConfig->letterSpacing), infoTextConfig);
