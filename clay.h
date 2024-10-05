@@ -1971,10 +1971,12 @@ void Clay__CalculateFinalLayout() {
         };
         // Short circuit all wrap calculations if wrap mode is none
         if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE || (containerElement->dimensions.width == textElementData->preferredDimensions.width && textConfig->wrapMode != CLAY_TEXT_WRAP_NEWLINES)) {
+            float lineHeight = textConfig->lineHeight != 0 ? textConfig->lineHeight : textElementData->preferredDimensions.height;
             Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
                 .text = text,
-                .dimensions = textElementData->preferredDimensions,
-                .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(textConfig->lineHeight) }),
+                .dimensions = { textElementData->preferredDimensions.width, lineHeight },
+                .minDimensions = textElementData->preferredDimensions,
+                .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(lineHeight) }),
                 .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                 .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                 .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
@@ -2027,15 +2029,17 @@ void Clay__CalculateFinalLayout() {
                     wordStartIndex = lineStartIndex;
                     wordEndIndex = lineStartIndex;
                 }
+                float lineHeight = textConfig->lineHeight != 0 ? textConfig->lineHeight : lineDimensions.height;
                 Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
                     .text = stringToRender,
-                    .dimensions = { lineDimensions.width, lineDimensions.height },
-                    .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(textConfig->lineHeight) }),
+                    .dimensions = { lineDimensions.width, lineHeight },
+                    .minDimensions = { lineDimensions.width, lineDimensions.height },
+                    .layoutConfig = CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(lineHeight) }),
                     .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
                     .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
                     .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
                 });
-                containerElement->dimensions.height += textConfig->lineHeight != 0 ? textConfig->lineHeight : lineDimensions.height;
+                containerElement->dimensions.height += lineHeight;
                 containerElement->children.length++;
                 lineDimensions = CLAY__INIT(Clay_Dimensions) {};
                 Clay__int32_tArray_Add(&Clay__layoutElementChildren, (int32_t)Clay__layoutElements.length - 1);
@@ -2258,6 +2262,9 @@ void Clay__CalculateFinalLayout() {
                     }
                     case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                         renderCommand.text = currentElement->text;
+                        if (currentElement->minDimensions.height != currentElement->dimensions.height) {
+                            renderCommand.boundingBox.y += (currentElement->dimensions.height - currentElement->minDimensions.height) / 2;
+                        }
                         break;
                     }
                     case CLAY_RENDER_COMMAND_TYPE_BORDER: { // We render borders on close because they need to render above children
