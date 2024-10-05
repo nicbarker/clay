@@ -1769,52 +1769,55 @@ typedef enum
 // will actually be distributed. So we keep looping until either all the excess width is distributed or
 // we have exhausted all our containers that can change size along this axis
 float Clay__DistributeSizeAmongChildren(bool xAxis, float sizeToDistribute, Clay__LayoutElementPointerArray resizableContainerBuffer, Clay__SizeDistributionType distributionType) {
-    Clay__LayoutElementPointerArray backBuffer = Clay__layoutElementReusableBuffer;
-    backBuffer.length = 0;
+    Clay__LayoutElementPointerArray remainingElements = Clay__layoutElementReusableBuffer;
+    remainingElements.length = 0;
 
-    Clay__LayoutElementPointerArray remainingElements = resizableContainerBuffer;
-    float totalDistributedSize;
+    for (int i = 0; i < resizableContainerBuffer.length; ++i) {
+        Clay__LayoutElementPointerArray_Add(&remainingElements, *Clay__LayoutElementPointerArray_Get(&resizableContainerBuffer, i));
+    }
+
     while (sizeToDistribute != 0 && remainingElements.length > 0) {
-        totalDistributedSize = 0;
+        float dividedSize = sizeToDistribute / (float)remainingElements.length;
         for (int childOffset = 0; childOffset < remainingElements.length; childOffset++) {
             Clay_LayoutElement *childElement = *Clay__LayoutElementPointerArray_Get(&remainingElements, childOffset);
             Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
             float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
             float childMinSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
+            bool canDistribute = true;
 
             if ((sizeToDistribute < 0 && *childSize == childSizing.sizeMinMax.min) || (sizeToDistribute > 0 && *childSize == childSizing.sizeMinMax.max)) {
+                canDistribute = false;
+            }
+            // Currently, we don't support squishing aspect ratio images on their Y axis as it would break ratio
+            else if (!xAxis && childElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_IMAGE) {
+                canDistribute = false;
+            }
+            else {
+                switch (distributionType) {
+                    case CLAY__SIZE_DISTRIBUTION_TYPE_RESIZEABLE_CONTAINER: break;
+                    case CLAY__SIZE_DISTRIBUTION_TYPE_GROW_CONTAINER: if (childSizing.type != CLAY__SIZING_TYPE_GROW) canDistribute = false; break;
+                    case CLAY__SIZE_DISTRIBUTION_TYPE_SCROLL_CONTAINER: if ((childElement->elementType != CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER || (xAxis && !childElement->elementConfig.scrollElementConfig->horizontal) || (!xAxis && !childElement->elementConfig.scrollElementConfig->vertical))) canDistribute = false; break;
+                }
+            }
+
+            if (!canDistribute) {
+                Clay__LayoutElementPointerArray_RemoveSwapback(&remainingElements, childOffset);
+                childOffset--;
                 continue;
             }
 
-            if (!xAxis && childElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_IMAGE) {
-                continue; // Currently, we don't support squishing aspect ratio images on their Y axis as it would break ratio
-            }
-
-            switch (distributionType) {
-                case CLAY__SIZE_DISTRIBUTION_TYPE_RESIZEABLE_CONTAINER: break;
-                case CLAY__SIZE_DISTRIBUTION_TYPE_GROW_CONTAINER: if (childSizing.type != CLAY__SIZING_TYPE_GROW) { continue; } break;
-                case CLAY__SIZE_DISTRIBUTION_TYPE_SCROLL_CONTAINER: if ((childElement->elementType != CLAY__LAYOUT_ELEMENT_TYPE_SCROLL_CONTAINER || (xAxis && !childElement->elementConfig.scrollElementConfig->horizontal) || (!xAxis && !childElement->elementConfig.scrollElementConfig->vertical))) { continue; } break;
-            }
-
-            float dividedSize = sizeToDistribute / (float)(remainingElements.length - childOffset);
             float oldChildSize = *childSize;
             *childSize = CLAY__MAX(CLAY__MAX(CLAY__MIN(childSizing.sizeMinMax.max, *childSize + dividedSize), childSizing.sizeMinMax.min), childMinSize);
             float diff = *childSize - oldChildSize;
-            if (diff != 0) {
-                Clay__LayoutElementPointerArray_Add(&backBuffer, childElement);
+            if (diff > -0.01 && diff < 0.01) {
+                Clay__LayoutElementPointerArray_RemoveSwapback(&remainingElements, childOffset);
+                childOffset--;
+                continue;
             }
             sizeToDistribute -= diff;
-            totalDistributedSize += diff;
         }
-        if (totalDistributedSize == 0) {
-            break;
-        }
-        // Flip the buffers
-        Clay__LayoutElementPointerArray temp = remainingElements;
-        remainingElements = backBuffer;
-        backBuffer = temp;
     }
-    return sizeToDistribute;
+    return (sizeToDistribute > -0.01 && sizeToDistribute < 0.01) ? 0 : sizeToDistribute;
 }
 
 void Clay__SizeContainersAlongAxis(bool xAxis) {
