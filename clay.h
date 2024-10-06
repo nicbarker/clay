@@ -1950,6 +1950,15 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
     }
 }
 
+static inline Clay_BoundingBox Clay__BoundingBoxWithRoundedValues(float x, float y, float width, float height) {
+    return CLAY__INIT(Clay_BoundingBox) {
+        (int32_t)(x + (x > 0 ? 0.5f : -0.5f)),
+        (int32_t)(y + (y > 0 ? 0.5f : -0.5f)),
+        (int32_t)(width + (width > 0 ? 0.5f : -0.5f)),
+        (int32_t)(height + (height > 0 ? 0.5f : -0.5f))
+    };
+}
+
 void Clay__CalculateFinalLayout() {
     // Calculate sizing along the X axis
     Clay__SizeContainersAlongAxis(true);
@@ -2198,7 +2207,7 @@ void Clay__CalculateFinalLayout() {
             if (!Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
                 Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
 
-                Clay_BoundingBox currentElementBoundingBox = CLAY__INIT(Clay_BoundingBox) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+                Clay_BoundingBox currentElementBoundingBox = Clay__BoundingBoxWithRoundedValues(currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height);
                 if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_FLOATING_CONTAINER) {
                     Clay_FloatingElementConfig *floatingElementConfig = currentElement->elementConfig.floatingElementConfig;
                     Clay_Dimensions expand = floatingElementConfig->expand;
@@ -2330,7 +2339,7 @@ void Clay__CalculateFinalLayout() {
                     });
                 // Borders between elements are expressed as additional rectangle render commands
                 } else if (currentElement->elementType == CLAY__LAYOUT_ELEMENT_TYPE_BORDER_CONTAINER) {
-                    Clay_BoundingBox currentElementBoundingBox = CLAY__INIT(Clay_BoundingBox) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+                    Clay_BoundingBox currentElementBoundingBox = Clay__BoundingBoxWithRoundedValues(currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height);
                     #ifndef CLAY_DISABLE_CULLING
                     bool offscreen = currentElementBoundingBox.x > (float)Clay__layoutDimensions.width || currentElementBoundingBox.y > (float)Clay__layoutDimensions.height || currentElementBoundingBox.x + currentElementBoundingBox.width < 0 || currentElementBoundingBox.y + currentElementBoundingBox.height < 0;
                     if (offscreen) {
