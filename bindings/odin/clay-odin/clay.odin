@@ -97,7 +97,7 @@ TextElementConfig :: struct {
     fontId:        u16,
     fontSize:      u16,
     letterSpacing: u16,
-    lineSpacing:   u16,
+    lineHeight:    u16,
     wrapMode:      TextWrapMode,
 }
 
@@ -234,8 +234,8 @@ LayoutConfig :: struct {
     sizing:          Sizing,
     padding:         Padding,
     childGap:        u16,
-    layoutDirection: LayoutDirection,
     childAlignment:  ChildAlignment,
+    layoutDirection: LayoutDirection,
 }
 
 ClayArray :: struct($type: typeid) {

@@ -4,3 +4,4 @@ cmake-build-release/
 .idea/
 build/
 node_modules/
+*.dSYM
