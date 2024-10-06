@@ -1952,10 +1952,10 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
 
 static inline Clay_BoundingBox Clay__BoundingBoxWithRoundedValues(float x, float y, float width, float height) {
     return CLAY__INIT(Clay_BoundingBox) {
-        (int32_t)(x + (x > 0 ? 0.5f : -0.5f)),
-        (int32_t)(y + (y > 0 ? 0.5f : -0.5f)),
-        (int32_t)(width + (width > 0 ? 0.5f : -0.5f)),
-        (int32_t)(height + (height > 0 ? 0.5f : -0.5f))
+        (float)(int32_t)(x + (x > 0 ? 0.5f : -0.5f)),
+        (float)(int32_t)(y + (y > 0 ? 0.5f : -0.5f)),
+        (float)(int32_t)(width + (width > 0 ? 0.5f : -0.5f)),
+        (float)(int32_t)(height + (height > 0 ? 0.5f : -0.5f))
     };
 }
 
