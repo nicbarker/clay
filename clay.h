@@ -257,7 +257,7 @@ typedef struct
     uint16_t fontId;
     uint16_t fontSize;
     uint16_t letterSpacing;
-    uint16_t lineSpacing;
+    uint16_t lineHeight;
     Clay_TextElementConfigWrapMode wrapMode;
     #ifdef CLAY_EXTEND_CONFIG_TEXT
     CLAY_EXTEND_CONFIG_TEXT
@@ -2974,9 +2974,9 @@ void Clay__RenderDebugView() {
                                 // .fontId
                                 CLAY_TEXT(CLAY_STRING("Font ID"), infoTitleConfig);
                                 CLAY_TEXT(Clay__IntToString(textConfig->fontId), infoTextConfig);
-                                // .lineSpacing
-                                CLAY_TEXT(CLAY_STRING("Line Spacing"), infoTitleConfig);
-                                CLAY_TEXT(Clay__IntToString(textConfig->lineSpacing), infoTextConfig);
+                                // .lineHeight
+                                CLAY_TEXT(CLAY_STRING("Line Height"), infoTitleConfig);
+                                CLAY_TEXT(Clay__IntToString(textConfig->lineHeight), infoTextConfig);
                                 // .letterSpacing
                                 CLAY_TEXT(CLAY_STRING("Letter Spacing"), infoTitleConfig);
                                 CLAY_TEXT(Clay__IntToString(textConfig->letterSpacing), infoTextConfig);
