@@ -180,6 +180,7 @@ SizingType :: enum EnumBackingType {
     FIT,
     GROW,
     PERCENT,
+    FIXED,
 }
 
 SizingConstraintsMinMax :: struct {
@@ -398,7 +399,7 @@ SizingGrow :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
 }
 
 SizingFixed :: proc(size: c.float) -> SizingAxis {
-    return SizingAxis{type = SizingType.FIT, constraints = {sizeMinMax = {size, size}}}
+    return SizingAxis{type = SizingType.FIXED, constraints = {sizeMinMax = {size, size}}}
 }
 
 SizingPercent :: proc(sizePercent: c.float) -> SizingAxis {
