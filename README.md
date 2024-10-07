@@ -1044,7 +1044,7 @@ Available options are:
 - `CLAY_TEXT_WRAP_NEWLINES` -  will only wrap when encountering newline characters.
 - `CLAY_TEXT_WRAP_NONE` - Text will never wrap even if its container is compressed beyond the text measured width.
 
----
+---****
 
 **Example Usage**
 ```C

@@ -103,9 +103,9 @@ Clay_RenderCommandArray CreateLayout() {
                     }
                 }
                 CLAY_RECTANGLE(CLAY_ID("ScrollContainerInner"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_RECTANGLE_CONFIG(.color = {160, 160, 160, 255})) {
-//                    for (int i = 0; i < 100; i++) {
-//                        RenderDropdownTextItem(i);
-//                    }
+                    for (int i = 0; i < 10; i++) {
+                        RenderDropdownTextItem(i);
+                    }
                 }
             }
         }
