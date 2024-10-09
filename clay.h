@@ -123,6 +123,13 @@ typedef struct {
     const char *chars;
 } Clay_String;
 
+typedef struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_String *internalArray;
+} Clay__StringArray;
+
 typedef struct {
     Clay_String label;
     uint64_t nextAllocation;
@@ -354,35 +361,6 @@ typedef struct
     Clay_ElementConfigUnion config;
 } Clay_ElementConfig;
 
-typedef struct
-{
-    int32_t *elements;
-    uint16_t length;
-} Clay__LayoutElementChildren;
-
-typedef struct
-{
-	uint32_t length;
-	Clay_ElementConfig *internalArray;
-} Clay__ElementConfigArraySlice;
-
-typedef struct
-{
-    #ifdef CLAY_DEBUG
-    Clay_String name;
-    #endif
-    union {
-        Clay__LayoutElementChildren children;
-        Clay_String text;
-    };
-    Clay_Dimensions dimensions;
-    Clay_Dimensions minDimensions;
-    Clay_LayoutConfig *layoutConfig;
-    Clay__ElementConfigArraySlice elementConfigs;
-    uint32_t configsEnabled;
-    uint32_t id;
-} Clay_LayoutElement;
-
 // Miscellaneous Structs & Enums ---------------------------------
 typedef struct
 {
@@ -439,7 +417,7 @@ void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_Str
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
 
-Clay_LayoutElement *Clay__OpenElement();
+void Clay__OpenElement();
 void Clay__CloseElement();
 
 // Internal API functions required by macros
@@ -640,7 +618,7 @@ Clay_ElementId *Clay__ElementIdArray_Add(Clay__ElementIdArray *array, Clay_Eleme
 
 Clay_ElementConfig CLAY__ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ElementConfig) {};
 
-// __GENERATED__ template array_define,array_allocate,array_get,array_add,array_get_slice TYPE=Clay_ElementConfig NAME=Clay__ElementConfigArray DEFAULT_VALUE=&CLAY__ELEMENT_CONFIG_DEFAULT
+// __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_add,array_get_slice TYPE=Clay_ElementConfig NAME=Clay__ElementConfigArray DEFAULT_VALUE=&CLAY__ELEMENT_CONFIG_DEFAULT
 #pragma region generated
 typedef struct
 {
@@ -648,6 +626,11 @@ typedef struct
 	uint32_t length;
 	Clay_ElementConfig *internalArray;
 } Clay__ElementConfigArray;
+typedef struct
+{
+	uint32_t length;
+	Clay_ElementConfig *internalArray;
+} Clay__ElementConfigArraySlice;
 Clay__ElementConfigArray Clay__ElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ElementConfig), CLAY__ALIGNMENT(Clay_ElementConfig), arena)};
 }
@@ -828,10 +811,32 @@ Clay_ScrollElementConfig *Clay__ScrollElementConfigArray_Add(Clay__ScrollElement
 #pragma endregion
 // __GENERATED__ template
 
+// __GENERATED__ template array_define_slice,array_allocate,array_add TYPE=Clay_String NAME=Clay__StringArray DEFAULT_VALUE=&CLAY__STRING_DEFAULT
+#pragma region generated
 typedef struct
 {
-    uint32_t elementIndex;
+	uint32_t length;
+	Clay_String *internalArray;
+} Clay__StringArraySlice;
+Clay__StringArray Clay__StringArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+    return CLAY__INIT(Clay__StringArray){.capacity = capacity, .length = 0, .internalArray = (Clay_String *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_String), CLAY__ALIGNMENT(Clay_String), arena)};
+}
+Clay_String *Clay__StringArray_Add(Clay__StringArray *array, Clay_String item) {
+	if (Clay__Array_IncrementCapacityCheck(array->length, array->capacity)) {
+		array->internalArray[array->length++] = item;
+		return &array->internalArray[array->length - 1];
+	}
+	return &CLAY__STRING_DEFAULT;
+}
+#pragma endregion
+// __GENERATED__ template
+
+typedef struct
+{
+    Clay_String text;
     Clay_Dimensions preferredDimensions;
+    uint32_t elementIndex;
+    Clay__StringArraySlice wrappedLines;
 } Clay__TextElementData;
 
 Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = CLAY__INIT(Clay__TextElementData) {};
@@ -882,6 +887,29 @@ Clay_BorderElementConfig *Clay__BorderElementConfigArray_Add(Clay__BorderElement
 }
 #pragma endregion
 // __GENERATED__ template
+
+typedef struct
+{
+    int32_t *elements;
+    uint16_t length;
+} Clay__LayoutElementChildren;
+
+typedef struct
+{
+    #ifdef CLAY_DEBUG
+    Clay_String name;
+    #endif
+    union {
+        Clay__LayoutElementChildren children;
+        Clay__TextElementData *textElementData;
+    };
+    Clay_Dimensions dimensions;
+    Clay_Dimensions minDimensions;
+    Clay_LayoutConfig *layoutConfig;
+    Clay__ElementConfigArraySlice elementConfigs;
+    uint32_t configsEnabled;
+    uint32_t id;
+} Clay_LayoutElement;
 
 Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = CLAY__INIT(Clay_LayoutElement) {};
 
@@ -1088,7 +1116,51 @@ Clay_LayoutElementHashMapItem *Clay__LayoutElementHashMapItemArray_Add(Clay__Lay
 
 typedef struct
 {
-    Clay_Dimensions dimensions;
+    Clay_String word;
+    uint32_t startOffset;
+    uint32_t length;
+    float width;
+} Clay__MeasuredWord;
+
+Clay__MeasuredWord CLAY__MEASURED_WORD_DEFAULT = (Clay__MeasuredWord) {};
+
+// __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_get_slice,array_add TYPE=Clay__MeasuredWord NAME=Clay__MeasuredWordArray DEFAULT_VALUE=&CLAY__MEASURED_WORD_DEFAULT
+#pragma region generated
+typedef struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay__MeasuredWord *internalArray;
+} Clay__MeasuredWordArray;
+typedef struct
+{
+	uint32_t length;
+	Clay__MeasuredWord *internalArray;
+} Clay__MeasuredWordArraySlice;
+Clay__MeasuredWordArray Clay__MeasuredWordArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+    return CLAY__INIT(Clay__MeasuredWordArray){.capacity = capacity, .length = 0, .internalArray = (Clay__MeasuredWord *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__MeasuredWord), CLAY__ALIGNMENT(Clay__MeasuredWord), arena)};
+}
+Clay__MeasuredWord *Clay__MeasuredWordArray_Get(Clay__MeasuredWordArray *array, int index) {
+    return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__MEASURED_WORD_DEFAULT;
+}
+Clay__MeasuredWord *Clay__MeasuredWordArraySlice_Get(Clay__MeasuredWordArraySlice *slice, int index) {
+    return Clay__Array_RangeCheck(index, slice->length) ? &slice->internalArray[index] : &CLAY__MEASURED_WORD_DEFAULT;
+}
+Clay__MeasuredWord *Clay__MeasuredWordArray_Add(Clay__MeasuredWordArray *array, Clay__MeasuredWord item) {
+	if (Clay__Array_IncrementCapacityCheck(array->length, array->capacity)) {
+		array->internalArray[array->length++] = item;
+		return &array->internalArray[array->length - 1];
+	}
+	return &CLAY__MEASURED_WORD_DEFAULT;
+}
+#pragma endregion
+// __GENERATED__ template
+
+typedef struct
+{
+    Clay_Dimensions unwrappedDimensions;
+    Clay__MeasuredWordArraySlice measuredWords;
+    // Hash map data
     uint32_t id;
     int32_t nextIndex;
     uint32_t generation;
@@ -1266,27 +1338,6 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
     return CLAY__INIT(Clay_String) { .length = string.length, .chars = (const char *)(buffer->internalArray + buffer->length - string.length) };
 }
 
-// __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_String NAME=Clay__StringArray DEFAULT_VALUE=&CLAY__STRING_DEFAULT
-#pragma region generated
-typedef struct
-{
-	uint32_t capacity;
-	uint32_t length;
-	Clay_String *internalArray;
-} Clay__StringArray;
-Clay__StringArray Clay__StringArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
-    return CLAY__INIT(Clay__StringArray){.capacity = capacity, .length = 0, .internalArray = (Clay_String *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_String), CLAY__ALIGNMENT(Clay_String), arena)};
-}
-Clay_String *Clay__StringArray_Add(Clay__StringArray *array, Clay_String item) {
-	if (Clay__Array_IncrementCapacityCheck(array->length, array->capacity)) {
-		array->internalArray[array->length++] = item;
-		return &array->internalArray[array->length - 1];
-	}
-	return &CLAY__STRING_DEFAULT;
-}
-#pragma endregion
-// __GENERATED__ template
-
 typedef enum
 {
     CLAY__POINTER_INFO_PRESSED_THIS_FRAME,
@@ -1334,6 +1385,7 @@ Clay__CustomElementConfigArray Clay__customElementConfigs;
 Clay__BorderElementConfigArray Clay__borderElementConfigs;
 // Misc Data Structures
 Clay__StringArray Clay__layoutElementIdStrings;
+Clay__StringArray Clay__wrappedTextLines;
 Clay__LayoutElementTreeNodeArray Clay__layoutElementTreeNodeArray1;
 Clay__LayoutElementTreeRootArray Clay__layoutElementTreeRoots;
 Clay__LayoutElementHashMapItemArray Clay__layoutElementsHashMapInternal;
@@ -1341,6 +1393,7 @@ Clay__int32_tArray Clay__layoutElementsHashMap;
 Clay__MeasureTextCacheItemArray Clay__measureTextHashMapInternal;
 Clay__int32_tArray Clay__measureTextHashMapInternalFreeList;
 Clay__int32_tArray Clay__measureTextHashMap;
+Clay__MeasuredWordArray Clay__measuredWords;
 Clay__int32_tArray Clay__openClipElementStack;
 Clay__ElementIdArray Clay__pointerOverIds;
 Clay__ScrollContainerDataInternalArray Clay__scrollContainerDatas;
@@ -1448,7 +1501,7 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
     return hash + 1; // Reserve the hash result of zero as "null id"
 }
 
-Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfig *config) {
+Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfig *config) {
     uint32_t id = Clay__HashTextWithConfig(text, config);
     uint32_t hashBucket = id % Clay__measureTextHashMap.capacity;
     int32_t elementIndexPrevious = 0;
@@ -1457,7 +1510,7 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
         Clay__MeasureTextCacheItem *hashEntry = Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndex);
         if (hashEntry->id == id) {
             hashEntry->generation = Clay__generation;
-            return hashEntry->dimensions;
+            return hashEntry;
         }
         // This element hasn't been seen in a few frames, delete the hash map item
         if (Clay__generation - hashEntry->generation > 2) {
@@ -1476,19 +1529,59 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
             elementIndex = hashEntry->nextIndex;
         }
     }
-    Clay_Dimensions measured = Clay__MeasureText(text, config);
+
     uint32_t newItemIndex = 0;
+    Clay__MeasureTextCacheItem newCacheItem = CLAY__INIT(Clay__MeasureTextCacheItem) { .measuredWords = CLAY__INIT(Clay__MeasuredWordArraySlice) { .length = 0, .internalArray = &Clay__measuredWords.internalArray[Clay__measuredWords.length] }, .id = id, .generation = Clay__generation };
+    Clay__MeasureTextCacheItem *measured = NULL;
     if (Clay__measureTextHashMapInternalFreeList.length > 0) {
         newItemIndex = Clay__int32_tArray_Get(&Clay__measureTextHashMapInternalFreeList, Clay__measureTextHashMapInternalFreeList.length - 1);
         Clay__measureTextHashMapInternalFreeList.length--;
-        Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, newItemIndex, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id, .generation = Clay__generation });
+        Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, newItemIndex, newCacheItem);
+        measured = Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, newItemIndex);
     } else {
         if (Clay__measureTextHashMapInternal.length == Clay__measureTextHashMapInternal.capacity) {
-            return measured;
+            return NULL;
         }
-        Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id, .generation = Clay__generation });
+        measured = Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, newCacheItem);
         newItemIndex = Clay__measureTextHashMapInternal.length - 1;
     }
+
+    uint32_t start = 0;
+    uint32_t end = 0;
+    float measuredWidth = 0;
+    float measuredHeight = 0;
+    float spaceWidth = Clay__MeasureText(&CLAY__SPACECHAR, config).width;
+    while (end < text->length) {
+        char current = text->chars[end];
+        if (current == ' ' || current == '\n') {
+            uint32_t length = end - start;
+            Clay_String word = CLAY__INIT(Clay_String) { .length = length, .chars = &text->chars[start] };
+            Clay_Dimensions dimensions = Clay__MeasureText(&word, config);
+            if (current == ' ') {
+                dimensions.width += spaceWidth;
+                Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = word, .startOffset = start, .length = length + 1, .width = dimensions.width });
+            }
+            if (current == '\n') {
+                Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = word, .startOffset = start, .length = length, .width = dimensions.width });
+                Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = CLAY__INIT(Clay_String) { .length = 0, .chars = &text->chars[end] }, .startOffset = end + 1, .length = 0, .width = 0 });
+                measured->measuredWords.length++;
+            }
+            measuredWidth += dimensions.width;
+            measuredHeight = dimensions.height;
+            measured->measuredWords.length++;
+            start = end + 1;
+        }
+        end++;
+    }
+    Clay_String lastWord = CLAY__INIT(Clay_String) { .length = end - start, .chars = &text->chars[start] };
+    Clay_Dimensions dimensions = Clay__MeasureText(&lastWord, config);
+    Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = lastWord, .startOffset = start, .length = end - start, .width = dimensions.width });
+    measuredWidth += dimensions.width;
+    measuredHeight = dimensions.height;
+    measured->measuredWords.length++;
+    measured->unwrappedDimensions.width = measuredWidth;
+    measured->unwrappedDimensions.height = measuredHeight;
+
     if (elementIndexPrevious != 0) {
         Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndexPrevious)->nextIndex = newItemIndex;
     } else {
@@ -1723,20 +1816,20 @@ void Clay__CloseElement() {
     }
 }
 
-Clay_LayoutElement *Clay__OpenElement() {
+void Clay__OpenElement() {
     Clay_LayoutElement layoutElement = CLAY__INIT(Clay_LayoutElement) {};
-    Clay_LayoutElement *openLayoutElement = Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
+    Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
     Clay__int32_tArray_Add(&Clay__openLayoutElementStack, Clay__layoutElements.length - 1);
-    return openLayoutElement;
 }
 
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig) {
     Clay_LayoutElement *parentElement = Clay__GetOpenLayoutElement();
     parentElement->children.length++;
 
-    Clay_LayoutElement * openLayoutElement = Clay__OpenElement();
+    Clay__OpenElement();
+    Clay_LayoutElement * openLayoutElement = Clay__GetOpenLayoutElement();
     Clay__int32_tArray_Add(&Clay__layoutElementChildrenBuffer, Clay__layoutElements.length - 1);
-    Clay_Dimensions textMeasured = Clay__MeasureTextCached(&text, textConfig);
+    Clay__MeasureTextCacheItem *textMeasured = Clay__MeasureTextCached(&text, textConfig);
     Clay_ElementId elementId = Clay__HashString(CLAY_STRING("Text"), parentElement->children.length, parentElement->id);
     openLayoutElement->id = elementId.id;
     #ifdef CLAY_DEBUG
@@ -1744,11 +1837,10 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     #endif
     Clay__AddHashMapItem(elementId, openLayoutElement);
     Clay__StringArray_Add(&Clay__layoutElementIdStrings, elementId.stringId);
-    openLayoutElement->dimensions.width = textMeasured.width;
-    openLayoutElement->dimensions.height = textMeasured.height;
-    openLayoutElement->text = text;
-    openLayoutElement->minDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured.height, .height = textMeasured.height }; // TODO not sure this is the best way to decide min width for text
-    Clay__TextElementDataArray_Add(&Clay__textElementData, CLAY__INIT(Clay__TextElementData) { .elementIndex = Clay__layoutElements.length - 1, .preferredDimensions = textMeasured });
+    Clay_Dimensions textDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured->unwrappedDimensions.width, .height = textConfig->lineHeight > 0 ? textConfig->lineHeight : textMeasured->unwrappedDimensions.height };
+    openLayoutElement->dimensions = textDimensions;
+    openLayoutElement->minDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured->unwrappedDimensions.height, .height = textDimensions.height }; // TODO not sure this is the best way to decide min width for text
+    openLayoutElement->textElementData = Clay__TextElementDataArray_Add(&Clay__textElementData, CLAY__INIT(Clay__TextElementData) { .text = text, .preferredDimensions = textMeasured->unwrappedDimensions, .elementIndex = Clay__layoutElements.length - 1 });
     openLayoutElement->elementConfigs = CLAY__INIT(Clay__ElementConfigArraySlice) {
         .length = 1,
         .internalArray = Clay__ElementConfigArray_Add(&Clay__elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = CLAY__ELEMENT_CONFIG_TYPE_TEXT, .config = { .textElementConfig = textConfig }})
@@ -1779,6 +1871,7 @@ void Clay__InitializeEphemeralMemory(Clay_Arena *arena) {
     Clay__borderElementConfigs = Clay__BorderElementConfigArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
 
     Clay__layoutElementIdStrings = Clay__StringArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
+    Clay__wrappedTextLines = Clay__StringArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__layoutElementTreeNodeArray1 = Clay__LayoutElementTreeNodeArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__layoutElementTreeRoots = Clay__LayoutElementTreeRootArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__layoutElementChildren = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
@@ -1801,6 +1894,7 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
     Clay__measureTextHashMapInternal = Clay__MeasureTextCacheItemArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMapInternalFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
+    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__pointerOverIds = Clay__ElementIdArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__debugElementData = Clay__DebugElementDataArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__arenaResetOffset = arena->nextAllocation;
@@ -1846,6 +1940,8 @@ float Clay__DistributeSizeAmongChildren(bool xAxis, float sizeToDistribute, Clay
                         if (Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
                             Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(childElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
                             if ((xAxis && !scrollConfig->horizontal) || (!xAxis && !scrollConfig->vertical)) {
+                                Clay__int32_tArray_RemoveSwapback(&remainingElements, childOffset);
+                                childOffset--;
                                 continue;
                             }
                         }
@@ -2035,97 +2131,39 @@ void Clay__CalculateFinalLayout() {
     Clay__SizeContainersAlongAxis(true);
 
     // Wrap text
-//    uint32_t originalTextLayoutElementDataLength = Clay__textElementData.length;
-//    for (int i = 0; i < originalTextLayoutElementDataLength; ++i) {
-//        Clay__TextElementData *textElementData = Clay__TextElementDataArray_Get(&Clay__textElementData, i);
-//        Clay_LayoutElement *containerElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)textElementData->elementIndex);
-//        Clay_String text = containerElement->text;
-//        Clay_TextElementConfig *textConfig = containerElement->elementConfig.textElementConfig;
-//        containerElement->elementType = CLAY__LAYOUT_ELEMENT_TYPE_CONTAINER;
-//        // Clone the style config to prevent pollution of other elements that share this config
-//        containerElement->layoutConfig = Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, *containerElement->layoutConfig);
-//        containerElement->layoutConfig->layoutDirection = CLAY_TOP_TO_BOTTOM;
-//        containerElement->layoutConfig->childGap = textConfig->lineSpacing;
-//        containerElement->children = CLAY__INIT(Clay__LayoutElementChildren) { // Note: this overwrites the text property
-//            .elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length],
-//            .length = 0,
-//        };
-//        // Short circuit all wrap calculations if wrap mode is none
-//        if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE || (containerElement->dimensions.width == textElementData->preferredDimensions.width)) {
-//            Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
-//                .text = text,
-//                .dimensions = textElementData->preferredDimensions,
-//                .layoutConfig = &CLAY_LAYOUT_DEFAULT,
-//                .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
-//                .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
-//                .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
-//            });
-//            containerElement->children.length++;
-//            Clay__int32_tArray_Add(&Clay__layoutElementChildren, (int32_t)Clay__layoutElements.length - 1);
-//            continue;
-//        }
-//        containerElement->dimensions.height = 0;
-//        int lineStartIndex = 0;
-//        int wordStartIndex = 0;
-//        int wordEndIndex = 0;
-//        Clay_Dimensions lineDimensions = CLAY__INIT(Clay_Dimensions){};
-//        float spaceWidth = Clay__MeasureText(&CLAY__SPACECHAR, textConfig).width; // todo may as well cache it somewhere
-//        while (wordStartIndex <= text.length) {
-//            if (text.chars[wordEndIndex] == ' ' || (text.chars[wordEndIndex] == '\n' && textConfig->wrapMode <= CLAY_TEXT_WRAP_NEWLINES) || wordEndIndex == text.length) {
-//                Clay_String stringToRender = CLAY__INIT(Clay_String) { .length = wordEndIndex - lineStartIndex, .chars = text.chars + lineStartIndex };
-//                Clay_String wordToMeasure = CLAY__INIT(Clay_String) { .length = wordEndIndex - wordStartIndex, .chars = text.chars + wordStartIndex };
-//                // Clip off trailing spaces and newline characters
-//                Clay_Dimensions wordDimensions = Clay__MeasureTextCached(&wordToMeasure, textConfig);
-//                lineDimensions.width = lineDimensions.width + wordDimensions.width + spaceWidth;
-//                lineDimensions.height = wordDimensions.height;
-//                bool isOverlappingBoundaries = (lineDimensions.width - spaceWidth) > containerElement->dimensions.width + 0.01f; // Epsilon for floating point inaccuracy of adding components
-//                // Need to wrap
-//                if (isOverlappingBoundaries && textConfig->wrapMode == CLAY_TEXT_WRAP_WORDS) {
-//                    lineDimensions.width -= spaceWidth;
-//                    // We can wrap at the most recent word start
-//                    if (wordStartIndex != lineStartIndex) {
-//                        stringToRender = CLAY__INIT(Clay_String) { .length = wordStartIndex - lineStartIndex - 1, .chars = text.chars + lineStartIndex };
-//                        lineDimensions.width -= (wordDimensions.width + spaceWidth);
-//                        lineStartIndex = wordStartIndex;
-//                        wordStartIndex = lineStartIndex;
-//                        wordEndIndex = lineStartIndex;
-//                        containerElement->dimensions.width = CLAY__MAX(containerElement->dimensions.width, lineDimensions.width);
-//                    // The single word is larger than the entire container - just render it in place
-//                    } else {
-//                        lineStartIndex = wordEndIndex + 1;
-//                        wordStartIndex = lineStartIndex;
-//                        wordEndIndex = lineStartIndex;
-//                        containerElement->dimensions.width = CLAY__MAX(containerElement->dimensions.width, lineDimensions.width);
-//                    }
-//                // If we're at a space character and the current phrase fits, just keep going
-//                } else if (text.chars[wordEndIndex] == ' ') {
-//                    wordStartIndex = wordEndIndex + 1;
-//                    wordEndIndex = wordStartIndex;
-//                    continue;
-//                // Newline or end of string
-//                } else {
-//                    lineStartIndex = wordEndIndex + 1;
-//                    wordStartIndex = lineStartIndex;
-//                    wordEndIndex = lineStartIndex;
-//                }
-//                Clay_LayoutElementArray_Add(&Clay__layoutElements, CLAY__INIT(Clay_LayoutElement) {
-//                    .text = stringToRender,
-//                    .dimensions = { lineDimensions.width, lineDimensions.height },
-//                    .layoutConfig = &CLAY_LAYOUT_DEFAULT,
-//                    .elementConfig = { .textElementConfig = containerElement->elementConfig.textElementConfig },
-//                    .id = Clay__RehashWithNumber(containerElement->id, containerElement->children.length),
-//                    .elementType = CLAY__LAYOUT_ELEMENT_TYPE_TEXT,
-//                });
-//                containerElement->dimensions.height += lineDimensions.height + (float)(containerElement->children.length > 0 ? textConfig->lineSpacing : 0);
-//                containerElement->children.length++;
-//                lineDimensions = CLAY__INIT(Clay_Dimensions) {};
-//                Clay__int32_tArray_Add(&Clay__layoutElementChildren, (int32_t)Clay__layoutElements.length - 1);
-//            } else {
-//                // In the middle of a word
-//                wordEndIndex++;
-//            }
-//        }
-//    }
+    for (int textElementIndex = 0; textElementIndex < Clay__textElementData.length; ++textElementIndex) {
+        Clay__TextElementData *textElementData = Clay__TextElementDataArray_Get(&Clay__textElementData, textElementIndex);
+        textElementData->wrappedLines = CLAY__INIT(Clay__StringArraySlice) { .length = 0, .internalArray = &Clay__wrappedTextLines.internalArray[Clay__wrappedTextLines.length] };
+        Clay_LayoutElement *containerElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)textElementData->elementIndex);
+        Clay_TextElementConfig *textConfig = Clay__FindElementConfigWithType(containerElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT).textElementConfig;
+        Clay__MeasureTextCacheItem *measureTextCacheItem = Clay__MeasureTextCached(&textElementData->text, textConfig);
+        float lineWidth = 0;
+        float lineHeight = textConfig->lineHeight > 0 ? textConfig->lineHeight : textElementData->preferredDimensions.height;
+        uint32_t lineLengthChars = 0;
+        uint32_t lineStartOffset = 0;
+        for (int wordIndex = 0; wordIndex < measureTextCacheItem->measuredWords.length; ++wordIndex) {
+            Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArraySlice_Get(&measureTextCacheItem->measuredWords, wordIndex);
+            // measuredWord->length == 0 means a newline character
+            if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
+                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
+                textElementData->wrappedLines.length++;
+                if (lineLengthChars > 0 && measuredWord->length > 0) {
+                    wordIndex--;
+                }
+                lineWidth = 0;
+                lineLengthChars = 0;
+                lineStartOffset = measuredWord->startOffset;
+            } else {
+                lineWidth += measuredWord->width;
+                lineLengthChars += measuredWord->length;
+            }
+        }
+        if (lineLengthChars > 0) {
+            Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
+            textElementData->wrappedLines.length++;
+        }
+        containerElement->dimensions.height = lineHeight * textElementData->wrappedLines.length;
+    }
 
     // Scale vertical image heights according to aspect ratio
     for (int i = 0; i < Clay__imageElementPointers.length; ++i) {
@@ -2148,7 +2186,7 @@ void Clay__CalculateFinalLayout() {
         if (!Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             // If the element has no children or is the container for a text element, don't bother inspecting it
-            if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->children.length == 0 || Clay__ElementHasConfig(Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[0]), CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
+            if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->children.length == 0) {
                 dfsBuffer.length--;
                 continue;
             }
@@ -2351,8 +2389,31 @@ void Clay__CalculateFinalLayout() {
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_TEXT: {
-                            renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_TEXT;
-                            renderCommand.text = currentElement->text;
+                            shouldRender = false;
+                            Clay_ElementConfigUnion configUnion = elementConfig->config;
+                            Clay_TextElementConfig *textElementConfig = configUnion.textElementConfig;
+                            float naturalLineHeight = currentElement->textElementData->preferredDimensions.height;
+                            float finalLineHeight = textElementConfig->lineHeight > 0 ? textElementConfig->lineHeight : naturalLineHeight;
+                            float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
+                            float yPosition = lineHeightOffset;
+                            for (int lineIndex = 0; lineIndex < currentElement->textElementData->wrappedLines.length; ++lineIndex) {
+                                Clay_String wrappedLine = currentElement->textElementData->wrappedLines.internalArray[lineIndex]; // todo range check
+                                if (wrappedLine.length == 0) {
+                                    continue;
+                                }
+                                Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, (float)50, naturalLineHeight }, // TODO width
+                                    .config = configUnion,
+                                    .text = wrappedLine,
+                                    .id = Clay__RehashWithNumber(currentElement->id, 5 + lineIndex),
+                                    .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
+                                });
+                                yPosition += finalLineHeight;
+
+                                if (currentElementBoundingBox.y + yPosition > Clay__layoutDimensions.height) {
+                                    break;
+                                }
+                            }
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: {
@@ -2440,7 +2501,7 @@ void Clay__CalculateFinalLayout() {
                     }
 
                     if (scrollContainerData) {
-                        scrollContainerData->contentSize = contentSize;
+                        scrollContainerData->contentSize = CLAY__INIT(Clay_Dimensions) { contentSize.width + layoutConfig->padding.x * 2, contentSize.height + layoutConfig->padding.y * 2 };
                     }
                 }
             }
@@ -2687,12 +2748,13 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             // Render the text contents below the element as a non-interactive row
             if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
                 layoutData.rowCount++;
+                Clay__TextElementData *textElementData = currentElement->textElementData;
                 Clay_TextElementConfig *rawTextConfig = offscreen ? CLAY_TEXT_CONFIG(.textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16) : &Clay__DebugView_TextNameConfig;
                 CLAY(CLAY_LAYOUT(.sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE()) {
                     CLAY(CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16)})) {}
                     CLAY_TEXT(CLAY_STRING("\""), rawTextConfig);
-                    CLAY_TEXT(currentElement->text.length > 40 ? (CLAY__INIT(Clay_String) { .length = 40, .chars = currentElement->text.chars }) : currentElement->text, rawTextConfig);
-                    if (currentElement->text.length > 40) {
+                    CLAY_TEXT(textElementData->text.length > 40 ? (CLAY__INIT(Clay_String) { .length = 40, .chars = textElementData->text.chars }) : textElementData->text, rawTextConfig);
+                    if (textElementData->text.length > 40) {
                         CLAY_TEXT(CLAY_STRING("..."), rawTextConfig);
                     }
                     CLAY_TEXT(CLAY_STRING("\""), rawTextConfig);
