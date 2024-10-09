@@ -1524,7 +1524,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         char current = text->chars[end];
         if (current == ' ' || current == '\n') {
             uint32_t length = end - start;
-            Clay_String word = CLAY__INIT(Clay_String) { .length = length, .chars = &text->chars[start] };
+            Clay_String word = CLAY__INIT(Clay_String) { .length = (int)length, .chars = &text->chars[start] };
             Clay_Dimensions dimensions = Clay__MeasureText(&word, config);
             if (current == ' ') {
                 dimensions.width += spaceWidth;
@@ -1542,7 +1542,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         }
         end++;
     }
-    Clay_String lastWord = CLAY__INIT(Clay_String) { .length = end - start, .chars = &text->chars[start] };
+    Clay_String lastWord = CLAY__INIT(Clay_String) { .length = (int)(end - start), .chars = &text->chars[start] };
     Clay_Dimensions dimensions = Clay__MeasureText(&lastWord, config);
     Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = lastWord, .startOffset = start, .length = end - start, .width = dimensions.width });
     measuredWidth += dimensions.width;
@@ -1786,7 +1786,7 @@ void Clay__CloseElement() {
 
 void Clay__OpenElement() {
     Clay_LayoutElement layoutElement = CLAY__INIT(Clay_LayoutElement) {};
-    Clay_LayoutElement *openLayoutElement = Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
+    Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
     Clay__int32_tArray_Add(&Clay__openLayoutElementStack, Clay__layoutElements.length - 1);
 }
 
@@ -2112,7 +2112,7 @@ void Clay__CalculateFinalLayout() {
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArraySlice_Get(&measureTextCacheItem->measuredWords, wordIndex);
             // measuredWord->length == 0 means a newline character
             if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
-                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
+                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
                 textElementData->wrappedLines.length++;
                 if (lineLengthChars > 0 && measuredWord->length > 0) {
                     wordIndex--;
@@ -2126,7 +2126,7 @@ void Clay__CalculateFinalLayout() {
             }
         }
         if (lineLengthChars > 0) {
-            Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
+            Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
             textElementData->wrappedLines.length++;
         }
         containerElement->dimensions.height = lineHeight * textElementData->wrappedLines.length;
