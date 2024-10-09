@@ -93,7 +93,7 @@ static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
 #define CLAY__3_ARGS(a, b, c) a, b, c
 #define CLAY__2_ARGS(a, b) a, b
 #define CLAY__1_ARGS(a) a
-#define CLAY__0_ARGS(...) 0
+#define CLAY__0_ARGS() 0
 #define CLAY__ARGS_OVERRIDE(_0, _1, _2, _3, _4, _5, _6, NAME, ...) NAME
 
 // Publicly visible layout element macros -----------------------------------------------------
@@ -1122,7 +1122,7 @@ typedef struct
     float width;
 } Clay__MeasuredWord;
 
-Clay__MeasuredWord CLAY__MEASURED_WORD_DEFAULT = (Clay__MeasuredWord) {};
+Clay__MeasuredWord CLAY__MEASURED_WORD_DEFAULT = CLAY__INIT(Clay__MeasuredWord) {};
 
 // __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_get_slice,array_add TYPE=Clay__MeasuredWord NAME=Clay__MeasuredWordArray DEFAULT_VALUE=&CLAY__MEASURED_WORD_DEFAULT
 #pragma region generated
