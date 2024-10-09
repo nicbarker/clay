@@ -85,7 +85,6 @@ static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
 		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
 	)
 
-
 // Publicly visible layout element macros
 #define CLAY__6_ARGS(a, b, c, d, e, f) a, b, c, d, e, f
 #define CLAY__5_ARGS(a, b, c, d, e) a, b, c, d, e
@@ -93,7 +92,7 @@ static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
 #define CLAY__3_ARGS(a, b, c) a, b, c
 #define CLAY__2_ARGS(a, b) a, b
 #define CLAY__1_ARGS(a) a
-#define CLAY__0_ARGS() 0
+#define CLAY__0_ARGS() Clay__Noop()
 #define CLAY__ARGS_OVERRIDE(_0, _1, _2, _3, _4, _5, _6, NAME, ...) NAME
 
 // Publicly visible layout element macros -----------------------------------------------------
@@ -434,7 +433,7 @@ Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConf
 Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
-uint32_t Clay__GetOpenLayoutElementId(void);
+void Clay__Noop();
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -471,6 +470,8 @@ extern uint32_t Clay__debugViewWidth;
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 bool Clay__warningsEnabled = true;
+
+void Clay__Noop() {};
 
 Clay_String CLAY__SPACECHAR = CLAY__INIT(Clay_String) { .length = 1, .chars = " " };
 Clay_String CLAY__STRING_DEFAULT = CLAY__INIT(Clay_String) { .length = 0, .chars = "" };
