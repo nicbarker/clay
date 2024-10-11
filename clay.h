@@ -481,11 +481,11 @@ typedef struct
 Clay__WarningArray Clay__WarningArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     uint64_t totalSizeBytes = capacity * sizeof(Clay_String);
     Clay__WarningArray array = CLAY__INIT(Clay__WarningArray){.capacity = capacity, .length = 0};
-    uint64_t nextAllocAddress = (uint64_t)(arena->nextAllocation + arena->memory);
+    uint64_t nextAllocAddress = (uint64_t)arena->nextAllocation + (uint64_t)arena->memory;
     uint64_t arenaOffsetAligned = nextAllocAddress + (CLAY__ALIGNMENT(Clay_String) - (nextAllocAddress % CLAY__ALIGNMENT(Clay_String)));
     arenaOffsetAligned -= (uint64_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
-        array.internalArray = (Clay__Warning*)(arena->memory + arenaOffsetAligned);
+        array.internalArray = (Clay__Warning*)((uint64_t)arena->memory + (uint64_t)arenaOffsetAligned);
         arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
     }
     else {
@@ -515,12 +515,12 @@ Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning i
 void* Clay__Array_Allocate_Arena(uint32_t capacity, uint32_t itemSize, uint32_t alignment, Clay_Arena *arena)
 {
     uint64_t totalSizeBytes = capacity * itemSize;
-    uint64_t nextAllocAddress = (uint64_t)(arena->nextAllocation + arena->memory);
+    uint64_t nextAllocAddress = (uint64_t)arena->nextAllocation + (uint64_t)arena->memory;
     uint64_t arenaOffsetAligned = nextAllocAddress + (alignment - (nextAllocAddress % alignment));
     arenaOffsetAligned -= (uint64_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
         arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
-        return (void*)(arena->memory + arenaOffsetAligned);
+        return (void*)((uint64_t)arena->memory + (uint64_t)arenaOffsetAligned);
     }
     else {
         if (Clay__warningsEnabled) {
