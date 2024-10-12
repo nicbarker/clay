@@ -395,7 +395,7 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
 
     Clay__debugViewHighlightColor = (Clay_Color) {105,210,231, 120};
 
-    Clay_SetPointerState((Clay_Vector2) {mousePositionX, mousePositionY}, isMouseDown);
+    Clay_SetPointerState((Clay_Vector2) {mousePositionX, mousePositionY}, isMouseDown || isTouchDown);
 
     if (!isMouseDown) {
         scrollbarData.mouseDown = false;
