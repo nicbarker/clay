@@ -141,7 +141,7 @@ void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     // Handle scroll containers
     Clay_Vector2 mousePosition = RAYLIB_VECTOR2_TO_CLAY_VECTOR2(GetMousePosition());
-    Clay_SetPointerState(mousePosition, IsMouseButtonDown(0));
+    Clay_SetPointerState(mousePosition, IsMouseButtonDown(0) && !scrollbarData.mouseDown);
     Clay_SetLayoutDimensions((Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() });
     if (!IsMouseButtonDown(0)) {
         scrollbarData.mouseDown = false;
