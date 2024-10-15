@@ -1098,6 +1098,7 @@ typedef struct
     Clay_Dimensions dimensions;
     uint32_t id;
     int32_t nextIndex;
+    uint32_t generation;
 } Clay__MeasureTextCacheItem;
 
 Clay__MeasureTextCacheItem CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT = CLAY__INIT(Clay__MeasureTextCacheItem) { };
@@ -1342,6 +1343,7 @@ Clay__LayoutElementTreeRootArray Clay__layoutElementTreeRoots;
 Clay__LayoutElementHashMapItemArray Clay__layoutElementsHashMapInternal;
 Clay__int32_tArray Clay__layoutElementsHashMap;
 Clay__MeasureTextCacheItemArray Clay__measureTextHashMapInternal;
+Clay__int32_tArray Clay__measureTextHashMapInternalFreeList;
 Clay__int32_tArray Clay__measureTextHashMap;
 Clay__int32_tArray Clay__openClipElementStack;
 Clay__ElementIdArray Clay__pointerOverIds;
@@ -1451,17 +1453,43 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
     while (elementIndex != 0) {
         Clay__MeasureTextCacheItem *hashEntry = Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndex);
         if (hashEntry->id == id) {
+            hashEntry->generation = Clay__generation;
             return hashEntry->dimensions;
         }
-        elementIndexPrevious = elementIndex;
-        elementIndex = hashEntry->nextIndex;
+        // This element hasn't been seen in a few frames, delete the hash map item
+        if (Clay__generation - hashEntry->generation > 2) {
+            uint32_t nextIndex = hashEntry->nextIndex;
+            Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, elementIndex, CLAY__INIT(Clay__MeasureTextCacheItem) {});
+            Clay__int32_tArray_Add(&Clay__measureTextHashMapInternalFreeList, elementIndex);
+            if (elementIndexPrevious == 0) {
+                Clay__measureTextHashMap.internalArray[hashBucket] = nextIndex;
+            } else {
+                Clay__MeasureTextCacheItem *previousHashEntry = Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndexPrevious);
+                previousHashEntry->nextIndex = nextIndex;
+            }
+            elementIndex = nextIndex;
+        } else {
+            elementIndexPrevious = elementIndex;
+            elementIndex = hashEntry->nextIndex;
+        }
     }
     Clay_Dimensions measured = Clay__MeasureText(text, config);
-    Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id });
-    if (elementIndexPrevious != 0) {
-        Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndexPrevious)->nextIndex = (int32_t)Clay__measureTextHashMapInternal.length - 1;
+    uint32_t newItemIndex = 0;
+    if (Clay__measureTextHashMapInternalFreeList.length > 0) {
+        newItemIndex = Clay__int32_tArray_Get(&Clay__measureTextHashMapInternalFreeList, Clay__measureTextHashMapInternalFreeList.length - 1);
+        Clay__measureTextHashMapInternalFreeList.length--;
+        Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, newItemIndex, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id, .generation = Clay__generation });
     } else {
-        Clay__measureTextHashMap.internalArray[hashBucket] = (int32_t)Clay__measureTextHashMapInternal.length - 1;
+        if (Clay__measureTextHashMapInternal.length == Clay__measureTextHashMapInternal.capacity) {
+            return measured;
+        }
+        Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id, .generation = Clay__generation });
+        newItemIndex = Clay__measureTextHashMapInternal.length - 1;
+    }
+    if (elementIndexPrevious != 0) {
+        Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, elementIndexPrevious)->nextIndex = newItemIndex;
+    } else {
+        Clay__measureTextHashMap.internalArray[hashBucket] = newItemIndex;
     }
     return measured;
 }
@@ -1744,6 +1772,7 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
     Clay__layoutElementsHashMapInternal = Clay__LayoutElementHashMapItemArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__layoutElementsHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMapInternal = Clay__MeasureTextCacheItemArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
+    Clay__measureTextHashMapInternalFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__pointerOverIds = Clay__ElementIdArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__debugElementData = Clay__DebugElementDataArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
