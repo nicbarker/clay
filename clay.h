@@ -1478,12 +1478,12 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
     if (Clay__measureTextHashMapInternalFreeList.length > 0) {
         newItemIndex = Clay__int32_tArray_Get(&Clay__measureTextHashMapInternalFreeList, Clay__measureTextHashMapInternalFreeList.length - 1);
         Clay__measureTextHashMapInternalFreeList.length--;
-        Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, newItemIndex, CLAY__INIT(Clay__MeasureTextCacheItem) { .generation = Clay__generation, .dimensions = measured, .id = id });
+        Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, newItemIndex, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id, .generation = Clay__generation });
     } else {
         if (Clay__measureTextHashMapInternal.length == Clay__measureTextHashMapInternal.capacity) {
             return measured;
         }
-        Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, CLAY__INIT(Clay__MeasureTextCacheItem) { .generation = Clay__generation, .dimensions = measured, .id = id });
+        Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, CLAY__INIT(Clay__MeasureTextCacheItem) { .dimensions = measured, .id = id, .generation = Clay__generation });
         newItemIndex = Clay__measureTextHashMapInternal.length - 1;
     }
     if (elementIndexPrevious != 0) {
