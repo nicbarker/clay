@@ -6,7 +6,7 @@
 
 double windowWidth = 1024, windowHeight = 768;
 float modelPageOneZRotation = 0;
-int ACTIVE_RENDERER_INDEX = 1;
+uint32_t ACTIVE_RENDERER_INDEX = 0;
 
 const uint32_t FONT_ID_BODY_16 = 0;
 const uint32_t FONT_ID_TITLE_56 = 1;
@@ -174,7 +174,7 @@ void HighPerformancePageDesktop(float lerpValue) {
             CLAY_TEXT(CLAY_STRING("Simplify animations and reactive UI design by avoiding the standard performance hacks."), CLAY_TEXT_CONFIG(.fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
         }
         CLAY(CLAY_ID("PerformanceRightImageOuter"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.50) }, .childAlignment = {CLAY_ALIGN_X_CENTER})) {
-            CLAY(CLAY_ID(""), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(400) }), CLAY_BORDER_ALL(.width = 2, .color = COLOR_LIGHT)) {
+            CLAY(CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(400) }), CLAY_BORDER_ALL(.width = 2, .color = COLOR_LIGHT)) {
                 CLAY(CLAY_ID("AnimationDemoContainerLeft"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_PERCENT(0.3f + 0.4f * lerpValue), CLAY_SIZING_GROW() }, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}, .padding = {32, 32}), CLAY_RECTANGLE(.color = ColorLerp(COLOR_RED, COLOR_ORANGE, lerpValue))) {
                     CLAY_TEXT(LOREM_IPSUM_TEXT, CLAY_TEXT_CONFIG(.fontSize = 24, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT));
                 }
@@ -208,22 +208,25 @@ void HighPerformancePageMobile(float lerpValue) {
     }
 }
 
+void HandleRendererButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
+    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+        ACTIVE_RENDERER_INDEX = (uint32_t)userData;
+    }
+}
+
 void RendererButtonActive(Clay_String text) {
-    Clay_ElementId buttonId;
-    CLAY(buttonId = CLAY_ID_LOCAL("button"),
-        CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300) }, .padding = {16, 16}),
-        CLAY_RECTANGLE(.color = Clay_PointerOver(buttonId) ? COLOR_RED_HOVER : COLOR_RED, .cornerRadius = CLAY_CORNER_RADIUS(10))
+    CLAY(CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300) }, .padding = {16, 16}),
+        CLAY_RECTANGLE(.color = Clay_Hovered() ? COLOR_RED_HOVER : COLOR_RED, .cornerRadius = CLAY_CORNER_RADIUS(10))
     ) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_LIGHT));
     }
 }
 
-void RendererButtonInactive(Clay_String text) {
-    Clay_ElementId buttonId;
-    CLAY(buttonId = CLAY_ID_LOCAL("button"),
-        CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300)}, .padding = {16, 16}),
+void RendererButtonInactive(Clay_String text, size_t rendererIndex) {
+    CLAY(CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(300)}, .padding = {16, 16}),
         CLAY_BORDER_OUTSIDE_RADIUS(2, COLOR_RED, 10),
-        CLAY_RECTANGLE(.color = Clay_PointerOver(buttonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT, .cornerRadius = CLAY_CORNER_RADIUS(10), .cursorPointer = true)
+        CLAY_RECTANGLE(.color = Clay_Hovered() ? COLOR_LIGHT_HOVER : COLOR_LIGHT, .cornerRadius = CLAY_CORNER_RADIUS(10), .cursorPointer = true),
+        Clay_OnHover(HandleRendererButtonInteraction, rendererIndex)
     ) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED));
     }
@@ -244,9 +247,9 @@ void RendererPageDesktop() {
                 CLAY(CLAY_ID("RendererSpacerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) })) {}
                 if (ACTIVE_RENDERER_INDEX == 0) {
                     RendererButtonActive(CLAY_STRING("HTML Renderer"));
-                    RendererButtonInactive(CLAY_STRING("Canvas Renderer"));
+                    RendererButtonInactive(CLAY_STRING("Canvas Renderer"), 1);
                 } else {
-                    RendererButtonInactive(CLAY_STRING("HTML Renderer"));
+                    RendererButtonInactive(CLAY_STRING("HTML Renderer"), 0);
                     RendererButtonActive(CLAY_STRING("Canvas Renderer"));
                 }
             }
@@ -268,9 +271,9 @@ void RendererPageMobile() {
             CLAY(CLAY_ID("RendererSpacerRight"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(.max = 32) })) {}
             if (ACTIVE_RENDERER_INDEX == 0) {
                 RendererButtonActive(CLAY_STRING("HTML Renderer"));
-                RendererButtonInactive(CLAY_STRING("Canvas Renderer"));
+                RendererButtonInactive(CLAY_STRING("Canvas Renderer"), 1);
             } else {
-                RendererButtonInactive(CLAY_STRING("HTML Renderer"));
+                RendererButtonInactive(CLAY_STRING("HTML Renderer"), 0);
                 RendererButtonActive(CLAY_STRING("Canvas Renderer"));
             }
         }
@@ -306,30 +309,28 @@ float animationLerpValue = -1.0f;
 Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
     Clay_BeginLayout();
     CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }), CLAY_RECTANGLE(.color = COLOR_LIGHT)) {
-        CLAY(CLAY_ID("Header"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(50) }, .childAlignment = { 0, CLAY_ALIGN_Y_CENTER }, .childGap = 24, .padding = { 32 })) {
+        CLAY(CLAY_ID("Header"), CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(50) }, .childAlignment = { 0, CLAY_ALIGN_Y_CENTER }, .childGap = 16, .padding = { 32 })) {
             CLAY_TEXT(CLAY_STRING("Clay"), &headerTextConfig);
             CLAY(CLAY_ID("Spacer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() })) {}
-
             if (!mobileScreen) {
-                CLAY(CLAY_ID("LinkExamplesOuter"), CLAY_RECTANGLE(.link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples"), .color = {0,0,0,0})) {
+                CLAY(CLAY_ID("LinkExamplesOuter"), CLAY_LAYOUT(.padding = {8}), CLAY_RECTANGLE(.link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples"), .color = {0,0,0,0})) {
                     CLAY_TEXT(CLAY_STRING("Examples"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
                 }
-                CLAY(CLAY_ID("LinkDocsOuter"), CLAY_RECTANGLE(.link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md"), .color = {0,0,0,0})) {
+                CLAY(CLAY_ID("LinkDocsOuter"), CLAY_LAYOUT(.padding = {8}), CLAY_RECTANGLE(.link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md"), .color = {0,0,0,0})) {
                     CLAY_TEXT(CLAY_STRING("Docs"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
                 }
             }
-            Clay_ElementId discordButtonId;
-            CLAY(discordButtonId = CLAY_ID("HeaderButtonGithub"),
-                CLAY_LAYOUT(.padding = {16, 6}),
-                CLAY_RECTANGLE(.cornerRadius = CLAY_CORNER_RADIUS(10), .link = CLAY_STRING("https://discord.gg/b4FTWkxdvT"), .color = Clay_PointerOver(discordButtonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT),
+            CLAY(CLAY_LAYOUT(.padding = {16, 6}),
+                CLAY_RECTANGLE(
+                    .cornerRadius = CLAY_CORNER_RADIUS(10),
+                    .link = CLAY_STRING("https://discord.gg/b4FTWkxdvT"),
+                    .color = Clay_Hovered() ? COLOR_LIGHT_HOVER : COLOR_LIGHT),
                 CLAY_BORDER_OUTSIDE_RADIUS(2, COLOR_RED, 10)
             ) {
                 CLAY_TEXT(CLAY_STRING("Discord"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
             }
-            Clay_ElementId githubButtonId;
-            CLAY(githubButtonId = CLAY_ID("HeaderButtonGithub"),
-                CLAY_LAYOUT(.padding = {16, 6}),
-                CLAY_RECTANGLE(.cornerRadius = CLAY_CORNER_RADIUS(10), .link = CLAY_STRING("https://github.com/nicbarker/clay"), .color = Clay_PointerOver(githubButtonId) ? COLOR_LIGHT_HOVER : COLOR_LIGHT),
+            CLAY(CLAY_LAYOUT(.padding = {16, 6}),
+                CLAY_RECTANGLE(.cornerRadius = CLAY_CORNER_RADIUS(10), .link = CLAY_STRING("https://github.com/nicbarker/clay"), .color = Clay_Hovered() ? COLOR_LIGHT_HOVER : COLOR_LIGHT),
                 CLAY_BORDER_OUTSIDE_RADIUS(2, COLOR_RED, 10)
             ) {
                 CLAY_TEXT(CLAY_STRING("Github"), CLAY_TEXT_CONFIG(.disablePointerEvents = true, .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255}));
@@ -343,7 +344,6 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
         CLAY(CLAY_ID("OuterScrollContainer"),
             CLAY_LAYOUT(.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM),
             CLAY_SCROLL(.vertical = true),
-            CLAY_RECTANGLE(.color = COLOR_LIGHT),
             CLAY_BORDER(.betweenChildren = {2, COLOR_RED})
         ) {
             if (mobileScreen) {
@@ -364,16 +364,16 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
     }
 
     if (!mobileScreen) {
-        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         Clay_Color scrollbarColor = (Clay_Color){225, 138, 50, 120};
         if (scrollbarData.mouseDown) {
             scrollbarColor = (Clay_Color){225, 138, 50, 200};
-        } else if (Clay_PointerOver(CLAY_ID("ScrollBar"))) {
+        } else if (Clay_PointerOver(Clay_GetElementId(CLAY_STRING("ScrollBar")))) {
             scrollbarColor = (Clay_Color){225, 138, 50, 160};
         }
         float scrollHeight = scrollData.scrollContainerDimensions.height - 12;
         CLAY(CLAY_ID("ScrollBar"),
-            CLAY_FLOATING(.offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = CLAY_ID("OuterScrollContainer").id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}),
+            CLAY_FLOATING(.offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = Clay_GetElementId(CLAY_STRING("OuterScrollContainer")).id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}),
             CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(10), CLAY_SIZING_FIXED((scrollHeight / scrollData.contentDimensions.height) * scrollHeight)}),
             CLAY_RECTANGLE(.cornerRadius = CLAY_CORNER_RADIUS(5), .color = scrollbarColor)
         ) {}
@@ -399,14 +399,6 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
         Clay_SetDebugModeEnabled(debugModeEnabled);
     }
 
-    if (isTouchDown || isMouseDown) {
-        if (Clay_PointerOver(CLAY_ID("RendererSelectButtonHTML"))) {
-            ACTIVE_RENDERER_INDEX = 0;
-        } else if (Clay_PointerOver(CLAY_ID("RendererSelectButtonCanvas"))) {
-            ACTIVE_RENDERER_INDEX = 1;
-        }
-    }
-
     Clay__debugViewHighlightColor = (Clay_Color) {105,210,231, 120};
 
     Clay_SetPointerState((Clay_Vector2) {mousePositionX, mousePositionY}, isMouseDown || isTouchDown);
@@ -415,13 +407,13 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
         scrollbarData.mouseDown = false;
     }
 
-    if (isMouseDown && !scrollbarData.mouseDown && Clay_PointerOver(CLAY_ID("ScrollBar"))) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+    if (isMouseDown && !scrollbarData.mouseDown && Clay_PointerOver(Clay_GetElementId(CLAY_STRING("ScrollBar")))) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         scrollbarData.clickOrigin = (Clay_Vector2) { mousePositionX, mousePositionY };
         scrollbarData.positionOrigin = *scrollContainerData.scrollPosition;
         scrollbarData.mouseDown = true;
     } else if (scrollbarData.mouseDown) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         if (scrollContainerData.contentDimensions.height > 0) {
             Clay_Vector2 ratio = (Clay_Vector2) {
                 scrollContainerData.contentDimensions.width / scrollContainerData.scrollContainerDimensions.width,
@@ -437,12 +429,12 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
     }
 
     if (arrowKeyDownPressedThisFrame) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         if (scrollContainerData.contentDimensions.height > 0) {
             scrollContainerData.scrollPosition->y = scrollContainerData.scrollPosition->y - 50;
         }
     } else if (arrowKeyUpPressedThisFrame) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(CLAY_ID("OuterScrollContainer"));
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         if (scrollContainerData.contentDimensions.height > 0) {
             scrollContainerData.scrollPosition->y = scrollContainerData.scrollPosition->y + 50;
         }

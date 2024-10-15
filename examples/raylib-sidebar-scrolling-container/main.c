@@ -13,10 +13,17 @@ Texture2D profilePicture;
 Clay_String profileText = CLAY_STRING("Profile Page one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen");
 Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = 1, .fontSize = 16, .textColor = {0,0,0,255} };
 
+void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
+    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+        return;
+    }
+}
+
 // Examples of re-usable "Components"
-void RenderHeaderButton(uint16_t index, Clay_String text) {
-    Clay_ElementId buttonId = Clay__HashString(CLAY_STRING("HeaderButton"), index, 0);
-    CLAY(Clay__AttachId(buttonId), CLAY_LAYOUT(.padding = {16, 8}), CLAY_RECTANGLE(.color = Clay_PointerOver(buttonId) ? COLOR_BLUE : COLOR_ORANGE)) {
+void RenderHeaderButton(Clay_String text) {
+    CLAY(CLAY_LAYOUT(.padding = {16, 8}),
+        CLAY_RECTANGLE(.color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE),
+        Clay_OnHover(HandleHeaderButtonInteraction, 1)) {
         CLAY_TEXT(text, &headerTextConfig);
     }
 }
@@ -33,6 +40,14 @@ void RenderDropdownTextItem(int index) {
 
 Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
+//    CLAY(CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16), CLAY_BORDER(.betweenChildren = {1, {0,250,0,255}})) {
+//        CLAY(CLAY_RECTANGLE(.color = {150,0,0,255}), CLAY_LAYOUT(.childAlignment = { .y = CLAY_ALIGN_Y_CENTER })) {
+//            CLAY_TEXT(CLAY_STRING("TEST"), CLAY_TEXT_CONFIG(.fontSize = 60, .textColor = {255,255,255,255}));
+//        }
+//        CLAY(CLAY_RECTANGLE(.color = {150,0,0,255}), CLAY_LAYOUT(.childAlignment = { .y = CLAY_ALIGN_Y_CENTER })) {
+//            CLAY_TEXT(CLAY_STRING("TEST"), CLAY_TEXT_CONFIG(.fontSize = 60, .textColor = {255,255,255,255}));
+//        }
+//    }
     CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }, .padding = { 16, 16 }, .childGap = 16), CLAY_RECTANGLE(.color = {200, 200, 200, 255})) {
         CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE(.color = {150, 150, 255, 255})) {
             CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .padding = { 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE(.color = {130, 130, 255, 255})) {
@@ -47,9 +62,9 @@ Clay_RenderCommandArray CreateLayout() {
 //
         CLAY(CLAY_ID("RightPanel"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }, .childGap = 16)) {
             CLAY(CLAY_ID("HeaderBar"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT }, .padding = {8, 8}, .childGap = 8), CLAY_RECTANGLE(.color =  {180, 180, 180, 255})) {
-                RenderHeaderButton(1, CLAY_STRING("Header Item 1"));
-                RenderHeaderButton(2, CLAY_STRING("Header Item 2"));
-                RenderHeaderButton(3, CLAY_STRING("Header Item 3"));
+                RenderHeaderButton(CLAY_STRING("Header Item 1"));
+                RenderHeaderButton(CLAY_STRING("Header Item 2"));
+                RenderHeaderButton(CLAY_STRING("Header Item 3"));
             }
             CLAY(CLAY_ID("MainContent"),
                 CLAY_SCROLL(.vertical = true),
@@ -110,9 +125,9 @@ Clay_RenderCommandArray CreateLayout() {
         }
         Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(Clay__HashString(CLAY_STRING("MainContent"), 0, 0));
         if (scrollData.found) {
-                CLAY(CLAY_ID("ScrollBar"),CLAY_FLOATING(.offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height }, .zIndex = 1, .parentId = Clay__HashString(CLAY_STRING("MainContent"), 0, 0).id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP})) {
-                    CLAY(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height)}), CLAY_RECTANGLE(.cornerRadius = {6}, .color = Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0, 0)) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150})) {}
-                };
+            CLAY(CLAY_ID("ScrollBar"),CLAY_FLOATING(.offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height }, .zIndex = 1, .parentId = Clay__HashString(CLAY_STRING("MainContent"), 0, 0).id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP})) {
+                CLAY(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height)}), CLAY_RECTANGLE(.cornerRadius = {6}, .color = Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0, 0)) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150})) {}
+            };
         }
     };
     return Clay_EndLayout();
