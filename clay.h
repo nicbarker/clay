@@ -1459,7 +1459,7 @@ Clay_Dimensions Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfi
         // This element hasn't been seen in a few frames, delete the hash map item
         if (Clay__generation - hashEntry->generation > 2) {
             uint32_t nextIndex = hashEntry->nextIndex;
-            Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, elementIndex, (Clay__MeasureTextCacheItem) {});
+            Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, elementIndex, CLAY__INIT(Clay__MeasureTextCacheItem) {});
             Clay__int32_tArray_Add(&Clay__measureTextHashMapInternalFreeList, elementIndex);
             if (elementIndexPrevious == 0) {
                 Clay__measureTextHashMap.internalArray[hashBucket] = nextIndex;
