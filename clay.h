@@ -2623,10 +2623,6 @@ void Clay__CalculateFinalLayout() {
                     } else {
                         currentElementTreeNode->nextChildOffset.y += childElement->dimensions.height + (float)layoutConfig->childGap;
                     }
-
-                    if (currentElementTreeNode->nextChildOffset.x > 10000) {
-                        continue;
-                    }
                 }
             }
         }
@@ -2653,9 +2649,6 @@ void Clay__AttachId(Clay_ElementId elementId) {
 
 void Clay__AttachLayoutConfig(Clay_LayoutConfig *config) {
     Clay__GetOpenLayoutElement()->layoutConfig = config;
-    if (config->childGap > 100) {
-        return;
-    }
 }
 void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type) {
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();

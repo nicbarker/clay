@@ -40,14 +40,6 @@ void RenderDropdownTextItem(int index) {
 
 Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
-//    CLAY(CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16), CLAY_BORDER(.betweenChildren = {1, {0,250,0,255}})) {
-//        CLAY(CLAY_RECTANGLE(.color = {150,0,0,255}), CLAY_LAYOUT(.childAlignment = { .y = CLAY_ALIGN_Y_CENTER })) {
-//            CLAY_TEXT(CLAY_STRING("TEST"), CLAY_TEXT_CONFIG(.fontSize = 60, .textColor = {255,255,255,255}));
-//        }
-//        CLAY(CLAY_RECTANGLE(.color = {150,0,0,255}), CLAY_LAYOUT(.childAlignment = { .y = CLAY_ALIGN_Y_CENTER })) {
-//            CLAY_TEXT(CLAY_STRING("TEST"), CLAY_TEXT_CONFIG(.fontSize = 60, .textColor = {255,255,255,255}));
-//        }
-//    }
     CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }, .padding = { 16, 16 }, .childGap = 16), CLAY_RECTANGLE(.color = {200, 200, 200, 255})) {
         CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE(.color = {150, 150, 255, 255})) {
             CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .padding = { 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE(.color = {130, 130, 255, 255})) {
