@@ -322,11 +322,13 @@
         let length = memoryDataView.getUint32(scratchSpaceAddress + 4, true);
         let arrayOffset = memoryDataView.getUint32(scratchSpaceAddress + 8, true);
         let scissorStack = [{ nextAllocation: { x: 0, y: 0 }, element: htmlRoot, nextElementIndex: 0 }];
+        let previousId = 0;
         for (let i = 0; i < length; i++, arrayOffset += renderCommandSize) {
             let entireRenderCommandMemory = new Uint32Array(memoryDataView.buffer.slice(arrayOffset, arrayOffset + renderCommandSize));
             let renderCommand = readStructAtAddress(arrayOffset, renderCommandDefinition);
             let parentElement = scissorStack[scissorStack.length - 1];
             let element = null;
+            let isMultiConfigElement = previousId === renderCommand.id.value;
             if (!elementCache[renderCommand.id.value]) {
                 let elementType = 'div';
                 switch (renderCommand.commandType.value) {
@@ -357,7 +359,7 @@
 
             let elementData = elementCache[renderCommand.id.value];
             element = elementData.element;
-            if (Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
+            if (!isMultiConfigElement && Array.prototype.indexOf.call(parentElement.element.children, element) !== parentElement.nextElementIndex) {
                 if (parentElement.nextElementIndex === 0) {
                     parentElement.element.insertAdjacentElement('afterbegin', element);
                 } else {
@@ -367,8 +369,12 @@
 
             elementData.exists = true;
             // Don't get me started. Cheaper to compare the render command memory than to update HTML elements
-            let dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize);
-            parentElement.nextElementIndex++;
+            let dirty = MemoryIsDifferent(elementData.previousMemoryCommand, entireRenderCommandMemory, renderCommandSize) && !isMultiConfigElement;
+            if (!isMultiConfigElement) {
+                parentElement.nextElementIndex++;
+            }
+
+            previousId = renderCommand.id.value;
 
             elementData.previousMemoryCommand = entireRenderCommandMemory;
             let offsetX = scissorStack.length > 0 ? scissorStack[scissorStack.length - 1].nextAllocation.x : 0;
