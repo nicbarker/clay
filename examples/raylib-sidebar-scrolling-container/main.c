@@ -24,7 +24,7 @@ void RenderHeaderButton(Clay_String text) {
     CLAY(CLAY_LAYOUT({ .padding = {16, 8} }),
         CLAY_RECTANGLE({ .color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE }),
         Clay_OnHover(HandleHeaderButtonInteraction, 1)) {
-        CLAY_TEXT(text, &headerTextConfig);
+        CLAY_TEXT(text, CLAY_TEXT_CONFIG(headerTextConfig));
     }
 }
 
@@ -101,7 +101,7 @@ Clay_RenderCommandArray CreateLayout() {
             }
         }
 
-        CLAY(CLAY_ID("Blob4Floating2"), CLAY_FLOATING({ .zIndex = 1, .parentId = Clay__HashString(CLAY_STRING("SidebarBlob4"), 0, 0).id })) {
+        CLAY(CLAY_ID("Blob4Floating2"), CLAY_FLOATING({ .zIndex = 1, .parentId = Clay_GetElementId(CLAY_STRING("SidebarBlob4")).id })) {
             CLAY(CLAY_ID("ScrollContainer"), CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(200) }, .childGap = 2 }), CLAY_SCROLL({ .vertical = true })) {
                 CLAY(CLAY_ID("FloatingContainer2"), CLAY_LAYOUT({ }), CLAY_FLOATING({ .zIndex = 1 })) {
                     CLAY(CLAY_ID("FloatingContainerInner"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) }, .padding = {16, 16} }), CLAY_RECTANGLE({ .color = {140,80, 200, 200} })) {
@@ -115,11 +115,21 @@ Clay_RenderCommandArray CreateLayout() {
                 }
             }
         }
-        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(Clay__HashString(CLAY_STRING("MainContent"), 0, 0));
+        Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("MainContent")));
         if (scrollData.found) {
-            CLAY(CLAY_ID("ScrollBar"),CLAY_FLOATING({ .offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height }, .zIndex = 1, .parentId = Clay__HashString(CLAY_STRING("MainContent"), 0, 0).id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP} })) {
-                CLAY(CLAY_ID("ScrollBarButton"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height) }}), CLAY_RECTANGLE({ .cornerRadius = {6}, .color = Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0, 0)) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150} })) {}
-            };
+            CLAY(CLAY_ID("ScrollBar"),
+                CLAY_FLOATING({
+                    .offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height },
+                    .zIndex = 1,
+                    .parentId = Clay_GetElementId(CLAY_STRING("MainContent")).id,
+                    .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}
+                })
+            ) {
+                CLAY(CLAY_ID("ScrollBarButton"),
+                    CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height) }}),
+                    CLAY_RECTANGLE({ .cornerRadius = {6}, .color = Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0, 0)) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150} })
+                ) {}
+            }
         }
     };
     return Clay_EndLayout();

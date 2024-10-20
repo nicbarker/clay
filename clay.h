@@ -40,7 +40,7 @@
 
 #define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE))
 
-#define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__INIT(Clay_TextElementConfig) __VA_ARGS__)
+#define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__))
 
 #define CLAY_IMAGE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .imageElementConfig = Clay__StoreImageElementConfig(CLAY__INIT(Clay_ImageElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE))
 
@@ -439,6 +439,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
 void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
 void Clay_BeginLayout();
 Clay_RenderCommandArray Clay_EndLayout();
+Clay_ElementId Clay_GetElementId(Clay_String idString);
 bool Clay_Hovered();
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData), intptr_t userData);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
@@ -446,10 +447,9 @@ void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_Str
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
 
+// Internal API functions required by macros
 void Clay__OpenElement();
 void Clay__CloseElement();
-
-// Internal API functions required by macros
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
 void Clay__ElementPostConfiguration();
 void Clay__AttachId(Clay_ElementId id);
@@ -2645,10 +2645,6 @@ void Clay__CalculateFinalLayout() {
     }
 }
 
-Clay_ElementId Clay_GetElementId(Clay_String idString) {
-    return Clay__HashString(idString, 0, 0);
-}
-
 void Clay__AttachId(Clay_ElementId elementId) {
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     openLayoutElement->id = elementId.id;
@@ -3539,6 +3535,11 @@ Clay_RenderCommandArray Clay_EndLayout()
     }
     Clay__CalculateFinalLayout();
     return Clay__renderCommands;
+}
+
+CLAY_WASM_EXPORT("Clay_EndLayout")
+Clay_ElementId Clay_GetElementId(Clay_String idString) {
+    return Clay__HashString(idString, 0, 0);
 }
 
 bool Clay_Hovered() {
