@@ -83,8 +83,8 @@ Clay_LayoutConfig sidebarItemLayout = (Clay_LayoutConfig) {
 };
 
 // Re-useable components are just normal functions
-void SidebarItemComponent(int index) {
-    CLAY_RECTANGLE(CLAY_IDI("SidebarBlob", index), sidebarItemLayout, CLAY_RECTANGLE_CONFIG(.color = COLOR_ORANGE)) {}
+void SidebarItemComponent() {
+    CLAY(CLAY_LAYOUT(sidebarItemLayout), CLAY_RECTANGLE(.color = COLOR_ORANGE)) {}
 }
 
 // An example function to begin the "root" of your layout tree
@@ -92,20 +92,23 @@ Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
 
     // An example of laying out a UI with a fixed width sidebar and flexible width main content
-    CLAY_RECTANGLE(CLAY_ID("OuterContainer"), CLAY_LAYOUT(.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = {250,250,255,255})) {
-        CLAY_RECTANGLE(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT)) {
-            CLAY_RECTANGLE(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE_CONFIG(.color = COLOR_RED)) {
-                CLAY_IMAGE(CLAY_ID("ProfilePicture"), CLAY_LAYOUT( .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }), CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .height = 60, .width = 60)) {}
-                CLAY_TEXT(CLAY_ID("ProfileTitle"), CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG(.fontSize = 24, .textColor = {255, 255, 255, 255}));
+    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE(.color = {250,250,255,255})) {
+        CLAY(CLAY_ID("SideBar"),
+            CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16 }),
+            CLAY_RECTANGLE(.color = COLOR_LIGHT)
+        ) {
+            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE(.color = COLOR_RED)) {
+                CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE(.imageData = &profilePicture, .height = 60, .width = 60)) {}
+                CLAY_TEXT(CLAY_ID("ProfileTitle"), CLAY_STRING("Clay - UI Library"), CLAY_TEXT(.fontSize = 24, .textColor = {255, 255, 255, 255}));
             }
 
             // Standard C code like loops etc work inside components
             for (int i = 0; i < 5; i++) {
-                SidebarItemComponent(i);
+                SidebarItemComponent();
             }
         }
 
-        CLAY_RECTANGLE(CLAY_ID("MainContent"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }), CLAY_RECTANGLE_CONFIG(.color = COLOR_LIGHT)) {}
+        CLAY(CLAY_ID("MainContent"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }}), CLAY_RECTANGLE(.color = COLOR_LIGHT)) {}
     }
     // ...
 });
@@ -149,16 +152,16 @@ For help starting out or to discuss clay, considering joining [the discord serve
 ## High Level Documentation
 
 ### Building UI Hierarchies
-Clay UI hierarchies are built using C macros that allow _nested_ declarations, similar to other declarative UI systems like HTML.
+Clay UIs are built using the C macro `CLAY()`. This macro creates a new blank element in a UI hierarchy, and supports modular customisation of layout, styling and functionality. The `CLAY()` macro can also be _nested_, similar to other declarative UI systems like HTML.
 
-This means that child elements are declared _inside_ their parent elements. Clay element macros work by opening a block: `{}` after calling the element macro (exactly like you would with an `if` statement or `for` loop), and declaring child components inside the braces.
+Child elements are added by opening a block: `{}` after calling the `CLAY()` macro (exactly like you would with an `if` statement or `for` loop), and declaring child components inside the braces.
 ```C
-// Parent element
-CLAY_CONTAINER(id, layout) {
+// Parent element with 8px of padding
+CLAY(CLAY_LAYOUT({ .padding = 8 })) {
     // Child element 1
-    CLAY_TEXT(id, text, config);
-    // Child element 2
-    CLAY_RECTANGLE(id, layout, config) {
+    CLAY_TEXT(CLAY_STRING("Hello World"), CLAY_TEXT_CONFIG({ .fontSize = 16 }));
+    // Child element 2 with red background
+    CLAY(CLAY_RECTANGLE({ .color = COLOR_RED })) {
         // etc
     }
 }
@@ -168,20 +171,21 @@ However, unlike HTML and other declarative DSLs, these macros are just C. As a r
 ```C
 // Re-usable "components" are just functions that declare more UI
 void ButtonComponent(Clay_String buttonText) {
-    CLAY_RECTANGLE(id, layout, config) {
-        CLAY_TEXT(id, buttonText, config);
+    // Red box button with 8px of padding
+    CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+        CLAY_TEXT(buttonText, textConfig);
     }
 }
 
 // Parent element
-CLAY_CONTAINER(id, layout, {
+CLAY(CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
     // Render a bunch of text elements
     for (int i = 0; i < textArray.length; i++) {
-        CLAY_TEXT(id, textArray.elements[i], config);
+        CLAY_TEXT(textArray.elements[i], textConfig);
     }
     // Only render this element if we're on a mobile screen
     if (isMobileScreen) {
-        CLAY_CONTAINER(id, layout) {
+        CLAY() {
             // etc
         }
     }
@@ -192,9 +196,9 @@ CLAY_CONTAINER(id, layout, {
 ```
 
 ### Configuring Layout and Styling UI Elements
-Many of the element macros in Clay take a `Clay_LayoutConfig` as the second argument. Clay provides a convenience macro, [CLAY_LAYOUT()](#clay_layout) for easy construction of element styles.
+The layout of clay elements is configured with the `CLAY_LAYOUT()` macro. 
 ```C
-CLAY_CONTAINER(id, CLAY_LAYOUT(.padding = {.x = 8, .y = 8}, .backgroundColor = {120, 120, 120, 255})) {
+CLAY(CLAY_LAYOUT({ .padding = {.x = 8, .y = 8}, .backgroundColor = {120, 120, 120, 255} })) {
     // ...
 }
 ```
@@ -202,12 +206,12 @@ This macro isn't magic - all it's doing is wrapping the standard designated init
 
 See the [Clay_LayoutConfig](#clay_layout) API for the full list of options.
 
-A `Clay_LayoutConfig` struct can be defined in file scope or elsewhere, as long as the lifetime ends after `EndLayout` is called.
+A `Clay_LayoutConfig` struct can be defined in file scope or elsewhere, and reused.
 ```C
 // Define a style in the global / file scope
 Clay_LayoutConfig reusableStyle = (Clay_LayoutConfig) {.backgroundColor = {120, 120, 120, 255}};
 
-CLAY_CONTAINER(id, &reusableStyle) {
+CLAY(CLAY_LAYOUT(reusableStyle)) {
     // ...
 }
 ```
@@ -215,24 +219,24 @@ CLAY_CONTAINER(id, &reusableStyle) {
 Some of the other element macros, such as [CLAY_TEXT()](#clay_text) and [CLAY_RECTANGLE()](#clay_rectangle) take an element-specific config object as their 3rd argument. These config objects also have convenience macros for constructing them, generally of the form [CLAY_TEXT_CONFIG()](#clay_text_config) or [CLAY_RECTANGLE_CONFIG()](#clay_rectangle_config):
 
 ```C
-CLAY_TEXT(id, CLAY_STRING("button text"), CLAY_TEXT_CONFIG(.fontSize = 24, .fontId = FONT_ID_LATO, .textColor = {255, 255, 255, 255}));
+CLAY_TEXT(CLAY_STRING("button text"), (Clay_TextConfig) { .fontSize = 24, .fontId = FONT_ID_LATO, .textColor = {255, 255, 255, 255} });
 ```
 
 See the [Full API](#api) for details on the specific config macros. 
 
-### Element IDs
+### Element IDs TODO
 
 All element macros take a `Clay_ElementId` ID as their first argument. Clay provides the [CLAY_ID()](#clay_id) macro to generate these IDs as string hashes:
 ```C
 // Will always produce the same ID from the same input string
-CLAY_CONTAINER(CLAY_ID("OuterContainer"), style) {}
+CLAY(CLAY_ID("OuterContainer"), style) {}
 ```  
 
 To avoid having to construct dynamic strings at runtime to differentiate ids, clay provides the [CLAY_IDI(string, index)](#clay_idi) macro to generate different ids from a single input string. Think of IDI as "**ID** + **I**ndex"
 ```C
 // This is the equivalent of calling CLAY_ID("Item0"), CLAY_ID("Item1") etc
 for (int index = 0; index < items.length; index++) {
-    CLAY_CONTAINER(CLAY_IDI("Item", index), style) {}
+    CLAY(CLAY_IDI("Item", index), style) {}
 }
 ```
 
@@ -242,11 +246,41 @@ This ID is used for querying mouse / pointer events, and will be forwarded to th
 
 ### Mouse, Touch and Pointer Interactions
 
-Clay provides a very simple unified API for handling mouse and pointer interactions, with specific handling left to user code.
+Clay provides several functions for handling mouse and pointer interactions.
 
 All pointer interactions depend on the function `void Clay_SetPointerState(Clay_Vector2 position)` being called after each mouse position update and before any other clay functions.
 
-The function `bool Clay_PointerOver(Clay_ElementId id)` takes an element id that was used during layout creation and returns a bool representing whether the current pointer position is within its bounding box. 
+The function `bool Clay_Hovered()` can be called during element construction or in the body of an element, and returns `true` if the mouse / pointer is over the currently open element.
+
+```C
+// An orange button that turns blue when hovered
+CLAY(CLAY_RECTANGLE(.color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE)) {
+    bool buttonHovered = Clay_Hovered();
+    CLAY_TEXT(buttonHovered ? CLAY_STRING("Hovered") : CLAY_STRING("Hover me!"), headerTextConfig);
+}
+```
+
+The function `void Clay_OnHover()` allows you to attach a function pointer to the currently open element, which will be called if the mouse / pointer is over the element.
+
+```C
+void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
+    ButtonData *buttonData = (ButtonData *)userData;
+    // Pointer state allows you to detect mouse down / hold / release
+    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+        // Do some click handling
+        NavigateTo(buttonData->link);
+    }
+}
+
+ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/clay" };
+
+// HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
+CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
+    CLAY_TEXT(CLAY_STRING("Button"), headerTextConfig);
+}
+```
+
+If you want to query mouse / pointer overlaps outside layout declarations, you can use the function `bool Clay_PointerOver(Clay_ElementId id)`. takes an element id that was used during layout creation and returns a bool representing whether the current pointer position is within its bounding box. 
 ```C
 // Reminder: Clay_SetPointerState must be called before functions that rely on pointer position otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
@@ -258,28 +292,15 @@ if (mouseButtonDown(0) && Clay_PointerOver(CLAY_ID("ProfilePicture"))) {
 }
 ```
 
-Querying `Clay_PointerOver` also works _during_ layout construction, and can be used as a convenient way for applying "hover" states, for example:
-
-```C
-// Reminder: Clay_SetPointerState must be called before functions that rely on pointer position otherwise it will have no effect
-Clay_Vector2 mousePosition = { x, y };
-Clay_SetPointerState(mousePosition);
-// ...
-Clay_ElementId buttonId = CLAY_ID("HeaderButton");
-// An orange button that turns blue when hovered
-CLAY_CONTAINER(buttonId, CLAY_LAYOUT(.backgroundColor = Clay_PointerOver(buttonId) ? COLOR_BLUE : COLOR_ORANGE)) {
-    CLAY_TEXT(CLAY_IDI("Button", index), text, &headerTextConfig);
-}
-```
 Note that the bounding box queried by `Clay_PointerOver` is from the last frame. This shouldn't make a difference except in the case of animations that move at high speed.
 If this is an issue for you, performing layout twice per frame with the same data will give you the correct interaction the second time.
 
-### Scrolling Containers
+### Scrolling Elements
 
-Scrolling containers are defined with the `CLAY_SCROLL_CONTAINER` element macro and function just like normal containers, however to make scroll containers respond to mouse wheel and scroll events, two functions need to be called:
+Elements are configured as scrollable with the `CLAY_SCROLL` macro. To make scroll containers respond to mouse wheel and scroll events, two functions need to be called before `BeginLayout()`:
 ```C
-// Reminder: Clay_SetPointerState must be called before Clay_UpdateScrollContainers otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
+// Reminder: Clay_SetPointerState must be called before Clay_UpdateScrollContainers otherwise it will have no effect
 Clay_SetPointerState(mousePosition);
 // Clay_UpdateScrollContainers needs to be called before Clay_BeginLayout for the position to avoid a 1 frame delay
 Clay_UpdateScrollContainers(
@@ -290,29 +311,28 @@ Clay_UpdateScrollContainers(
 // ...
 ```
 
-More specific details can be found in the full [Scroll Container API](#clay_scroll_container).
+More specific details can be found in the full [Scroll API](#clay_scroll).
 
-### Floating Containers ("Absolute" Positioning)
+### Floating Elements ("Absolute" Positioning)
 
 All standard elements in clay are laid out on top of, and _within_ their parent, positioned according to their parent's layout rules, and affect the positioning and sizing of siblings.
 
-**"Floating"** elements are defined with the `CLAY_FLOATING_CONTAINER` element macro and don't affect the parent they are defined in, or the position of their siblings.
+**"Floating"** is configured with the `CLAY_FLOATING()` macro. Floating elements don't affect the parent they are defined in, or the position of their siblings.
 They also have a **z-index**, and as a result can intersect and render over the top of other elements.
-Aside from positioning, `CLAY_FLOATING_CONTAINER` elements function like standard `CLAY_CONTAINER` elements.
 
 A classic example use case for floating elements is tooltips and modals.
 
 ```C
 // The two text elements will be laid out top to bottom, and the floating container
 // will be attached to "Outer"
-CLAY_CONTAINER(CLAY_ID("Outer"), CLAY_LAYOUT(.layoutDirection = TOP_TO_BOTTOM)) {
+CLAY(CLAY_ID("Outer"), CLAY_LAYOUT(.layoutDirection = TOP_TO_BOTTOM)) {
     CLAY_TEXT(CLAY_ID("Button"), text, &headerTextConfig);
-    CLAY_FLOATING(CLAY_ID("Tooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG) {}
+    CLAY(CLAY_ID("Tooltip"), CLAY_FLOATING()) {}
     CLAY_TEXT(CLAY_ID("Button"), text, &headerTextConfig);
 }
 ```
 
-More specific details can be found in the full [Floating Container API](#clay_floating_container).
+More specific details can be found in the full [Floating API](#clay_floating).
 
 ### Laying Out Your Own Custom Elements
 
@@ -336,9 +356,9 @@ typedef struct t_CustomElementData {
 Model myModel = Load3DModel(filePath);
 CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
 // ...
-CLAY_CONTAINER(id, style) {
+CLAY() {
     // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
+    CLAY(CLAY_CUSTOM_ELEMENT(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
 }
 
 // Later during your rendering
@@ -364,7 +384,7 @@ switch (renderCommand->commandType) {
 }
 ```
 
-More specific details can be found in the full [Custom Container API](#clay_custom_element).
+More specific details can be found in the full [Custom Element API](#clay_custom_element).
 
 ### Retained Mode Rendering
 Clay was originally designed for [Immediate Mode](https://www.youtube.com/watch?v=Z1qyvQsjK5Y) rendering - where the entire UI is redrawn every frame. This may not be possible with your platform, renderer design or performance constraints.

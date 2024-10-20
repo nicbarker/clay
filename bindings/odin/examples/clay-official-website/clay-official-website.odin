@@ -454,29 +454,23 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
         if clay.UI(clay.ID("TopBorder5"), clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingFixed(4)}}), clay.Rectangle({color = COLOR_TOP_BORDER_1})) {}
         if clay.UI(
             clay.ID("ScrollContainerBackgroundRectangle"),
-            clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingGrow({})}}),
+            clay.Scroll({vertical = true}),
+            clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingGrow({})}, layoutDirection = clay.LayoutDirection.TOP_TO_BOTTOM}),
             clay.Rectangle({color = COLOR_LIGHT}),
+            clay.Border({betweenChildren = {2, COLOR_RED}})
         ) {
-            if clay.UI(clay.ID("OuterScrollContainer"), clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingGrow({})}}), clay.Scroll({vertical = true})) {
-                if clay.UI(
-                    clay.ID("ScrollContainerInner"),
-                    clay.Layout({layoutDirection = .TOP_TO_BOTTOM, sizing = {width = clay.SizingGrow({})}}),
-                    clay.Border({betweenChildren = {2, COLOR_RED}}),
-                ) {
-                    if (!mobileScreen) {
-                        LandingPageDesktop()
-                        FeatureBlocksDesktop()
-                        DeclarativeSyntaxPageDesktop()
-                        HighPerformancePageDesktop(lerpValue)
-                        RendererPageDesktop()
-                    } else {
-                        LandingPageMobile()
-                        FeatureBlocksMobile()
-                        DeclarativeSyntaxPageMobile()
-                        HighPerformancePageMobile(lerpValue)
-                        RendererPageMobile()
-                    }
-                }
+            if (!mobileScreen) {
+                LandingPageDesktop()
+                FeatureBlocksDesktop()
+                DeclarativeSyntaxPageDesktop()
+                HighPerformancePageDesktop(lerpValue)
+                RendererPageDesktop()
+            } else {
+                LandingPageMobile()
+                FeatureBlocksMobile()
+                DeclarativeSyntaxPageMobile()
+                HighPerformancePageMobile(lerpValue)
+                RendererPageMobile()
             }
         }
     }
