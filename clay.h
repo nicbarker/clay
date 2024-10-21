@@ -681,7 +681,7 @@ Clay_ElementConfig *Clay__ElementConfigArraySlice_Get(Clay__ElementConfigArraySl
 #pragma endregion
 // __GENERATED__ template
 
-Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = CLAY__INIT(Clay_LayoutConfig){ .sizing = { .width = { .type = CLAY__SIZING_TYPE_FIT, .sizeMinMax = {0, CLAY__MAXFLOAT }}, .height = { .type = CLAY__SIZING_TYPE_FIT, .sizeMinMax = {0, CLAY__MAXFLOAT }} } };
+Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = CLAY__INIT(Clay_LayoutConfig){ .sizing = { .width = { .sizeMinMax = {0, CLAY__MAXFLOAT }, .type = CLAY__SIZING_TYPE_FIT }, .height = { .sizeMinMax = {0, CLAY__MAXFLOAT }, .type = CLAY__SIZING_TYPE_FIT } } };
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_LayoutConfig NAME=Clay__LayoutConfigArray DEFAULT_VALUE=&CLAY_LAYOUT_DEFAULT
 #pragma region generated
@@ -3537,7 +3537,7 @@ Clay_RenderCommandArray Clay_EndLayout()
     return Clay__renderCommands;
 }
 
-CLAY_WASM_EXPORT("Clay_EndLayout")
+CLAY_WASM_EXPORT("Clay_GetElementId")
 Clay_ElementId Clay_GetElementId(Clay_String idString) {
     return Clay__HashString(idString, 0, 0);
 }

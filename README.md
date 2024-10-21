@@ -84,7 +84,7 @@ Clay_LayoutConfig sidebarItemLayout = (Clay_LayoutConfig) {
 
 // Re-useable components are just normal functions
 void SidebarItemComponent() {
-    CLAY(CLAY_LAYOUT(sidebarItemLayout), CLAY_RECTANGLE(.color = COLOR_ORANGE)) {}
+    CLAY(CLAY_LAYOUT(sidebarItemLayout), CLAY_RECTANGLE({ .color = COLOR_ORANGE })) {}
 }
 
 // An example function to begin the "root" of your layout tree
@@ -92,14 +92,14 @@ Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
 
     // An example of laying out a UI with a fixed width sidebar and flexible width main content
-    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE(.color = {250,250,255,255})) {
+    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE({ .color = {250,250,255,255} })) {
         CLAY(CLAY_ID("SideBar"),
             CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16 }),
-            CLAY_RECTANGLE(.color = COLOR_LIGHT)
+            CLAY_RECTANGLE({ .color = COLOR_LIGHT })
         ) {
-            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE(.color = COLOR_RED)) {
-                CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE(.imageData = &profilePicture, .height = 60, .width = 60)) {}
-                CLAY_TEXT(CLAY_ID("ProfileTitle"), CLAY_STRING("Clay - UI Library"), CLAY_TEXT(.fontSize = 24, .textColor = {255, 255, 255, 255}));
+            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+                CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .height = 60, .width = 60 })) {}
+                CLAY_TEXT(CLAY_ID("ProfileTitle"), CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
             }
 
             // Standard C code like loops etc work inside components
@@ -108,7 +108,7 @@ Clay_RenderCommandArray CreateLayout() {
             }
         }
 
-        CLAY(CLAY_ID("MainContent"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }}), CLAY_RECTANGLE(.color = COLOR_LIGHT)) {}
+        CLAY(CLAY_ID("MainContent"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }}), CLAY_RECTANGLE({ .color = COLOR_LIGHT })) {}
     }
     // ...
 });
@@ -152,7 +152,7 @@ For help starting out or to discuss clay, considering joining [the discord serve
 ## High Level Documentation
 
 ### Building UI Hierarchies
-Clay UIs are built using the C macro `CLAY()`. This macro creates a new blank element in a UI hierarchy, and supports modular customisation of layout, styling and functionality. The `CLAY()` macro can also be _nested_, similar to other declarative UI systems like HTML.
+Clay UIs are built using the C macro `CLAY()`. This macro creates a new empty element in the UI hierarchy, and supports modular customisation of layout, styling and functionality. The `CLAY()` macro can also be _nested_, similar to other declarative UI systems like HTML.
 
 Child elements are added by opening a block: `{}` after calling the `CLAY()` macro (exactly like you would with an `if` statement or `for` loop), and declaring child components inside the braces.
 ```C
@@ -209,46 +209,43 @@ See the [Clay_LayoutConfig](#clay_layout) API for the full list of options.
 A `Clay_LayoutConfig` struct can be defined in file scope or elsewhere, and reused.
 ```C
 // Define a style in the global / file scope
-Clay_LayoutConfig reusableStyle = (Clay_LayoutConfig) {.backgroundColor = {120, 120, 120, 255}};
+Clay_LayoutConfig reusableStyle = (Clay_LayoutConfig) { .backgroundColor = {120, 120, 120, 255} };
 
 CLAY(CLAY_LAYOUT(reusableStyle)) {
     // ...
 }
 ```
 
-Some of the other element macros, such as [CLAY_TEXT()](#clay_text) and [CLAY_RECTANGLE()](#clay_rectangle) take an element-specific config object as their 3rd argument. These config objects also have convenience macros for constructing them, generally of the form [CLAY_TEXT_CONFIG()](#clay_text_config) or [CLAY_RECTANGLE_CONFIG()](#clay_rectangle_config):
+### Element IDs
 
-```C
-CLAY_TEXT(CLAY_STRING("button text"), (Clay_TextConfig) { .fontSize = 24, .fontId = FONT_ID_LATO, .textColor = {255, 255, 255, 255} });
-```
+Clay elements can optionally be tagged with a unique identifier using [CLAY_ID()](#clay_id).
 
-See the [Full API](#api) for details on the specific config macros. 
-
-### Element IDs TODO
-
-All element macros take a `Clay_ElementId` ID as their first argument. Clay provides the [CLAY_ID()](#clay_id) macro to generate these IDs as string hashes:
 ```C
 // Will always produce the same ID from the same input string
 CLAY(CLAY_ID("OuterContainer"), style) {}
-```  
+```
 
-To avoid having to construct dynamic strings at runtime to differentiate ids, clay provides the [CLAY_IDI(string, index)](#clay_idi) macro to generate different ids from a single input string. Think of IDI as "**ID** + **I**ndex"
+Element IDs have two main use cases. Firstly, tagging an element with an ID allows you to query information about the element later, such as its [mouseover state](#clay-pointerover) or dimensions.
+
+Secondly, IDs are visually useful when attempting to read and modify UI code, as well as when using the built-in [debug tools](#debug-tools).
+
+To avoid having to construct dynamic strings at runtime to differentiate ids in loops, clay provides the [CLAY_IDI(string, index)](#clay_idi) macro to generate different ids from a single input string. Think of IDI as "**ID** + **I**ndex"
 ```C
 // This is the equivalent of calling CLAY_ID("Item0"), CLAY_ID("Item1") etc
 for (int index = 0; index < items.length; index++) {
-    CLAY(CLAY_IDI("Item", index), style) {}
+    CLAY(CLAY_IDI("Item", index)) {}
 }
 ```
 
-**_Generally, you should try to keep IDs unique if possible._**
-
-This ID is used for querying mouse / pointer events, and will be forwarded to the final `Clay_RenderCommandArray` for use in retained mode UIs. Using duplicate IDs may cause some functionality to misbehave (i.e. if you're trying to attach a floating container to a specific element with ID that is duplicated, it may not attach to the one you expect)
+This ID (or, if not provided, an auto generated ID) will be forwarded to the final `Clay_RenderCommandArray` for use in retained mode UIs. Using duplicate IDs may cause some functionality to misbehave (i.e. if you're trying to attach a floating container to a specific element with ID that is duplicated, it may not attach to the one you expect)
 
 ### Mouse, Touch and Pointer Interactions
 
 Clay provides several functions for handling mouse and pointer interactions.
 
 All pointer interactions depend on the function `void Clay_SetPointerState(Clay_Vector2 position)` being called after each mouse position update and before any other clay functions.
+
+**During UI declaration**
 
 The function `bool Clay_Hovered()` can be called during element construction or in the body of an element, and returns `true` if the mouse / pointer is over the currently open element.
 
@@ -276,23 +273,25 @@ ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/cla
 
 // HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
 CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
-    CLAY_TEXT(CLAY_STRING("Button"), headerTextConfig);
+    CLAY_TEXT(CLAY_STRING("Button"), &headerTextConfig);
 }
 ```
 
-If you want to query mouse / pointer overlaps outside layout declarations, you can use the function `bool Clay_PointerOver(Clay_ElementId id)`. takes an element id that was used during layout creation and returns a bool representing whether the current pointer position is within its bounding box. 
+**Before / After UI declaration**
+
+If you want to query mouse / pointer overlaps outside layout declarations, you can use the function `bool Clay_PointerOver(Clay_ElementId id)`, which takes an [element id](#element-ids) and returns a bool representing whether the current pointer position is within its bounding box. 
 ```C
 // Reminder: Clay_SetPointerState must be called before functions that rely on pointer position otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
 Clay_SetPointerState(mousePosition);
 // ...
 // If profile picture was clicked
-if (mouseButtonDown(0) && Clay_PointerOver(CLAY_ID("ProfilePicture"))) {
+if (mouseButtonDown(0) && Clay_PointerOver(Clay_GetElementId("ProfilePicture"))) {
     // Handle profile picture clicked
 }
 ```
 
-Note that the bounding box queried by `Clay_PointerOver` is from the last frame. This shouldn't make a difference except in the case of animations that move at high speed.
+Note that the bounding box queried by `Clay_PointerOver` is from the last frame. This generally shouldn't make a difference except in the case of animations that move at high speed.
 If this is an issue for you, performing layout twice per frame with the same data will give you the correct interaction the second time.
 
 ### Scrolling Elements
@@ -325,7 +324,7 @@ A classic example use case for floating elements is tooltips and modals.
 ```C
 // The two text elements will be laid out top to bottom, and the floating container
 // will be attached to "Outer"
-CLAY(CLAY_ID("Outer"), CLAY_LAYOUT(.layoutDirection = TOP_TO_BOTTOM)) {
+CLAY(CLAY_ID("Outer"), CLAY_LAYOUT({ .layoutDirection = TOP_TO_BOTTOM })) {
     CLAY_TEXT(CLAY_ID("Button"), text, &headerTextConfig);
     CLAY(CLAY_ID("Tooltip"), CLAY_FLOATING()) {}
     CLAY_TEXT(CLAY_ID("Button"), text, &headerTextConfig);
@@ -336,7 +335,7 @@ More specific details can be found in the full [Floating API](#clay_floating).
 
 ### Laying Out Your Own Custom Elements
 
-Clay only supports a simple set of UI element primitives, such as rectangles, text and images. Clay provides a simple, singular API for layout out custom elements:
+Clay only supports a simple set of UI element primitives, such as rectangles, text and images. Clay provides a singular API for layout out custom elements:
 ```C
 // Extend CLAY_CUSTOM_ELEMENT_CONFIG with your custom data
 #define CLAY_EXTEND_CONFIG_CUSTOM struct t_CustomElementData customData;
@@ -358,7 +357,7 @@ CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL
 // ...
 CLAY() {
     // This config is type safe and contains the CustomElementData struct
-    CLAY(CLAY_CUSTOM_ELEMENT(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
+    CLAY(CLAY_CUSTOM_ELEMENT({ .customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel } })) {}
 }
 
 // Later during your rendering
@@ -411,7 +410,7 @@ The supported directives are:
 - `CLAY_WASM` - Required when targeting Web Assembly.
 - `CLAY_OVERFLOW_TRAP` - By default, clay will continue to allow function calls without crashing even when it exhausts all its available pre-allocated memory.  This can produce erroneous layout results that are difficult to interpret. If `CLAY_OVERFLOW_TRAP` is defined, clay will raise a `SIGTRAP` signal that will be caught by your debugger. Relies on `signal.h` being available in your environment.
 - `CLAY_DEBUG` - Used for debugging clay's internal implementation. Useful if you want to modify or debug clay, or learn how things work. It enables a number of debug features such as preserving source strings for hash IDs to make debugging easier.
-- `CLAY_EXTEND_CONFIG_RECTANGLE` - Provide additional struct members to `CLAY_RECTANGLE_CONFIG` that will be passed through with output render commands.
+- `CLAY_EXTEND_CONFIG_RECTANGLE` - Provide additional struct members to `CLAY_RECTANGLE` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_TEXT` - Provide additional struct members to `CLAY_TEXT_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_IMAGE` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_CUSTOM` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
@@ -455,7 +454,7 @@ _The official Clay website with debug tooling visible_
 `Clay_MinMemorySize` -> `Clay_CreateArenaWithCapacityAndMemory` -> `Clay_SetMeasureTextFunction` -> `Clay_Initialize`
 
 **Each Frame**
-`Clay_SetLayoutDimensions` -> `Clay_SetPointerState` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY_CONTAINER() etc...` -> `Clay_EndLayout`
+`Clay_SetLayoutDimensions` -> `Clay_SetPointerState` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY() etc...` -> `Clay_EndLayout`
 
 ### Clay_MinMemorySize
 
@@ -519,6 +518,36 @@ Prepares clay to calculate a new layout. Called each frame / layout **before** a
 
 Ends declaration of element macros and calculates the results of the currrent layout. Renders a [Clay_RenderCommandArray](#clay_rendercommandarrray) containing the results of the layout calculation.
 
+### Clay_Hovered
+
+`bool Clay_Hovered()`
+
+Called **during** layout declaration, and returns `true` if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the currently open element. Note: this is based on the element's position from the **last** frame.
+
+### Clay_OnHover
+
+`void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData), intptr_t userData)`
+
+Called **during** layout declaration, this function allows you to attach a function pointer to the currently open element that will be called once per layout if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the currently open element. See [Clay_PointerInfo](#clay-pointer-info) for more information on the `pointerInfo` argument.
+
+```C
+void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
+    ButtonData *buttonData = (ButtonData *)userData;
+    // Pointer state allows you to detect mouse down / hold / release
+    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+        // Do some click handling
+        NavigateTo(buttonData->link);
+    }
+}
+
+ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/clay" };
+
+// HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
+CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
+    CLAY_TEXT(CLAY_STRING("Button"), &headerTextConfig);
+}
+```
+
 ### Clay_PointerOver
 
 `bool Clay_PointerOver(Clay_ElementId id)`
@@ -531,307 +560,104 @@ Returns `true` if the pointer position previously set with `Clay_SetPointerState
 
 Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll container matching the provided ID. This function allows imperative manipulation of scroll position, allowing you to build things such as scroll bars, buttons that "jump" to somewhere in a scroll container, etc.
 
+### Clay_GetElementId
+
+`Clay_ElementId Clay_GetElementId(Clay_String idString)`
+
+Returns a [Clay_ElementId](#clay-elementid) for the provided id string, used for querying element info such as mouseover state, scroll container data, etc.
+
 ## Element Macros
 
-### CLAY_CONTAINER
+### CLAY()
 **Usage**
 
-`CLAY_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig);`
+`CLAY(...configuration) { ...children }`
 
 **Lifecycle**
 
-`Clay_BeginLayout()` -> `CLAY_CONTAINER()` -> `Clay_EndLayout()` 
+`Clay_BeginLayout()` -> `CLAY()` -> `Clay_EndLayout()` 
 
 **Notes**
 
-**CONTAINER** is a generic rectangular container that supports child elements. It uses a [Clay_LayoutConfig](#clay_layout) for styling and layout.
+**CLAY** opens a generic empty container, that is configurable and supports nested children.
 
 **Examples**
 ```C
-// Define a container with 16px of x and y padding
-CLAY_CONTAINER(CLAY_ID("SideBar"), CLAY_LAYOUT(.padding = {16, 16})) {
-    // A nested child container
-    CLAY_CONTAINER(CLAY_ID("SideBar"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16)) {
-        // Children laid out top to bottom
+// Define an element with 16px of x and y padding
+CLAY(CLAY_ID("Outer"), CLAY_LAYOUT({ .padding = {16, 16} })) {
+    // A nested child element
+    CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16 })) {
+        // Children laid out top to bottom with a 16 px gap between them
+    }
+    // A vertical scrolling container with a colored background
+    CLAY(
+        CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16 })
+        CLAY_RECTANGLE({ .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) })
+        CLAY_SCROLL({ .vertical = true })
+    ) {
+        // child elements
     }
 }
 ```
 
-**Rendering**
+### CLAY_ID
 
-`CLAY_CONTAINER` elements will not generate any render commands.
-
-### CLAY_TEXT
 **Usage**
 
-`CLAY_TEXT(Clay_ElementId id, Clay_String textContents, Clay_TextElementConfig *textConfig);`
+`CLAY(CLAY_ID(char* idString)) {}`
 
 **Lifecycle**
 
-`Clay_BeginLayout()` -> `CLAY_TEXT()` -> `Clay_EndLayout()` 
+`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_ID()` -> `)` -> `Clay_EndLayout()` 
 
 **Notes**
 
-**TEXT** is a measured, auto-wrapped text element. It uses [Clay_TextElementConfig](#clay_text_config) to configure text specific options.
+**CLAY_ID()** is used to generate and attach a [Clay_ElementId](#clay_elementid) to a layout element during declaration.
 
-Note that `Clay_TextElementConfig` uses `uint32_t fontId`. Font ID to font asset mapping is managed in user code and passed to render commands.
+To regenerate the same ID outside of layout declaration when using utility functions such as [Clay_PointerOver](#clay_pointerover), use the [Clay_GetElementId](#clay_getelementid) function.
 
 **Examples**
 
 ```C
-// Define a font somewhere in your code
-const uint32_t FONT_ID_LATO = 3;
-// ..
-CLAY_TEXT(CLAY_ID("Username"), CLAY_STRING("John Smith"), CLAY_TEXT_CONFIG(.fontId = FONT_ID_LATO, .fontSize = 24, .textColor = {255, 0, 0, 255}));
-// Rendering example
-Font fontToUse = LoadedFonts[renderCommand->elementConfig.textElementConfig->fontId];
-```
+// Tag a button with the Id "Button"
+CLAY(
+    CLAY_ID("Button"),
+    CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16) })
+) {
+    // ...children
+}
 
-**Rendering**
-
-Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_TEXT` may be created, one for each wrapped line of text.
-
-`Clay_RenderCommand.textContent` will be populated with a `Clay_String` _slice_ of the original string passed in (i.e. wrapping doesn't reallocate, it just returns a `Clay_String` pointing to the start of the new line with a `length`)
-
-### CLAY_IMAGE
-**Usage**
-
-`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ImageElementConfig *imageConfig);`
-
-**Lifecycle**
-
-`Clay_BeginLayout()` -> `CLAY_IMAGE()` -> `Clay_EndLayout()` 
-
-**Notes**
-
-**IMAGE_CONTAINER** is a used to layout images, and can optionally have children. It uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and [Clay_ImageElementConfig](#clay_image_config) to configure image specific options.
-
-**Examples**
-
-```C
-// Load an image somewhere in your code
-Image profilePicture = LoadImage("profilePicture.png");
-// ..
-CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .height = 60, .width = 60)) {}
-// Rendering example
-Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
-```
-
-**Rendering**
-
-Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->elementConfig.imageElementConfig->imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `renderCommand->color` with the image.
-
-### CLAY_SCROLL_CONTAINER
-**Usage**
-
-`CLAY_IMAGE(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_ScrollElementConfig *scrollConfig);`
-
-**Lifecycle**
-
-`Clay_SetPointerState()` -> `Clay_UpdateScrollContainers()` -> `Clay_BeginLayout()` -> `CLAY_SCROLL_CONTAINER()` -> `Clay_EndLayout()` 
-
-**Notes**
-
-**SCROLL_CONTAINER** creates a masked container that allows layout of children to extend beyond its boundaries. It uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and [Clay_ScrollElementConfig](#clay_scroll_config) to configure scroll specific options.
-
-Note: In order to process scrolling based on pointer position and mouse wheel or touch interactions, you must call `Clay_SetPointerState()` and `Clay_UpdateScrollContainers()` _before_ calling `BeginLayout`.
-
-**Examples**
-
-```C
-CLAY_SCROLL_CONTAINER(CLAY_ID("MainContent"), &CLAY_LAYOUT_DEFAULT, CLAY_SCROLL_CONFIG(.vertical = true)) {
-    // Create child content with a fixed height of 5000
-    CLAY_CONTAINER(CLAY_ID("ScrollInner"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(5000) })) {}
+// Later on outside of layout code
+bool buttonIsHovered = Clay_IsPointerOver(Clay_GetElementId("Button"));
+if (buttonIsHovered && leftMouseButtonPressed) {
+    // ... do some click handling
 }
 ```
 
-**Rendering**
+### CLAY_IDI()
 
-Scroll containers will result in two render commands: 
-- `commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START`, which should create a rectangle mask with its `boundingBox` and is **not** subject to [culling](#visibility-culling)
-- `commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END`, which disables the previous rectangle mask and is **not** subject to [culling](#visibility-culling)
+`Clay_ElementId CLAY_IDI(char *label, int index)`
 
-### CLAY_BORDER_CONTAINER
-**Usage**
-
-`CLAY_BORDER_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_BorderElementConfig *borderConfig);`
-
-**Lifecycle**
-
-`Clay_BeginLayout()` -> `CLAY_BORDER_CONTAINER()` -> `Clay_EndLayout()` 
-
-**Notes**
-
-**BORDER_CONTAINER** is functionally identical to **CONTAINER** but also allows configuration of a border around the element. It uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and [Clay_BorderElementConfig](#clay_border_config) to configure border specific options.
-
-**Examples**
-
-```C
-// 300x300 container with a 1px red border around all the edges
-CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300)}), CLAY_BORDER_CONFIG_OUTSIDE(.color = COLOR_RED, .width = 1)) {
-    // ...
-}
-
-// Container with a 3px yellow bottom border
-CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), &CLAY_LAYOUT_DEFAULT, CLAY_BORDER_CONFIG(.bottom = { .color = COLOR_YELLOW, .width = 3 })) {
-    // ...
-}
-
-// Container with a 5px curved border around the edges, and a 5px blue border between all children laid out top to bottom
-CLAY_BORDER_CONTAINER(CLAY_ID("OuterBorder"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM), CLAY_BORDER_CONFIG_ALL_RADIUS({ .color = COLOR_BLUE, .width = 5 })) {
-    // Child
-    // -- border will be here --
-    // Child
-}
-```
-
-**Rendering**
-
-Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_BORDER` representing the container will be created.
-Rendering of borders and rounded corners is left up to the user. See the provided [Raylib Renderer](https://github.com/nicbarker/clay/tree/main/renderers/raylib) for examples of how to draw borders using line and curve primitives.
-
-### CLAY_FLOATING_CONTAINER
-**Usage**
-
-`CLAY_FLOATING_CONTAINER(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig);`
-
-**Lifecycle**
-
-`Clay_BeginLayout()` -> `CLAY_FLOATING_CONTAINER()` -> `Clay_EndLayout()` 
-
-**Notes**
-
-**FLOATING_CONTAINER** defines an element that "floats" above other content. Typical use-cases include tooltips and modals.
-
-Floating containers:
-
-- With the [default configuration](#clay_floating_config), attach to the top left corner of their "parent" 
-- Don't affect the width and height of their parent
-- Don't affect the positioning of sibling elements
-- Depending on their z-index can appear above or below other elements, partially or completely occluding them
-- Apart from positioning, function just like standard `CLAY_CONTAINER` elements - including expanding to fit their children, etc.
-
-The easiest mental model to use when thinking about floating containers is that they are a completely separate UI hierarchy, attached to a specific x,y point on their "parent".
-
-Floating elements use [Clay_LayoutConfig](#clay_layout) for styling and layout, and [Clay_FloatingElementConfig](#clay_floating_config) to configure specific options.
-
-**Examples**
-
-```C
-// Horizontal container with three option buttons
-CLAY_CONTAINER(CLAY_ID("OptionsList"), CLAY_LAYOUT(.childGap = 16)) {
-    CLAY_RECTANGLE(CLAY_IDI("Option", 1), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE)) {
-        CLAY_TEXT(CLAY_IDI("OptionText", 1), CLAY_STRING("Option 1"), CLAY_TEXT_CONFIG());
-    }
-    CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE)) {
-        CLAY_TEXT(CLAY_IDI("OptionText", 2), CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
-        // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-        CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP })) {
-            CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
-        }
-    }
-    CLAY_RECTANGLE(CLAY_IDI("Option", 3), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE_CONFIG(.color = COLOR_BLUE)) {
-        CLAY_TEXT(CLAY_IDI("OptionText", 3), CLAY_STRING("Option 3"), CLAY_TEXT_CONFIG());
-    }
-}
-
-// Floating containers can also be declared elsewhere in a layout, to avoid branching or polluting other UI
-for (int i = 0; i < 1000; i++) {
-    CLAY_CONTAINER(CLAY_IDI("Option", i + 1), &CLAY_LAYOUT_DEFAULT) {
-        // ...
-    }
-}
-// Note the use of "parentId".
-// Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER })) {
-    CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
-}
-```
-
-When using `.parentId`, the floating container can be declared anywhere after `BeginLayout` and before `EndLayout`. The target element matching the `.parentId` doesn't need to exist when `CLAY_FLOATING_CONTAINER` is called.
-
-**Rendering**
-
-`CLAY_FLOATING_CONTAINER` elements will not generate any render commands.
-
-### CLAY_CUSTOM_ELEMENT
-**Usage**
-
-`CLAY_CUSTOM_ELEMENT(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig);`
-
-**Lifecycle**
-
-`Clay_BeginLayout()` -> `CLAY_CUSTOM_ELEMENT()` -> `Clay_EndLayout()` 
-
-**Notes**
-
-**CUSTOM_ELEMENT** uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and allows the user to pass custom data to the renderer. 
-
-**Examples**
-```C
-// Extend CLAY_CUSTOM_ELEMENT_CONFIG with your custom data
-#define CLAY_EXTEND_CONFIG_CUSTOM struct t_CustomElementData customData;
-// Extensions need to happen _before_ the clay include
-#include "clay.h"
-
-// A rough example of how you could handle laying out 3d models in your UI
-typedef struct t_CustomElementData {
-    CustomElementType type;
-    union {
-        Model model;
-        Video video;
-        // ...
-    };
-} CustomElementData;
-
-Model myModel = Load3DModel(filePath);
-CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
-// ...
-CLAY_CONTAINER(id, style) {
-    // This config is type safe and contains the CustomElementData struct
-    CLAY_CUSTOM_ELEMENT(id, style, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
-}
-
-// Later during your rendering
-switch (renderCommand->commandType) {
-    // ...
-    case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
-        // Your extended struct is passed through
-        CustomElementData *data = renderCommand->elementConfig.customElementConfig->customData;
-        if (!customElement) continue;
-        switch (customElement->type) {
-            case CUSTOM_ELEMENT_TYPE_MODEL: {
-                // Render your 3d model here
-                break;
-            }
-            case CUSTOM_ELEMENT_TYPE_VIDEO: {
-                // Render your video here
-                break;
-            }
-            // ...
-        }
-        break;
-    }
-}
-```
-
-**Rendering**
-
-Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM` will be created.
-The user will need to access [Clay_CustomElementConfig](#clay_custom_element_config) to retrieve custom data referenced during layout creation.
-
-## Config Macros
-
-A number of clay element macros take element-specific **config** structs.
+An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
 
 ### CLAY_LAYOUT
 
-**CLAY_LAYOUT()** is used for configuring layout for most clay elements.
+**Usage**
+
+`CLAY(CLAY_LAYOUT(...layout config)) {}`
+
+**Lifecycle**
+
+`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_LAYOUT()` -> `)` -> `Clay_EndLayout()` 
+
+**Notes**
+
+**CLAY_LAYOUT()** is used for configuring _layout_ options (i.e. options that affect the final position and size of an element, its parents, siblings, and children)
 
 **Struct API (Pseudocode)**
 
 ```C
-// CLAY_LAYOUT(.member = value) supports these options
+// CLAY_LAYOUT({ .member = value }) supports these options
 Clay_LayoutConfig {
     Clay_LayoutDirection layoutDirection = CLAY_LEFT_TO_RIGHT (default) | CLAY_TOP_TO_BOTTOM;
     Clay_Padding padding {
@@ -854,7 +680,7 @@ As with all config macros, `CLAY_LAYOUT()` accepts designated initializer syntax
 
 **`.layoutDirection`** - `Clay_LayoutDirection`
 
-`CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM)`
+`CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })`
 
 Controls the axis / direction in which child elements are laid out. Available options are `CLAY_LEFT_TO_RIGHT` (default) and `CLAY_TOP_TO_BOTTOM`.
 
@@ -866,7 +692,7 @@ _Did you know that "left to right" and "top to bottom" both have 13 letters?_
 
 **`.padding`** - `Clay_Padding`
 
-`CLAY_LAYOUT(.padding = { .x = 16, .y = 16 })`
+`CLAY_LAYOUT({ .padding = { .x = 16, .y = 16 } })`
 
 Controls horizontal and vertical white-space "padding" around the **outside** of child elements.
 
@@ -876,7 +702,7 @@ Controls horizontal and vertical white-space "padding" around the **outside** of
 
 **`.childGap`** - `uint16_t`
 
-`CLAY_LAYOUT(.childGap = 16)`
+`CLAY_LAYOUT({ .childGap = 16 })`
 
 Controls the white-space **between** child elements as they are laid out. When `.layoutDirection` is `CLAY_LEFT_TO_RIGHT` (default), this will be horizontal space, whereas for `CLAY_TOP_TO_BOTTOM` it will be vertical space.
 
@@ -886,7 +712,7 @@ Controls the white-space **between** child elements as they are laid out. When `
 
 **`.childAlignment`** - `Clay_ChildAlignment`
 
-`CLAY_LAYOUT(.childAlignment = { .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_CENTER })`
+`CLAY_LAYOUT({ .childAlignment = { .x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_CENTER } })`
 
 Controls the alignment of children relative to the height and width of the parent container. Available options are:
 ```C
@@ -900,7 +726,7 @@ Controls the alignment of children relative to the height and width of the paren
 
 **`.sizing`** - `Clay_Sizing`
 
-`CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_PERCENT(0.5) })`
+`CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_PERCENT(0.5) } })`
 
 Controls how final width and height of element are calculated. The same configurations are available for both the `.width` and `.height` axis. There are several options:
 
@@ -920,20 +746,29 @@ Controls how final width and height of element are calculated. The same configur
 **Example Usage**
 
 ```C
-CLAY_CONTAINER(CLAY_ID("Button"), CLAY_LAYOUT(.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16)) {
+CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16) }) {
     // Children will be laid out vertically with 16px of padding around and between
 }
 ``` 
 
-### CLAY_RECTANGLE_CONFIG
+### CLAY_RECTANGLE
+**Usage**
 
-**CLAY_RECTANGLE_CONFIG()** is used for configuring rendering for [CLAY_RECTANGLE()](#clay_rectangle) elements. The config will be passed through to render commands as `Clay_RenderCommand.config.rectangleElementConfig`
+`CLAY(CLAY_RECTANGLE(...rectangle config)) {}`
+
+**Lifecycle**
+
+`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_RECTANGLE()` -> `)` -> `Clay_EndLayout()` 
+
+**Notes**
+
+**RECTANGLE** configures a clay element to background-fill its bounding box with a color. It uses [Clay_RectangleElementConfig](#clay_rectangleelementconfig) for rectangle specific options.
 
 **Struct API (Pseudocode)**
 
 ```C
-// CLAY_RECTANGLE_CONFIG(.member = value) supports these options
-Clay_RectangleConfig {
+// CLAY_RECTANGLE({ .member = value }) supports these options
+Clay_RectangleElementConfig {
     Clay_Color color {
         float r; float g; float b; float a;
     };
@@ -945,7 +780,7 @@ Clay_RectangleConfig {
 }
 ```
 
-As with all config macros, `CLAY_RECTANGLE_CONFIG()` accepts designated initializer syntax and provides default values for any unspecified struct members.
+As with all config macros, `CLAY_RECTANGLE()` accepts designated initializer syntax and provides default values for any unspecified struct members.
 
 **Extension**
 
@@ -959,7 +794,7 @@ The underlying `Clay_RectangleElementConfig` can be extended with new members by
 
 **`.color`** - `Clay_Color`
 
-`CLAY_RECTANGLE_CONFIG(.color = {120, 120, 120, 255})`
+`CLAY_RECTANGLE({ .color = {120, 120, 120, 255} })`
 
 Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
 
@@ -967,20 +802,55 @@ Conventionally accepts `rgba` float values between 0 and 255, but interpretation
 
 **`.cornerRadius`** - `float`
 
-`CLAY_RECTANGLE_CONFIG(.cornerRadius = 16)`
+`CLAY_RECTANGLE({ .cornerRadius = { .topLeft = 16, .topRight = 16, .bottomLeft = 16, .bottomRight = 16 })`
 
 Defines the radius in pixels for the arc of rectangle corners (`0` is square, `rectangle.width / 2` is circular).
 
-Note that the `CLAY_CORNER_RADIUS(radius)` function-like macro is available to provide short hand for setting all four corner radii to the same value. e.g. `CLAY_BORDER_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(10))`
+Note that the `CLAY_CORNER_RADIUS(radius)` function-like macro is available to provide short hand for setting all four corner radii to the same value. e.g. `CLAY_BORDER({ .cornerRadius = CLAY_CORNER_RADIUS(10) })`
 
-### CLAY_TEXT_CONFIG
+**Rendering**
 
-**CLAY_TEXT_CONFIG()** is a macro used to create and store `Clay_TextElementConfig` structs, which are for configuring [CLAY_TEXT](#clay_text) elements. The config used in declaration will be passed both as an argument to the user-provided `Clay_MeasureText(Clay_String *text, Clay_TextElementConfig *config)` function as well as the in the final output as `Clay_RenderCommand.config.textElementConfig`.
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE` will be created, with `renderCommand->elementConfig.rectangleElementConfig` containing a pointer to the element's Clay_RectangleElementConfig.
+
+**Examples**
+
+```C
+// Declare a reusable rectangle config, with a purple color and 10px rounded corners
+Clay_RectangleElementConfig rectangleConfig = (Clay_RectangleElementConfig) { .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) };
+// Declare a rectangle element using a reusable config
+CLAY(CLAY_RECTANGLE(rectangleConfig)) {}
+// Declare a retangle element using an inline config
+CLAY(CLAY_RECTANGLE({ .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) })) {
+    // child elements
+}
+// Declare a scrolling container with a colored background
+CLAY(
+    CLAY_RECTANGLE({ .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) })
+    CLAY_SCROLL({ .vertical = true })
+) {
+    // child elements
+}
+```
+
+### CLAY_TEXT
+**Usage**
+
+`CLAY_TEXT(Clay_String textContents, Clay_TextElementConfig *textConfig);`
+
+**Lifecycle**
+
+`Clay_BeginLayout()` -> `CLAY_TEXT()` -> `Clay_EndLayout()` 
+
+**Notes**
+
+**TEXT** is a measured, auto-wrapped text element. It uses `Clay_TextElementConfig` to configure text specific options.
+
+Note that `Clay_TextElementConfig` uses `uint32_t fontId`. Font ID to font asset mapping is managed in user code and passed to render commands.
 
 **Struct API (Pseudocode)**
 
 ```C
-// CLAY_TEXT_CONFIG(.member = value) supports these options
+// CLAY_TEXT(text, CLAY_TEXT_CONFIG({ .member = value })) supports these options
 Clay_TextElementConfig {
     Clay_Color textColor {
         float r; float g; float b; float a;
@@ -990,7 +860,7 @@ Clay_TextElementConfig {
     uint16_t letterSpacing;
     uint16_t lineHeight;
     Clay_TextElementConfigWrapMode wrapMode {
-    	CLAY_TEXT_WRAP_WORDS (default),
+        CLAY_TEXT_WRAP_WORDS (default),
 	CLAY_TEXT_WRAP_NEWLINES,
 	CLAY_TEXT_WRAP_NONE,
     };
@@ -1064,17 +934,37 @@ Available options are:
 - `CLAY_TEXT_WRAP_NEWLINES` -  will only wrap when encountering newline characters.
 - `CLAY_TEXT_WRAP_NONE` - Text will never wrap even if its container is compressed beyond the text measured width.
 
----****
+---
 
-**Example Usage**
+**Examples**
+
 ```C
-// A 24px, red text element that says "John Smith"
-CLAY_TEXT(CLAY_ID("Username"), CLAY_STRING("John Smith"), CLAY_TEXT_CONFIG(.fontSize = 24, .fontId = 2, .textColor = {255, 0, 0, 255}));
+// Define a font somewhere in your code
+const uint32_t FONT_ID_LATO = 3;
+// ..
+CLAY_TEXT(CLAY_STRING("John Smith"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_LATO, .fontSize = 24, .textColor = {255, 0, 0, 255} }));
+// Rendering example
+Font fontToUse = LoadedFonts[renderCommand->elementConfig.textElementConfig->fontId];
 ```
 
-### CLAY_IMAGE_CONFIG
+**Rendering**
 
-**CLAY_IMAGE_CONFIG()** is a macro used to create and store `Clay_ImageElementConfig` structs, which are for configuring [CLAY_IMAGE](#clay_image) elements. The config will be passed through to render commands as `Clay_RenderCommand.config.imageElementConfig`
+Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_TEXT` may be created, one for each wrapped line of text.
+
+`Clay_RenderCommand.textContent` will be populated with a `Clay_String` _slice_ of the original string passed in (i.e. wrapping doesn't reallocate, it just returns a `Clay_String` pointing to the start of the new line with a `length`)
+
+### CLAY_IMAGE
+**Usage**
+
+`CLAY(CLAY_IMAGE(...image config)) {}`
+
+**Lifecycle**
+
+`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_IMAGE()` -> `)` -> `Clay_EndLayout()` 
+
+**Notes**
+
+**IMAGE** configures a clay element to render an image as its background. It uses Clay_ImageElementConfig for image specific options.
 
 **Struct API (Pseudocode)**
 
@@ -1122,7 +1012,7 @@ Used to perform **aspect ratio scaling** on the image element. As of this versio
 // Load an image somewhere in your code
 Image profilePicture = LoadImage("profilePicture.png");
 // Note that when rendering, .imageData will be void* type.
-CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.imageData = &profilePicture, .sourceDimensions = { 60, 60 })) {}
+CLAY(CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = { 60, 60 } })) {}
 
 // OR ----------------
 
@@ -1137,19 +1027,234 @@ typedef struct t_Image {
     // ... etc
 } Image;
 
-// You can now use CLAY_IMAGE_CONFIG with your custom type and still have type safety & code completion
-CLAY_IMAGE(CLAY_ID("ProfilePicture"), &CLAY_LAYOUT_DEFAULT, CLAY_IMAGE_CONFIG(.image = { .format = IMAGE_FORMAT_RGBA, .internalData = &imageData }, .sourceDimensions = { 60, 60 })) {}
+// You can now use CLAY_IMAGE with your custom type and still have type safety & code completion
+CLAY(CLAY_IMAGE({ .image = { .format = IMAGE_FORMAT_RGBA, .internalData = &imageData }, .sourceDimensions = { 60, 60 } })) {}
 ```
 
-### CLAY_FLOATING_CONFIG
+**Examples**
 
-**CLAY_FLOATING_CONFIG()** is a macro used to create and store `Clay_FloatingElementConfig` structs, which are for configuring [CLAY_FLOATING_CONTAINER](#clay_floating_container) elements.
+```C
+// Load an image somewhere in your code
+Image profilePicture = LoadImage("profilePicture.png");
+// Declare a reusable image config
+Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture, .height = 60, .width = 60 };
+// Declare an image element using a reusable config
+CLAY(CLAY_IMAGE(imageConfig)) {}
+// Declare an image element using an inline config
+CLAY(CLAY_IMAGE({ .imageData = &profilePicture, .height = 60, .width = 60 })) {}
+// Rendering example
+Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
+```
+
+**Rendering**
+
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->elementConfig.imageElementConfig->imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `rectangleElementConfig->color` with the image.
+
+### CLAY_SCROLL
+**Usage**
+
+`CLAY(CLAY_SCROLL(...scroll config)) {}`
+
+**Lifecycle**
+
+`Clay_SetPointerState()` -> `Clay_UpdateScrollContainers()` -> `Clay_BeginLayout()` -> `CLAY(` -> `CLAY_SCROLL()` -> `)` -> `Clay_EndLayout()` 
+
+**Notes**
+
+**SCROLL** configures the element as a scrolling container, enabling masking of children that extend beyond its boundaries. It uses [Clay_ScrollElementConfig](#clay_scrollelementconfig) to configure scroll specific options.
+
+Note: In order to process scrolling based on pointer position and mouse wheel or touch interactions, you must call `Clay_SetPointerState()` and `Clay_UpdateScrollContainers()` _before_ calling `BeginLayout`.
+
+**Struct Definition (Pseudocode)**
+
+```C
+Clay_ScrollElementConfig {
+    bool horizontal;
+    bool vertical;
+};
+```
+
+As with all config macros, `CLAY_SCROLL()` accepts designated initializer syntax and provides default values for any unspecified struct members. 
+
+**Fields**
+
+**`.horizontal`** - `bool`
+
+`CLAY_SCROLL(.horizontal = true)`
+
+Enables or disables horizontal scrolling for this container element.
+
+---
+
+**`.vertical`** - `bool`
+
+`CLAY_SCROLL(.vertical = true)`
+
+Enables or disables vertical scrolling for this container element.
+
+---
+
+**Rendering**
+
+Enabling scroll for an element will result in two additional render commands: 
+- `commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START`, which should create a rectangle mask with its `boundingBox` and is **not** subject to [culling](#visibility-culling)
+- `commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END`, which disables the previous rectangle mask and is **not** subject to [culling](#visibility-culling)
+
+**Examples**
+
+```C
+CLAY(CLAY_SCROLL(.vertical = true)) {
+    // Create child content with a fixed height of 5000
+    CLAY(CLAY_ID("ScrollInner"), CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(5000) } })) {}
+}
+```
+
+### CLAY_BORDER
+**Usage**
+
+`CLAY(CLAY_BORDER(...border config)) {}`
+
+**Lifecycle**
+
+`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_BORDER()` -> `)` -> `Clay_EndLayout()` 
+
+**Notes**
+
+**BORDER** adds borders to the edges or between the children of elements. It uses Clay_BorderElementConfig to configure border specific options.
+
+**Struct Definition (Pseudocode)**
+
+```C
+typedef struct Clay_BorderElementConfig
+{
+    Clay_Border left {
+        float width;
+        Clay_Color color {
+            float r; float g; float b; float a;
+        };
+    };
+    Clay_Border right // Exactly the same as left
+    Clay_Border top // Exactly the same as left
+    Clay_Border bottom // Exactly the same as left
+    Clay_Border betweenChildren // Exactly the same as left
+    Clay_CornerRadius cornerRadius {
+        float topLeft;
+        float topRight;
+        float bottomLeft;
+        float bottomRight;
+    };
+} Clay_BorderElementConfig;
+```
+
+**Usage**
+
+As with all config macros, `CLAY_BORDER()` accepts designated initializer syntax and provides default values for any unspecified struct members. 
+
+**Fields**
+
+**`.left, .right, .top, .bottom`** - `Clay_Border`
+
+`CLAY_BORDER({ .left = { 2, COLOR_RED }, .right = { 4, COLOR_YELLOW } /* etc */ })`
+
+Indicates to the renderer that a border of `.color` should be draw at the specified edges of the bounding box, **overlapping the box contents by `.width`**.
+
+This means that border configuration does not affect layout, as the width of the border doesn't contribute to the total container width or layout position. Border containers with zero padding will be drawn over the top of child elements.
+
+---
+
+**`.betweenChildren`** - `Clay_Border`
+
+`CLAY_BORDER({ .betweenChildren = { 2, COLOR_RED } })`
+
+Configures the width and color of borders to be drawn between children. These borders will be vertical lines if the parent uses `.layoutDirection = CLAY_LEFT_TO_RIGHT` and horizontal lines if the parent uses `CLAY_TOP_TO_BOTTOM`. Unlike `.left, .top` etc, this option **will generate additional rectangle render commands representing the borders between children.** As a result, the renderer does not need to specifically implement rendering for these border elements.
+
+---
+
+**`.cornerRadius`** - `float`
+
+`CLAY_BORDER({ .cornerRadius = 16 })`
+
+Defines the radius in pixels for the arc of border corners (`0` is square, `rectangle.width / 2` is circular). It is up to the renderer to decide how to interpolate between differing border widths and colors across shared corners.
+
+Note that the `CLAY_CORNER_RADIUS(radius)` function-like macro is available to provide short hand for setting all four corner radii to the same value. e.g. `CLAY_BORDER(.cornerRadius = CLAY_CORNER_RADIUS(10))`
+
+**Convenience Macros**
+
+There are some common cases for border configuration that are repetitive, i.e. specifying the same border around all four edges. Some convenience macros are provided for these cases:
+
+- `CLAY_BORDER_CONFIG_OUTSIDE({ .width = 2, .color = COLOR_RED })` - Shorthand for configuring all 4 outside borders at once.`
+- `CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(width, color, radius)` - Shorthand for configuring all 4 outside borders at once, with the provided `.cornerRadius`. Note this is a function-like macro and does not take `.member = value` syntax.
+- `CLAY_BORDER_CONFIG_ALL({ .width = 2, .color = COLOR_RED })` - Shorthand for configuring all 4 outside borders and `.betweenChildren` at once. 
+- `CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)` - Shorthand for configuring all 4 outside borders and `.betweenChildren` at once, with the provided `cornerRadius`. Note this is a function-like macro and does not take `.member = value` syntax.
+
+**Examples**
+
+```C
+// 300x300 container with a 1px red border around all the edges
+CLAY(
+    CLAY_ID("OuterBorder"),
+    CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300)}),
+    CLAY_BORDER_CONFIG_OUTSIDE({ .color = COLOR_RED, .width = 1 })
+) {
+    // ...
+}
+
+// Container with a 3px yellow bottom border
+CLAY(
+    CLAY_ID("OuterBorder"),
+    CLAY_BORDER({ .bottom = { .color = COLOR_YELLOW, .width = 3 } })
+) {
+    // ...
+}
+
+// Container with a 5px curved border around the edges, and a 5px blue border between all children laid out top to bottom
+CLAY(
+    CLAY_ID("OuterBorder"),
+    CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM }),
+    CLAY_BORDER_CONFIG_ALL_RADIUS(5, COLOR_BLUE, 5)
+) {
+    // Child
+    // -- 5px blue border will be here --
+    // Child
+    // -- 5px blue border will be here --
+    // Child
+}
+```
+
+**Rendering**
+
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_BORDER` representing the container will be created.
+Rendering of borders and rounded corners is left up to the user. See the provided [Raylib Renderer](https://github.com/nicbarker/clay/tree/main/renderers/raylib) for examples of how to draw borders using line and curve primitives.
+
+### CLAY_FLOATING
+**Usage**
+
+`CLAY_FLOATING(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig);`
+
+**Lifecycle**
+
+`Clay_BeginLayout()` -> `CLAY_FLOATING()` -> `Clay_EndLayout()` 
+
+**Notes**
+
+**FLOATING** defines an element that "floats" above other content. Typical use-cases include tooltips and modals.
+
+Floating containers:
+
+- With the [default configuration](#clay_floating_config), attach to the top left corner of their "parent" 
+- Don't affect the width and height of their parent
+- Don't affect the positioning of sibling elements
+- Depending on their z-index can appear above or below other elements, partially or completely occluding them
+- Apart from positioning, function just like standard `CLAY` elements - including expanding to fit their children, etc.
+
+The easiest mental model to use when thinking about floating containers is that they are a completely separate UI hierarchy, attached to a specific x,y point on their "parent".
+
+Floating elements uses `Clay_FloatingElementConfig` to configure specific options.
 
 **Struct Definition (Pseudocode)** 
 
 ```C
-typedef struct
-{
+Clay_FloatingElementConfig {
     Clay_Vector2 offset {
         float x, float y
     };
@@ -1162,16 +1267,16 @@ typedef struct
         .element = CLAY_ATTACH_POINT_LEFT_TOP (default) | CLAY_ATTACH_POINT_LEFT_CENTER | CLAY_ATTACH_POINT_LEFT_BOTTOM | CLAY_ATTACH_POINT_CENTER_TOP | CLAY_ATTACH_POINT_CENTER_CENTER | CLAY_ATTACH_POINT_CENTER_BOTTOM | CLAY_ATTACH_POINT_RIGHT_TOP | CLAY_ATTACH_POINT_RIGHT_CENTER | CLAY_ATTACH_POINT_RIGHT_BOTTOM
         .parent = CLAY_ATTACH_POINT_LEFT_TOP (default) | CLAY_ATTACH_POINT_LEFT_CENTER | CLAY_ATTACH_POINT_LEFT_BOTTOM | CLAY_ATTACH_POINT_CENTER_TOP | CLAY_ATTACH_POINT_CENTER_CENTER | CLAY_ATTACH_POINT_CENTER_BOTTOM | CLAY_ATTACH_POINT_RIGHT_TOP | CLAY_ATTACH_POINT_RIGHT_CENTER | CLAY_ATTACH_POINT_RIGHT_BOTTOM
     };
-} Clay_FloatingElementConfig;
+};
 ```
 
-As with all config macros, `CLAY_FLOATING_CONFIG()` accepts designated initializer syntax and provides default values for any unspecified struct members. 
+As with all config macros, `CLAY_FLOATING()` accepts designated initializer syntax and provides default values for any unspecified struct members. 
 
 **Fields**
 
 **`.offset`** - `Clay_Vector2`
 
-`CLAY_FLOATING_CONFIG(.offset = { -24, -24 })`
+`CLAY_FLOATING({ .offset = { -24, -24 } })`
 
 Used to apply a position offset to the floating container _after_ all other layout has been calculated. 
 
@@ -1179,7 +1284,7 @@ Used to apply a position offset to the floating container _after_ all other layo
 
 **`.expand`** - `Clay_Dimensions`
 
-`CLAY_FLOATING_CONFIG(.expand = { 16, 16 })`
+`CLAY_FLOATING({ .expand = { 16, 16 } })`
 
 Used to expand the width and height of the floating container _before_ laying out child elements.
 
@@ -1187,7 +1292,7 @@ Used to expand the width and height of the floating container _before_ laying ou
 
 **`.zIndex`** - `float`
 
-`CLAY_FLOATING_CONFIG(.zIndex = 1)`
+`CLAY_FLOATING({ .zIndex = 1 })`
 
 All floating elements (as well as their entire child hierarchies) will be sorted by `.zIndex` order before being converted to render commands. If render commands are drawn in order, elements with higher `.zIndex` values will be drawn on top.
 
@@ -1195,41 +1300,41 @@ All floating elements (as well as their entire child hierarchies) will be sorted
 
 **`.parentId`** - `uint32_t`
 
-`CLAY_FLOATING_CONFIG(.parentId = CLAY_ID("HeaderButton").id)`
+`CLAY_FLOATING({ .parentId = Clay_GetElementId("HeaderButton").id })`
 
 By default, floating containers will "attach" to the parent element that they are declared inside. However, there are cases where this limitation could cause significant performance or ergonomics problems. `.parentId` allows you to specify a `CLAY_ID().id` to attach the floating container to. The parent element with the matching id can be declared anywhere in the hierarchy, it doesn't need to be declared before or after the floating container in particular.  
 
 Consider the following case:
 ```C
 // Load an image somewhere in your code
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 1) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */)
+        CLAY_FLOATING(/* floating config... */)
     }
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 2) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */)
+        CLAY_FLOATING(/* floating config... */)
     }
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 3) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */)
+        CLAY_FLOATING(/* floating config... */)
     }
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 4) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */)
+        CLAY_FLOATING(/* floating config... */)
     }
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
     if (tooltip.attachedButtonIndex == 5) {
-        CLAY_FLOATING_CONTAINER(/* floating config... */)
+        CLAY_FLOATING(/* floating config... */)
     }
 }
 ```
@@ -1238,24 +1343,24 @@ The definition of the above UI is significantly polluted by the need to conditio
 
 ```C
 // Load an image somewhere in your code
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 1), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 2), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 3), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 4), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
 }
-CLAY_CONTAINER(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT) {
+CLAY(CLAY_IDI("SidebarButton", 5), &CLAY_LAYOUT_DEFAULT) {
     // .. some button contents
 }
 
 // Any other point in the hierarchy
-CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING_CONFIG(.parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex).id)) {
+CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING(.parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex).id)) {
     // Tooltip contents...
 }
 ```
@@ -1264,7 +1369,7 @@ CLAY_FLOATING_CONTAINER(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLO
 
 **`.attachment`** - `Clay_FloatingAttachPoints`
 
-`CLAY_FLOATING_CONFIG(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP });`
+`CLAY_FLOATING(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP });`
 
 In terms of positioning the floating container, `.attachment` specifies 
 
@@ -1279,145 +1384,61 @@ For example:
 
 "Attach the LEFT_CENTER of the floating container to the RIGHT_TOP of the parent"
 
-`CLAY_FLOATING_CONFIG(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP });`
+`CLAY_FLOATING(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP });`
 
 ![Screenshot 2024-08-23 at 11 53 24 AM](https://github.com/user-attachments/assets/ebe75e0d-1904-46b0-982d-418f929d1516)
-
-
-### CLAY_SCROLL_CONFIG
-
-**CLAY_SCROLL_CONFIG()** is a macro used to create and store `Clay_ScrollElementConfig` structs, which are for configuring [CLAY_SCROLL_CONTAINER](#clay_scroll_container) elements.
-
-**Struct Definition (Pseudocode)**
-
-```C
-typedef struct
-{
-    bool horizontal;
-    bool vertical;
-} Clay_ScrollElementConfig;
-```
-
-As with all config macros, `CLAY_SCROLL_CONFIG()` accepts designated initializer syntax and provides default values for any unspecified struct members. 
-
-**Fields**
-
-**`.horizontal`** - `bool`
-
-`CLAY_SCROLL_CONFIG(.horizontal = true)`
-
-Enables or disables horizontal scrolling for this container element.
-
----
-
-**`.vertical`** - `bool`
-
-`CLAY_SCROLL_CONFIG(.vertical = true)`
-
-Enables or disables vertical scrolling for this container element.
 
 **Examples**
 
 ```C
-CLAY_SCROLL_CONTAINER(CLAY_ID("MainContent"), &CLAY_LAYOUT_DEFAULT, CLAY_SCROLL_CONFIG(.vertical = true)) {
-    // Create child content with a fixed height of 5000
-    CLAY_CONTAINER(CLAY_ID("ScrollInner"), CLAY_LAYOUT(.sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(5000) })) {}
+// Horizontal container with three option buttons
+CLAY(CLAY_ID("OptionsList"), CLAY_LAYOUT(.childGap = 16)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 1), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+        CLAY_TEXT(CLAY_IDI("OptionText", 1), CLAY_STRING("Option 1"), CLAY_TEXT_CONFIG());
+    }
+    CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+        CLAY_TEXT(CLAY_IDI("OptionText", 2), CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
+        // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
+        CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING(.zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP })) {
+            CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
+        }
+    }
+    CLAY_RECTANGLE(CLAY_IDI("Option", 3), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+        CLAY_TEXT(CLAY_IDI("OptionText", 3), CLAY_STRING("Option 3"), CLAY_TEXT_CONFIG());
+    }
+}
+
+// Floating containers can also be declared elsewhere in a layout, to avoid branching or polluting other UI
+for (int i = 0; i < 1000; i++) {
+    CLAY(CLAY_IDI("Option", i + 1), &CLAY_LAYOUT_DEFAULT) {
+        // ...
+    }
+}
+// Note the use of "parentId".
+// Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
+CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING(.parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER })) {
+    CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
 }
 ```
 
-### CLAY_BORDER_CONFIG
+When using `.parentId`, the floating container can be declared anywhere after `BeginLayout` and before `EndLayout`. The target element matching the `.parentId` doesn't need to exist when `CLAY_FLOATING` is called.
 
-**CLAY_BORDER_CONFIG()** is a macro used to create and store `Clay_BorderElementConfig` structs, which are for configuring [CLAY_BORDER_CONTAINER](#clay_border_container) elements.
+**Rendering**
 
-**Struct Definition (Pseudocode)**
+`CLAY_FLOATING` elements will not generate any render commands.
 
-```C
-typedef struct
-{
-    Clay_Border left {
-        float width;
-        Clay_Color color {
-            float r; float g; float b; float a;
-        };
-    };
-    Clay_Border right {
-        float width;
-        Clay_Color color {
-            float r; float g; float b; float a;
-        };
-    }
-    Clay_Border top {
-        float width;
-        Clay_Color color {
-            float r; float g; float b; float a;
-        };
-    };
-    Clay_Border bottom {
-        float width;
-        Clay_Color color {
-            float r; float g; float b; float a;
-        };
-    };
-    Clay_Border betweenChildren {
-        float width;
-        Clay_Color color {
-            float r; float g; float b; float a;
-        };
-    };
-    Clay_CornerRadius cornerRadius {
-        float topLeft;
-        float topRight;
-        float bottomLeft;
-        float bottomRight;
-    };
-} Clay_BorderElementConfig;
-```
-
+### CLAY_CUSTOM_ELEMENT
 **Usage**
 
-As with all config macros, `CLAY_BORDER_CONFIG()` accepts designated initializer syntax and provides default values for any unspecified struct members. 
+`CLAY_CUSTOM_ELEMENT(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_CustomElementConfig *customConfig);`
 
+**Lifecycle**
 
-**Fields**
+`Clay_BeginLayout()` -> `CLAY_CUSTOM_ELEMENT()` -> `Clay_EndLayout()` 
 
-**`.left, .right, .top, .bottom`** - `Clay_Border`
+**Notes**
 
-`CLAY_BORDER_CONFIG(.left = { 2, COLOR_RED }, .right = { 4, COLOR_YELLOW } /* etc */)`
-
-Indicates to the renderer that a border of `.color` should be draw at the specified edges of the bounding box, **overlapping the box contents by `.width`**.
-
-This means that border configuration does not affect layout, as the width of the border doesn't contribute to the total container width or layout position. Border containers with zero padding will be drawn over the top of child elements.
-
----
-
-**`.betweenChildren`** - `Clay_Border`
-
-`CLAY_BORDER_CONFIG(.betweenChildren = { 2, COLOR_RED })`
-
-Configures the width and color of borders to be drawn between children. These borders will be vertical lines if the parent uses `.layoutDirection = CLAY_LEFT_TO_RIGHT` and horizontal lines if the parent uses `CLAY_TOP_TO_BOTTOM`. Unlike `.left, .top` etc, this option **will generate additional rectangle render commands representing the borders between children.** As a result, the renderer does not need to specifically implement rendering for these border elements.
-
----
-
-**`.cornerRadius`** - `float`
-
-`CLAY_BORDER_CONFIG(.cornerRadius = 16)`
-
-Defines the radius in pixels for the arc of border corners (`0` is square, `rectangle.width / 2` is circular). It is up to the renderer to decide how to interpolate between differing border widths and colors across shared corners.
-
-Note that the `CLAY_CORNER_RADIUS(radius)` function-like macro is available to provide short hand for setting all four corner radii to the same value. e.g. `CLAY_BORDER_CONFIG(.cornerRadius = CLAY_CORNER_RADIUS(10))`
-
-**Convenience Macros**
-
-There are some common cases for border configuration that are repetitive, i.e. specifying the same border around all four edges. Some convenience macros are provided for these cases:
-
-- `CLAY_BORDER_CONFIG_OUTSIDE(.width = 2, .color = COLOR_RED)` - Shorthand for configuring all 4 outside borders at once.`
-- `CLAY_BORDER_CONFIG_OUTSIDE_RADIUS(width, color, radius)` - Shorthand for configuring all 4 outside borders at once, with the provided `.cornerRadius`. Note this is a function-like macro and does not take `.member = value` syntax.
-- `CLAY_BORDER_CONFIG_ALL(.width = 2, .color = COLOR_RED)` - Shorthand for configuring all 4 outside borders and `.betweenChildren` at once. 
-- `CLAY_BORDER_CONFIG_ALL_RADIUS(width, color, radius)` - Shorthand for configuring all 4 outside borders and `.betweenChildren` at once, with the provided `cornerRadius`. Note this is a function-like macro and does not take `.member = value` syntax.
-
-### CLAY_CUSTOM_ELEMENT_CONFIG
-
-**CLAY_CUSTOM_ELEMENT_CONFIG()** is a macro used to create and store `Clay_CustomElementConfig` structs, which are for configuring [CLAY_CUSTOM_ELEMENT]() elements.
+**CUSTOM_ELEMENT** uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and allows the user to pass custom data to the renderer. 
 
 **Struct Definition (Pseudocode)** 
 
@@ -1450,6 +1471,7 @@ The underlying `Clay_ImageCustomConfig` can be extended with new members by usin
 
 `.customData` is a generic void pointer that can be used to pass through custom data to the renderer. **Note:** this field is generally not recommended for usage due to the lack of type safety, see `#define CLAY_EXTEND_CONFIG_CUSTOM` in [Preprocessor Directives]() for an alternative.
 
+**Examples**
 ```C
 // Extend CLAY_CUSTOM_ELEMENT_CONFIG with your custom data
 #define CLAY_EXTEND_CONFIG_CUSTOM struct t_CustomElementData customData;
@@ -1469,7 +1491,7 @@ typedef struct t_CustomElementData {
 Model myModel = Load3DModel(filePath);
 CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
 // ...
-CLAY_CONTAINER(id, style) {
+CLAY(id, style) {
     // This config is type safe and contains the CustomElementData struct
     CLAY_CUSTOM_ELEMENT(id, layout, CLAY_CUSTOM_ELEMENT_CONFIG(.customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel })) {}
 }
@@ -1497,19 +1519,10 @@ switch (renderCommand->commandType) {
 }
 ```
 
-## Misc Macros
+**Rendering**
 
-### CLAY_ID
-
-`Clay_ElementId CLAY_ID(char *label)`
-
-Generates a [Clay_ElementId](#clay_elementid) from the provided `char *label`. Used both to generate ids when defining element macros, as well as for referencing ids later when using utility functions such as [Clay_PointerOver](#clay-pointerover)
-
-### CLAY_IDI()
-
-`Clay_ElementId CLAY_IDI(char *label, int index)`
-
-Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM` will be created.
+The user will need to access [Clay_CustomElementConfig](#clay_custom_element_config) to retrieve custom data referenced during layout creation.
 
 ## Data Structures & Definitions
 
@@ -1629,11 +1642,11 @@ A rectangle representing the bounding box of this render command, with `.x` and 
 
 A C union containing various pointers to config data, with the type dependent on `.commandType`. Possible values include:
 
-- `config.rectangleElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE`. See [CLAY_RECTANGLE_CONFIG](#clay_rectangle_config) for details.
-- `config.textElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. See [CLAY_TEXT_CONFIG](#clay_text_config) for details.
-- `config.imageElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE`. See [CLAY_IMAGE_CONFIG](#clay_image_config) for details.
-- `config.borderElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_BORDER`. See [CLAY_BORDER_CONFIG](#clay_border_config) for details.
-- `config.customElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM`. See [CLAY_CUSTOM_CONFIG](#clay_custom_config) for details.
+- `config.rectangleElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE`. See [CLAY_RECTANGLE](#clay_rectangle) for details.
+- `config.textElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. See [CLAY_TEXT](#clay_text) for details.
+- `config.imageElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE`. See [CLAY_IMAGE](#clay_image) for details.
+- `config.borderElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_BORDER`. See [CLAY_BORDER](#clay_border) for details.
+- `config.customElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM`. See [CLAY_CUSTOM](#clay_custom_element) for details.
 - `config.floatingElementConfig` - Not used and will always be NULL.
 - `config.scrollElementConfig` - Not used and will always be NULL.
 
