@@ -97,7 +97,6 @@ static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
 		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
 	)
 
-// Publicly visible layout element macros
 #define CLAY__6_ARGS(a, b, c, d, e, f) a, b, c, d, e, f
 #define CLAY__5_ARGS(a, b, c, d, e) a, b, c, d, e
 #define CLAY__4_ARGS(a, b, c, d) a, b, c, d
@@ -2730,6 +2729,7 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
         case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), CLAY__INIT(Clay_Color) {108,91,123, 255} };
         case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), CLAY__INIT(Clay_Color) {11,72,107,255} };
     }
+    return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Error"), CLAY__INIT(Clay_Color) {0,0,0,255} };
 }
 
 typedef struct
