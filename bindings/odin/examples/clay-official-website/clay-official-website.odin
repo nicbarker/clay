@@ -436,15 +436,13 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
                     clay.Text("Docs", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
                 }
             }
-            // githubButtonId: clay.ElementId = clay.ID("HeaderButtonGithub")
-            if clay.UI(clay.ID("LinkGithubOuter"), clay.Layout({}), clay.BorderOutsideRadius({2, COLOR_RED}, 10)) {
-                if clay.UI(
-                    // githubButtonId,
-                    clay.Layout({padding = {16, 6}}),
-                    clay.Rectangle({cornerRadius = clay.CornerRadiusAll(10), color = COLOR_LIGHT}),
-                ) {
-                    clay.Text("Github", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
-                }
+            if clay.UI(
+                clay.ID("LinkGithubOuter"),
+                clay.Layout({padding = {16, 6}}),
+                clay.BorderOutsideRadius({2, COLOR_RED}, 10),
+                clay.Rectangle({cornerRadius = clay.CornerRadiusAll(10), color = clay.PointerOver(clay.GetElementId(clay.MakeString("LinkGithubOuter"))) ? COLOR_LIGHT_HOVER : COLOR_LIGHT})
+            ) {
+                clay.Text("Github", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
             }
         }
         if clay.UI(clay.ID("TopBorder1"), clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingFixed(4)}}), clay.Rectangle({color = COLOR_TOP_BORDER_5})) {}

@@ -275,6 +275,7 @@ foreign Clay {
     BeginLayout :: proc() ---
     EndLayout :: proc() -> ClayArray(RenderCommand) ---
     PointerOver :: proc(id: ElementId) -> bool ---
+    GetElementId :: proc(id: String) -> ElementId ---
     GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
     SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
