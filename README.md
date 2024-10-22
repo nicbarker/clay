@@ -198,8 +198,8 @@ CLAY(CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
 ### Configuring Layout and Styling UI Elements
 The layout of clay elements is configured with the `CLAY_LAYOUT()` macro. 
 ```C
-CLAY(CLAY_LAYOUT({ .padding = {.x = 8, .y = 8}, .backgroundColor = {120, 120, 120, 255} })) {
-    // ...
+CLAY(CLAY_LAYOUT({ .padding = {.x = 8, .y = 8}, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
+    // Children are 8px inset into parent, and laid out top to bottom
 }
 ```
 This macro isn't magic - all it's doing is wrapping the standard designated initializer syntax and adding the result to an internal array. e.g. `(Clay_LayoutConfig) { .padding = { .x = 8, .y = 8 } ...`.
