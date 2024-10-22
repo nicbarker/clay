@@ -2182,7 +2182,7 @@ void Clay__CalculateFinalLayout() {
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArraySlice_Get(&measureTextCacheItem->measuredWords, wordIndex);
             // Only word on the line is too large, just render it anyway
             if (lineLengthChars == 0 && lineWidth + measuredWord->width > containerElement->dimensions.width) {
-                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] });
+                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] });
                 textElementData->wrappedLines.length++;
             }
             // measuredWord->length == 0 means a newline character
