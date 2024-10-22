@@ -8,5 +8,5 @@ add_executable(clay_examples_cpp_project_example main.cpp)
 
 target_include_directories(clay_examples_cpp_project_example PUBLIC .)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "-Werror -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
