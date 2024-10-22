@@ -2180,8 +2180,13 @@ void Clay__CalculateFinalLayout() {
         }
         for (int wordIndex = 0; wordIndex < measureTextCacheItem->measuredWords.length; ++wordIndex) {
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArraySlice_Get(&measureTextCacheItem->measuredWords, wordIndex);
+            // Only word on the line is too large, just render it anyway
+            if (lineLengthChars == 0 && lineWidth + measuredWord->width > containerElement->dimensions.width) {
+                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] });
+                textElementData->wrappedLines.length++;
+            }
             // measuredWord->length == 0 means a newline character
-            if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
+            else if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
                 Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
                 textElementData->wrappedLines.length++;
                 if (lineLengthChars > 0 && measuredWord->length > 0) {
@@ -2458,7 +2463,7 @@ void Clay__CalculateFinalLayout() {
                                     continue;
                                 }
                                 Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
-                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, (float)50, naturalLineHeight }, // TODO width
+                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, currentElement->dimensions.width, naturalLineHeight }, // TODO width
                                     .config = configUnion,
                                     .text = wrappedLine,
                                     .id = Clay__HashNumber(lineIndex, currentElement->id).id,
