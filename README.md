@@ -139,7 +139,7 @@ The above example, rendered correctly will look something like the following:
 
 In summary, the general order of steps is:
 
-1. [Clay_SetLayoutDimensions(dimensions)](#clay_setdimensions)	
+1. [Clay_SetLayoutDimensions(dimensions)](#clay_setlayoutdimensions)	
 2. [Clay_SetPointerState(pointerPosition, isPointerDown)](#clay_setpointerstate)
 3. [Clay_UpdateScrollContainers(enableDragScrolling, scrollDelta, deltaTime)](#clay_updatescrollcontainers)
 4. [Clay_BeginLayout()](#clay_beginlayout)
@@ -225,7 +225,7 @@ Clay elements can optionally be tagged with a unique identifier using [CLAY_ID()
 CLAY(CLAY_ID("OuterContainer"), style) {}
 ```
 
-Element IDs have two main use cases. Firstly, tagging an element with an ID allows you to query information about the element later, such as its [mouseover state](#clay-pointerover) or dimensions.
+Element IDs have two main use cases. Firstly, tagging an element with an ID allows you to query information about the element later, such as its [mouseover state](#clay_pointerover) or dimensions.
 
 Secondly, IDs are visually useful when attempting to read and modify UI code, as well as when using the built-in [debug tools](#debug-tools).
 
@@ -260,10 +260,10 @@ CLAY(CLAY_RECTANGLE(.color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE)) {
 The function `void Clay_OnHover()` allows you to attach a function pointer to the currently open element, which will be called if the mouse / pointer is over the element.
 
 ```C
-void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
+void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData) {
     ButtonData *buttonData = (ButtonData *)userData;
     // Pointer state allows you to detect mouse down / hold / release
-    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+    if (pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         // Do some click handling
         NavigateTo(buttonData->link);
     }
@@ -516,7 +516,7 @@ Prepares clay to calculate a new layout. Called each frame / layout **before** a
 
 `Clay_RenderCommandArray Clay_EndLayout()`
 
-Ends declaration of element macros and calculates the results of the currrent layout. Renders a [Clay_RenderCommandArray](#clay_rendercommandarrray) containing the results of the layout calculation.
+Ends declaration of element macros and calculates the results of the current layout. Renders a [Clay_RenderCommandArray](#clay_rendercommandarray) containing the results of the layout calculation.
 
 ### Clay_Hovered
 
@@ -526,15 +526,15 @@ Called **during** layout declaration, and returns `true` if the pointer position
 
 ### Clay_OnHover
 
-`void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData), intptr_t userData)`
+`void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData)`
 
-Called **during** layout declaration, this function allows you to attach a function pointer to the currently open element that will be called once per layout if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the currently open element. See [Clay_PointerInfo](#clay-pointer-info) for more information on the `pointerInfo` argument.
+Called **during** layout declaration, this function allows you to attach a function pointer to the currently open element that will be called once per layout if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the currently open element. See [Clay_PointerData](#clay_pointerdata) for more information on the `pointerData` argument.
 
 ```C
-void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
+void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
     ButtonData *buttonData = (ButtonData *)userData;
     // Pointer state allows you to detect mouse down / hold / release
-    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         // Do some click handling
         NavigateTo(buttonData->link);
     }
@@ -564,7 +564,7 @@ Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll con
 
 `Clay_ElementId Clay_GetElementId(Clay_String idString)`
 
-Returns a [Clay_ElementId](#clay-elementid) for the provided id string, used for querying element info such as mouseover state, scroll container data, etc.
+Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for querying element info such as mouseover state, scroll container data, etc.
 
 ## Element Macros
 
@@ -762,7 +762,7 @@ CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .si
 
 **Notes**
 
-**RECTANGLE** configures a clay element to background-fill its bounding box with a color. It uses [Clay_RectangleElementConfig](#clay_rectangleelementconfig) for rectangle specific options.
+**RECTANGLE** configures a clay element to background-fill its bounding box with a color. It uses `Clay_RectangleElementConfig` for rectangle specific options.
 
 **Struct API (Pseudocode)**
 
@@ -1061,7 +1061,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 
 **Notes**
 
-**SCROLL** configures the element as a scrolling container, enabling masking of children that extend beyond its boundaries. It uses [Clay_ScrollElementConfig](#clay_scrollelementconfig) to configure scroll specific options.
+**SCROLL** configures the element as a scrolling container, enabling masking of children that extend beyond its boundaries. It uses `Clay_ScrollElementConfig` to configure scroll specific options.
 
 Note: In order to process scrolling based on pointer position and mouse wheel or touch interactions, you must call `Clay_SetPointerState()` and `Clay_UpdateScrollContainers()` _before_ calling `BeginLayout`.
 
@@ -1241,7 +1241,7 @@ Rendering of borders and rounded corners is left up to the user. See the provide
 
 Floating containers:
 
-- With the [default configuration](#clay_floating_config), attach to the top left corner of their "parent" 
+- With the default configuration, attach to the top left corner of their "parent" 
 - Don't affect the width and height of their parent
 - Don't affect the positioning of sibling elements
 - Depending on their z-index can appear above or below other elements, partially or completely occluding them
@@ -1438,7 +1438,7 @@ When using `.parentId`, the floating container can be declared anywhere after `B
 
 **Notes**
 
-**CUSTOM_ELEMENT** uses [Clay_LayoutConfig](#clay_layout) for styling and layout, and allows the user to pass custom data to the renderer. 
+**CUSTOM_ELEMENT** allows the user to pass custom data to the renderer. 
 
 **Struct Definition (Pseudocode)** 
 
@@ -1522,7 +1522,6 @@ switch (renderCommand->commandType) {
 **Rendering**
 
 Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM` will be created.
-The user will need to access [Clay_CustomElementConfig](#clay_custom_element_config) to retrieve custom data referenced during layout creation.
 
 ## Data Structures & Definitions
 
@@ -1709,4 +1708,46 @@ Dimensions representing the inner width and height of the content _inside_ the s
 
 **`.config`** - `Clay_ScrollElementConfig`
 
-The [Clay_ScrollElementConfig](#clay_scroll_config) for the matching scroll container element.
+The [Clay_ScrollElementConfig](#clay_scroll) for the matching scroll container element.
+
+### Clay_PointerData
+
+```C
+typedef struct
+{
+    Clay_Vector2 position;
+    Clay_PointerDataInteractionState state;
+} Clay_PointerData;
+```
+
+**Fields**
+
+**`.position`** - `Clay_Vector2`
+
+A Vector2 containing the current x,y coordinates of the mouse pointer, which were originally passed into [Clay_SetPointerState()](#clay_setpointerstate).
+
+---
+
+**`.state`** - `Clay_PointerDataInteractionState`
+
+```C
+typedef enum
+{
+    CLAY_POINTER_DATA_PRESSED_THIS_FRAME,
+    CLAY_POINTER_DATA_PRESSED,
+    CLAY_POINTER_DATA_RELEASED_THIS_FRAME,
+    CLAY_POINTER_DATA_RELEASED,
+} Clay_PointerDataInteractionState;
+```
+
+An enum value representing the current "state" of the pointer interaction. As an example, consider the case where a user is on a desktop computer, moves the mouse pointer over a button, clicks and holds the left mouse button for a short time, then releases it:
+
+- While the mouse pointer is over ("hovering") the button, but no mouse button has been pressed: `CLAY_POINTER_DATA_RELEASED`
+- First frame that the user presses the left mouse button: `CLAY_POINTER_DATA_PRESSED_THIS_FRAME`
+- All subsequent frames where the user is still holding the left mouse button: `CLAY_POINTER_DATA_PRESSED`
+- The single frame where the left mouse button goes from pressed -> released: `CLAY_POINTER_DATA_RELEASED_THIS_FRAME`
+- All subsequent frames while the mouse pointer is still over the button: `CLAY_POINTER_DATA_RELEASED`
+
+---
+
+

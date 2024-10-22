@@ -13,8 +13,8 @@ Texture2D profilePicture;
 Clay_String profileText = CLAY_STRING("Profile Page one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen");
 Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = 1, .fontSize = 16, .textColor = {0,0,0,255} };
 
-void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
-    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         // Do some click handling
     }
 }

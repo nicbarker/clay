@@ -208,8 +208,8 @@ void HighPerformancePageMobile(float lerpValue) {
     }
 }
 
-void HandleRendererButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
-    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+void HandleRendererButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData) {
+    if (pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         ACTIVE_RENDERER_INDEX = (uint32_t)userData;
     }
 }

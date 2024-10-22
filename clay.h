@@ -416,17 +416,17 @@ typedef struct
 
 typedef enum
 {
-    CLAY_POINTER_INFO_PRESSED_THIS_FRAME,
-    CLAY_POINTER_INFO_PRESSED,
-    CLAY_POINTER_INFO_RELEASED_THIS_FRAME,
-    CLAY_POINTER_INFO_RELEASED,
-} Clay_PointerInfoMouseDownState;
+    CLAY_POINTER_DATA_PRESSED_THIS_FRAME,
+    CLAY_POINTER_DATA_PRESSED,
+    CLAY_POINTER_DATA_RELEASED_THIS_FRAME,
+    CLAY_POINTER_DATA_RELEASED,
+} Clay_PointerDataInteractionState;
 
 typedef struct
 {
     Clay_Vector2 position;
-    Clay_PointerInfoMouseDownState state;
-} Clay_PointerInfo;
+    Clay_PointerDataInteractionState state;
+} Clay_PointerData;
 
 // Function Forward Declarations ---------------------------------
 // Public API functions ---
@@ -440,7 +440,7 @@ void Clay_BeginLayout();
 Clay_RenderCommandArray Clay_EndLayout();
 Clay_ElementId Clay_GetElementId(Clay_String idString);
 bool Clay_Hovered();
-void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData), intptr_t userData);
+void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
 void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config));
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
@@ -1113,7 +1113,7 @@ typedef struct // todo get this struct into a single cache line
     Clay_BoundingBox boundingBox;
     Clay_ElementId elementId;
     Clay_LayoutElement* layoutElement;
-    void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData);
+    void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData);
     intptr_t hoverFunctionUserData;
     int32_t nextIndex;
     uint32_t generation;
@@ -1370,7 +1370,7 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
     return CLAY__INIT(Clay_String) { .length = string.length, .chars = (const char *)(buffer->internalArray + buffer->length - string.length) };
 }
 
-Clay_PointerInfo Clay__pointerInfo = CLAY__INIT(Clay_PointerInfo) { .position = {-1, -1} };
+Clay_PointerData Clay__pointerInfo = CLAY__INIT(Clay_PointerData) { .position = {-1, -1} };
 Clay_Dimensions Clay__layoutDimensions = CLAY__INIT(Clay_Dimensions){};
 Clay_ElementId Clay__dynamicElementIndexBaseHash = CLAY__INIT(Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
 uint32_t Clay__dynamicElementIndex = 0;
@@ -2776,7 +2776,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             }
 
             if (highlightedRowIndex == layoutData.rowCount) {
-                if (Clay__pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+                if (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
                     Clay__debugSelectedElementId = currentElement->id;
                 }
                 highlightedElementId = currentElement->id;
@@ -2872,7 +2872,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
         }
     }
 
-    if (Clay__pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+    if (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         Clay_ElementId collapseButtonId = Clay__HashString(CLAY_STRING("Clay__DebugView_CollapseElement"), 0, 0);
         if (Clay__pointerInfo.position.x > Clay__layoutDimensions.width - (float)Clay__debugViewWidth && Clay__pointerInfo.position.x < Clay__layoutDimensions.width && Clay__pointerInfo.position.y > 0 && Clay__pointerInfo.position.y < Clay__layoutDimensions.height) {
             for (int i = (int)Clay__pointerOverIds.length - 1; i >= 0; i--) {
@@ -2974,15 +2974,15 @@ void Clay__RenderDebugViewBorder(int index, Clay_Border border, Clay_TextElement
     }
 }
 
-void HandleDebugViewCloseButtonInteraction(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData) {
-    if (pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+void HandleDebugViewCloseButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData) {
+    if (pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         Clay__debugModeEnabled = false;
     }
 }
 
 void Clay__RenderDebugView() {
     Clay_ElementId closeButtonId = Clay__HashString(CLAY_STRING("Clay__DebugViewTopHeaderCloseButtonOuter"), 0, 0);
-    if (Clay__pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
+    if (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         for (int i = 0; i < Clay__pointerOverIds.length; ++i) {
             Clay_ElementId *elementId = Clay__ElementIdArray_Get(&Clay__pointerOverIds, i);
             if (elementId->id == closeButtonId.id) {
@@ -3365,16 +3365,16 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
     }
 
     if (isPointerDown) {
-        if (Clay__pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME) {
-            Clay__pointerInfo.state = CLAY_POINTER_INFO_PRESSED;
-        } else if (Clay__pointerInfo.state != CLAY_POINTER_INFO_PRESSED) {
-            Clay__pointerInfo.state = CLAY_POINTER_INFO_PRESSED_THIS_FRAME;
+        if (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+            Clay__pointerInfo.state = CLAY_POINTER_DATA_PRESSED;
+        } else if (Clay__pointerInfo.state != CLAY_POINTER_DATA_PRESSED) {
+            Clay__pointerInfo.state = CLAY_POINTER_DATA_PRESSED_THIS_FRAME;
         }
     } else {
-        if (Clay__pointerInfo.state == CLAY_POINTER_INFO_RELEASED_THIS_FRAME) {
-            Clay__pointerInfo.state = CLAY_POINTER_INFO_RELEASED;
-        } else if (Clay__pointerInfo.state != CLAY_POINTER_INFO_RELEASED)  {
-            Clay__pointerInfo.state = CLAY_POINTER_INFO_RELEASED_THIS_FRAME;
+        if (Clay__pointerInfo.state == CLAY_POINTER_DATA_RELEASED_THIS_FRAME) {
+            Clay__pointerInfo.state = CLAY_POINTER_DATA_RELEASED;
+        } else if (Clay__pointerInfo.state != CLAY_POINTER_DATA_RELEASED)  {
+            Clay__pointerInfo.state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
         }
     }
 }
@@ -3396,7 +3396,7 @@ void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions) {
 
 CLAY_WASM_EXPORT("Clay_UpdateScrollContainers")
 void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDelta, float deltaTime) {
-    bool isPointerActive = enableDragScrolling && (Clay__pointerInfo.state == CLAY_POINTER_INFO_PRESSED || Clay__pointerInfo.state == CLAY_POINTER_INFO_PRESSED_THIS_FRAME);
+    bool isPointerActive = enableDragScrolling && (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED || Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME);
     // Don't apply scroll events to ancestors of the inner element
     int32_t highestPriorityElementIndex = -1;
     Clay__ScrollContainerDataInternal *highestPriorityScrollData = CLAY__NULL;
@@ -3561,7 +3561,7 @@ bool Clay_Hovered() {
     return false;
 }
 
-void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerInfo pointerInfo, intptr_t userData), intptr_t userData) {
+void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData), intptr_t userData) {
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     if (openLayoutElement->id == 0) {
         Clay__GenerateIdForAnonymousElement(openLayoutElement);
