@@ -439,6 +439,7 @@ void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
 void Clay_BeginLayout();
 Clay_RenderCommandArray Clay_EndLayout();
 Clay_ElementId Clay_GetElementId(Clay_String idString);
+Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index);
 bool Clay_Hovered();
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
@@ -3545,6 +3546,11 @@ Clay_RenderCommandArray Clay_EndLayout()
 CLAY_WASM_EXPORT("Clay_GetElementId")
 Clay_ElementId Clay_GetElementId(Clay_String idString) {
     return Clay__HashString(idString, 0, 0);
+}
+
+CLAY_WASM_EXPORT("Clay_GetElementIdWithIndex")
+Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index) {
+    return Clay__HashString(idString, index, 0);
 }
 
 bool Clay_Hovered() {
