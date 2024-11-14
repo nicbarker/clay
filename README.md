@@ -53,7 +53,7 @@ Clay_SetMeasureTextFunction(MeasureText);
 
 ```C
 // Update internal layout dimensions
-Clay_SetLayoutDimensions((Clay_Dimensions) { screenWidth, screenHeight }, isMouseDown);
+Clay_SetLayoutDimensions((Clay_Dimensions) { screenWidth, screenHeight });
 ```
 
 5. **Optional** - Call [Clay_SetPointerState(pointerPosition, isPointerDown)](#clay_setpointerstate) if you want to use mouse interactions.
@@ -99,7 +99,7 @@ Clay_RenderCommandArray CreateLayout() {
         ) {
             CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
                 CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .height = 60, .width = 60 })) {}
-                CLAY_TEXT(CLAY_ID("ProfileTitle"), CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
+                CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
             }
 
             // Standard C code like loops etc work inside components
@@ -117,7 +117,7 @@ Clay_RenderCommandArray CreateLayout() {
 8. Call [Clay_EndLayout()](#clay_endlayout) and process the resulting [Clay_RenderCommandArray](#clay_rendercommandarray) in your choice of renderer.
 
 ```C
-Clay_RenderCommandArray renderCommands = Clay_EndLayout(windowWidth, windowHeight);
+Clay_RenderCommandArray renderCommands = Clay_EndLayout();
 
 for (int i = 0; i < renderCommands.length; i++) {
     Clay_RenderCommand *renderCommand = &renderCommands.internalArray[i];
@@ -342,6 +342,11 @@ Clay only supports a simple set of UI element primitives, such as rectangles, te
 // Extensions need to happen _before_ the clay include
 #include "clay.h"
 
+enum CustomElementType {
+    CUSTOM_ELEMENT_TYPE_MODEL,
+    CUSTOM_ELEMENT_TYPE_VIDEO
+};
+
 // A rough example of how you could handle laying out 3d models in your UI
 typedef struct t_CustomElementData {
     CustomElementType type;
@@ -365,7 +370,7 @@ switch (renderCommand->commandType) {
     // ...
     case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
         // Your extended struct is passed through
-        CustomElementData *data = renderCommand->elementConfig.customElementConfig->customData;
+        CustomElementData *customElement = renderCommand->config.customElementConfig->customData;
         if (!customElement) continue;
         switch (customElement->type) {
             case CUSTOM_ELEMENT_TYPE_MODEL: {
@@ -1384,7 +1389,7 @@ For example:
 
 "Attach the LEFT_CENTER of the floating container to the RIGHT_TOP of the parent"
 
-`CLAY_FLOATING(.attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP });`
+`CLAY_FLOATING({ .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP } });`
 
 ![Screenshot 2024-08-23 at 11 53 24 AM](https://github.com/user-attachments/assets/ebe75e0d-1904-46b0-982d-418f929d1516)
 
@@ -1399,7 +1404,7 @@ CLAY(CLAY_ID("OptionsList"), CLAY_LAYOUT(.childGap = 16)) {
     CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 2), CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
         // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-        CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING(.zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP })) {
+        CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING({ .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP } })) {
             CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
         }
     }
@@ -1416,7 +1421,7 @@ for (int i = 0; i < 1000; i++) {
 }
 // Note the use of "parentId".
 // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING(.parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER })) {
+CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING({ .parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER } })) {
     CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
 }
 ```
@@ -1477,6 +1482,11 @@ The underlying `Clay_ImageCustomConfig` can be extended with new members by usin
 #define CLAY_EXTEND_CONFIG_CUSTOM struct t_CustomElementData customData;
 // Extensions need to happen _before_ the clay include
 #include "clay.h"
+
+enum CustomElementType {
+    CUSTOM_ELEMENT_TYPE_MODEL,
+    CUSTOM_ELEMENT_TYPE_VIDEO
+};
 
 // A rough example of how you could handle laying out 3d models in your UI
 typedef struct t_CustomElementData {
