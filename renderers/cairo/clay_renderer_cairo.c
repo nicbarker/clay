@@ -72,7 +72,7 @@ static cairo_t *Clay__Cairo = NULL;
 // Return a null-terminated copy of Clay_String `str`.
 // Callee is required to free.
 static inline char *Clay_Cairo__NullTerminate(Clay_String *str) {
-	char *copy = malloc(str->length + 1);
+	char *copy = (char*) malloc(str->length + 1);
 	if (!copy) {
 		fprintf(stderr, "Memory allocation failed\n");
 		return NULL;
@@ -96,8 +96,8 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_Text
 			// brute-forcing it until the text boundaries look
 			// okay-ish.  You should probably rather use a proper text
 			// shaping engine like HarfBuzz or Pango.
-			.width = te.x_advance * 1.9,
-			.height = config->fontSize
+			.width = ((float) te.x_advance) * 1.9f,
+			.height = (float) config->fontSize
 		};
 	}
 
@@ -153,8 +153,8 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_Text
 
 	// Return dimensions
 	return (Clay_Dimensions){
-		.width = glyph_extents.width,
-		.height = glyph_extents.height
+		.width =  (float) glyph_extents.width,
+		.height = (float) glyph_extents.height
 	};
 }
 
@@ -238,7 +238,7 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			cairo_select_font_face(Clay__Cairo, font_family, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 			cairo_set_font_size(cr, command->config.textElementConfig->fontSize);
 
-			cairo_move_to(cr, bb.x, bb.y + bb.height / 2.f);
+			cairo_move_to(cr, bb.x, bb.y + bb.height);
 
 			cairo_set_source_rgba(cr, CLAY_TO_CAIRO(color));
 			cairo_show_text(cr, text);
@@ -338,9 +338,7 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			Clay_ImageElementConfig *config = command->config.imageElementConfig;
 			Clay_BoundingBox bb = command->boundingBox;
 
-			char *path = malloc(config->path.length + 1);
-			memcpy(path, config->path.chars, config->path.length);
-			path[config->path.length] = '\0';
+			char *path = Clay_Cairo__NullTerminate(&config->path);
 
 			cairo_surface_t *surf = cairo_image_surface_create_from_png(path),
 							*origin = cairo_get_target(cr);
