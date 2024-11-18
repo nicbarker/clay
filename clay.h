@@ -82,7 +82,7 @@
 
 #define CLAY_ID_LOCAL(label) CLAY_IDI_LOCAL(label, 0)
 
-#define CLAY_IDI_LOCAL(label, index) Clay__AttachId(Clay__HashString(CLAY_STRING(label), Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 2))->children.length + 1, Clay__GetOpenLayoutElement()->id))
+#define CLAY_IDI_LOCAL(label, index) Clay__AttachId(Clay__HashString(CLAY_STRING(label), index, Clay__GetParentElementId()))
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
@@ -464,6 +464,8 @@ Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConf
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
 void Clay__Noop();
+void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
+uint32_t Clay__GetParentElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -1428,6 +1430,10 @@ Clay__DebugElementDataArray Clay__debugElementData;
 
 Clay_LayoutElement* Clay__GetOpenLayoutElement() {
     return Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 1));
+}
+
+uint32_t Clay__GetParentElementId(void) {
+    return Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 2))->id;
 }
 
 bool Clay__ElementHasConfig(Clay_LayoutElement *element, Clay__ElementConfigType type) {
