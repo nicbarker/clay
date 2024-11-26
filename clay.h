@@ -489,6 +489,10 @@ extern uint32_t Clay__debugViewWidth;
 #define CLAY_MAX_ELEMENT_COUNT 8192
 #endif
 
+#ifndef CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT
+#define CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT 1024
+#endif
+
 #ifndef CLAY__NULL
 #define CLAY__NULL 0
 #endif
@@ -1158,7 +1162,7 @@ typedef struct
 
 Clay__MeasuredWord CLAY__MEASURED_WORD_DEFAULT = CLAY__INIT(Clay__MeasuredWord) {};
 
-// __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_get_slice,array_add TYPE=Clay__MeasuredWord NAME=Clay__MeasuredWordArray DEFAULT_VALUE=&CLAY__MEASURED_WORD_DEFAULT
+// __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_set,array_get_slice,array_add TYPE=Clay__MeasuredWord NAME=Clay__MeasuredWordArray DEFAULT_VALUE=&CLAY__MEASURED_WORD_DEFAULT
 #pragma region generated
 typedef struct
 {
@@ -1176,6 +1180,19 @@ Clay__MeasuredWordArray Clay__MeasuredWordArray_Allocate_Arena(uint32_t capacity
 }
 Clay__MeasuredWord *Clay__MeasuredWordArray_Get(Clay__MeasuredWordArray *array, int index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__MEASURED_WORD_DEFAULT;
+}
+void Clay__MeasuredWordArray_Set(Clay__MeasuredWordArray *array, int index, Clay__MeasuredWord value) {
+	if (index < array->capacity && index >= 0) {
+		array->internalArray[index] = value;
+		array->length = index < array->length ? array->length : index + 1;
+	} else {
+	    if (Clay__warningsEnabled) {
+            Clay__WarningArray_Add(&Clay_warnings, CLAY__INIT(Clay__Warning) { CLAY_STRING("Attempting to allocate array in arena, but arena is already at capacity and would overflow.") });
+	    }
+        #ifdef CLAY_OVERFLOW_TRAP
+        raise(SIGTRAP);
+        #endif
+	}
 }
 Clay__MeasuredWord *Clay__MeasuredWordArraySlice_Get(Clay__MeasuredWordArraySlice *slice, int index) {
     return Clay__Array_RangeCheck(index, slice->length) ? &slice->internalArray[index] : &CLAY__MEASURED_WORD_DEFAULT;
@@ -1372,6 +1389,7 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
     return CLAY__INIT(Clay_String) { .length = string.length, .chars = (const char *)(buffer->internalArray + buffer->length - string.length) };
 }
 
+// Global Variable Definitions ----------------------------------------------
 Clay_PointerData Clay__pointerInfo = CLAY__INIT(Clay_PointerData) { .position = {-1, -1} };
 Clay_Dimensions Clay__layoutDimensions = CLAY__INIT(Clay_Dimensions){};
 Clay_ElementId Clay__dynamicElementIndexBaseHash = CLAY__INIT(Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
@@ -1414,6 +1432,7 @@ Clay__MeasureTextCacheItemArray Clay__measureTextHashMapInternal;
 Clay__int32_tArray Clay__measureTextHashMapInternalFreeList;
 Clay__int32_tArray Clay__measureTextHashMap;
 Clay__MeasuredWordArray Clay__measuredWords;
+Clay__int32_tArray Clay__measuredWordsFreeList;
 Clay__int32_tArray Clay__openClipElementStack;
 Clay__ElementIdArray Clay__pointerOverIds;
 Clay__ScrollContainerDataInternalArray Clay__scrollContainerDatas;
@@ -1526,9 +1545,20 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
     return hash + 1; // Reserve the hash result of zero as "null id"
 }
 
+void Clay__AddMeasuredWord(Clay__MeasuredWord word) {
+    if (Clay__measuredWordsFreeList.length > 0) {
+        uint32_t newItemIndex = Clay__int32_tArray_Get(&Clay__measuredWordsFreeList, (int)Clay__measuredWordsFreeList.length - 1);
+        Clay__measuredWordsFreeList.length--;
+        Clay__MeasuredWordArray_Set(&Clay__measuredWords, (int)newItemIndex, word);
+        Clay__MeasuredWordArray_Get(&Clay__measuredWords, (int)newItemIndex);
+    } else {
+        Clay__MeasuredWordArray_Add(&Clay__measuredWords, word);
+    }
+}
+
 Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfig *config) {
     uint32_t id = Clay__HashTextWithConfig(text, config);
-    uint32_t hashBucket = id % Clay__measureTextHashMap.capacity;
+    uint32_t hashBucket = id % CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT;
     int32_t elementIndexPrevious = 0;
     int32_t elementIndex = Clay__measureTextHashMap.internalArray[hashBucket];
     while (elementIndex != 0) {
@@ -1539,6 +1569,11 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         }
         // This element hasn't been seen in a few frames, delete the hash map item
         if (Clay__generation - hashEntry->generation > 2) {
+            // Add all the measured words that were included in this measurement to the freelist
+            for (int32_t i = 0; i < hashEntry->measuredWords.length; i++) {
+                uint32_t index = Clay__MeasuredWordArraySlice_Get(&hashEntry->measuredWords, i) - &Clay__measuredWords.internalArray[0];
+                Clay__int32_tArray_Add(&Clay__measuredWordsFreeList, index);
+            }
             uint32_t nextIndex = hashEntry->nextIndex;
             Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, elementIndex, CLAY__INIT(Clay__MeasureTextCacheItem) {});
             Clay__int32_tArray_Add(&Clay__measureTextHashMapInternalFreeList, elementIndex);
@@ -1584,11 +1619,11 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
             Clay_Dimensions dimensions = Clay__MeasureText(&word, config);
             if (current == ' ') {
                 dimensions.width += spaceWidth;
-                Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = word, .startOffset = start, .length = length + 1, .width = dimensions.width });
+                Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = word, .startOffset = start, .length = length + 1, .width = dimensions.width });
             }
             if (current == '\n') {
-                Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = word, .startOffset = start, .length = length, .width = dimensions.width });
-                Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = CLAY__INIT(Clay_String) { .length = 0, .chars = &text->chars[end] }, .startOffset = end + 1, .length = 0, .width = 0 });
+                Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = word, .startOffset = start, .length = length, .width = dimensions.width });
+                Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = CLAY__INIT(Clay_String) { .length = 0, .chars = &text->chars[end] }, .startOffset = end + 1, .length = 0, .width = 0 });
                 measured->measuredWords.length++;
             }
             measuredWidth += dimensions.width;
@@ -1601,7 +1636,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
     if (end - start > 0) {
         Clay_String lastWord = CLAY__INIT(Clay_String) { .length = (int)(end - start), .chars = &text->chars[start] };
         Clay_Dimensions dimensions = Clay__MeasureText(&lastWord, config);
-        Clay__MeasuredWordArray_Add(&Clay__measuredWords, CLAY__INIT(Clay__MeasuredWord) { .word = lastWord, .startOffset = start, .length = end - start, .width = dimensions.width });
+        Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = lastWord, .startOffset = start, .length = end - start, .width = dimensions.width });
         measuredWidth += dimensions.width;
         measuredHeight = dimensions.height;
         measured->measuredWords.length++;
@@ -1698,7 +1733,7 @@ void Clay__ElementPostConfiguration() {
         Clay_ElementConfig *config = Clay__ElementConfigArray_Add(&Clay__elementConfigs, *Clay__ElementConfigArray_Get(&Clay__elementConfigBuffer, Clay__elementConfigBuffer.length - openLayoutElement->elementConfigs.length + elementConfigIndex));
         openLayoutElement->configsEnabled |= config->type;
         switch (config->type) {
-            case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: break;
+            case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE:
             case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: break;
             case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: {
                 Clay_FloatingElementConfig *floatingConfig = config->config.floatingElementConfig;
@@ -1927,8 +1962,9 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
     Clay__layoutElementsHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMapInternal = Clay__MeasureTextCacheItemArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMapInternalFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
+    Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
-    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT * 2, arena);
+    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__pointerOverIds = Clay__ElementIdArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__debugElementData = Clay__DebugElementDataArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__arenaResetOffset = arena->nextAllocation;
