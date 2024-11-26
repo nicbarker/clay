@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.27)
 project(clay)
 
 add_subdirectory("examples/cpp-project-example")
