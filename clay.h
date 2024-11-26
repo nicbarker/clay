@@ -1570,10 +1570,14 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         // This element hasn't been seen in a few frames, delete the hash map item
         if (Clay__generation - hashEntry->generation > 2) {
             // Add all the measured words that were included in this measurement to the freelist
-            for (int32_t i = 0; i < hashEntry->measuredWords.length; i++) {
-                uint32_t index = Clay__MeasuredWordArraySlice_Get(&hashEntry->measuredWords, i) - &Clay__measuredWords.internalArray[0];
-                Clay__int32_tArray_Add(&Clay__measuredWordsFreeList, index);
+            if (hashEntry->measuredWords.length > 0) {
+                uint32_t startOffset = hashEntry->measuredWords.internalArray - Clay__measuredWords.internalArray;
+
+                for (int32_t i = 0; i < hashEntry->measuredWords.length; i++) {
+                    Clay__int32_tArray_Add(&Clay__measuredWordsFreeList, (int32_t)(startOffset + i));
+                }
             }
+
             uint32_t nextIndex = hashEntry->nextIndex;
             Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, elementIndex, CLAY__INIT(Clay__MeasureTextCacheItem) {});
             Clay__int32_tArray_Add(&Clay__measureTextHashMapInternalFreeList, elementIndex);
