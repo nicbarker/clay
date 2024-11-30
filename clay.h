@@ -2246,6 +2246,7 @@ void Clay__CalculateFinalLayout() {
             if (lineLengthChars == 0 && lineWidth + measuredWord->width > containerElement->dimensions.width) {
                 Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] });
                 textElementData->wrappedLines.length++;
+                wordIndex = measuredWord->next;
             }
             // measuredWord->length == 0 means a newline character
             else if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
