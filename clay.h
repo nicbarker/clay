@@ -3405,6 +3405,9 @@ void Clay_SetLayoutDimensions(Clay_Dimensions dimensions) {
 
 CLAY_WASM_EXPORT("Clay_SetPointerState")
 void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
+    if (Clay__debugMaxElementsLatch) {
+        return;
+    }
     Clay__pointerInfo.position = position;
     Clay__pointerOverIds.length = 0;
     Clay__int32_tArray dfsBuffer = Clay__layoutElementChildrenBuffer;
