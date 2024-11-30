@@ -468,6 +468,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
+extern bool Clay__debugMaxElementsLatch;
 
 #ifdef __cplusplus
 }
@@ -486,11 +487,15 @@ extern uint32_t Clay__debugViewWidth;
 #endif
 
 #ifndef CLAY_MAX_ELEMENT_COUNT
-#define CLAY_MAX_ELEMENT_COUNT 8192
+#define CLAY_MAX_ELEMENT_COUNT 512
 #endif
 
 #ifndef CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT
-#define CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT 1024
+#define CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT (CLAY_MAX_ELEMENT_COUNT / 2)
+#endif
+
+#ifndef CLAY_MEASURE_TEXT_CACHE_SIZE
+#define CLAY_MEASURE_TEXT_CACHE_SIZE CLAY_MAX_ELEMENT_COUNT * 2
 #endif
 
 #ifndef CLAY__NULL
@@ -601,7 +606,7 @@ bool Clay__Array_IncrementCapacityCheck(uint32_t length, uint32_t capacity)
     if (length < capacity) {
         return true;
     }
-    if (Clay__warningsEnabled) {
+    if (Clay__warningsEnabled && !Clay__debugMaxElementsLatch) {
         Clay__WarningArray_Add(&Clay_warnings, CLAY__INIT(Clay__Warning) { CLAY_STRING("Attempting to add to array that is already at capacity.") });
     }
     #ifdef CLAY_OVERFLOW_TRAP
@@ -1398,6 +1403,7 @@ bool Clay__debugModeEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
 uint32_t Clay__debugViewWidth = 400;
 Clay_Color Clay__debugViewHighlightColor = CLAY__INIT(Clay_Color) { 168, 66, 28, 100 };
+bool Clay__debugMaxElementsLatch = false;
 uint32_t Clay__generation = 0;
 uint64_t Clay__arenaResetOffset = 0;
 Clay_Arena Clay__internalArena;
@@ -1603,8 +1609,8 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, newItemIndex, newCacheItem);
         measured = Clay__MeasureTextCacheItemArray_Get(&Clay__measureTextHashMapInternal, newItemIndex);
     } else {
-        if (Clay__measureTextHashMapInternal.length == Clay__measureTextHashMapInternal.capacity) {
-            return NULL;
+        if (Clay__measureTextHashMapInternal.length == Clay__measureTextHashMapInternal.capacity - 1) {
+            return &CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT;
         }
         measured = Clay__MeasureTextCacheItemArray_Add(&Clay__measureTextHashMapInternal, newCacheItem);
         newItemIndex = Clay__measureTextHashMapInternal.length - 1;
@@ -1616,6 +1622,9 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
     float measuredHeight = 0;
     float spaceWidth = Clay__MeasureText(&CLAY__SPACECHAR, config).width;
     while (end < text->length) {
+        if (Clay__measuredWords.length == Clay__measuredWords.capacity - 1) {
+            return &CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT;
+        }
         char current = text->chars[end];
         if (current == ' ' || current == '\n') {
             uint32_t length = end - start;
@@ -1661,6 +1670,9 @@ bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_BoundingBox rect) {
 }
 
 Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Clay_LayoutElement* layoutElement) {
+    if (Clay__layoutElementsHashMapInternal.length == Clay__layoutElementsHashMapInternal.capacity - 1) {
+        return NULL;
+    }
     Clay_LayoutElementHashMapItem item = CLAY__INIT(Clay_LayoutElementHashMapItem) { .elementId = elementId, .layoutElement = layoutElement, .nextIndex = -1, .generation = Clay__generation + 1 };
     uint32_t hashBucket = elementId.id % Clay__layoutElementsHashMap.capacity;
     int32_t hashItemPrevious = -1;
@@ -1706,7 +1718,7 @@ Clay_LayoutElementHashMapItem *Clay__GetHashMapItem(uint32_t id) {
         }
         elementIndex = hashEntry->nextIndex;
     }
-    return CLAY__NULL;
+    return &CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT;
 }
 
 void Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) {
@@ -1721,6 +1733,9 @@ void Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) 
 }
 
 void Clay__ElementPostConfiguration() {
+    if (Clay__debugMaxElementsLatch) {
+        return;
+    }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     // ID
     if (openLayoutElement->id == 0) {
@@ -1799,6 +1814,9 @@ void Clay__ElementPostConfiguration() {
 }
 
 void Clay__CloseElement() {
+    if (Clay__debugMaxElementsLatch) {
+        return;
+    }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     Clay_LayoutConfig *layoutConfig = openLayoutElement->layoutConfig;
     bool elementHasScrollHorizontal = false;
@@ -1890,12 +1908,20 @@ void Clay__CloseElement() {
 }
 
 void Clay__OpenElement() {
+    if (Clay__layoutElements.length == Clay__layoutElements.capacity - 1 || Clay__debugMaxElementsLatch) {
+        Clay__debugMaxElementsLatch = true;
+        return;
+    }
     Clay_LayoutElement layoutElement = CLAY__INIT(Clay_LayoutElement) {};
     Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
     Clay__int32_tArray_Add(&Clay__openLayoutElementStack, Clay__layoutElements.length - 1);
 }
 
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig) {
+    if (Clay__layoutElements.length == Clay__layoutElements.capacity - 1 || Clay__debugMaxElementsLatch) {
+        Clay__debugMaxElementsLatch = true;
+        return;
+    }
     Clay_LayoutElement *parentElement = Clay__GetOpenLayoutElement();
     parentElement->children.length++;
 
@@ -1968,7 +1994,7 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
     Clay__measureTextHashMapInternalFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
-    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
+    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(CLAY_MEASURE_TEXT_CACHE_SIZE, arena);
     Clay__pointerOverIds = Clay__ElementIdArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__debugElementData = Clay__DebugElementDataArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__arenaResetOffset = arena->nextAllocation;
@@ -2692,6 +2718,9 @@ void Clay__CalculateFinalLayout() {
 }
 
 void Clay__AttachId(Clay_ElementId elementId) {
+    if (Clay__debugMaxElementsLatch) {
+        return;
+    }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     openLayoutElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, openLayoutElement);
@@ -2702,9 +2731,16 @@ void Clay__AttachId(Clay_ElementId elementId) {
 }
 
 void Clay__AttachLayoutConfig(Clay_LayoutConfig *config) {
+    if (Clay__debugMaxElementsLatch) {
+        Clay__GetOpenLayoutElement()->layoutConfig = &CLAY_LAYOUT_DEFAULT;
+        return;
+    }
     Clay__GetOpenLayoutElement()->layoutConfig = config;
 }
 void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type) {
+    if (Clay__debugMaxElementsLatch) {
+        return;
+    }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     openLayoutElement->elementConfigs.length++;
     Clay__ElementConfigArray_Add(&Clay__elementConfigBuffer, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
@@ -3559,6 +3595,9 @@ void Clay_BeginLayout() {
     if (Clay__debugModeEnabled) {
         rootDimensions.width -= (float)Clay__debugViewWidth;
     }
+    if (Clay__debugMaxElementsLatch) {
+        return;
+    }
     Clay__OpenElement();
     CLAY_ID("Clay__RootContainer");
     CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED((rootDimensions.width)), CLAY_SIZING_FIXED(rootDimensions.height)} });
@@ -3566,6 +3605,8 @@ void Clay_BeginLayout() {
     Clay__int32_tArray_Add(&Clay__openLayoutElementStack, 0);
     Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) { .layoutElementIndex = 0 });
 }
+
+Clay_TextElementConfig Clay__DebugView_ErrorTextConfig = CLAY__INIT(Clay_TextElementConfig) {.textColor = {255, 0, 0, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
 
 CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout()
@@ -3580,7 +3621,11 @@ Clay_RenderCommandArray Clay_EndLayout()
         Clay__warningsEnabled = true;
         #endif
     }
-    Clay__CalculateFinalLayout();
+    if (Clay__debugMaxElementsLatch) {
+        Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand ) { .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT, .boundingBox = { Clay__layoutDimensions.width / 2 - 59 * 4, Clay__layoutDimensions.height / 2 }, .text = CLAY_STRING("Clay Error: Layout elements exceeded CLAY_MAX_ELEMENT_COUNT"), .config = { .textElementConfig = &Clay__DebugView_ErrorTextConfig } });
+    } else {
+        Clay__CalculateFinalLayout();
+    }
     return Clay__renderCommands;
 }
 
@@ -3609,6 +3654,9 @@ bool Clay_Hovered() {
 }
 
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData), intptr_t userData) {
+    if (Clay__debugMaxElementsLatch) {
+        return;
+    }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     if (openLayoutElement->id == 0) {
         Clay__GenerateIdForAnonymousElement(openLayoutElement);
