@@ -487,7 +487,7 @@ extern bool Clay__debugMaxElementsLatch;
 #endif
 
 #ifndef CLAY_MAX_ELEMENT_COUNT
-#define CLAY_MAX_ELEMENT_COUNT 8192
+#define CLAY_MAX_ELEMENT_COUNT 256
 #endif
 
 #ifndef CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT
@@ -1159,7 +1159,6 @@ Clay_LayoutElementHashMapItem *Clay__LayoutElementHashMapItemArray_Add(Clay__Lay
 
 typedef struct
 {
-    Clay_String word;
     uint32_t startOffset;
     uint32_t length;
     float width;
@@ -1628,11 +1627,11 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
             Clay_Dimensions dimensions = Clay__MeasureText(&word, config);
             if (current == ' ') {
                 dimensions.width += spaceWidth;
-                previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = word, .next = -1, .startOffset = start, .length = length + 1, .width = dimensions.width }, previousWord);
+                previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = length + 1, .width = dimensions.width, .next = -1 }, previousWord);
             }
             if (current == '\n') {
-                previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = word, .next = -1, .startOffset = start, .length = length, .width = dimensions.width }, previousWord);
-                previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = word, .next = -1, .startOffset = end + 1, .length = 0, .width = 0 }, previousWord);
+                previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = length, .width = dimensions.width, .next = -1 }, previousWord);
+                previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = end + 1, .length = 0, .width = 0, .next = -1 }, previousWord);
             }
             measuredWidth += dimensions.width;
             measuredHeight = dimensions.height;
@@ -1643,7 +1642,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
     if (end - start > 0) {
         Clay_String lastWord = CLAY__INIT(Clay_String) { .length = (int)(end - start), .chars = &text->chars[start] };
         Clay_Dimensions dimensions = Clay__MeasureText(&lastWord, config);
-        Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .word = lastWord, .next = -1, .startOffset = start, .length = end - start, .width = dimensions.width }, previousWord);
+        Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = end - start, .width = dimensions.width, .next = -1 }, previousWord);
         measuredWidth += dimensions.width;
         measuredHeight = dimensions.height;
     }
@@ -3623,7 +3622,7 @@ Clay_RenderCommandArray Clay_EndLayout()
         #endif
     }
     if (Clay__debugMaxElementsLatch) {
-        Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand ) { .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT, .boundingBox = { Clay__layoutDimensions.width / 2 - 59 * 4, Clay__layoutDimensions.height / 2 }, .text = CLAY_STRING("Clay Error: Layout elements exceeded CLAY_MAX_ELEMENT_COUNT"), .config = { .textElementConfig = &Clay__DebugView_ErrorTextConfig } });
+        Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand ) { .boundingBox = { Clay__layoutDimensions.width / 2 - 59 * 4, Clay__layoutDimensions.height / 2 },  .config = { .textElementConfig = &Clay__DebugView_ErrorTextConfig }, .text = CLAY_STRING("Clay Error: Layout elements exceeded CLAY_MAX_ELEMENT_COUNT"), .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT });
     } else {
         Clay__CalculateFinalLayout();
     }
