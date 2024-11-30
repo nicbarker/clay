@@ -2239,7 +2239,6 @@ void Clay__CalculateFinalLayout() {
             textElementData->wrappedLines.length++;
             continue;
         }
-        int32_t previousWordIndex = -1;
         int32_t wordIndex = measureTextCacheItem->measuredWordsStartIndex;
         while (wordIndex != -1) {
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArray_Get(&Clay__measuredWords, wordIndex);
