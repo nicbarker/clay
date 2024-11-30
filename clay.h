@@ -487,7 +487,7 @@ extern bool Clay__debugMaxElementsLatch;
 #endif
 
 #ifndef CLAY_MAX_ELEMENT_COUNT
-#define CLAY_MAX_ELEMENT_COUNT 512
+#define CLAY_MAX_ELEMENT_COUNT 8192
 #endif
 
 #ifndef CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT
