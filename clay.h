@@ -491,7 +491,7 @@ extern bool Clay__debugMaxElementsLatch;
 #endif
 
 #ifndef CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT
-#define CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT (CLAY_MAX_ELEMENT_COUNT / 2)
+#define CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT 128
 #endif
 
 #ifndef CLAY_MEASURE_TEXT_CACHE_SIZE
@@ -1557,10 +1557,10 @@ Clay__MeasuredWord *Clay__AddMeasuredWord(Clay__MeasuredWord word, Clay__Measure
         uint32_t newItemIndex = Clay__int32_tArray_Get(&Clay__measuredWordsFreeList, (int)Clay__measuredWordsFreeList.length - 1);
         Clay__measuredWordsFreeList.length--;
         Clay__MeasuredWordArray_Set(&Clay__measuredWords, (int)newItemIndex, word);
-        previousWord->next = newItemIndex;
+        previousWord->next = (int32_t)newItemIndex;
         return Clay__MeasuredWordArray_Get(&Clay__measuredWords, (int)newItemIndex);
     } else {
-        previousWord->next = Clay__measuredWords.length;
+        previousWord->next = (int32_t)Clay__measuredWords.length;
         return Clay__MeasuredWordArray_Add(&Clay__measuredWords, word);
     }
 }
@@ -1994,7 +1994,7 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
     Clay__layoutElementsHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMapInternal = Clay__MeasureTextCacheItemArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measureTextHashMapInternalFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
-    Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
+    Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MEASURE_TEXT_CACHE_SIZE, arena);
     Clay__measureTextHashMap = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(CLAY_MEASURE_TEXT_CACHE_SIZE, arena);
     Clay__pointerOverIds = Clay__ElementIdArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
