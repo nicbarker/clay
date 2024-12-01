@@ -482,7 +482,7 @@ extern bool Clay__debugMaxElementsLatch;
 #ifdef CLAY_IMPLEMENTATION
 #undef CLAY_IMPLEMENTATION
 
-#ifdef CLAY_OVERFLOW_TRAP
+#ifdef CLAY_OVERFLOW_TRAP1
     #include "signal.h"
 #endif
 
