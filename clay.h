@@ -487,7 +487,7 @@ extern bool Clay__debugMaxElementsLatch;
 #endif
 
 #ifndef CLAY_MAX_ELEMENT_COUNT
-#define CLAY_MAX_ELEMENT_COUNT 256
+#define CLAY_MAX_ELEMENT_COUNT 8192
 #endif
 
 #ifndef CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT
@@ -515,6 +515,15 @@ void Clay__Noop() {};
 
 Clay_String CLAY__SPACECHAR = CLAY__INIT(Clay_String) { .length = 1, .chars = " " };
 Clay_String CLAY__STRING_DEFAULT = CLAY__INIT(Clay_String) { .length = 0, .chars = NULL };
+
+typedef struct
+{
+    bool maxElementsExceeded;
+    bool maxRenderCommandsExceeded;
+    bool maxStringMeasureCacheExceeded;
+} Clay_BooleanWarnings;
+
+Clay_BooleanWarnings Clay__booleanWarnings;
 
 typedef struct
 {
@@ -829,9 +838,9 @@ Clay_CustomElementConfig *Clay__CustomElementConfigArray_Add(Clay__CustomElement
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ScrollElementConfig CLAY__SCROLL_CONTAINER_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ScrollElementConfig ) {};
+Clay_ScrollElementConfig CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ScrollElementConfig ) {};
 
-// __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ScrollElementConfig NAME=Clay__ScrollElementConfigArray DEFAULT_VALUE=&CLAY__SCROLL_CONTAINER_ELEMENT_CONFIG_DEFAULT
+// __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ScrollElementConfig NAME=Clay__ScrollElementConfigArray DEFAULT_VALUE=&CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
 typedef struct
 {
@@ -847,7 +856,7 @@ Clay_ScrollElementConfig *Clay__ScrollElementConfigArray_Add(Clay__ScrollElement
 		array->internalArray[array->length++] = item;
 		return &array->internalArray[array->length - 1];
 	}
-	return &CLAY__SCROLL_CONTAINER_ELEMENT_CONFIG_DEFAULT;
+	return &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
@@ -906,9 +915,9 @@ Clay__TextElementData *Clay__TextElementDataArray_Add(Clay__TextElementDataArray
 #pragma endregion
 // __GENERATED__ template
 
-Clay_BorderElementConfig CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_BorderElementConfig ) {};
+Clay_BorderElementConfig CLAY__BORDER_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_BorderElementConfig ) {};
 
-// __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_BorderElementConfig NAME=Clay__BorderElementConfigArray DEFAULT_VALUE=&CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT
+// __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_BorderElementConfig NAME=Clay__BorderElementConfigArray DEFAULT_VALUE=&CLAY__BORDER_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
 typedef struct
 {
@@ -924,7 +933,7 @@ Clay_BorderElementConfig *Clay__BorderElementConfigArray_Add(Clay__BorderElement
 		array->internalArray[array->length++] = item;
 		return &array->internalArray[array->length - 1];
 	}
-	return &CLAY__BORDER_CONTAINER_ELEMENT_CONFIG_DEFAULT;
+	return &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
@@ -2219,6 +2228,44 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
     }
 }
 
+Clay_String Clay__IntToString(int integer) {
+    if (integer == 0) {
+        return CLAY__INIT(Clay_String) { .length = 1, .chars = "0" };
+    }
+    char *chars = (char *)(Clay__dynamicStringData.internalArray + Clay__dynamicStringData.length);
+    int length = 0;
+    int sign = integer;
+
+    if (integer < 0) {
+        integer = -integer;
+    }
+    while (integer > 0) {
+        chars[length++] = (char)(integer % 10 + '0');
+        integer /= 10;
+    }
+
+    if (sign < 0) {
+        chars[length++] = '-';
+    }
+
+    // Reverse the string to get the correct order
+    for (int j = 0, k = length - 1; j < k; j++, k--) {
+        char temp = chars[j];
+        chars[j] = chars[k];
+        chars[k] = temp;
+    }
+    Clay__dynamicStringData.length += length;
+    return CLAY__INIT(Clay_String) { .length = length, .chars = chars };
+}
+
+void Clay__AddRenderCommand(Clay_RenderCommand renderCommand) {
+    if (Clay__renderCommands.length < Clay__renderCommands.capacity - 1) {
+        Clay_RenderCommandArray_Add(&Clay__renderCommands, renderCommand);
+    } else {
+        Clay__booleanWarnings.maxRenderCommandsExceeded = true;
+    }
+}
+
 void Clay__CalculateFinalLayout() {
     // Calculate sizing along the X axis
     Clay__SizeContainersAlongAxis(true);
@@ -2241,6 +2288,10 @@ void Clay__CalculateFinalLayout() {
         }
         int32_t wordIndex = measureTextCacheItem->measuredWordsStartIndex;
         while (wordIndex != -1) {
+            if (Clay__wrappedTextLines.length > Clay__wrappedTextLines.capacity - 1) {
+                Clay__booleanWarnings.maxStringMeasureCacheExceeded = true;
+                break;
+            }
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArray_Get(&Clay__measuredWords, wordIndex);
             // Only word on the line is too large, just render it anyway
             if (lineLengthChars == 0 && lineWidth + measuredWord->width > containerElement->dimensions.width) {
@@ -2250,6 +2301,7 @@ void Clay__CalculateFinalLayout() {
             }
             // measuredWord->length == 0 means a newline character
             else if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
+                // Wrapped text lines list has overflowed, just render out the line
                 Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
                 textElementData->wrappedLines.length++;
                 if (lineLengthChars == 0 || measuredWord->length == 0) {
@@ -2263,7 +2315,6 @@ void Clay__CalculateFinalLayout() {
                 lineLengthChars += measuredWord->length;
                 wordIndex = measuredWord->next;
             }
-
         }
         if (lineLengthChars > 0) {
             Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
@@ -2400,7 +2451,7 @@ void Clay__CalculateFinalLayout() {
         if (root->clipElementId) {
             Clay_LayoutElementHashMapItem *clipHashMapItem = Clay__GetHashMapItem(root->clipElementId);
             if (clipHashMapItem) {
-                Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
@@ -2527,7 +2578,7 @@ void Clay__CalculateFinalLayout() {
                                 if (wrappedLine.length == 0) {
                                     continue;
                                 }
-                                Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                                Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                                     .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, currentElement->dimensions.width, naturalLineHeight }, // TODO width
                                     .config = configUnion,
                                     .text = wrappedLine,
@@ -2549,7 +2600,7 @@ void Clay__CalculateFinalLayout() {
                         default: break;
                     }
                     if (shouldRender) {
-                        Clay_RenderCommandArray_Add(&Clay__renderCommands, renderCommand);
+                        Clay__AddRenderCommand(renderCommand);
                     }
                     if (offscreen) {
                         // NOTE: You may be tempted to try an early return / continue if an element is off screen. Why bother calculating layout for its children, right?
@@ -2623,7 +2674,7 @@ void Clay__CalculateFinalLayout() {
                             for (int i = 0; i < currentElement->children.length; ++i) {
                                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
                                 if (i > 0) {
-                                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                                    Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                                         .boundingBox = { currentElementBoundingBox.x + borderOffset.x + scrollOffset.x, currentElementBoundingBox.y + scrollOffset.y, (float)borderConfig->betweenChildren.width, currentElement->dimensions.height },
                                         .config = { rectangleConfig },
                                         .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
@@ -2636,7 +2687,7 @@ void Clay__CalculateFinalLayout() {
                             for (int i = 0; i < currentElement->children.length; ++i) {
                                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
                                 if (i > 0) {
-                                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                                    Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                                         .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y, currentElement->dimensions.width, (float)borderConfig->betweenChildren.width },
                                         .config = { rectangleConfig },
                                         .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
@@ -2650,7 +2701,7 @@ void Clay__CalculateFinalLayout() {
                 }
                 // This exists because the scissor needs to end _after_ borders between elements
                 if (closeScrollElement) {
-                    Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) {
+                    Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                         .id = Clay__RehashWithNumber(currentElement->id, 11),
                        .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
                     });
@@ -2709,7 +2760,7 @@ void Clay__CalculateFinalLayout() {
         }
 
         if (root->clipElementId) {
-            Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand) { .id = Clay__RehashWithNumber(rootElement->id, 11), .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
+            Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) { .id = Clay__RehashWithNumber(rootElement->id, 11), .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
         }
     }
 }
@@ -2729,7 +2780,6 @@ void Clay__AttachId(Clay_ElementId elementId) {
 
 void Clay__AttachLayoutConfig(Clay_LayoutConfig *config) {
     if (Clay__debugMaxElementsLatch) {
-        Clay__GetOpenLayoutElement()->layoutConfig = &CLAY_LAYOUT_DEFAULT;
         return;
     }
     Clay__GetOpenLayoutElement()->layoutConfig = config;
@@ -2742,14 +2792,14 @@ void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConf
     openLayoutElement->elementConfigs.length++;
     Clay__ElementConfigArray_Add(&Clay__elementConfigBuffer, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
 }
-inline Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) { return Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
-inline Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) { return Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
-inline Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) { return Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
-inline Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) { return Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
-inline Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) { return Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
-inline Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) { return Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
-inline Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) { return Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
-inline Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) { return Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
+inline Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
+inline Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
+inline Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__TEXT_ELEMENT_CONFIG_DEFAULT : Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
+inline Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
+inline Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
+inline Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
+inline Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
+inline Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
 Clay_Color CLAY__DEBUGVIEW_COLOR_1 = CLAY__INIT(Clay_Color) {58, 56, 52, 255};
@@ -2762,36 +2812,6 @@ const int CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
 Clay_TextElementConfig Clay__DebugView_TextNameConfig = CLAY__INIT(Clay_TextElementConfig) {.textColor = {238, 226, 231, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
 Clay_LayoutConfig Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__INIT(Clay_LayoutConfig) {};
-
-Clay_String Clay__IntToString(int integer) {
-    if (integer == 0) {
-        return CLAY__INIT(Clay_String) { .length = 1, .chars = "0" };
-    }
-    char *chars = (char *)(Clay__dynamicStringData.internalArray + Clay__dynamicStringData.length);
-    int length = 0;
-    int sign = integer;
-
-    if (integer < 0) {
-        integer = -integer;
-    }
-    while (integer > 0) {
-        chars[length++] = (char)(integer % 10 + '0');
-        integer /= 10;
-    }
-
-    if (sign < 0) {
-        chars[length++] = '-';
-    }
-
-    // Reverse the string to get the correct order
-    for (int j = 0, k = length - 1; j < k; j++, k--) {
-        char temp = chars[j];
-        chars[j] = chars[k];
-        chars[k] = temp;
-    }
-    Clay__dynamicStringData.length += length;
-    return CLAY__INIT(Clay_String) { .length = length, .chars = chars };
-}
 
 typedef struct
 {
@@ -3622,7 +3642,7 @@ Clay_RenderCommandArray Clay_EndLayout()
         #endif
     }
     if (Clay__debugMaxElementsLatch) {
-        Clay_RenderCommandArray_Add(&Clay__renderCommands, CLAY__INIT(Clay_RenderCommand ) { .boundingBox = { Clay__layoutDimensions.width / 2 - 59 * 4, Clay__layoutDimensions.height / 2 },  .config = { .textElementConfig = &Clay__DebugView_ErrorTextConfig }, .text = CLAY_STRING("Clay Error: Layout elements exceeded CLAY_MAX_ELEMENT_COUNT"), .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT });
+        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand ) { .boundingBox = { Clay__layoutDimensions.width / 2 - 59 * 4, Clay__layoutDimensions.height / 2 },  .config = { .textElementConfig = &Clay__DebugView_ErrorTextConfig }, .text = CLAY_STRING("Clay Error: Layout elements exceeded CLAY_MAX_ELEMENT_COUNT"), .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT });
     } else {
         Clay__CalculateFinalLayout();
     }
@@ -3640,6 +3660,9 @@ Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index) 
 }
 
 bool Clay_Hovered() {
+    if (Clay__debugMaxElementsLatch) {
+        return false;
+    }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     // If the element has no id attached at this point, we need to generate one
     if (openLayoutElement->id == 0) {
