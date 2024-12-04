@@ -2576,6 +2576,7 @@ void Clay__CalculateFinalLayout() {
                             for (int lineIndex = 0; lineIndex < currentElement->textElementData->wrappedLines.length; ++lineIndex) {
                                 Clay_String wrappedLine = currentElement->textElementData->wrappedLines.internalArray[lineIndex]; // todo range check
                                 if (wrappedLine.length == 0) {
+                                    yPosition += finalLineHeight;
                                     continue;
                                 }
                                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
