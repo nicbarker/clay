@@ -1541,8 +1541,23 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
     hash += (hash << 10);
     hash ^= (hash >> 6);
 
-    uint64_t configPointerAsNumber = (uint64_t)config;
-    hash += configPointerAsNumber;
+    hash += config->fontId;
+    hash += (hash << 10);
+    hash ^= (hash >> 6);
+
+    hash += config->fontSize;
+    hash += (hash << 10);
+    hash ^= (hash >> 6);
+
+    hash += config->lineHeight;
+    hash += (hash << 10);
+    hash ^= (hash >> 6);
+
+    hash += config->letterSpacing;
+    hash += (hash << 10);
+    hash ^= (hash >> 6);
+
+    hash += config->wrapMode;
     hash += (hash << 10);
     hash ^= (hash >> 6);
 
