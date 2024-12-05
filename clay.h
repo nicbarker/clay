@@ -2565,10 +2565,7 @@ void Clay__CalculateFinalLayout() {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE;
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: {
-                            renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_BORDER;
-                            break;
-                        }
+                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER:
                         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_NONE;
                             shouldRender = false;
@@ -2671,7 +2668,6 @@ void Clay__CalculateFinalLayout() {
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
                     closeScrollElement = true;
                     Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
-                    // todo get rid of this annoying duplication just for handling borders between elements
                     for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
                         if (mapping->layoutElement == currentElement) {
@@ -2681,10 +2677,18 @@ void Clay__CalculateFinalLayout() {
                         }
                     }
                 }
+                // Todo: culling not implemented for borders
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)) {
                     Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
                     Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
                     Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER).borderElementConfig;
+                    Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
+                            .boundingBox = currentElementBoundingBox,
+                            .config = { .borderElementConfig = borderConfig },
+                            .id = currentElement->id,
+                    };
+                    Clay__AddRenderCommand(renderCommand);
                     if (borderConfig->betweenChildren.width > 0 && borderConfig->betweenChildren.color.a > 0) {
                         Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {.color = borderConfig->betweenChildren.color});
                         Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x, (float)layoutConfig->padding.y };
