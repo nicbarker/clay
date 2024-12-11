@@ -2683,10 +2683,10 @@ void Clay__CalculateFinalLayout() {
                     Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
                     Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER).borderElementConfig;
                     Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
                             .boundingBox = currentElementBoundingBox,
                             .config = { .borderElementConfig = borderConfig },
-                            .id = currentElement->id,
+                            .id = Clay__RehashWithNumber(currentElement->id, 4),
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
                     };
                     Clay__AddRenderCommand(renderCommand);
                     if (borderConfig->betweenChildren.width > 0 && borderConfig->betweenChildren.color.a > 0) {
