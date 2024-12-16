@@ -211,6 +211,8 @@ void HighPerformancePageMobile(float lerpValue) {
 void HandleRendererButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData) {
     if (pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         ACTIVE_RENDERER_INDEX = (uint32_t)userData;
+        Clay_SetCullingEnabled(ACTIVE_RENDERER_INDEX == 1);
+        Clay_SetExternalScrollHandlingEnabled(ACTIVE_RENDERER_INDEX == 0);
     }
 }
 
@@ -364,7 +366,7 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
         }
     }
 
-    if (!mobileScreen) {
+    if (!mobileScreen && ACTIVE_RENDERER_INDEX == 1) {
         Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         Clay_Color scrollbarColor = (Clay_Color){225, 138, 50, 120};
         if (scrollbarData.mouseDown) {
@@ -399,6 +401,8 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
         debugModeEnabled = !debugModeEnabled;
         Clay_SetDebugModeEnabled(debugModeEnabled);
     }
+    Clay_SetCullingEnabled(ACTIVE_RENDERER_INDEX == 1);
+    Clay_SetExternalScrollHandlingEnabled(ACTIVE_RENDERER_INDEX == 0);
 
     Clay__debugViewHighlightColor = (Clay_Color) {105,210,231, 120};
 
