@@ -2516,9 +2516,9 @@ void Clay__CalculateFinalLayout() {
                 }
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
+                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig){}) },
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig){}) },
                 });
             }
         }
