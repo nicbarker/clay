@@ -3,7 +3,6 @@ mkdir -p build/clay                                                       \
 -Wall                                                                     \
 -Werror                                                                   \
 -Os                                                                       \
--g                                                                        \
 -DCLAY_WASM                                                               \
 -mbulk-memory                                                             \
 --target=wasm32                                                           \
