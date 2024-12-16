@@ -2563,7 +2563,7 @@ void Clay__CalculateFinalLayout() {
                                 scrollOffset.y = mapping->scrollPosition.y;
                             }
                             if (Clay__externalScrollHandlingEnabled) {
-                                scrollOffset = (Clay_Vector2) {};
+                                scrollOffset = CLAY__INIT(Clay_Vector2) {};
                             }
                             break;
                         }
@@ -2727,7 +2727,7 @@ void Clay__CalculateFinalLayout() {
                             if (scrollConfig->horizontal) { scrollOffset.x = mapping->scrollPosition.x; }
                             if (scrollConfig->vertical) { scrollOffset.y = mapping->scrollPosition.y; }
                             if (Clay__externalScrollHandlingEnabled) {
-                                scrollOffset = (Clay_Vector2) {};
+                                scrollOffset = CLAY__INIT(Clay_Vector2) {};
                             }
                             break;
                         }
