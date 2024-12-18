@@ -447,8 +447,10 @@ bool Clay_Hovered();
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
 void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config));
+void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId));
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
+void Clay_SetCullingEnabled(bool enabled);
 
 // Internal API functions required by macros
 void Clay__OpenElement();
@@ -1345,6 +1347,7 @@ typedef struct
     uint32_t parentId; // This can be zero in the case of the root layout tree
     uint32_t clipElementId; // This can be zero if there is no clip element
     uint32_t zIndex;
+    Clay_Vector2 pointerOffset; // Only used when scroll containers are managed externally
 } Clay__LayoutElementTreeRoot;
 
 Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = CLAY__INIT(Clay__LayoutElementTreeRoot) {};
@@ -1401,6 +1404,8 @@ Clay_Dimensions Clay__layoutDimensions = CLAY__INIT(Clay_Dimensions){};
 Clay_ElementId Clay__dynamicElementIndexBaseHash = CLAY__INIT(Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
 uint32_t Clay__dynamicElementIndex = 0;
 bool Clay__debugModeEnabled = false;
+bool Clay__disableCulling = false;
+bool Clay__externalScrollHandlingEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
 uint32_t Clay__debugViewWidth = 400;
 Clay_Color Clay__debugViewHighlightColor = CLAY__INIT(Clay_Color) { 168, 66, 28, 100 };
@@ -1417,6 +1422,7 @@ Clay__int32_tArray Clay__layoutElementChildrenBuffer;
 Clay__TextElementDataArray Clay__textElementData;
 Clay__LayoutElementPointerArray Clay__imageElementPointers;
 Clay__int32_tArray Clay__reusableElementIndexBuffer;
+Clay__int32_tArray Clay__layoutElementClipElementIds;
 // Configs
 Clay__LayoutConfigArray Clay__layoutConfigs;
 Clay__ElementConfigArray Clay__elementConfigBuffer;
@@ -1449,8 +1455,10 @@ Clay__DebugElementDataArray Clay__debugElementData;
 
 #if CLAY_WASM
     __attribute__((import_module("clay"), import_name("measureTextFunction"))) Clay_Dimensions Clay__MeasureText(Clay_String *text, Clay_TextElementConfig *config);
+    __attribute__((import_module("clay"), import_name("queryScrollOffsetFunction"))) Clay_Vector2 Clay__QueryScrollOffset(uint32_t elementId);
 #else
     Clay_Dimensions (*Clay__MeasureText)(Clay_String *text, Clay_TextElementConfig *config);
+    Clay_Vector2 (*Clay__QueryScrollOffset)(uint32_t elementId);
 #endif
 
 Clay_LayoutElement* Clay__GetOpenLayoutElement() {
@@ -1792,6 +1800,7 @@ void Clay__ElementPostConfiguration() {
                     }
                 } else {
                     Clay_LayoutElementHashMapItem *parentItem = Clay__GetHashMapItem(floatingConfig->parentId);
+                    clipElementId = Clay__int32_tArray_Get(&Clay__layoutElementClipElementIds, parentItem->layoutElement - Clay__layoutElements.internalArray);
                     if (!parentItem) {
                         Clay__WarningArray_Add(&Clay_warnings, CLAY__INIT(Clay__Warning) { CLAY_STRING("Clay Warning: Couldn't find parent container to attach floating container to.") });
                     }
@@ -1817,7 +1826,10 @@ void Clay__ElementPostConfiguration() {
                     }
                 }
                 if (!scrollOffset) {
-                    Clay__ScrollContainerDataInternalArray_Add(&Clay__scrollContainerDatas, CLAY__INIT(Clay__ScrollContainerDataInternal){.layoutElement = openLayoutElement, .scrollOrigin = {-1,-1}, .elementId = openLayoutElement->id, .openThisFrame = true});
+                    scrollOffset = Clay__ScrollContainerDataInternalArray_Add(&Clay__scrollContainerDatas, CLAY__INIT(Clay__ScrollContainerDataInternal){.layoutElement = openLayoutElement, .scrollOrigin = {-1,-1}, .elementId = openLayoutElement->id, .openThisFrame = true});
+                }
+                if (Clay__externalScrollHandlingEnabled) {
+                    scrollOffset->scrollPosition = Clay__QueryScrollOffset(scrollOffset->elementId);
                 }
                 break;
             }
@@ -1934,6 +1946,11 @@ void Clay__OpenElement() {
     Clay_LayoutElement layoutElement = CLAY__INIT(Clay_LayoutElement) {};
     Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
     Clay__int32_tArray_Add(&Clay__openLayoutElementStack, Clay__layoutElements.length - 1);
+    if (Clay__openClipElementStack.length > 0) {
+        Clay__int32_tArray_Set(&Clay__layoutElementClipElementIds, Clay__layoutElements.length - 1, Clay__int32_tArray_Get(&Clay__openClipElementStack, (int)Clay__openClipElementStack.length - 1));
+    } else {
+        Clay__int32_tArray_Set(&Clay__layoutElementClipElementIds, Clay__layoutElements.length - 1, 0);
+    }
 }
 
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig) {
@@ -2001,6 +2018,7 @@ void Clay__InitializeEphemeralMemory(Clay_Arena *arena) {
     Clay__treeNodeVisited.length = Clay__treeNodeVisited.capacity; // This array is accessed directly rather than behaving as a list
     Clay__openClipElementStack = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__reusableElementIndexBuffer = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
+    Clay__layoutElementClipElementIds = Clay__int32_tArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
     Clay__dynamicStringData = Clay__CharArray_Allocate_Arena(CLAY_MAX_ELEMENT_COUNT, arena);
 }
 
@@ -2283,6 +2301,17 @@ void Clay__AddRenderCommand(Clay_RenderCommand renderCommand) {
     }
 }
 
+bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
+    if (Clay__disableCulling) {
+        return false;
+    }
+
+    return (boundingBox->x > (float)Clay__layoutDimensions.width) ||
+           (boundingBox->y > (float)Clay__layoutDimensions.height) ||
+           (boundingBox->x + boundingBox->width < 0) ||
+           (boundingBox->y + boundingBox->height < 0);
+}
+
 void Clay__CalculateFinalLayout() {
     // Calculate sizing along the X axis
     Clay__SizeContainersAlongAxis(true);
@@ -2468,8 +2497,26 @@ void Clay__CalculateFinalLayout() {
         if (root->clipElementId) {
             Clay_LayoutElementHashMapItem *clipHashMapItem = Clay__GetHashMapItem(root->clipElementId);
             if (clipHashMapItem) {
+                // Floating elements that are attached to scrolling contents won't be correctly positioned if external scroll handling is enabled, fix here
+                if (Clay__externalScrollHandlingEnabled) {
+                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(clipHashMapItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+                    for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
+                        Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
+                        if (mapping->layoutElement == clipHashMapItem->layoutElement) {
+                            root->pointerOffset = mapping->scrollPosition;
+                            if (scrollConfig->horizontal) {
+                                rootPosition.x += mapping->scrollPosition.x;
+                            }
+                            if (scrollConfig->vertical) {
+                                rootPosition.y += mapping->scrollPosition.y;
+                            }
+                            break;
+                        }
+                    }
+                }
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
+                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig){}) },
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
                 });
@@ -2515,6 +2562,9 @@ void Clay__CalculateFinalLayout() {
                             if (scrollConfig->vertical) {
                                 scrollOffset.y = mapping->scrollPosition.y;
                             }
+                            if (Clay__externalScrollHandlingEnabled) {
+                                scrollOffset = CLAY__INIT(Clay_Vector2) {};
+                            }
                             break;
                         }
                     }
@@ -2530,7 +2580,7 @@ void Clay__CalculateFinalLayout() {
                     sortedConfigIndexes[elementConfigIndex] = elementConfigIndex;
                 }
                 int sortMax = currentElement->elementConfigs.length - 1;
-                while (sortMax > 0) { // dumb bubble sort
+                while (sortMax > 0) { // todo dumb bubble sort
                     for (int i = 0; i < sortMax; ++i) {
                         int current = sortedConfigIndexes[i];
                         int next = sortedConfigIndexes[i + 1];
@@ -2553,19 +2603,18 @@ void Clay__CalculateFinalLayout() {
                         .id = currentElement->id,
                     };
 
-                    #ifndef CLAY_DISABLE_CULLING
+                    bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
-                    bool offscreen = currentElementBoundingBox.x > (float)Clay__layoutDimensions.width || currentElementBoundingBox.y > (float)Clay__layoutDimensions.height || currentElementBoundingBox.x + currentElementBoundingBox.width < 0 || currentElementBoundingBox.y + currentElementBoundingBox.height < 0;
                     bool shouldRender = !offscreen;
-                    #elif
-                    bool shouldRender = true;
-                    #endif
                     switch (elementConfig->type) {
                         case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE;
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER:
+                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: {
+                            shouldRender = false;
+                            break;
+                        }
                         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_NONE;
                             shouldRender = false;
@@ -2573,6 +2622,7 @@ void Clay__CalculateFinalLayout() {
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START;
+                            shouldRender = true;
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
@@ -2580,6 +2630,9 @@ void Clay__CalculateFinalLayout() {
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_TEXT: {
+                            if (!shouldRender) {
+                                break;
+                            }
                             shouldRender = false;
                             Clay_ElementConfigUnion configUnion = elementConfig->config;
                             Clay_TextElementConfig *textElementConfig = configUnion.textElementConfig;
@@ -2602,7 +2655,7 @@ void Clay__CalculateFinalLayout() {
                                 });
                                 yPosition += finalLineHeight;
 
-                                if (currentElementBoundingBox.y + yPosition > Clay__layoutDimensions.height) {
+                                if (!Clay__disableCulling && (currentElementBoundingBox.y + yPosition > Clay__layoutDimensions.height)) {
                                     break;
                                 }
                             }
@@ -2673,50 +2726,57 @@ void Clay__CalculateFinalLayout() {
                         if (mapping->layoutElement == currentElement) {
                             if (scrollConfig->horizontal) { scrollOffset.x = mapping->scrollPosition.x; }
                             if (scrollConfig->vertical) { scrollOffset.y = mapping->scrollPosition.y; }
+                            if (Clay__externalScrollHandlingEnabled) {
+                                scrollOffset = CLAY__INIT(Clay_Vector2) {};
+                            }
                             break;
                         }
                     }
                 }
-                // Todo: culling not implemented for borders
+
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)) {
                     Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
                     Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
-                    Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER).borderElementConfig;
-                    Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
-                            .boundingBox = currentElementBoundingBox,
-                            .config = { .borderElementConfig = borderConfig },
-                            .id = Clay__RehashWithNumber(currentElement->id, 4),
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
-                    };
-                    Clay__AddRenderCommand(renderCommand);
-                    if (borderConfig->betweenChildren.width > 0 && borderConfig->betweenChildren.color.a > 0) {
-                        Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {.color = borderConfig->betweenChildren.color});
-                        Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x, (float)layoutConfig->padding.y };
-                        if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-                            for (int i = 0; i < currentElement->children.length; ++i) {
-                                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
-                                if (i > 0) {
-                                    Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                        .boundingBox = { currentElementBoundingBox.x + borderOffset.x + scrollOffset.x, currentElementBoundingBox.y + scrollOffset.y, (float)borderConfig->betweenChildren.width, currentElement->dimensions.height },
-                                        .config = { rectangleConfig },
-                                        .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
-                                        .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-                                    });
+
+                    // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
+                    if (!Clay__ElementIsOffscreen(&currentElementBoundingBox)) {
+                        Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER).borderElementConfig;
+                        Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
+                                .boundingBox = currentElementBoundingBox,
+                                .config = { .borderElementConfig = borderConfig },
+                                .id = Clay__RehashWithNumber(currentElement->id, 4),
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                        if (borderConfig->betweenChildren.width > 0 && borderConfig->betweenChildren.color.a > 0) {
+                            Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {.color = borderConfig->betweenChildren.color});
+                            Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x, (float)layoutConfig->padding.y };
+                            if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+                                for (int i = 0; i < currentElement->children.length; ++i) {
+                                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
+                                    if (i > 0) {
+                                        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                                            .boundingBox = { currentElementBoundingBox.x + borderOffset.x + scrollOffset.x, currentElementBoundingBox.y + scrollOffset.y, (float)borderConfig->betweenChildren.width, currentElement->dimensions.height },
+                                            .config = { rectangleConfig },
+                                            .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
+                                            .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                                        });
+                                    }
+                                    borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap / 2);
                                 }
-                                borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap / 2);
-                            }
-                        } else {
-                            for (int i = 0; i < currentElement->children.length; ++i) {
-                                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
-                                if (i > 0) {
-                                    Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                        .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y, currentElement->dimensions.width, (float)borderConfig->betweenChildren.width },
-                                        .config = { rectangleConfig },
-                                        .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
-                                        .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-                                    });
+                            } else {
+                                for (int i = 0; i < currentElement->children.length; ++i) {
+                                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
+                                    if (i > 0) {
+                                        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                                                .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y, currentElement->dimensions.width, (float)borderConfig->betweenChildren.width },
+                                                .config = { rectangleConfig },
+                                                .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
+                                                .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                                        });
+                                    }
+                                    borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap / 2);
                                 }
-                                borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap / 2);
                             }
                         }
                     }
@@ -2901,12 +2961,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
 
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
-            Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
-            #ifndef CLAY_DISABLE_CULLING
-                bool offscreen = currentElementBoundingBox.x > (float)Clay__layoutDimensions.width || currentElementBoundingBox.y > (float)Clay__layoutDimensions.height || currentElementBoundingBox.x + currentElementBoundingBox.width < 0 || currentElementBoundingBox.y + currentElementBoundingBox.height < 0;
-            #elif
-                bool offscreen = false;
-            #endif
+            bool offscreen = Clay__ElementIsOffscreen(&currentElementData->boundingBox);
             if (Clay__debugSelectedElementId == currentElement->id) {
                 layoutData.selectedElementRowIndex = layoutData.rowCount;
             }
@@ -2991,14 +3046,12 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
 
     if (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         Clay_ElementId collapseButtonId = Clay__HashString(CLAY_STRING("Clay__DebugView_CollapseElement"), 0, 0);
-        if (Clay__pointerInfo.position.x > Clay__layoutDimensions.width - (float)Clay__debugViewWidth && Clay__pointerInfo.position.x < Clay__layoutDimensions.width && Clay__pointerInfo.position.y > 0 && Clay__pointerInfo.position.y < Clay__layoutDimensions.height) {
-            for (int i = (int)Clay__pointerOverIds.length - 1; i >= 0; i--) {
-                Clay_ElementId *elementId = Clay__ElementIdArray_Get(&Clay__pointerOverIds, i);
-                if (elementId->baseId == collapseButtonId.baseId) {
-                    Clay_LayoutElementHashMapItem *highlightedItem = Clay__GetHashMapItem(elementId->offset);
-                    highlightedItem->debugData->collapsed = !highlightedItem->debugData->collapsed;
-                    break;
-                }
+        for (int i = (int)Clay__pointerOverIds.length - 1; i >= 0; i--) {
+            Clay_ElementId *elementId = Clay__ElementIdArray_Get(&Clay__pointerOverIds, i);
+            if (elementId->baseId == collapseButtonId.baseId) {
+                Clay_LayoutElementHashMapItem *highlightedItem = Clay__GetHashMapItem(elementId->offset);
+                highlightedItem->debugData->collapsed = !highlightedItem->debugData->collapsed;
+                break;
             }
         }
     }
@@ -3118,7 +3171,9 @@ void Clay__RenderDebugView() {
     for (int i = 0; i < Clay__scrollContainerDatas.length; ++i) {
         Clay__ScrollContainerDataInternal *scrollContainerData = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
         if (scrollContainerData->elementId == scrollId.id) {
-            scrollYOffset = scrollContainerData->scrollPosition.y;
+            if (!Clay__externalScrollHandlingEnabled) {
+                scrollYOffset = scrollContainerData->scrollPosition.y;
+            }
             break;
         }
     }
@@ -3439,6 +3494,12 @@ void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_Str
 }
 #endif
 
+#ifndef CLAY_WASM
+void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId)) {
+    Clay__QueryScrollOffset = queryScrollOffsetFunction;
+}
+#endif
+
 CLAY_WASM_EXPORT("Clay_SetLayoutDimensions")
 void Clay_SetLayoutDimensions(Clay_Dimensions dimensions) {
     Clay__layoutDimensions = dimensions;
@@ -3465,11 +3526,16 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1));
             Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO think of a way around this, maybe the fact that it's essentially a binary tree limits the cost, but the worst case is not great
-            if (mapItem && Clay__PointIsInsideRect(position, mapItem->boundingBox)) {
-                if (mapItem->onHoverFunction) {
-                    mapItem->onHoverFunction(mapItem->elementId, Clay__pointerInfo, mapItem->hoverFunctionUserData);
+            Clay_BoundingBox elementBox = mapItem->boundingBox;
+            elementBox.x -= root->pointerOffset.x;
+            elementBox.y -= root->pointerOffset.y;
+            if (mapItem) {
+                if ((Clay__PointIsInsideRect(position, elementBox))) {
+                    if (mapItem->onHoverFunction) {
+                        mapItem->onHoverFunction(mapItem->elementId, Clay__pointerInfo, mapItem->hoverFunctionUserData);
+                    }
+                    Clay__ElementIdArray_Add(&Clay__pointerOverIds, mapItem->elementId);
                 }
-                Clay__ElementIdArray_Add(&Clay__pointerOverIds, mapItem->elementId);
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
                     dfsBuffer.length--;
                     continue;
@@ -3741,6 +3807,16 @@ Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
 CLAY_WASM_EXPORT("Clay_SetDebugModeEnabled")
 void Clay_SetDebugModeEnabled(bool enabled) {
     Clay__debugModeEnabled = enabled;
+}
+
+CLAY_WASM_EXPORT("Clay_SetCullingEnabled")
+void Clay_SetCullingEnabled(bool enabled) {
+    Clay__disableCulling = !enabled;
+}
+
+CLAY_WASM_EXPORT("Clay_SetExternalScrollHandlingEnabled")
+void Clay_SetExternalScrollHandlingEnabled(bool enabled) {
+    Clay__externalScrollHandlingEnabled = enabled;
 }
 
 #endif //CLAY_IMPLEMENTATION

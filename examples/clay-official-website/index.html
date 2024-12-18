@@ -42,6 +42,7 @@
             position: absolute;
             box-sizing: border-box;
             -webkit-backface-visibility: hidden;
+            pointer-events: none;
         }
 
         a {
@@ -52,6 +53,11 @@
         .text {
             pointer-events: all;
             white-space: pre;
+        }
+
+        /* TODO special exception for text selection in debug tools */
+        [id='2067877626'] > * {
+            pointer-events: none !important;
         }
     </style>
 </head>
@@ -123,6 +129,10 @@
        { name: 'wrapMode', type: 'uint32_t' },
        { name: 'disablePointerEvents', type: 'uint8_t' }
     ]};
+    let scrollConfigDefinition = { name: 'text', type: 'struct', members: [
+        { name: 'horizontal', type: 'bool' },
+        { name: 'vertical', type: 'bool' },
+    ]};
     let imageConfigDefinition = { name: 'image', type: 'struct', members: [
         { name: 'imageData', type: 'uint32_t' },
         { name: 'sourceDimensions', type: 'struct', members: [
@@ -170,6 +180,7 @@
             case 'uint32_t': return 4;
             case 'uint16_t': return 2;
             case 'uint8_t': return 1;
+            case 'bool': return 1;
             default: {
                 throw "Unimplemented C data type " + definition.type
             }
@@ -196,7 +207,8 @@
             case 'float': return { value: memoryDataView.getFloat32(address, true), __size: 4 };
             case 'uint32_t': return { value: memoryDataView.getUint32(address, true), __size: 4 };
             case 'uint16_t': return { value: memoryDataView.getUint16(address, true), __size: 2 };
-            case 'uint8_t': return { value: memoryDataView.getUint16(address, true), __size: 1 };
+            case 'uint8_t': return { value: memoryDataView.getUint8(address, true), __size: 1 };
+            case 'bool': return { value: memoryDataView.getUint8(address, true), __size: 1 };
             default: {
                 throw "Unimplemented C data type " + definition.type
             }
@@ -228,7 +240,7 @@
         window.arrowKeyDownPressedThisFrame = false;
         window.arrowKeyUpPressedThisFrame = false;
         let zeroTimeout = null;
-        addEventListener("wheel", (event) => {
+        document.addEventListener("wheel", (event) => {
             window.mouseWheelXThisFrame = event.deltaX * -0.1;
             window.mouseWheelYThisFrame = event.deltaY * -0.1;
             clearTimeout(zeroTimeout);
@@ -241,8 +253,17 @@
         function handleTouch (event) {
             if (event.touches.length === 1) {
                 window.touchDown = true;
-                window.mousePositionXThisFrame = event.changedTouches[0].pageX;
-                window.mousePositionYThisFrame = event.changedTouches[0].pageY;
+                let target = event.target;
+                let scrollTop = 0;
+                let scrollLeft = 0;
+                let activeRendererIndex = memoryDataView.getUint32(instance.exports.ACTIVE_RENDERER_INDEX.value, true);
+                while (activeRendererIndex !== 1 && target) {
+                    scrollLeft += target.scrollLeft;
+                    scrollTop += target.scrollTop;
+                    target = target.parentElement;
+                }
+                window.mousePositionXThisFrame = event.changedTouches[0].pageX + scrollLeft;
+                window.mousePositionYThisFrame = event.changedTouches[0].pageY + scrollTop;
             }
         }
 
@@ -255,8 +276,17 @@
         })
 
         document.addEventListener("mousemove", (event) => {
-            window.mousePositionXThisFrame = event.x;
-            window.mousePositionYThisFrame = event.y;
+            let target = event.target;
+            let scrollTop = 0;
+            let scrollLeft = 0;
+            let activeRendererIndex = memoryDataView.getUint32(instance.exports.ACTIVE_RENDERER_INDEX.value, true);
+            while (activeRendererIndex !== 1 && target) {
+                scrollLeft += target.scrollLeft;
+                scrollTop += target.scrollTop;
+                target = target.parentElement;
+            }
+            window.mousePositionXThisFrame = event.x + scrollLeft;
+            window.mousePositionYThisFrame = event.y + scrollTop;
         });
 
         document.addEventListener("mousedown", (event) => {
@@ -290,6 +320,13 @@
                 let sourceDimensions = getTextDimensions(text, `${Math.round(textConfig.fontSize.value * GLOBAL_FONT_SCALING_FACTOR)}px ${fontsById[textConfig.fontId.value]}`);
                 memoryDataView.setFloat32(addressOfDimensions, sourceDimensions.width, true);
                 memoryDataView.setFloat32(addressOfDimensions + 4, sourceDimensions.height, true);
+            },
+            queryScrollOffsetFunction: (addressOfOffset, elementId) => {
+                let container = document.getElementById(elementId.toString());
+                if (container) {
+                    memoryDataView.setFloat32(addressOfOffset, -container.scrollLeft, true);
+                    memoryDataView.setFloat32(addressOfOffset + 4, -container.scrollTop, true);
+                }
             }},
         };
         const { instance } = await WebAssembly.instantiateStreaming(
@@ -485,6 +522,15 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_START): {
                     scissorStack.push({ nextAllocation: { x: renderCommand.boundingBox.x.value, y: renderCommand.boundingBox.y.value }, element, nextElementIndex: 0 });
+                    let config = readStructAtAddress(renderCommand.config.value, scrollConfigDefinition);
+                    if (config.horizontal.value) {
+                        element.style.overflowX = 'scroll';
+                        element.style.pointerEvents = 'auto';
+                    }
+                    if (config.vertical.value) {
+                        element.style.overflowY = 'scroll';
+                        element.style.pointerEvents = 'auto';
+                    }
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_END): {
@@ -698,7 +744,11 @@
         const elapsed = currentTime - previousFrameTime;
         previousFrameTime = currentTime;
         let activeRendererIndex = memoryDataView.getUint32(instance.exports.ACTIVE_RENDERER_INDEX.value, true);
-        instance.exports.UpdateDrawFrame(scratchSpaceAddress, window.innerWidth, window.innerHeight, window.mouseWheelXThisFrame, window.mouseWheelYThisFrame, window.mousePositionXThisFrame, window.mousePositionYThisFrame, window.touchDown, window.mouseDown, window.arrowKeyDownPressedThisFrame, window.arrowKeyUpPressedThisFrame, window.dKeyPressedThisFrame, elapsed / 1000);
+        if (activeRendererIndex === 0) {
+            instance.exports.UpdateDrawFrame(scratchSpaceAddress, window.innerWidth, window.innerHeight, 0, 0, window.mousePositionXThisFrame, window.mousePositionYThisFrame, window.touchDown, window.mouseDown, 0, 0, window.dKeyPressedThisFrame, elapsed / 1000);
+        } else {
+            instance.exports.UpdateDrawFrame(scratchSpaceAddress, window.innerWidth, window.innerHeight, window.mouseWheelXThisFrame, window.mouseWheelYThisFrame, window.mousePositionXThisFrame, window.mousePositionYThisFrame, window.touchDown, window.mouseDown, window.arrowKeyDownPressedThisFrame, window.arrowKeyUpPressedThisFrame, window.dKeyPressedThisFrame, elapsed / 1000);
+        }
         let rendererChanged = activeRendererIndex !== window.previousActiveRendererIndex;
         switch (activeRendererIndex) {
             case 0: {
