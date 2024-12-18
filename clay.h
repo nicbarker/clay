@@ -2301,15 +2301,15 @@ void Clay__AddRenderCommand(Clay_RenderCommand renderCommand) {
     }
 }
 
-bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox, Clay_Vector2 offset) {
+bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
     if (Clay__disableCulling) {
         return false;
     }
 
-    return (boundingBox->x + offset.x > (float)Clay__layoutDimensions.width) ||
-           (boundingBox->y + offset.y > (float)Clay__layoutDimensions.height) ||
-           (boundingBox->x + offset.x + boundingBox->width < 0) ||
-           (boundingBox->y + offset.y + boundingBox->height < 0);
+    return (boundingBox->x > (float)Clay__layoutDimensions.width) ||
+           (boundingBox->y > (float)Clay__layoutDimensions.height) ||
+           (boundingBox->x + boundingBox->width < 0) ||
+           (boundingBox->y + boundingBox->height < 0);
 }
 
 void Clay__CalculateFinalLayout() {
@@ -2603,7 +2603,7 @@ void Clay__CalculateFinalLayout() {
                         .id = currentElement->id,
                     };
 
-                    bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox, CLAY__INIT(Clay_Vector2) {});
+                    bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                     bool shouldRender = !offscreen;
                     switch (elementConfig->type) {
@@ -2612,7 +2612,7 @@ void Clay__CalculateFinalLayout() {
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: {
-                            renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_BORDER;
+                            shouldRender = false;
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: {
@@ -2739,15 +2739,15 @@ void Clay__CalculateFinalLayout() {
                     Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
 
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
-                    if (!Clay__ElementIsOffscreen(&currentElementBoundingBox, scrollOffset)) {
+                    if (!Clay__ElementIsOffscreen(&currentElementBoundingBox)) {
                         Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER).borderElementConfig;
-//                        Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
-//                                .boundingBox = currentElementBoundingBox,
-//                                .config = { .borderElementConfig = borderConfig },
-//                                .id = Clay__RehashWithNumber(currentElement->id, 4),
-//                                .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
-//                        };
-//                        Clay__AddRenderCommand(renderCommand);
+                        Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
+                                .boundingBox = currentElementBoundingBox,
+                                .config = { .borderElementConfig = borderConfig },
+                                .id = Clay__RehashWithNumber(currentElement->id, 4),
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
                         if (borderConfig->betweenChildren.width > 0 && borderConfig->betweenChildren.color.a > 0) {
                             Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {.color = borderConfig->betweenChildren.color});
                             Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x, (float)layoutConfig->padding.y };
@@ -2961,7 +2961,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
 
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
-            bool offscreen = Clay__ElementIsOffscreen(&currentElementData->boundingBox, CLAY__INIT(Clay_Vector2){});
+            bool offscreen = Clay__ElementIsOffscreen(&currentElementData->boundingBox);
             if (Clay__debugSelectedElementId == currentElement->id) {
                 layoutData.selectedElementRowIndex = layoutData.rowCount;
             }
