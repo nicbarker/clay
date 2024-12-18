@@ -2603,7 +2603,7 @@ void Clay__CalculateFinalLayout() {
                         .id = currentElement->id,
                     };
 
-                    bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox, scrollOffset);
+                    bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox, CLAY__INIT(Clay_Vector2) {});
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                     bool shouldRender = !offscreen;
                     switch (elementConfig->type) {
