@@ -272,7 +272,7 @@ void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerI
 ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/clay" };
 
 // HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
-CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
+CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, &linkButton)) {
     CLAY_TEXT(CLAY_STRING("Button"), &headerTextConfig);
 }
 ```
