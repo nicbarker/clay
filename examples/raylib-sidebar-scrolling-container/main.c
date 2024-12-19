@@ -207,7 +207,7 @@ int main(void) {
     Clay_Arena clayMemory = (Clay_Arena) { .label = CLAY_STRING("Clay Memory Arena"), .memory = malloc(totalMemorySize), .capacity = totalMemorySize };
     Clay_SetMeasureTextFunction(Raylib_MeasureText);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() });
-    Clay_Raylib_Initialize(FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
+    Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
     profilePicture = LoadTextureFromImage(LoadImage("resources/profile-picture.png"));
     Raylib_fonts[FONT_ID_BODY_24] = (Raylib_Font) {
         .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
