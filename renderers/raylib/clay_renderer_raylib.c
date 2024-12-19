@@ -124,9 +124,9 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
     return textSize;
 }
 
-void Clay_Raylib_Initialize(unsigned int flags) {
+void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned int flags) {
     SetConfigFlags(flags);
-    InitWindow(1024, 768, "Clay - Raylib Renderer Example");
+    InitWindow(width, height, title);
 //    EnableEventWaiting();
 }
 
