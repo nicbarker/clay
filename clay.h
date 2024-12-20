@@ -36,6 +36,9 @@
 #define CLAY__CONFIG_WRAPPER(type, ...) (type) __VA_ARGS__
 #endif
 
+#define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 #define CLAY_LAYOUT(...) Clay__AttachLayoutConfig(Clay__StoreLayoutConfig(CLAY__CONFIG_WRAPPER(Clay_LayoutConfig, __VA_ARGS__)))
 
 #define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE))
@@ -514,9 +517,6 @@ extern bool Clay__debugMaxElementsLatch;
 #ifndef CLAY__MAXFLOAT
 #define CLAY__MAXFLOAT 3.40282346638528859812e+38F
 #endif
-
-#define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 bool Clay__warningsEnabled = true;
 
