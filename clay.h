@@ -313,7 +313,7 @@ typedef struct
 
 typedef enum {
     CLAY_POINTER_CAPTURE_MODE_CAPTURE,
-    CLAY_POINTER_CAPTURE_MODE_PARENT,
+//    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
 } Clay_PointerCaptureMode;
 
@@ -324,7 +324,7 @@ typedef struct
     uint16_t zIndex;
     uint32_t parentId;
     Clay_FloatingAttachPoints attachment;
-    Clay_PointerCaptureMode capturePointer;
+    Clay_PointerCaptureMode pointerCaptureMode;
 } Clay_FloatingElementConfig;
 
 // Custom
