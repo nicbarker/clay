@@ -314,6 +314,12 @@ typedef struct
     Clay_FloatingAttachPointType parent;
 } Clay_FloatingAttachPoints;
 
+typedef enum {
+    CLAY_POINTER_CAPTURE_MODE_CAPTURE,
+//    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
+    CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+} Clay_PointerCaptureMode;
+
 typedef struct
 {
     Clay_Vector2 offset;
@@ -321,6 +327,7 @@ typedef struct
     uint16_t zIndex;
     uint32_t parentId;
     Clay_FloatingAttachPoints attachment;
+    Clay_PointerCaptureMode pointerCaptureMode;
 } Clay_FloatingElementConfig;
 
 // Custom
@@ -3513,11 +3520,12 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
     Clay__pointerInfo.position = position;
     Clay__pointerOverIds.length = 0;
     Clay__int32_tArray dfsBuffer = Clay__layoutElementChildrenBuffer;
-    for (int rootIndex = 0; rootIndex < Clay__layoutElementTreeRoots.length; ++rootIndex) {
+    for (int rootIndex = Clay__layoutElementTreeRoots.length - 1; rootIndex >= 0; --rootIndex) {
         dfsBuffer.length = 0;
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, rootIndex);
         Clay__int32_tArray_Add(&dfsBuffer, (int32_t)root->layoutElementIndex);
         Clay__treeNodeVisited.internalArray[0] = false;
+        bool found = false;
         while (dfsBuffer.length > 0) {
             if (Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
                 dfsBuffer.length--;
@@ -3535,6 +3543,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                         mapItem->onHoverFunction(mapItem->elementId, Clay__pointerInfo, mapItem->hoverFunctionUserData);
                     }
                     Clay__ElementIdArray_Add(&Clay__pointerOverIds, mapItem->elementId);
+                    found = true;
                 }
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
                     dfsBuffer.length--;
@@ -3547,6 +3556,12 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             } else {
                 dfsBuffer.length--;
             }
+        }
+
+        Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, root->layoutElementIndex);
+        if (found && Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER) &&
+                Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig->pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_CAPTURE) {
+            break;
         }
     }
 
