@@ -34,10 +34,11 @@
 
 // TODO: We should use the given `uint16_t fontId` instead of doing this.
 #define CLAY_EXTEND_CONFIG_TEXT Clay_String fontFamily; // Font family
-#define CLAY_IMPLEMENTATION
-#include "../../clay.h"
+#include "../clay_renderer.h"
 
 #include <cairo/cairo.h>
+
+typedef struct caito_t Clay_Renderer_Data;
 
 ////////////////////////////////
 //
@@ -45,12 +46,12 @@
 //
 
 // Initialize the internal cairo pointer with the user provided instance.
-// This is REQUIRED before calling Clay_Cairo_Render.
-void Clay_Cairo_Initialize(cairo_t *cairo);
+// This is REQUIRED before calling Clay_Renderer_Render.
+void Clay_Renderer_Initialize(struct Clay_Renderer_Data *cairo);
 
 // Render the command queue to the `cairo_t*` instance you called
-// `Clay_Cairo_Initialize` on.
-void Clay_Cairo_Render(Clay_RenderCommandArray commands);
+// `Clay_Renderer_Initialize` on.
+void Clay_Renderer_Render(Clay_RenderCommandArray commands);
 ////////////////////////////////
 
 
@@ -83,7 +84,7 @@ static inline char *Clay_Cairo__NullTerminate(Clay_String *str) {
 }
 
 // Measure text using cairo's *toy* text API.
-static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_TextElementConfig *config) {
+inline Clay_Dimensions Clay_Renderer_MeasureText(Clay_String *str, Clay_TextElementConfig *config) {
 	// Edge case: Clay computes the width of a whitespace character
 	// once.  Cairo does not factor in whitespaces when computing text
 	// extents, this edge-case serves as a short-circuit to introduce
@@ -159,8 +160,8 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_Text
 }
 
 
-void Clay_Cairo_Initialize(cairo_t *cairo) {
-	Clay__Cairo = cairo;
+void Clay_Renderer_Initialize(struct Clay_Renderer_Data *cairo) {
+	Clay__Cairo = (cairo_t *)cairo;
 }
 
 // Internally used to copy images onto our document/active workspace.
@@ -191,7 +192,7 @@ void Clay_Cairo__Blit_Surface(cairo_surface_t *src_surface, cairo_surface_t *des
 	cairo_destroy(cr);
 }
 
-void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
+void Clay_Renderer_Render(Clay_RenderCommandArray commands) {
 	cairo_t *cr = Clay__Cairo;
 	for(size_t i = 0; i < commands.length; i++) {
 		Clay_RenderCommand *command = Clay_RenderCommandArray_Get(&commands, i);
