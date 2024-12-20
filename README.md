@@ -1234,11 +1234,11 @@ Rendering of borders and rounded corners is left up to the user. See the provide
 ### CLAY_FLOATING
 **Usage**
 
-`CLAY_FLOATING(Clay_ElementId id, Clay_LayoutConfig *layoutConfig, Clay_FloatingElementConfig *floatingConfig);`
+`CLAY(CLAY_FLOATING(...floating config)) {}`
 
 **Lifecycle**
 
-`Clay_BeginLayout()` -> `CLAY_FLOATING()` -> `Clay_EndLayout()` 
+`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_FLOATING()` -> `)` -> `Clay_EndLayout()` 
 
 **Notes**
 
@@ -1271,6 +1271,10 @@ Clay_FloatingElementConfig {
     Clay_FloatingAttachPoints attachment {
         .element = CLAY_ATTACH_POINT_LEFT_TOP (default) | CLAY_ATTACH_POINT_LEFT_CENTER | CLAY_ATTACH_POINT_LEFT_BOTTOM | CLAY_ATTACH_POINT_CENTER_TOP | CLAY_ATTACH_POINT_CENTER_CENTER | CLAY_ATTACH_POINT_CENTER_BOTTOM | CLAY_ATTACH_POINT_RIGHT_TOP | CLAY_ATTACH_POINT_RIGHT_CENTER | CLAY_ATTACH_POINT_RIGHT_BOTTOM
         .parent = CLAY_ATTACH_POINT_LEFT_TOP (default) | CLAY_ATTACH_POINT_LEFT_CENTER | CLAY_ATTACH_POINT_LEFT_BOTTOM | CLAY_ATTACH_POINT_CENTER_TOP | CLAY_ATTACH_POINT_CENTER_CENTER | CLAY_ATTACH_POINT_CENTER_BOTTOM | CLAY_ATTACH_POINT_RIGHT_TOP | CLAY_ATTACH_POINT_RIGHT_CENTER | CLAY_ATTACH_POINT_RIGHT_BOTTOM
+    };
+    Clay_PointerCaptureMode captureMode {
+        CLAY_POINTER_CAPTURE_MODE_CAPTURE (default),
+        CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
     };
 };
 ```
@@ -1392,6 +1396,12 @@ For example:
 `CLAY_FLOATING({ .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP } });`
 
 ![Screenshot 2024-08-23 at 11 53 24 AM](https://github.com/user-attachments/assets/ebe75e0d-1904-46b0-982d-418f929d1516)
+
+**`.pointerCaptureMode`** - `Clay_PointerCaptureMode`
+
+`CLAY_FLOATING({ .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE })`
+
+Controls whether pointer events like hover and click should pass through to content underneath this floating element, or whether the pointer should be "captured" by this floating element. Defaults to `CLAY_POINTER_CAPTURE_MODE_CAPTURE`. 
 
 **Examples**
 
