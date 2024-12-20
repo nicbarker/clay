@@ -138,12 +138,12 @@ inline Clay_Dimensions Clay_Renderer_MeasureText(Clay_String *text, Clay_TextEle
     return textSize;
 }
 
-struct Clay_Renderer_Data {
+typedef struct Clay_Renderer_Data {
     int width;
     int height;
     const char *title;
     unsigned int flags;
-};
+} Clay_Raylib_Data;
 
 void Clay_Renderer_Initialize(struct Clay_Renderer_Data *data) {
     SetConfigFlags(data->flags);

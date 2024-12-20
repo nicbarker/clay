@@ -1,6 +1,8 @@
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
-#include <raylib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "../../renderers/raylib/raylib.h"
 #include "../../renderers/clay_renderer.h"
 
 const uint32_t FONT_ID_BODY_24 = 0;
@@ -209,7 +211,12 @@ int main(void) {
     Clay_SetMeasureTextFunction(Clay_Renderer_MeasureText);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() });
 
-    Clay_Renderer_Initialize(&(struct Clay_Renderer_Data){
+    Clay_Renderer_Initialize((struct Clay_Renderer_Data)&(struct {
+        int width;
+        int height;
+        const char *title;
+        int flags;
+    }){
         .width = 1024,
         .height = 768,
         .title = "Clay - Raylib Renderer Example",
