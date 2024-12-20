@@ -128,11 +128,11 @@ int main(void) {
 	// We require some kind of global reference to a valid
 	// cairo instance to properly measure text.
 	// Note that due to this, this interface is not thread-safe!
-	Clay_Cairo_Initialize(cr);
+	Clay_Renderer_Initialize((struct Clay_Renderer_Data *)cr);
 
 	uint64_t totalMemorySize = Clay_MinMemorySize();
 	Clay_Arena clayMemory = (Clay_Arena) { .label = CLAY_STRING("Clay Memory Arena"), .memory = malloc(totalMemorySize), .capacity = totalMemorySize };
-	Clay_SetMeasureTextFunction(Clay_Cairo_MeasureText);
+	Clay_SetMeasureTextFunction(Clay_Renderer_MeasureText);
 
 	// We initialize Clay with the same size
 	Clay_Initialize(clayMemory, (Clay_Dimensions) { width, height });
@@ -145,7 +145,7 @@ int main(void) {
 
 	Clay_RenderCommandArray commands = Clay_EndLayout();
 	// Pass our layout to the cairo backend
-	Clay_Cairo_Render(commands);
+	Clay_Renderer_Render(commands);
 
 	// To keep this example short, we will not emit a second page in the PDF.
 	// But to do so, you have to
