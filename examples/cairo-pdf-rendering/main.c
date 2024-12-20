@@ -24,8 +24,8 @@
 #include <stdlib.h>
 
 // The renderer includes clay.h while also providing the
-// CLAY_IMPLEMENTATION
-#include "../../renderers/cairo/clay_renderer_cairo.c"
+#define CLAY_IMPLEMENTATION
+#include "../../renderers/clay_renderer.h"
 
 // cairo-pdf, though this is optional and not required if you,
 // e.g. render PNGs.
