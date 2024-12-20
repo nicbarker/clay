@@ -42,16 +42,16 @@ typedef struct caito_t Clay_Renderer_Data;
 
 ////////////////////////////////
 //
-// Public API
+// Public API (defined in clay_renderer.h)
 //
 
 // Initialize the internal cairo pointer with the user provided instance.
 // This is REQUIRED before calling Clay_Renderer_Render.
-void Clay_Renderer_Initialize(struct Clay_Renderer_Data *cairo);
+// void Clay_Renderer_Initialize(struct Clay_Renderer_Data *cairo);
 
 // Render the command queue to the `cairo_t*` instance you called
 // `Clay_Renderer_Initialize` on.
-void Clay_Renderer_Render(Clay_RenderCommandArray commands);
+// void Clay_Renderer_Render(Clay_RenderCommandArray commands);
 ////////////////////////////////
 
 
@@ -84,7 +84,7 @@ static inline char *Clay_Cairo__NullTerminate(Clay_String *str) {
 }
 
 // Measure text using cairo's *toy* text API.
-inline Clay_Dimensions Clay_Renderer_MeasureText(Clay_String *str, Clay_TextElementConfig *config) {
+Clay_Dimensions Clay_Renderer_MeasureText(Clay_String *str, Clay_TextElementConfig *config) {
 	// Edge case: Clay computes the width of a whitespace character
 	// once.  Cairo does not factor in whitespaces when computing text
 	// extents, this edge-case serves as a short-circuit to introduce
