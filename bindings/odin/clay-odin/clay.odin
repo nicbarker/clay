@@ -154,12 +154,18 @@ FloatingAttachPoints :: struct {
     parent:  FloatingAttachPointType,
 }
 
+PointerCaptureMode :: enum EnumBackingType {
+    CAPTURE,
+    PASSTHROUGH,
+}
+
 FloatingElementConfig :: struct {
-    offset:     Vector2,
-    expand:     Dimensions,
-    zIndex:     u16,
-    parentId:   u32,
-    attachment: FloatingAttachPoints,
+    offset:             Vector2,
+    expand:             Dimensions,
+    zIndex:             u16,
+    parentId:           u32,
+    attachment:         FloatingAttachPoints,
+    pointerCaptureMode: PointerCaptureMode,
 }
 
 ElementConfigUnion :: struct #raw_union {
