@@ -1,3 +1,4 @@
+#include "../clay_renderer.h"
 #include "raylib.h"
 #include "raymath.h"
 #include "stdint.h"
@@ -8,8 +9,21 @@
 #include "signal.h"
 #endif
 
-#define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) (Rectangle) { .x = rectangle.x, .y = rectangle.y, .width = rectangle.width, .height = rectangle.height }
-#define CLAY_COLOR_TO_RAYLIB_COLOR(color) (Color) { .r = (unsigned char)roundf(color.r), .g = (unsigned char)roundf(color.g), .b = (unsigned char)roundf(color.b), .a = (unsigned char)roundf(color.a) }
+#define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle)   \
+    (Rectangle) {                                       \
+        .x = rectangle.x,                               \
+        .y = rectangle.y,                               \
+        .width = rectangle.width,                       \
+        .height = rectangle.height                      \
+    }
+
+#define CLAY_COLOR_TO_RAYLIB_COLOR(color)       \
+    (Color) {                                   \
+        .r = (unsigned char)roundf(color.r),    \
+        .g = (unsigned char)roundf(color.g),    \
+        .b = (unsigned char)roundf(color.b),    \
+        .a = (unsigned char)roundf(color.a)     \
+    }
 
 typedef struct
 {
@@ -42,7 +56,7 @@ typedef struct
 } CustomLayoutElement;
 
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
-Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance)
+static Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance)
 {
     Ray ray = { 0 };
 
@@ -92,7 +106,7 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
 
 uint32_t measureCalls = 0;
 
-static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextElementConfig *config) {
+inline Clay_Dimensions Clay_Renderer_MeasureText(Clay_String *text, Clay_TextElementConfig *config) {
     measureCalls++;
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
@@ -124,13 +138,20 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
     return textSize;
 }
 
-void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned int flags) {
-    SetConfigFlags(flags);
-    InitWindow(width, height, title);
-//    EnableEventWaiting();
+typedef struct Clay_Renderer_Data {
+    int width;
+    int height;
+    const char *title;
+    unsigned int flags;
+} Clay_Raylib_Data;
+
+void Clay_Renderer_Initialize(struct Clay_Renderer_Data *data) {
+    SetConfigFlags(data->flags);
+    InitWindow(data->width, data->height, data->title);
+    // EnableEventWaiting();
 }
 
-void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
+void Clay_Renderer_Render(Clay_RenderCommandArray renderCommands)
 {
     measureCalls = 0;
     for (int j = 0; j < renderCommands.length; j++)
