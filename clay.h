@@ -2881,14 +2881,14 @@ void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConf
     openLayoutElement->elementConfigs.length++;
     Clay__ElementConfigArray_Add(&Clay__elementConfigBuffer, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
 }
-inline Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
-inline Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
-inline Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__TEXT_ELEMENT_CONFIG_DEFAULT : Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
-inline Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
-inline Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
-inline Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
-inline Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
-inline Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
+Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
+Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
+Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__TEXT_ELEMENT_CONFIG_DEFAULT : Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
+Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
+Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
+Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
+Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
+Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
 Clay_Color CLAY__DEBUGVIEW_COLOR_1 = CLAY__INIT(Clay_Color) {58, 56, 52, 255};
