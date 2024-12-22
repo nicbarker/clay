@@ -551,13 +551,13 @@ typedef struct
 } Clay__WarningArray;
 
 Clay__WarningArray Clay__WarningArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
-    uint64_t totalSizeBytes = capacity * sizeof(Clay_String);
+    size_t totalSizeBytes = capacity * sizeof(Clay_String);
     Clay__WarningArray array = CLAY__INIT(Clay__WarningArray){.capacity = capacity, .length = 0};
-    uint64_t nextAllocAddress = (uint64_t)arena->nextAllocation + (uint64_t)arena->memory;
-    uint64_t arenaOffsetAligned = nextAllocAddress + (CLAY__ALIGNMENT(Clay_String) - (nextAllocAddress % CLAY__ALIGNMENT(Clay_String)));
-    arenaOffsetAligned -= (uint64_t)arena->memory;
+    uintptr_t nextAllocAddress = (uintptr_t)arena->nextAllocation + (uintptr_t)arena->memory;
+    uintptr_t arenaOffsetAligned = nextAllocAddress + (CLAY__ALIGNMENT(Clay_String) - (nextAllocAddress % CLAY__ALIGNMENT(Clay_String)));
+    arenaOffsetAligned -= (uintptr_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
-        array.internalArray = (Clay__Warning*)((uint64_t)arena->memory + (uint64_t)arenaOffsetAligned);
+        array.internalArray = (Clay__Warning*)((uintptr_t)arena->memory + (uintptr_t)arenaOffsetAligned);
         arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
     }
     else {
@@ -586,13 +586,13 @@ Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning i
 
 void* Clay__Array_Allocate_Arena(uint32_t capacity, uint32_t itemSize, uint32_t alignment, Clay_Arena *arena)
 {
-    uint64_t totalSizeBytes = capacity * itemSize;
-    uint64_t nextAllocAddress = (uint64_t)arena->nextAllocation + (uint64_t)arena->memory;
-    uint64_t arenaOffsetAligned = nextAllocAddress + (alignment - (nextAllocAddress % alignment));
-    arenaOffsetAligned -= (uint64_t)arena->memory;
+    size_t totalSizeBytes = capacity * itemSize;
+    uintptr_t nextAllocAddress = (uintptr_t)arena->nextAllocation + (uintptr_t)arena->memory;
+    uintptr_t arenaOffsetAligned = nextAllocAddress + (alignment - (nextAllocAddress % alignment));
+    arenaOffsetAligned -= (uintptr_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
         arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
-        return (void*)((uint64_t)arena->memory + (uint64_t)arenaOffsetAligned);
+        return (void*)((uintptr_t)arena->memory + (uintptr_t)arenaOffsetAligned);
     }
     else {
         if (Clay__warningsEnabled) {
@@ -1043,7 +1043,7 @@ Clay_RenderCommand *Clay_RenderCommandArray_Add(Clay_RenderCommandArray *array, 
 	}
 	return &CLAY__RENDER_COMMAND_DEFAULT;
 }
-Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int index) {
+Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__RENDER_COMMAND_DEFAULT;
 }
 #pragma endregion
@@ -1546,7 +1546,7 @@ uint32_t Clay__RehashWithNumber(uint32_t id, uint32_t number) {
 
 uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
     uint32_t hash = 0;
-    uint64_t pointerAsNumber = (uint64_t)text->chars;
+    uintptr_t pointerAsNumber = (uintptr_t)text->chars;
 
     hash += pointerAsNumber;
     hash += (hash << 10);
@@ -2881,14 +2881,14 @@ void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConf
     openLayoutElement->elementConfigs.length++;
     Clay__ElementConfigArray_Add(&Clay__elementConfigBuffer, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
 }
-inline Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
-inline Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
-inline Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__TEXT_ELEMENT_CONFIG_DEFAULT : Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
-inline Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
-inline Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
-inline Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
-inline Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
-inline Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
+Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
+Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
+Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__TEXT_ELEMENT_CONFIG_DEFAULT : Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
+Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
+Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
+Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
+Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
+Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__debugMaxElementsLatch ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
 Clay_Color CLAY__DEBUGVIEW_COLOR_1 = CLAY__INIT(Clay_Color) {58, 56, 52, 255};
