@@ -551,13 +551,13 @@ typedef struct
 } Clay__WarningArray;
 
 Clay__WarningArray Clay__WarningArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
-    uint64_t totalSizeBytes = capacity * sizeof(Clay_String);
+    size_t totalSizeBytes = capacity * sizeof(Clay_String);
     Clay__WarningArray array = CLAY__INIT(Clay__WarningArray){.capacity = capacity, .length = 0};
-    uint64_t nextAllocAddress = (uint64_t)arena->nextAllocation + (uint64_t)arena->memory;
-    uint64_t arenaOffsetAligned = nextAllocAddress + (CLAY__ALIGNMENT(Clay_String) - (nextAllocAddress % CLAY__ALIGNMENT(Clay_String)));
-    arenaOffsetAligned -= (uint64_t)arena->memory;
+    uintptr_t nextAllocAddress = (uintptr_t)arena->nextAllocation + (uintptr_t)arena->memory;
+    uintptr_t arenaOffsetAligned = nextAllocAddress + (CLAY__ALIGNMENT(Clay_String) - (nextAllocAddress % CLAY__ALIGNMENT(Clay_String)));
+    arenaOffsetAligned -= (uintptr_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
-        array.internalArray = (Clay__Warning*)((uint64_t)arena->memory + (uint64_t)arenaOffsetAligned);
+        array.internalArray = (Clay__Warning*)((uintptr_t)arena->memory + (uintptr_t)arenaOffsetAligned);
         arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
     }
     else {
@@ -586,13 +586,13 @@ Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning i
 
 void* Clay__Array_Allocate_Arena(uint32_t capacity, uint32_t itemSize, uint32_t alignment, Clay_Arena *arena)
 {
-    uint64_t totalSizeBytes = capacity * itemSize;
-    uint64_t nextAllocAddress = (uint64_t)arena->nextAllocation + (uint64_t)arena->memory;
-    uint64_t arenaOffsetAligned = nextAllocAddress + (alignment - (nextAllocAddress % alignment));
-    arenaOffsetAligned -= (uint64_t)arena->memory;
+    size_t totalSizeBytes = capacity * itemSize;
+    uintptr_t nextAllocAddress = (uintptr_t)arena->nextAllocation + (uintptr_t)arena->memory;
+    uintptr_t arenaOffsetAligned = nextAllocAddress + (alignment - (nextAllocAddress % alignment));
+    arenaOffsetAligned -= (uintptr_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
         arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
-        return (void*)((uint64_t)arena->memory + (uint64_t)arenaOffsetAligned);
+        return (void*)((uintptr_t)arena->memory + (uintptr_t)arenaOffsetAligned);
     }
     else {
         if (Clay__warningsEnabled) {
@@ -1043,7 +1043,7 @@ Clay_RenderCommand *Clay_RenderCommandArray_Add(Clay_RenderCommandArray *array, 
 	}
 	return &CLAY__RENDER_COMMAND_DEFAULT;
 }
-Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int index) {
+Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__RENDER_COMMAND_DEFAULT;
 }
 #pragma endregion
@@ -1546,7 +1546,7 @@ uint32_t Clay__RehashWithNumber(uint32_t id, uint32_t number) {
 
 uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
     uint32_t hash = 0;
-    uint64_t pointerAsNumber = (uint64_t)text->chars;
+    uintptr_t pointerAsNumber = (uintptr_t)text->chars;
 
     hash += pointerAsNumber;
     hash += (hash << 10);
