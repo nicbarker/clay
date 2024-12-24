@@ -1,6 +1,9 @@
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
-#include "../../renderers/raylib/clay_renderer_raylib.c"
+#include <stdio.h>
+#include <stdlib.h>
+#include "../../renderers/raylib/raylib.h"
+#include "../../renderers/clay_renderer.h"
 
 const uint32_t FONT_ID_BODY_24 = 0;
 const uint32_t FONT_ID_BODY_16 = 1;
@@ -195,7 +198,7 @@ void UpdateDrawFrame(void)
 //    currentTime = GetTime();
     BeginDrawing();
     ClearBackground(BLACK);
-    Clay_Raylib_Render(renderCommands);
+    Clay_Renderer_Render(renderCommands);
     EndDrawing();
 //    printf("render time: %f ms\n", (GetTime() - currentTime) * 1000);
 
@@ -205,9 +208,20 @@ void UpdateDrawFrame(void)
 int main(void) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = (Clay_Arena) { .label = CLAY_STRING("Clay Memory Arena"), .memory = malloc(totalMemorySize), .capacity = totalMemorySize };
-    Clay_SetMeasureTextFunction(Raylib_MeasureText);
+    Clay_SetMeasureTextFunction(Clay_Renderer_MeasureText);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() });
-    Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
+
+    Clay_Renderer_Initialize((struct Clay_Renderer_Data)&(struct {
+        int width;
+        int height;
+        const char *title;
+        int flags;
+    }){
+        .width = 1024,
+        .height = 768,
+        .title = "Clay - Raylib Renderer Example",
+        .flags = FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT
+    });
     profilePicture = LoadTextureFromImage(LoadImage("resources/profile-picture.png"));
     Raylib_fonts[FONT_ID_BODY_24] = (Raylib_Font) {
         .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
