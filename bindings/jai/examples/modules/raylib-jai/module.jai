@@ -1,4 +1,11 @@
 
+Vector2 :: Math.Vector2;
+Vector3 :: Math.Vector3;
+Vector4 :: Math.Vector4;
+Quaternion :: Math.Quaternion;
+Matrix :: Math.Matrix4;
+PI :: Math.PI;
+
 LIGHTGRAY :: Color.{  200, 200, 200, 255  };
 GRAY :: Color.{  130, 130, 130, 255  };
 DARKGRAY :: Color.{  80, 80, 80, 255  };
@@ -38,14 +45,27 @@ IsKeyReleased :: (key: KeyboardKey) -> bool { return IsKeyReleased(cast(s32) key
 IsKeyUp :: (key: KeyboardKey) -> bool { return IsKeyUp(cast(s32) key); }
 SetExitKey :: (key: KeyboardKey) -> void { return SetExitKey(cast(s32) key); }
 
+SetConfigFlags :: (flags: ConfigFlags) -> void { return SetConfigFlags(cast(u32) flags); }
+SetGesturesEnabled :: (flags: Gesture) -> void { return SetGesturesEnabled(cast(u32) flags); }
+IsGestureDetected :: (gesture: Gesture) -> bool { return IsGestureDetected(cast(u32) gesture); }
+IsWindowState :: (flag: ConfigFlags) -> bool { return IsWindowState(cast(u32) flag); }
+SetWindowState :: (flags: ConfigFlags) -> void { return SetWindowState(cast(u32) flags); }
+ClearWindowState :: (flags: ConfigFlags) -> void { return ClearWindowState(cast(u32) flags); }
+
 #scope_module
 
 #if OS == .WINDOWS {
     #load "windows.jai";
-}
-#if OS == .WASM {
-    #load "wasm.jai";
+    winmm :: #system_library,link_always "winmm";
+    user32 :: #system_library,link_always "user32";
+    opengl32 :: #system_library,link_always "opengl32";
+    gdi32 :: #system_library,link_always "gdi32";
+    shell32 :: #system_library,link_always "shell32";
+    shcore :: #system_library,link_always "shcore";
+    
+} else {
+    assert(false);
 }
 
 #import "Basic";
-#import "Math";
+Math :: #import "Math";
