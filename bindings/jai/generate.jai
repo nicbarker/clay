@@ -42,7 +42,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
             File.make_directory_if_it_does_not_exist("clay-jai/windows", true);
 
             command := ifx compile_debug {
-                Process.break_command_into_strings("clang -c source\\clay.c");
+                Process.break_command_into_strings("clang g -gcodeview -c source\\clay.c");
             } else {
                 Process.break_command_into_strings("clang -O3 -c source\\clay.c");
             }
