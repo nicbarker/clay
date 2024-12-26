@@ -1569,6 +1569,7 @@ Clay__MeasuredWord *Clay__AddMeasuredWord(Clay__MeasuredWord word, Clay__Measure
 }
 
 Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_TextElementConfig *config) {
+    #ifndef CLAY_WASM
     if (!Clay__MeasureText) {
         Clay__errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
             .errorType = CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
@@ -1576,8 +1577,9 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
             .userData = Clay__errorHandler.userData });
         return NULL;
     }
+    #endif
     uint32_t id = Clay__HashTextWithConfig(text, config);
-    uint32_t hashBucket = id % (Clay__maxMeasureTextCacheWordCount / 8);
+    uint32_t hashBucket = id % (Clay__maxMeasureTextCacheWordCount / 32);
     int32_t elementIndexPrevious = 0;
     int32_t elementIndex = Clay__measureTextHashMap.internalArray[hashBucket];
     while (elementIndex != 0) {
@@ -3474,7 +3476,7 @@ void Clay__RenderDebugView() {
 
 CLAY_WASM_EXPORT("Clay_MinMemorySize")
 uint32_t Clay_MinMemorySize() {
-    Clay_Arena fakeArena = CLAY__INIT(Clay_Arena) { .capacity = INT64_MAX };
+    Clay_Arena fakeArena = CLAY__INIT(Clay_Arena) { .capacity = SIZE_MAX };
     Clay__InitializePersistentMemory(&fakeArena);
     Clay__InitializeEphemeralMemory(&fakeArena);
     return fakeArena.nextAllocation;
@@ -3493,9 +3495,6 @@ Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset
 void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config)) {
     Clay__MeasureText = measureTextFunction;
 }
-#endif
-
-#ifndef CLAY_WASM
 void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId)) {
     Clay__QueryScrollOffset = queryScrollOffsetFunction;
 }
