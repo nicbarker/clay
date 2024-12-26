@@ -12,6 +12,8 @@
 
 Take a look at the [clay website](https://nicbarker.com/clay) for an example of clay compiled to wasm and running in the browser, or others in the [examples directory](https://github.com/nicbarker/clay/tree/main/examples).
 
+You can also watch the [introduction video](https://youtu.be/DYWTw19_8r4) for an overview of the motivation behind Clay's development and a short demo of its usage.
+
 <img width="1394" alt="A screenshot of a code IDE with lots of visual and textual elements" src="https://github.com/user-attachments/assets/9986149a-ee0f-449a-a83e-64a392267e3d">
 
 _An example GUI application built with clay_
