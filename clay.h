@@ -144,9 +144,8 @@ typedef struct
 } Clay__StringArray;
 
 typedef struct {
-    Clay_String label;
-    uint64_t nextAllocation;
-    uint64_t capacity;
+    uintptr_t nextAllocation;
+    size_t capacity;
     char *memory;
 } Clay_Arena;
 
@@ -479,7 +478,7 @@ Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array,
 void Clay_SetDebugModeEnabled(bool enabled);
 void Clay_SetCullingEnabled(bool enabled);
 void Clay_SetMaxElementCount(uint32_t maxElementCount);
-void Clay_SetMeasureTextCacheSize(uint32_t measureTextCacheSize);
+void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount);
 
 // Internal API functions required by macros
 void Clay__OpenElement();
@@ -525,7 +524,7 @@ extern uint32_t Clay__debugViewWidth;
 
 bool Clay__warningsEnabled = true;
 uint32_t Clay__maxElementCount = 8192;
-uint32_t Clay__measureTextCacheSize = 16384;
+uint32_t Clay__maxMeasureTextCacheWordCount = 16384;
 Clay_ErrorHandler Clay__errorHandler = CLAY__INIT(Clay_ErrorHandler) { .errorHandlerFunction = Clay__Noop };
 
 void Clay__Noop() {};
@@ -561,7 +560,7 @@ typedef struct
 Clay__WarningArray Clay__WarningArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     size_t totalSizeBytes = capacity * sizeof(Clay_String);
     Clay__WarningArray array = CLAY__INIT(Clay__WarningArray){.capacity = capacity, .length = 0};
-    uintptr_t nextAllocAddress = (uintptr_t)arena->nextAllocation + (uintptr_t)arena->memory;
+    uintptr_t nextAllocAddress = arena->nextAllocation + (uintptr_t)arena->memory;
     uintptr_t arenaOffsetAligned = nextAllocAddress + (CLAY__ALIGNMENT(Clay_String) - (nextAllocAddress % CLAY__ALIGNMENT(Clay_String)));
     arenaOffsetAligned -= (uintptr_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
@@ -591,7 +590,7 @@ Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning i
 void* Clay__Array_Allocate_Arena(uint32_t capacity, uint32_t itemSize, uint32_t alignment, Clay_Arena *arena)
 {
     size_t totalSizeBytes = capacity * itemSize;
-    uintptr_t nextAllocAddress = (uintptr_t)arena->nextAllocation + (uintptr_t)arena->memory;
+    uintptr_t nextAllocAddress = arena->nextAllocation + (uintptr_t)arena->memory;
     uintptr_t arenaOffsetAligned = nextAllocAddress + (alignment - (nextAllocAddress % alignment));
     arenaOffsetAligned -= (uintptr_t)arena->memory;
     if (arenaOffsetAligned + totalSizeBytes <= arena->capacity) {
@@ -1577,7 +1576,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         return NULL;
     }
     uint32_t id = Clay__HashTextWithConfig(text, config);
-    uint32_t hashBucket = id % (Clay__measureTextCacheSize / 8);
+    uint32_t hashBucket = id % (Clay__maxMeasureTextCacheWordCount / 8);
     int32_t elementIndexPrevious = 0;
     int32_t elementIndex = Clay__measureTextHashMap.internalArray[hashBucket];
     while (elementIndex != 0) {
@@ -1647,7 +1646,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
             if (!Clay__booleanWarnings.maxTextMeasureCacheExceeded) {
                 Clay__errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
                     .errorType = CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED,
-                    .errorText = CLAY_STRING("Clay has run out of space in it's internal text measurement cache. Try using Clay_SetMeasureTextCacheSize() (default 16384, with 1 unit storing 1 measured word)."),
+                    .errorText = CLAY_STRING("Clay has run out of space in it's internal text measurement cache. Try using Clay_SetMaxMeasureTextCacheWordCount() (default 16384, with 1 unit storing 1 measured word)."),
                     .userData = Clay__errorHandler.userData });
                 Clay__booleanWarnings.maxTextMeasureCacheExceeded = true;
             }
@@ -2028,9 +2027,9 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
     Clay__layoutElementsHashMap = Clay__int32_tArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__measureTextHashMapInternal = Clay__MeasureTextCacheItemArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__measureTextHashMapInternalFreeList = Clay__int32_tArray_Allocate_Arena(Clay__maxElementCount, arena);
-    Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(Clay__measureTextCacheSize, arena);
+    Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(Clay__maxMeasureTextCacheWordCount, arena);
     Clay__measureTextHashMap = Clay__int32_tArray_Allocate_Arena(Clay__maxElementCount, arena);
-    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(Clay__measureTextCacheSize, arena);
+    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(Clay__maxMeasureTextCacheWordCount, arena);
     Clay__pointerOverIds = Clay__ElementIdArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__debugElementData = Clay__DebugElementDataArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__arenaResetOffset = arena->nextAllocation;
@@ -3830,9 +3829,9 @@ void Clay_SetMaxElementCount(uint32_t maxElementCount) {
     Clay__maxElementCount = maxElementCount;
 }
 
-CLAY_WASM_EXPORT("Clay_SetMeasureTextCacheSize")
-void Clay_SetMeasureTextCacheSize(uint32_t measureTextCacheSize) {
-    Clay__measureTextCacheSize = measureTextCacheSize;
+CLAY_WASM_EXPORT("Clay_SetMaxMeasureTextCacheWordCount")
+void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount) {
+    Clay__maxMeasureTextCacheWordCount = maxMeasureTextCacheWordCount;
 }
 
 #endif //CLAY_IMPLEMENTATION

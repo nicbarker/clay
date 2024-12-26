@@ -480,11 +480,29 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 
 **Note 2: It is essential that this function is as fast as possible.** For text heavy use-cases this function is called many times, and despite the fact that clay caches text measurements internally, it can easily become the dominant overall layout cost if the provided function is slow. **This is on the hot path!**
 
+### Clay_SetMaxElementCount
+
+`void Clay_SetMaxElementCount(uint32_t maxElementCount)`
+
+Updates the internal maximum element count, allowing clay to allocate larger UI hierarchies.
+
+**Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
+
+### Clay_SetMaxMeasureTextCacheWordCount
+
+`void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount)`
+
+Updates the internal text measurement cache size, allowing clay to allocate more text. The value represents how many seperate words can be stored in the text measurement cache.
+
+**Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
+
 ### Clay_Initialize
 
 `void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler)`
 
 Initializes the internal memory mapping, sets the internal dimensions for layout, and binds an error handler for clay to use when something goes wrong.
+
+Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler)
 
 ### Clay_SetLayoutDimensions
 
@@ -1542,6 +1560,29 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 
 ## Data Structures & Definitions
 
+### Clay_String
+
+```C
+typedef struct {
+    int length;
+    const char *chars;
+} Clay_String;
+```
+
+`Clay_String` is a string container that clay uses internally to represent all strings.
+
+**Fields**
+
+**`.length`** - `int`
+
+The number of characters in the string, _not including an optional null terminator._
+
+---
+
+**`.chars`** - `const char *`
+
+A pointer to the contents of the string. This data is not guaranteed to be null terminated, so if you are passing it to code that expects standard null terminated C strings, you will need to copy the data and append a null terminator.
+
 ### Clay_ElementId
 
 ```C
@@ -1823,7 +1864,7 @@ An enum representing the type of error Clay encountered. It's up to the user to 
 - `CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED` - The user is attempting to use `CLAY_TEXT` and either forgot to call [Clay_SetMeasureTextFunction](#clay_setmeasuretextfunction) or accidentally passed a null function pointer.
 - `CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED` - Clay was initialized with an Arena that was too small for the configured [Clay_SetMaxElementCount](#clay_setmaxelementcount). Try using [Clay_MinMemorySize()](#clay_minmemorysize) to get the exact number of bytes required by the current configuration.
 - `CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED` - The declared UI hierarchy has too many elements for the configured max element count. Use [Clay_SetMaxElementCount](#clay_setmaxelementcount) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
-- `CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED` - The declared UI hierarchy has too much text for the configured text measure cache size. Use [Clay_SetMeasureTextCacheSize](#clay_setmeasuretextcachesize) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
+- `CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED` - The declared UI hierarchy has too much text for the configured text measure cache size. Use [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmeasuretextcachesize) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
 - `CLAY_ERROR_TYPE_DUPLICATE_ID` - Two elements in Clays UI Hierarchy have been declared with exactly the same ID. Set a breakpoint in your error handler function for a stack trace back to exactly where this occured.
 - `CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND` - A `CLAY_FLOATING` element was declared with the `.parentId` property, but no element with that ID was found. Set a breakpoint in your error handler function for a stack trace back to exactly where this occured.
 - `CLAY_ERROR_TYPE_INTERNAL_ERROR` - Clay has encountered an internal logic or memory error. Please report this as a bug with a stack trace to help us fix these!
