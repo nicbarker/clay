@@ -37,16 +37,19 @@ Clay_RenderCommandArray CreateLayout() {
 }
 
 int main() {
+	const int width = 80;
+	const int height = 24;
+
 	uint64_t totalMemorySize = Clay_MinMemorySize();
 	Clay_Arena arena = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-	Clay_Initialize(arena, (Clay_Dimensions) { .width = 80, .height = 24 }); // TODO this is wrong, but I have no idea what the actual size of the terminal is in pixels
+	Clay_Initialize(arena, (Clay_Dimensions) { .width = (float) width, .height = (float) height }); // TODO this is wrong, but I have no idea what the actual size of the terminal is in pixels
 	// Tell clay how to measure text
 	Clay_SetMeasureTextFunction(Console_MeasureText);
 
 	while(true) {
 		Clay_RenderCommandArray layout = CreateLayout();
 
-		Clay_Console_Render(layout);
+		Clay_Console_Render(layout, width, height);
 
 		fflush(stdout);
 		sleep(1);
