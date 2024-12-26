@@ -3180,7 +3180,9 @@ void Clay__RenderDebugView() {
             break;
         }
     }
-    int32_t highlightedRow = (int32_t)((Clay__pointerInfo.position.y - scrollYOffset) / (float)CLAY__DEBUGVIEW_ROW_HEIGHT) - 1;
+    int32_t highlightedRow = Clay__pointerInfo.position.y < Clay__layoutDimensions.height - 300
+            ? (int32_t)((Clay__pointerInfo.position.y - scrollYOffset) / (float)CLAY__DEBUGVIEW_ROW_HEIGHT) - 1
+            : -1;
     if (Clay__pointerInfo.position.x < Clay__layoutDimensions.width - (float)Clay__debugViewWidth) {
         highlightedRow = -1;
     }

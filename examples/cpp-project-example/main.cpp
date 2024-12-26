@@ -4,7 +4,6 @@
 
 Clay_LayoutConfig layoutElement = Clay_LayoutConfig { .padding = {5} };
 
-
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
