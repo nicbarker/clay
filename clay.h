@@ -525,9 +525,10 @@ extern uint32_t Clay__debugViewWidth;
 bool Clay__warningsEnabled = true;
 uint32_t Clay__maxElementCount = 8192;
 uint32_t Clay__maxMeasureTextCacheWordCount = 16384;
-Clay_ErrorHandler Clay__errorHandler = CLAY__INIT(Clay_ErrorHandler) { .errorHandlerFunction = Clay__Noop };
+void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {}
+Clay_ErrorHandler Clay__errorHandler = CLAY__INIT(Clay_ErrorHandler) { .errorHandlerFunction = Clay__ErrorHandlerFunctionDefault };
 
-void Clay__Noop() {};
+void Clay__Noop() {}
 
 Clay_String CLAY__SPACECHAR = CLAY__INIT(Clay_String) { .length = 1, .chars = " " };
 Clay_String CLAY__STRING_DEFAULT = CLAY__INIT(Clay_String) { .length = 0, .chars = NULL };
