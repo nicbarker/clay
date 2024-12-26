@@ -393,6 +393,14 @@ typedef struct
     bool found;
 } Clay_ScrollContainerData;
 
+typedef struct
+{
+    Clay_BoundingBox elementLocation;
+
+    // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
+    bool found;
+} Clay_ElementLocationData;
+
 typedef enum {
     CLAY_RENDER_COMMAND_TYPE_NONE,
     CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
@@ -479,6 +487,7 @@ void Clay_SetDebugModeEnabled(bool enabled);
 void Clay_SetCullingEnabled(bool enabled);
 void Clay_SetMaxElementCount(uint32_t maxElementCount);
 void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount);
+Clay_ElementLocationData Clay_GetElementLocationData (Clay_ElementId id); 
 
 // Internal API functions required by macros
 void Clay__OpenElement();
@@ -3809,6 +3818,22 @@ Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
         }
     }
     return CLAY__INIT(Clay_ScrollContainerData) {};
+}
+
+CLAY_WASM_EXPORT("Clay_GetElementLocationData")
+Clay_ElementLocationData Clay_GetElementLocationData(Clay_ElementId id){
+    Clay_LayoutElementHashMapItem * item =Clay__GetHashMapItem(id.id);
+    if(item == &CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT) {
+        return CLAY__INIT(Clay_ElementLocationData){
+            .found=false,
+            .elementLocation=CLAY__INIT(Clay_BoundingBox){}
+        };
+    }
+
+    return CLAY__INIT(Clay_ElementLocationData){
+        .elementLocation=item->boundingBox,
+        .found = true
+    };
 }
 
 CLAY_WASM_EXPORT("Clay_SetDebugModeEnabled")
