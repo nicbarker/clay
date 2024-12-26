@@ -202,11 +202,24 @@ void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
 }
 
+bool reinitializeClay = false;
+
+void HandleClayErrors(Clay_ErrorData errorData) {
+    printf("%s", errorData.errorText.chars);
+    if (errorData.errorType == CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED) {
+        reinitializeClay = true;
+        Clay_SetMaxElementCount(Clay__maxElementCount * 2);
+    } else if (errorData.errorType == CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED) {
+        reinitializeClay = true;
+        Clay_SetMaxMeasureTextCacheWordCount(Clay__maxMeasureTextCacheWordCount * 2);
+    }
+}
+
 int main(void) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
-    Clay_Arena clayMemory = (Clay_Arena) { .label = CLAY_STRING("Clay Memory Arena"), .memory = malloc(totalMemorySize), .capacity = totalMemorySize };
+    Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
     Clay_SetMeasureTextFunction(Raylib_MeasureText);
-    Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() });
+    Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
     Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
     profilePicture = LoadTextureFromImage(LoadImage("resources/profile-picture.png"));
     Raylib_fonts[FONT_ID_BODY_24] = (Raylib_Font) {
@@ -226,6 +239,13 @@ int main(void) {
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        if (reinitializeClay) {
+            Clay_SetMaxElementCount(8192);
+            totalMemorySize = Clay_MinMemorySize();
+            clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
+            Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
+            reinitializeClay = false;
+        }
         UpdateDrawFrame();
     }
     return 0;
