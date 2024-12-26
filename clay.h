@@ -479,6 +479,7 @@ Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array,
 void Clay_SetDebugModeEnabled(bool enabled);
 void Clay_SetCullingEnabled(bool enabled);
 void Clay_SetMaxElementCount(uint32_t maxElementCount);
+void Clay_SetMeasureTextCacheSize(uint32_t measureTextCacheSize);
 
 // Internal API functions required by macros
 void Clay__OpenElement();
@@ -518,10 +519,6 @@ extern uint32_t Clay__debugViewWidth;
 #define CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT 16
 #endif
 
-#ifndef CLAY_MEASURE_TEXT_CACHE_SIZE
-#define CLAY_MEASURE_TEXT_CACHE_SIZE Clay__maxElementCount * 2
-#endif
-
 #ifndef CLAY__NULL
 #define CLAY__NULL 0
 #endif
@@ -532,6 +529,7 @@ extern uint32_t Clay__debugViewWidth;
 
 bool Clay__warningsEnabled = true;
 uint32_t Clay__maxElementCount = 128;
+uint32_t Clay__measureTextCacheSize = 128;
 Clay_ErrorHandler Clay__errorHandler = CLAY__INIT(Clay_ErrorHandler) { .errorHandlerFunction = Clay__Noop };
 
 void Clay__Noop() {};
@@ -1653,7 +1651,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
             if (!Clay__booleanWarnings.maxTextMeasureCacheExceeded) {
                 Clay__errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
                     .errorType = CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED,
-                    .errorText = CLAY_STRING("Clay has run out of space in it's internal text measurement cache. Try increasing CLAY_MEASURE_TEXT_CACHE_SIZE."),
+                    .errorText = CLAY_STRING("Clay has run out of space in it's internal text measurement cache. Try using Clay_SetMeasureTextCacheSize() (default 16384, with 1 unit storing 1 measured word)."),
                     .userData = Clay__errorHandler.userData });
                 Clay__booleanWarnings.maxTextMeasureCacheExceeded = true;
             }
@@ -2034,9 +2032,9 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
     Clay__layoutElementsHashMap = Clay__int32_tArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__measureTextHashMapInternal = Clay__MeasureTextCacheItemArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__measureTextHashMapInternalFreeList = Clay__int32_tArray_Allocate_Arena(Clay__maxElementCount, arena);
-    Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(CLAY_MEASURE_TEXT_CACHE_SIZE, arena);
+    Clay__measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(Clay__measureTextCacheSize, arena);
     Clay__measureTextHashMap = Clay__int32_tArray_Allocate_Arena(Clay__maxElementCount, arena);
-    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(CLAY_MEASURE_TEXT_CACHE_SIZE, arena);
+    Clay__measuredWords = Clay__MeasuredWordArray_Allocate_Arena(Clay__measureTextCacheSize, arena);
     Clay__pointerOverIds = Clay__ElementIdArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__debugElementData = Clay__DebugElementDataArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__arenaResetOffset = arena->nextAllocation;
@@ -3834,6 +3832,11 @@ void Clay_SetExternalScrollHandlingEnabled(bool enabled) {
 CLAY_WASM_EXPORT("Clay_SetMaxElementCount")
 void Clay_SetMaxElementCount(uint32_t maxElementCount) {
     Clay__maxElementCount = maxElementCount;
+}
+
+CLAY_WASM_EXPORT("Clay_SetMeasureTextCacheSize")
+void Clay_SetMeasureTextCacheSize(uint32_t measureTextCacheSize) {
+    Clay__measureTextCacheSize = measureTextCacheSize;
 }
 
 #endif //CLAY_IMPLEMENTATION

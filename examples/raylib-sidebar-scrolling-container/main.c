@@ -202,8 +202,17 @@ void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
 }
 
+bool reinitializeClay = false;
+
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
+    if (errorData.errorType == CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED) {
+        reinitializeClay = true;
+        Clay_SetMaxElementCount(Clay__maxElementCount * 2);
+    } else if (errorData.errorType == CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED) {
+        reinitializeClay = true;
+        Clay_SetMeasureTextCacheSize(Clay__measureTextCacheSize * 2);
+    }
 }
 
 int main(void) {
@@ -230,6 +239,13 @@ int main(void) {
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        if (reinitializeClay) {
+            Clay_SetMaxElementCount(8192);
+            totalMemorySize = Clay_MinMemorySize();
+            clayMemory = (Clay_Arena) { .label = CLAY_STRING("Clay Memory Arena"), .memory = malloc(totalMemorySize), .capacity = totalMemorySize };
+            Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
+            reinitializeClay = false;
+        }
         UpdateDrawFrame();
     }
     return 0;
