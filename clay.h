@@ -515,10 +515,6 @@ extern uint32_t Clay__debugViewWidth;
 #ifdef CLAY_IMPLEMENTATION
 #undef CLAY_IMPLEMENTATION
 
-#ifndef CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT
-#define CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT 16
-#endif
-
 #ifndef CLAY__NULL
 #define CLAY__NULL 0
 #endif
@@ -528,8 +524,8 @@ extern uint32_t Clay__debugViewWidth;
 #endif
 
 bool Clay__warningsEnabled = true;
-uint32_t Clay__maxElementCount = 128;
-uint32_t Clay__measureTextCacheSize = 128;
+uint32_t Clay__maxElementCount = 8192;
+uint32_t Clay__measureTextCacheSize = 16384;
 Clay_ErrorHandler Clay__errorHandler = CLAY__INIT(Clay_ErrorHandler) { .errorHandlerFunction = Clay__Noop };
 
 void Clay__Noop() {};
@@ -1581,7 +1577,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         return NULL;
     }
     uint32_t id = Clay__HashTextWithConfig(text, config);
-    uint32_t hashBucket = id % CLAY__TEXT_MEASURE_HASH_BUCKET_COUNT;
+    uint32_t hashBucket = id % (Clay__measureTextCacheSize / 8);
     int32_t elementIndexPrevious = 0;
     int32_t elementIndex = Clay__measureTextHashMap.internalArray[hashBucket];
     while (elementIndex != 0) {
