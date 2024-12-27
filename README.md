@@ -12,6 +12,8 @@
 
 Take a look at the [clay website](https://nicbarker.com/clay) for an example of clay compiled to wasm and running in the browser, or others in the [examples directory](https://github.com/nicbarker/clay/tree/main/examples).
 
+You can also watch the [introduction video](https://youtu.be/DYWTw19_8r4) for an overview of the motivation behind Clay's development and a short demo of its usage.
+
 <img width="1394" alt="A screenshot of a code IDE with lots of visual and textual elements" src="https://github.com/user-attachments/assets/9986149a-ee0f-449a-a83e-64a392267e3d">
 
 _An example GUI application built with clay_
@@ -410,15 +412,12 @@ Clay supports C preprocessor directives to modulate functionality at compile tim
 
 The supported directives are:
 
-- `CLAY_MAX_ELEMENT_COUNT` - Controls the maximum number of clay elements that memory is pre-allocated for. Defaults to **8192**, which should be more than enough for the majority of use cases. Napkin math is ~450 bytes of memory overhead per element (8192 elements is ~3.5mb of memory) 
-- `CLAY_DISABLE_CULLING` - Disables [Visibility Culling](#visibility-culling) of render commands.
 - `CLAY_WASM` - Required when targeting Web Assembly.
-- `CLAY_OVERFLOW_TRAP` - By default, clay will continue to allow function calls without crashing even when it exhausts all its available pre-allocated memory.  This can produce erroneous layout results that are difficult to interpret. If `CLAY_OVERFLOW_TRAP` is defined, clay will raise a `SIGTRAP` signal that will be caught by your debugger. Relies on `signal.h` being available in your environment.
 - `CLAY_DEBUG` - Used for debugging clay's internal implementation. Useful if you want to modify or debug clay, or learn how things work. It enables a number of debug features such as preserving source strings for hash IDs to make debugging easier.
 - `CLAY_EXTEND_CONFIG_RECTANGLE` - Provide additional struct members to `CLAY_RECTANGLE` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_TEXT` - Provide additional struct members to `CLAY_TEXT_CONFIG` that will be passed through with output render commands.
 - `CLAY_EXTEND_CONFIG_IMAGE` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
-- `CLAY_EXTEND_CONFIG_CUSTOM` - Provide additional struct members to `CLAY_IMAGE_CONFIG` that will be passed through with output render commands.
+- `CLAY_EXTEND_CONFIG_CUSTOM` - Provide additional struct members to `CLAY_CUSTOM_CONFIG` that will be passed through with output render commands.
 
 ### Bindings for non C
 
@@ -483,11 +482,29 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 
 **Note 2: It is essential that this function is as fast as possible.** For text heavy use-cases this function is called many times, and despite the fact that clay caches text measurements internally, it can easily become the dominant overall layout cost if the provided function is slow. **This is on the hot path!**
 
+### Clay_SetMaxElementCount
+
+`void Clay_SetMaxElementCount(uint32_t maxElementCount)`
+
+Updates the internal maximum element count, allowing clay to allocate larger UI hierarchies.
+
+**Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
+
+### Clay_SetMaxMeasureTextCacheWordCount
+
+`void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount)`
+
+Updates the internal text measurement cache size, allowing clay to allocate more text. The value represents how many seperate words can be stored in the text measurement cache.
+
+**Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
+
 ### Clay_Initialize
 
-`void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions)`
+`void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler)`
 
-Initializes the internal memory mapping, and sets the internal dimensions for layout.
+Initializes the internal memory mapping, sets the internal dimensions for layout, and binds an error handler for clay to use when something goes wrong.
+
+Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler)
 
 ### Clay_SetLayoutDimensions
 
@@ -1545,6 +1562,29 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 
 ## Data Structures & Definitions
 
+### Clay_String
+
+```C
+typedef struct {
+    int length;
+    const char *chars;
+} Clay_String;
+```
+
+`Clay_String` is a string container that clay uses internally to represent all strings.
+
+**Fields**
+
+**`.length`** - `int`
+
+The number of characters in the string, _not including an optional null terminator._
+
+---
+
+**`.chars`** - `const char *`
+
+A pointer to the contents of the string. This data is not guaranteed to be null terminated, so if you are passing it to code that expects standard null terminated C strings, you will need to copy the data and append a null terminator.
+
 ### Clay_ElementId
 
 ```C
@@ -1770,4 +1810,77 @@ An enum value representing the current "state" of the pointer interaction. As an
 
 ---
 
+### Clay_ErrorHandler
 
+```C
+typedef struct
+{
+    void (*errorHandlerFunction)(Clay_ErrorData errorText);
+    uintptr_t userData;
+} Clay_ErrorHandler;
+```
+
+**Fields**
+
+**`.errorHandlerFunction`** - `void (Clay_ErrorData errorText) {}`
+
+A function pointer to an error handler function, which takes `Clay_ErrorData` as an argument. This function will be called whenever Clay encounters an internal error.
+
+---
+
+**`.userData`** - `uintptr_t`
+
+A generic pointer to extra userdata that is transparently passed through from `Clay_Initialize` to Clay's error handler callback. Defaults to NULL.
+
+---
+
+### Clay_ErrorData
+
+```C
+typedef struct
+{
+    Clay_ErrorType errorType;
+    Clay_String errorText;
+    uintptr_t userData;
+} Clay_ErrorData;
+```
+
+**Fields**
+
+**`.errorType`** - `Clay_ErrorType`
+
+```C
+typedef enum {
+    CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
+    CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED,
+    CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED,
+    CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED,
+    CLAY_ERROR_TYPE_DUPLICATE_ID,
+    CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND,
+    CLAY_ERROR_TYPE_INTERNAL_ERROR,
+} Clay_ErrorType;
+```
+
+An enum representing the type of error Clay encountered. It's up to the user to handle on a case by case basis, but as some general guidance:
+
+- `CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED` - The user is attempting to use `CLAY_TEXT` and either forgot to call [Clay_SetMeasureTextFunction](#clay_setmeasuretextfunction) or accidentally passed a null function pointer.
+- `CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED` - Clay was initialized with an Arena that was too small for the configured [Clay_SetMaxElementCount](#clay_setmaxelementcount). Try using [Clay_MinMemorySize()](#clay_minmemorysize) to get the exact number of bytes required by the current configuration.
+- `CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED` - The declared UI hierarchy has too many elements for the configured max element count. Use [Clay_SetMaxElementCount](#clay_setmaxelementcount) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
+- `CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED` - The declared UI hierarchy has too much text for the configured text measure cache size. Use [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmeasuretextcachesize) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
+- `CLAY_ERROR_TYPE_DUPLICATE_ID` - Two elements in Clays UI Hierarchy have been declared with exactly the same ID. Set a breakpoint in your error handler function for a stack trace back to exactly where this occured.
+- `CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND` - A `CLAY_FLOATING` element was declared with the `.parentId` property, but no element with that ID was found. Set a breakpoint in your error handler function for a stack trace back to exactly where this occured.
+- `CLAY_ERROR_TYPE_INTERNAL_ERROR` - Clay has encountered an internal logic or memory error. Please report this as a bug with a stack trace to help us fix these!
+
+---
+
+**`.errorText`** - `Clay_String`
+
+A [Clay_String](#clay_string) that provides a human readable description of the error. May change in future and should not be relied on to detect error types.
+
+---
+
+**`.userData`** - `uintptr_t`
+
+A generic pointer to extra userdata that is transparently passed through from `Clay_Initialize` to Clay's error handler callback. Defaults to NULL.
+
+---
