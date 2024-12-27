@@ -19,9 +19,6 @@ static Clay_Dimensions SDL2_MeasureText(Clay_String *text, Clay_TextElementConfi
     int height = 0;
     if (TTF_SizeUTF8(font, chars, &width, &height) < 0) {
         fprintf(stderr, "Error: could not measure text: %s\n", TTF_GetError());
-#ifdef CLAY_OVERFLOW_TRAP
-        raise(SIGTRAP);
-#endif
         exit(1);
     }
     free(chars);
@@ -97,9 +94,6 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
             }
             default: {
                 fprintf(stderr, "Error: unhandled render command: %d\n", renderCommand->commandType);
-#ifdef CLAY_OVERFLOW_TRAP
-                raise(SIGTRAP);
-#endif
                 exit(1);
             }
         }
