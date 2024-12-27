@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(minimal_sdl2 C)
+project(SDL2_video_demo C)
 set(CMAKE_C_STANDARD 99)
 
 include(FetchContent)
@@ -23,12 +23,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(SDL2_ttf)
 
-add_executable(minimal_sdl2 main.c)
+add_executable(SDL2_video_demo main.c)
 
-target_compile_options(minimal_sdl2 PUBLIC)
-target_include_directories(minimal_sdl2 PUBLIC .)
+target_compile_options(SDL2_video_demo PUBLIC)
+target_include_directories(SDL2_video_demo PUBLIC .)
 
-target_link_libraries(minimal_sdl2 PUBLIC
+target_link_libraries(SDL2_video_demo PUBLIC
     SDL2::SDL2main
     SDL2::SDL2-static
     SDL2_ttf::SDL2_ttf-static
@@ -37,7 +37,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -DCLAY_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_custom_command(
-        TARGET minimal_sdl2 POST_BUILD
+        TARGET SDL2_video_demo POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/resources
         ${CMAKE_CURRENT_BINARY_DIR}/resources)
