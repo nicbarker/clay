@@ -3,7 +3,7 @@
 
 #define SOKOL_IMPL
 #define SOKOL_NO_ENTRY
-#define SOKOL_GLCORE33
+#define SOKOL_GLCORE
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_glue.h"
@@ -12,14 +12,14 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
-#include "sokol_imgui.h"
+#include "util/sokol_imgui.h"
 
 #include <stdio.h>
 
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 600
 
-sg_pass_action pass_action = {0};
+sg_pass_action pass_action = {};
 
 static const uint32_t FONT_ID_BODY_24 = 0;
 static const Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
@@ -103,11 +103,11 @@ int main(int argc, char** args) {
 
 void init() {
     sg_desc desc = {0};
-    desc.context = sapp_sgcontext();
+    desc.environment = sglue_environment();
     desc.logger.func = slog_func;
     sg_setup(&desc);
 
-    pass_action.colors[0] = (sg_color_attachment_action){ .action=SG_ACTION_CLEAR, .value={0.2f, 0.1f, 0.3f, 1.0f} };
+    pass_action.colors[0] = (sg_color_attachment_action){ .load_action=SG_LOADACTION_CLEAR, .clear_value={0.2f, 0.1f, 0.3f, 1.0f} };
 
     simgui_desc_t simgui_desc = {0};
     simgui_setup(&simgui_desc);
@@ -133,7 +133,7 @@ void frame() {
         ImGui::End();
     }
 
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_pass({ .action = pass_action, .swapchain = sglue_swapchain() });
     simgui_render();
     sg_end_pass();
     sg_commit();
