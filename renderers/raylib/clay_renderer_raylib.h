@@ -40,6 +40,8 @@ typedef struct
 } CustomLayoutElement;
 
 #ifdef CLAY_RAYLIB_IMPLEMENTATION
+#undef CLAY_RAYLIB_IMPLEMENTATION
+
 // Global state
 Raylib_Font Raylib_fonts[10];
 Camera Raylib_camera;
