@@ -1,6 +1,7 @@
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
-#include "../../renderers/raylib/clay_renderer_raylib.c"
+#define CLAY_RAYLIB_IMPLEMENTATION // This is different to the video, the raylib renderer is now in a header file
+#include "../../renderers/raylib/clay_renderer_raylib.h"
 
 const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
@@ -79,10 +80,7 @@ int main(void) {
     Clay_Raylib_Initialize(1024, 768, "Introducing Clay Demo", FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT); // Extra parameters to this function are new since the video was published
 
     uint64_t clayRequiredMemory = Clay_MinMemorySize();
-    Clay_Arena clayMemory = (Clay_Arena) {
-        .memory = malloc((size_t)1024 * 1024 * 1024 * 1024),
-        .capacity = clayRequiredMemory
-    };
+    Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Initialize(clayMemory, (Clay_Dimensions) {
        .width = GetScreenWidth(),
        .height = GetScreenHeight()
