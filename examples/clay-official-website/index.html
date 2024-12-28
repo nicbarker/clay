@@ -338,7 +338,7 @@
         memoryDataView = new DataView(new Uint8Array(instance.exports.memory.buffer).buffer);
         scratchSpaceAddress = instance.exports.__heap_base.value;
         heapSpaceAddress = instance.exports.__heap_base.value + 1024;
-        let arenaAddress = scratchSpaceAddress;
+        let arenaAddress = scratchSpaceAddress + 8;
         window.instance = instance;
         createMainArena(arenaAddress, heapSpaceAddress);
         memoryDataView.setFloat32(instance.exports.__heap_base.value, window.innerWidth, true);
