@@ -305,19 +305,38 @@ int main(void) {
     int windowHeight = 0;
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)windowWidth, (float)windowHeight }, (Clay_ErrorHandler) { HandleClayErrors });
+    Uint64 NOW = SDL_GetPerformanceCounter();
+    Uint64 LAST = 0;
+    double deltaTime = 0;
 
     while (true) {
+        Clay_Vector2 scrollDelta = {};
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
-            case SDL_QUIT: goto quit;
+                case SDL_QUIT: { goto quit; }
+                case SDL_MOUSEWHEEL: {
+                    scrollDelta.x = event.wheel.x;
+                    scrollDelta.y = event.wheel.y;
+                    break;
+                }
             }
         }
+        LAST = NOW;
+        NOW = SDL_GetPerformanceCounter();
+        deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency() );
+
         int mouseX = 0;
         int mouseY = 0;
         Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
         Clay_Vector2 mousePosition = (Clay_Vector2){ (float)mouseX, (float)mouseY };
         Clay_SetPointerState(mousePosition, mouseState & SDL_BUTTON(1));
+
+        Clay_UpdateScrollContainers(
+            true,
+            (Clay_Vector2) { scrollDelta.x, scrollDelta.y },
+            deltaTime
+        );
         
         SDL_GetWindowSize(window, &windowWidth, &windowHeight);
         Clay_SetLayoutDimensions((Clay_Dimensions) { (float)windowWidth, (float)windowHeight });
