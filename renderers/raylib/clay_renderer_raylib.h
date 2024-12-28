@@ -1,3 +1,6 @@
+#ifndef CLAY_RENDERER_RAYLIB_H
+#define CLAY_RENDERER_RAYLIB_H
+
 #include "raylib.h"
 #include "raymath.h"
 #include "stdint.h"
@@ -14,8 +17,6 @@ typedef struct
     Font font;
 } Raylib_Font;
 
-Raylib_Font Raylib_fonts[10];
-Camera Raylib_camera;
 
 typedef enum
 {
@@ -37,6 +38,12 @@ typedef struct
         CustomLayoutElement_3DModel model;
     };
 } CustomLayoutElement;
+
+#ifdef CLAY_RAYLIB_IMPLEMENTATION
+// Global state
+Raylib_Font Raylib_fonts[10];
+Camera Raylib_camera;
+uint32_t measureCalls = 0;
 
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
 Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance)
@@ -87,8 +94,6 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
     return ray;
 }
 
-uint32_t measureCalls = 0;
-
 static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextElementConfig *config) {
     measureCalls++;
     // Measure string size for Font
@@ -122,6 +127,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
 }
 
 void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned int flags) {
+    measureCalls = 0;
     SetConfigFlags(flags);
     InitWindow(width, height, title);
 //    EnableEventWaiting();
@@ -231,3 +237,6 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
         }
     }
 }
+
+#endif // CLAY_RAYLIB_IMPLEMENTATION
+#endif // CLAY_RENDERER_RAYLIB_H
