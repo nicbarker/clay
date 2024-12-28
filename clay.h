@@ -471,6 +471,7 @@ Clay_ElementId Clay_GetElementId(Clay_String idString);
 Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index);
 bool Clay_Hovered(void);
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
+bool Clay_PointerOver(Clay_ElementId elementId);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
 void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config));
 void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId));
