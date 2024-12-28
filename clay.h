@@ -888,12 +888,48 @@ Clay_String *Clay__StringArray_Add(Clay__StringArray *array, Clay_String item) {
 #pragma endregion
 // __GENERATED__ template
 
+typedef struct {
+    Clay_Dimensions dimensions;
+    Clay_String line;
+} Clay__WrappedTextLine;
+
+Clay__WrappedTextLine CLAY__WRAPPED_TEXT_LINE_DEFAULT = CLAY__INIT(Clay__WrappedTextLine) {};
+
+// __GENERATED__ template array_define,array_define_slice,array_allocate,array_add,array_get TYPE=Clay__WrappedTextLine NAME=Clay__WrappedTextLineArray DEFAULT_VALUE=&CLAY__WRAPPED_TEXT_LINE_DEFAULT
+#pragma region generated
+typedef struct
+{
+    uint32_t capacity;
+    uint32_t length;
+    Clay__WrappedTextLine *internalArray;
+} Clay__WrappedTextLineArray;
+typedef struct
+{
+    uint32_t length;
+    Clay__WrappedTextLine *internalArray;
+} Clay__WrappedTextLineArraySlice;
+Clay__WrappedTextLineArray Clay__WrappedTextLineArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+    return CLAY__INIT(Clay__WrappedTextLineArray){.capacity = capacity, .length = 0, .internalArray = (Clay__WrappedTextLine *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__WrappedTextLine), CLAY__ALIGNMENT(Clay__WrappedTextLine), arena)};
+}
+Clay__WrappedTextLine *Clay__WrappedTextLineArray_Add(Clay__WrappedTextLineArray *array, Clay__WrappedTextLine item) {
+    if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {
+        array->internalArray[array->length++] = item;
+        return &array->internalArray[array->length - 1];
+    }
+    return &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
+}
+Clay__WrappedTextLine *Clay__WrappedTextLineArray_Get(Clay__WrappedTextLineArray *array, int index) {
+    return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
+}
+#pragma endregion
+// __GENERATED__ template
+
 typedef struct
 {
     Clay_String text;
     Clay_Dimensions preferredDimensions;
     uint32_t elementIndex;
-    Clay__StringArraySlice wrappedLines;
+    Clay__WrappedTextLineArraySlice wrappedLines;
 } Clay__TextElementData;
 
 Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = CLAY__INIT(Clay__TextElementData) {};
@@ -1416,7 +1452,7 @@ Clay__CustomElementConfigArray Clay__customElementConfigs;
 Clay__BorderElementConfigArray Clay__borderElementConfigs;
 // Misc Data Structures
 Clay__StringArray Clay__layoutElementIdStrings;
-Clay__StringArray Clay__wrappedTextLines;
+Clay__WrappedTextLineArray Clay__wrappedTextLines;
 Clay__LayoutElementTreeNodeArray Clay__layoutElementTreeNodeArray1;
 Clay__LayoutElementTreeRootArray Clay__layoutElementTreeRoots;
 Clay__LayoutElementHashMapItemArray Clay__layoutElementsHashMapInternal;
@@ -2007,7 +2043,7 @@ void Clay__InitializeEphemeralMemory(Clay_Arena *arena) {
     Clay__borderElementConfigs = Clay__BorderElementConfigArray_Allocate_Arena(Clay__maxElementCount, arena);
 
     Clay__layoutElementIdStrings = Clay__StringArray_Allocate_Arena(Clay__maxElementCount, arena);
-    Clay__wrappedTextLines = Clay__StringArray_Allocate_Arena(Clay__maxElementCount, arena);
+    Clay__wrappedTextLines = Clay__WrappedTextLineArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__layoutElementTreeNodeArray1 = Clay__LayoutElementTreeNodeArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__layoutElementTreeRoots = Clay__LayoutElementTreeRootArray_Allocate_Arena(Clay__maxElementCount, arena);
     Clay__layoutElementChildren = Clay__int32_tArray_Allocate_Arena(Clay__maxElementCount, arena);
@@ -2326,7 +2362,7 @@ void Clay__CalculateFinalLayout() {
     // Wrap text
     for (int textElementIndex = 0; textElementIndex < Clay__textElementData.length; ++textElementIndex) {
         Clay__TextElementData *textElementData = Clay__TextElementDataArray_Get(&Clay__textElementData, textElementIndex);
-        textElementData->wrappedLines = CLAY__INIT(Clay__StringArraySlice) { .length = 0, .internalArray = &Clay__wrappedTextLines.internalArray[Clay__wrappedTextLines.length] };
+        textElementData->wrappedLines = CLAY__INIT(Clay__WrappedTextLineArraySlice) { .length = 0, .internalArray = &Clay__wrappedTextLines.internalArray[Clay__wrappedTextLines.length] };
         Clay_LayoutElement *containerElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)textElementData->elementIndex);
         Clay_TextElementConfig *textConfig = Clay__FindElementConfigWithType(containerElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT).textElementConfig;
         Clay__MeasureTextCacheItem *measureTextCacheItem = Clay__MeasureTextCached(&textElementData->text, textConfig);
@@ -2335,7 +2371,7 @@ void Clay__CalculateFinalLayout() {
         uint32_t lineLengthChars = 0;
         uint32_t lineStartOffset = 0;
         if (textElementData->preferredDimensions.width <= containerElement->dimensions.width) {
-            Clay__StringArray_Add(&Clay__wrappedTextLines, textElementData->text);
+            Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { containerElement->dimensions,  textElementData->text });
             textElementData->wrappedLines.length++;
             continue;
         }
@@ -2347,14 +2383,14 @@ void Clay__CalculateFinalLayout() {
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArray_Get(&Clay__measuredWords, wordIndex);
             // Only word on the line is too large, just render it anyway
             if (lineLengthChars == 0 && lineWidth + measuredWord->width > containerElement->dimensions.width) {
-                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] });
+                Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { CLAY__INIT(Clay_Dimensions) { measuredWord->width, lineHeight }, CLAY__INIT(Clay_String){ .length = (int)measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] } });
                 textElementData->wrappedLines.length++;
                 wordIndex = measuredWord->next;
             }
             // measuredWord->length == 0 means a newline character
             else if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
                 // Wrapped text lines list has overflowed, just render out the line
-                Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
+                Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { CLAY__INIT(Clay_Dimensions) { lineWidth, lineHeight }, CLAY__INIT(Clay_String){ .length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
                 textElementData->wrappedLines.length++;
                 if (lineLengthChars == 0 || measuredWord->length == 0) {
                     wordIndex = measuredWord->next;
@@ -2369,7 +2405,7 @@ void Clay__CalculateFinalLayout() {
             }
         }
         if (lineLengthChars > 0) {
-            Clay__StringArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] });
+            Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { CLAY__INIT(Clay_Dimensions) { lineWidth, lineHeight }, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
             textElementData->wrappedLines.length++;
         }
         containerElement->dimensions.height = lineHeight * textElementData->wrappedLines.length;
@@ -2647,15 +2683,15 @@ void Clay__CalculateFinalLayout() {
                             float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
                             float yPosition = lineHeightOffset;
                             for (int lineIndex = 0; lineIndex < currentElement->textElementData->wrappedLines.length; ++lineIndex) {
-                                Clay_String wrappedLine = currentElement->textElementData->wrappedLines.internalArray[lineIndex]; // todo range check
-                                if (wrappedLine.length == 0) {
+                                Clay__WrappedTextLine wrappedLine = currentElement->textElementData->wrappedLines.internalArray[lineIndex]; // todo range check
+                                if (wrappedLine.line.length == 0) {
                                     yPosition += finalLineHeight;
                                     continue;
                                 }
                                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, currentElement->dimensions.width, naturalLineHeight }, // TODO width
+                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, wrappedLine.dimensions.width, wrappedLine.dimensions.height }, // TODO width
                                     .config = configUnion,
-                                    .text = wrappedLine,
+                                    .text = wrappedLine.line,
                                     .id = Clay__HashNumber(lineIndex, currentElement->id).id,
                                     .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
                                 });
