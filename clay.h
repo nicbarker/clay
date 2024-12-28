@@ -157,9 +157,21 @@ typedef struct {
     float x, y;
 } Clay_Vector2;
 
-typedef struct {
-    float r, g, b, a;
-} Clay_Color;
+#ifndef CLAY_COLOR
+#define CLAY_COLOR struct { \
+    float r, g, b, a; \
+}
+#endif
+
+#ifndef CLAY_COLOR_RGB
+#define CLAY_COLOR_RGB(r, g, b) CLAY_COLOR_RGBA(r, g, b, 255)
+#endif
+
+#ifndef CLAY_COLOR_RGBA
+#define CLAY_COLOR_RGBA(r, g, b, a) CLAY__INIT(Clay_Color) {r, g, b, a}
+#endif
+
+typedef CLAY_COLOR Clay_Color;
 
 typedef struct {
     float x, y, width, height;
@@ -1426,7 +1438,7 @@ bool Clay__disableCulling = false;
 bool Clay__externalScrollHandlingEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
 uint32_t Clay__debugViewWidth = 400;
-Clay_Color Clay__debugViewHighlightColor = CLAY__INIT(Clay_Color) { 168, 66, 28, 100 };
+Clay_Color Clay__debugViewHighlightColor = CLAY_COLOR_RGBA(168, 66, 28, 100);
 uint32_t Clay__generation = 0;
 uint64_t Clay__arenaResetOffset = 0;
 Clay_Arena Clay__internalArena;
@@ -2924,11 +2936,11 @@ Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConf
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
-Clay_Color CLAY__DEBUGVIEW_COLOR_1 = CLAY__INIT(Clay_Color) {58, 56, 52, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_2 = CLAY__INIT(Clay_Color) {62, 60, 58, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_3 = CLAY__INIT(Clay_Color) {141, 133, 135, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_4 = CLAY__INIT(Clay_Color) {238, 226, 231, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = CLAY__INIT(Clay_Color) {102, 80, 78, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_1 = CLAY_COLOR_RGB(58, 56, 52);
+Clay_Color CLAY__DEBUGVIEW_COLOR_2 = CLAY_COLOR_RGB(62, 60, 58);
+Clay_Color CLAY__DEBUGVIEW_COLOR_3 = CLAY_COLOR_RGB(141, 133, 135);
+Clay_Color CLAY__DEBUGVIEW_COLOR_4 = CLAY_COLOR_RGB(238, 226, 231);
+Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = CLAY_COLOR_RGB(102, 80, 78);
 const int CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
 const int CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
@@ -2943,15 +2955,15 @@ typedef struct
 
 Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Clay__ElementConfigType type) {
     switch (type) {
-        case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Rectangle"), CLAY__INIT(Clay_Color) {243,134,48,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), CLAY__INIT(Clay_Color) {105,210,231,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), CLAY__INIT(Clay_Color) {121,189,154,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), CLAY__INIT(Clay_Color) {250,105,0,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Scroll"), CLAY__INIT(Clay_Color) {242,196,90,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), CLAY__INIT(Clay_Color) {108,91,123, 255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), CLAY__INIT(Clay_Color) {11,72,107,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Rectangle"), CLAY_COLOR_RGB(243, 134, 48) };
+        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), CLAY_COLOR_RGB(105, 210, 231) };
+        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), CLAY_COLOR_RGB(121, 189, 154) };
+        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), CLAY_COLOR_RGB(250, 105, 0) };
+        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Scroll"), CLAY_COLOR_RGB(242, 196, 90) };
+        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), CLAY_COLOR_RGB(108, 91, 123) };
+        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), CLAY_COLOR_RGB(11, 72, 107) };
     }
-    return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Error"), CLAY__INIT(Clay_Color) {0,0,0,255} };
+    return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Error"), CLAY_COLOR_RGB(0, 0, 0) };
 }
 
 typedef struct
@@ -3022,7 +3034,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 // Collisions and offscreen info
                 if (currentElementData) {
                     if (currentElementData->debugData->collision) {
-                        CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){177, 147, 8, 255}), 4)) {
+                        CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY_COLOR_RGB(177, 147, 8)), 4)) {
                             CLAY_TEXT(CLAY_STRING("Duplicate ID"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }));
                         }
                     }
@@ -3233,7 +3245,7 @@ void Clay__RenderDebugView() {
             CLAY_TEXT(CLAY_STRING("Clay Debug Tools"), infoTextConfig);
             CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({}) } })) {}
             // Close button
-            CLAY(CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){217,91,67,255}), 4),
+            CLAY(CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY_COLOR_RGB(217, 91, 67)), 4),
                 CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} }),
                 CLAY_RECTANGLE({ .color = {217,91,67,80} }),
                 Clay_OnHover(HandleDebugViewCloseButtonInteraction, 0)
