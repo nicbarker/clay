@@ -116,11 +116,15 @@ static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
 #ifdef __cplusplus
 #define CLAY__INIT(type) type
 #define CLAY__ALIGNMENT(type) alignof(type)
-#define CLAY_PACKED_ENUM : uint8_t
+#define CLAY_PACKED_ENUM enum : uint8_t
 #else
 #define CLAY__INIT(type) (type)
 #define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
-#define CLAY_PACKED_ENUM __attribute__((__packed__))
+#ifdef _MSC_VER
+#define CLAY_PACKED_ENUM __pragma(pack(push, 1)) enum __pragma(pack(pop))
+#else
+#define CLAY_PACKED_ENUM enum __attribute__((__packed__))
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -179,7 +183,7 @@ typedef struct {
     float bottomRight;
 } Clay_CornerRadius;
 
-typedef enum CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_NONE = 0,
     CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE = 1,
     CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER = 2,
@@ -192,24 +196,24 @@ typedef enum CLAY_PACKED_ENUM {
 
 // Element Configs ---------------------------
 // Layout
-typedef enum CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM {
     CLAY_LEFT_TO_RIGHT,
     CLAY_TOP_TO_BOTTOM,
 } Clay_LayoutDirection;
 
-typedef enum CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM {
     CLAY_ALIGN_X_LEFT,
     CLAY_ALIGN_X_RIGHT,
     CLAY_ALIGN_X_CENTER,
 } Clay_LayoutAlignmentX;
 
-typedef enum CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM {
     CLAY_ALIGN_Y_TOP,
     CLAY_ALIGN_Y_BOTTOM,
     CLAY_ALIGN_Y_CENTER,
 } Clay_LayoutAlignmentY;
 
-typedef enum CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM {
     CLAY__SIZING_TYPE_FIT,
     CLAY__SIZING_TYPE_GROW,
     CLAY__SIZING_TYPE_PERCENT,
@@ -295,7 +299,7 @@ typedef struct
 } Clay_ImageElementConfig;
 
 // Floating
-typedef enum CLAY_PACKED_ENUM {
+typedef CLAY_PACKED_ENUM {
     CLAY_ATTACH_POINT_LEFT_TOP,
     CLAY_ATTACH_POINT_LEFT_CENTER,
     CLAY_ATTACH_POINT_LEFT_BOTTOM,
