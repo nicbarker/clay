@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai ./generate.jai - -compile
+// jai d:/c/clay//bindings/jai/generate.jai jails_diagnostics modules import_dir c:/Users/Stowy/scoop/apps/vscode/1.96.2/data/extensions/apparentlystudio.jails-0.0.11/out/metaprogram
 //
 
 
@@ -21,7 +21,6 @@ StringArray :: struct {
 }
 
 Arena :: struct {
-    label:          String;
     nextAllocation: u64;
     capacity:       u64;
     memory:         *u8;
@@ -125,10 +124,10 @@ SizingMinMax :: struct {
 }
 
 SizingAxis :: struct {
-    union {
-        sizeMinMax:  SizingMinMax;
-        sizePercent: float;
-    }
+    size: union {
+        minMax:  SizingMinMax;
+        percent: float;
+    };
 
     type: SizingType;
 }
@@ -337,32 +336,64 @@ PointerData :: struct {
     state:    PointerDataInteractionState;
 }
 
+ErrorType :: enum s32 {
+    TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED :: 0;
+    ARENA_CAPACITY_EXCEEDED                :: 1;
+    ELEMENTS_CAPACITY_EXCEEDED             :: 2;
+    TEXT_MEASUREMENT_CAPACITY_EXCEEDED     :: 3;
+    DUPLICATE_ID                           :: 4;
+    FLOATING_CONTAINER_PARENT_NOT_FOUND    :: 5;
+    INTERNAL_ERROR                         :: 6;
+
+    CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED :: TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED;
+    CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED                :: ARENA_CAPACITY_EXCEEDED;
+    CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED             :: ELEMENTS_CAPACITY_EXCEEDED;
+    CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED     :: TEXT_MEASUREMENT_CAPACITY_EXCEEDED;
+    CLAY_ERROR_TYPE_DUPLICATE_ID                           :: DUPLICATE_ID;
+    CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND    :: FLOATING_CONTAINER_PARENT_NOT_FOUND;
+    CLAY_ERROR_TYPE_INTERNAL_ERROR                         :: INTERNAL_ERROR;
+}
+
+ErrorData :: struct {
+    errorType: ErrorType;
+    errorText: String;
+    userData:  u64;
+}
+
+ErrorHandler :: struct {
+    errorHandlerFunction: #type (errorText: ErrorData) -> void #c_call;
+    userData:             u64;
+}
+
 // Function Forward Declarations ---------------------------------
 // Public API functions ---
-MinMemorySize :: (__args: ..Any) -> u32 #foreign clay "Clay_MinMemorySize";
+MinMemorySize :: () -> u32 #foreign clay "Clay_MinMemorySize";
 CreateArenaWithCapacityAndMemory :: (capacity: u32, offset: *void) -> Arena #foreign clay "Clay_CreateArenaWithCapacityAndMemory";
 SetPointerState :: (position: Vector2, pointerDown: bool) -> void #foreign clay "Clay_SetPointerState";
-Initialize :: (arena: Arena, layoutDimensions: Dimensions) -> void #foreign clay "Clay_Initialize";
+Initialize :: (arena: Arena, layoutDimensions: Dimensions, errorHandler: ErrorHandler) -> void #foreign clay "Clay_Initialize";
 UpdateScrollContainers :: (enableDragScrolling: bool, scrollDelta: Vector2, deltaTime: float) -> void #foreign clay "Clay_UpdateScrollContainers";
 SetLayoutDimensions :: (dimensions: Dimensions) -> void #foreign clay "Clay_SetLayoutDimensions";
-BeginLayout :: (__args: ..Any) -> void #foreign clay "Clay_BeginLayout";
-EndLayout :: (__args: ..Any) -> RenderCommandArray #foreign clay "Clay_EndLayout";
+BeginLayout :: () -> void #foreign clay "Clay_BeginLayout";
+EndLayout :: () -> RenderCommandArray #foreign clay "Clay_EndLayout";
 GetElementId :: (idString: String) -> ElementId #foreign clay "Clay_GetElementId";
 GetElementIdWithIndex :: (idString: String, index: u32) -> ElementId #foreign clay "Clay_GetElementIdWithIndex";
-Hovered :: (__args: ..Any) -> bool #foreign clay "Clay_Hovered";
+Hovered :: () -> bool #foreign clay "Clay_Hovered";
 OnHover :: (onHoverFunction: #type (elementId: ElementId, pointerData: PointerData, userData: s64) -> void #c_call, userData: s64) -> void #foreign clay "Clay_OnHover";
+PointerOver :: (elementId: ElementId) -> bool #foreign clay "Clay_PointerOver";
 GetScrollContainerData :: (id: ElementId) -> ScrollContainerData #foreign clay "Clay_GetScrollContainerData";
 SetMeasureTextFunction :: (measureTextFunction: #type (text: *String, config: *TextElementConfig) -> Dimensions #c_call) -> void #foreign clay "Clay_SetMeasureTextFunction";
 SetQueryScrollOffsetFunction :: (queryScrollOffsetFunction: #type (elementId: u32) -> Vector2 #c_call) -> void #foreign clay "Clay_SetQueryScrollOffsetFunction";
 RenderCommandArray_Get :: (array: *RenderCommandArray, index: s32) -> *RenderCommand #foreign clay "Clay_RenderCommandArray_Get";
 SetDebugModeEnabled :: (enabled: bool) -> void #foreign clay "Clay_SetDebugModeEnabled";
 SetCullingEnabled :: (enabled: bool) -> void #foreign clay "Clay_SetCullingEnabled";
+SetMaxElementCount :: (maxElementCount: u32) -> void #foreign clay "Clay_SetMaxElementCount";
+SetMaxMeasureTextCacheWordCount :: (maxMeasureTextCacheWordCount: u32) -> void #foreign clay "Clay_SetMaxMeasureTextCacheWordCount";
 
 // Internal API functions required by macros
-OpenElement :: (__args: ..Any) -> void #foreign clay "Clay__OpenElement";
-CloseElement :: (__args: ..Any) -> void #foreign clay "Clay__CloseElement";
+OpenElement :: () -> void #foreign clay "Clay__OpenElement";
+CloseElement :: () -> void #foreign clay "Clay__CloseElement";
 StoreLayoutConfig :: (config: LayoutConfig) -> *LayoutConfig #foreign clay "Clay__StoreLayoutConfig";
-ElementPostConfiguration :: (__args: ..Any) -> void #foreign clay "Clay__ElementPostConfiguration";
+ElementPostConfiguration :: () -> void #foreign clay "Clay__ElementPostConfiguration";
 AttachId :: (id: ElementId) -> void #foreign clay "Clay__AttachId";
 AttachLayoutConfig :: (config: *LayoutConfig) -> void #foreign clay "Clay__AttachLayoutConfig";
 AttachElementConfig :: (config: ElementConfigUnion, type: ElementConfigType) -> void #foreign clay "Clay__AttachElementConfig";
@@ -374,12 +405,11 @@ StoreCustomElementConfig :: (config: CustomElementConfig) -> *CustomElementConfi
 StoreScrollElementConfig :: (config: ScrollElementConfig) -> *ScrollElementConfig #foreign clay "Clay__StoreScrollElementConfig";
 StoreBorderElementConfig :: (config: BorderElementConfig) -> *BorderElementConfig #foreign clay "Clay__StoreBorderElementConfig";
 HashString :: (key: String, offset: u32, seed: u32) -> ElementId #foreign clay "Clay__HashString";
-Noop :: (__args: ..Any) -> void #foreign clay "Clay__Noop";
+Noop :: () -> void #foreign clay "Clay__Noop";
 OpenTextElement :: (text: String, textConfig: *TextElementConfig) -> void #foreign clay "Clay__OpenTextElement";
 
 Clay__debugViewHighlightColor: Color #elsewhere clay;
 Clay__debugViewWidth: u32 #elsewhere clay;
-Clay__debugMaxElementsLatch: bool #elsewhere clay;
 
 #scope_file
 
@@ -410,15 +440,13 @@ clay :: #library,no_dll "clay-jai/windows/clay";
 
     {
         instance: Arena;
-        assert(((cast(*void)(*instance.label)) - cast(*void)(*instance)) == 0, "Arena.label has unexpected offset % instead of 0", ((cast(*void)(*instance.label)) - cast(*void)(*instance)));
-        assert(size_of(type_of(Arena.label)) == 16, "Arena.label has unexpected size % instead of 16", size_of(type_of(Arena.label)));
-        assert(((cast(*void)(*instance.nextAllocation)) - cast(*void)(*instance)) == 16, "Arena.nextAllocation has unexpected offset % instead of 16", ((cast(*void)(*instance.nextAllocation)) - cast(*void)(*instance)));
+        assert(((cast(*void)(*instance.nextAllocation)) - cast(*void)(*instance)) == 0, "Arena.nextAllocation has unexpected offset % instead of 0", ((cast(*void)(*instance.nextAllocation)) - cast(*void)(*instance)));
         assert(size_of(type_of(Arena.nextAllocation)) == 8, "Arena.nextAllocation has unexpected size % instead of 8", size_of(type_of(Arena.nextAllocation)));
-        assert(((cast(*void)(*instance.capacity)) - cast(*void)(*instance)) == 24, "Arena.capacity has unexpected offset % instead of 24", ((cast(*void)(*instance.capacity)) - cast(*void)(*instance)));
+        assert(((cast(*void)(*instance.capacity)) - cast(*void)(*instance)) == 8, "Arena.capacity has unexpected offset % instead of 8", ((cast(*void)(*instance.capacity)) - cast(*void)(*instance)));
         assert(size_of(type_of(Arena.capacity)) == 8, "Arena.capacity has unexpected size % instead of 8", size_of(type_of(Arena.capacity)));
-        assert(((cast(*void)(*instance.memory)) - cast(*void)(*instance)) == 32, "Arena.memory has unexpected offset % instead of 32", ((cast(*void)(*instance.memory)) - cast(*void)(*instance)));
+        assert(((cast(*void)(*instance.memory)) - cast(*void)(*instance)) == 16, "Arena.memory has unexpected offset % instead of 16", ((cast(*void)(*instance.memory)) - cast(*void)(*instance)));
         assert(size_of(type_of(Arena.memory)) == 8, "Arena.memory has unexpected size % instead of 8", size_of(type_of(Arena.memory)));
-        assert(size_of(Arena) == 40, "Arena has size % instead of 40", size_of(Arena));
+        assert(size_of(Arena) == 24, "Arena has size % instead of 24", size_of(Arena));
     }
 
     {
@@ -489,6 +517,8 @@ clay :: #library,no_dll "clay-jai/windows/clay";
 
     {
         instance: SizingAxis;
+        assert(((cast(*void)(*instance.size)) - cast(*void)(*instance)) == 0, "SizingAxis.size has unexpected offset % instead of 0", ((cast(*void)(*instance.size)) - cast(*void)(*instance)));
+        assert(size_of(type_of(SizingAxis.size)) == 8, "SizingAxis.size has unexpected size % instead of 8", size_of(type_of(SizingAxis.size)));
         assert(((cast(*void)(*instance.type)) - cast(*void)(*instance)) == 8, "SizingAxis.type has unexpected offset % instead of 8", ((cast(*void)(*instance.type)) - cast(*void)(*instance)));
         assert(size_of(type_of(SizingAxis.type)) == 4, "SizingAxis.type has unexpected size % instead of 4", size_of(type_of(SizingAxis.type)));
         assert(size_of(SizingAxis) == 12, "SizingAxis has size % instead of 12", size_of(SizingAxis));
@@ -706,6 +736,26 @@ clay :: #library,no_dll "clay-jai/windows/clay";
         assert(((cast(*void)(*instance.state)) - cast(*void)(*instance)) == 8, "PointerData.state has unexpected offset % instead of 8", ((cast(*void)(*instance.state)) - cast(*void)(*instance)));
         assert(size_of(type_of(PointerData.state)) == 4, "PointerData.state has unexpected size % instead of 4", size_of(type_of(PointerData.state)));
         assert(size_of(PointerData) == 12, "PointerData has size % instead of 12", size_of(PointerData));
+    }
+
+    {
+        instance: ErrorData;
+        assert(((cast(*void)(*instance.errorType)) - cast(*void)(*instance)) == 0, "ErrorData.errorType has unexpected offset % instead of 0", ((cast(*void)(*instance.errorType)) - cast(*void)(*instance)));
+        assert(size_of(type_of(ErrorData.errorType)) == 4, "ErrorData.errorType has unexpected size % instead of 4", size_of(type_of(ErrorData.errorType)));
+        assert(((cast(*void)(*instance.errorText)) - cast(*void)(*instance)) == 8, "ErrorData.errorText has unexpected offset % instead of 8", ((cast(*void)(*instance.errorText)) - cast(*void)(*instance)));
+        assert(size_of(type_of(ErrorData.errorText)) == 16, "ErrorData.errorText has unexpected size % instead of 16", size_of(type_of(ErrorData.errorText)));
+        assert(((cast(*void)(*instance.userData)) - cast(*void)(*instance)) == 24, "ErrorData.userData has unexpected offset % instead of 24", ((cast(*void)(*instance.userData)) - cast(*void)(*instance)));
+        assert(size_of(type_of(ErrorData.userData)) == 8, "ErrorData.userData has unexpected size % instead of 8", size_of(type_of(ErrorData.userData)));
+        assert(size_of(ErrorData) == 32, "ErrorData has size % instead of 32", size_of(ErrorData));
+    }
+
+    {
+        instance: ErrorHandler;
+        assert(((cast(*void)(*instance.errorHandlerFunction)) - cast(*void)(*instance)) == 0, "ErrorHandler.errorHandlerFunction has unexpected offset % instead of 0", ((cast(*void)(*instance.errorHandlerFunction)) - cast(*void)(*instance)));
+        assert(size_of(type_of(ErrorHandler.errorHandlerFunction)) == 8, "ErrorHandler.errorHandlerFunction has unexpected size % instead of 8", size_of(type_of(ErrorHandler.errorHandlerFunction)));
+        assert(((cast(*void)(*instance.userData)) - cast(*void)(*instance)) == 8, "ErrorHandler.userData has unexpected offset % instead of 8", ((cast(*void)(*instance.userData)) - cast(*void)(*instance)));
+        assert(size_of(type_of(ErrorHandler.userData)) == 8, "ErrorHandler.userData has unexpected size % instead of 8", size_of(type_of(ErrorHandler.userData)));
+        assert(size_of(ErrorHandler) == 16, "ErrorHandler has size % instead of 16", size_of(ErrorHandler));
     }
 }
 

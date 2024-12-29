@@ -31,10 +31,10 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
     compile := array_find(args, "-compile");
     compile_debug := array_find(args, "-debug");
 
-    if compile {
-        could_copy := FileUtils.copy_file("../../clay.h", "source/clay.h");
-        if !could_copy then return false;
+    could_copy := FileUtils.copy_file("../../clay.h", "source/clay.h");
+    if !could_copy then return false;
 
+    if compile {
         source_file := tprint("%/clay.c", SOURCE_PATH);
 
         success := true;
