@@ -639,10 +639,11 @@ bool CLAY__BOOL_DEFAULT = false;
 
 // __GENERATED__ template array_define,array_allocate TYPE=bool NAME=Clay__BoolArray
 #pragma region generated
-CLAY__TYPEDEF(Clay__BoolArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    bool *internalArray;
+CLAY__TYPEDEF(Clay__BoolArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	bool *internalArray;
 });
 Clay__BoolArray Clay__BoolArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__BoolArray){.capacity = capacity, .length = 0, .internalArray = (bool *)Clay__Array_Allocate_Arena(capacity, sizeof(bool), CLAY__ALIGNMENT(bool), arena)};
@@ -654,10 +655,11 @@ Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay_ElementId NAME=Clay__ElementIdArray DEFAULT_VALUE=&CLAY__ELEMENT_ID_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__ElementIdArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_ElementId *internalArray;
+CLAY__TYPEDEF(Clay__ElementIdArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_ElementId *internalArray;
 });
 Clay__ElementIdArray Clay__ElementIdArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ElementIdArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ElementId *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ElementId), CLAY__ALIGNMENT(Clay_ElementId), arena)};
@@ -679,14 +681,16 @@ Clay_ElementConfig CLAY__ELEMENT_CONFIG_DEFAULT = {CLAY__ELEMENT_CONFIG_TYPE_NON
 
 // __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_add,array_get_slice TYPE=Clay_ElementConfig NAME=Clay__ElementConfigArray DEFAULT_VALUE=&CLAY__ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__ElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_ElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__ElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_ElementConfig *internalArray;
 });
-CLAY__TYPEDEF(Clay__ElementConfigArraySlice, struct {
-    uint32_t length;
-    Clay_ElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__ElementConfigArraySlice, struct
+{
+	uint32_t length;
+	Clay_ElementConfig *internalArray;
 });
 Clay__ElementConfigArray Clay__ElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ElementConfig), CLAY__ALIGNMENT(Clay_ElementConfig), arena)};
@@ -711,10 +715,11 @@ Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = { .sizing = { .width = { .size = { .minM
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_LayoutConfig NAME=Clay__LayoutConfigArray DEFAULT_VALUE=&CLAY_LAYOUT_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__LayoutConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_LayoutConfig *internalArray;
+CLAY__TYPEDEF(Clay__LayoutConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_LayoutConfig *internalArray;
 });
 Clay__LayoutConfigArray Clay__LayoutConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__LayoutConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutConfig), CLAY__ALIGNMENT(Clay_LayoutConfig), arena)};
@@ -733,10 +738,11 @@ Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_RectangleElementConfig NAME=Clay__RectangleElementConfigArray DEFAULT_VALUE=&CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__RectangleElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_RectangleElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__RectangleElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_RectangleElementConfig *internalArray;
 });
 Clay__RectangleElementConfigArray Clay__RectangleElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__RectangleElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_RectangleElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_RectangleElementConfig), CLAY__ALIGNMENT(Clay_RectangleElementConfig), arena)};
@@ -755,10 +761,11 @@ Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_TextElementConfig NAME=Clay__TextElementConfigArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__TextElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_TextElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__TextElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_TextElementConfig *internalArray;
 });
 Clay__TextElementConfigArray Clay__TextElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__TextElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_TextElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_TextElementConfig), CLAY__ALIGNMENT(Clay_TextElementConfig), arena)};
@@ -777,10 +784,11 @@ Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ImageElementConfig NAME=Clay__ImageElementConfigArray DEFAULT_VALUE=&CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__ImageElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_ImageElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__ImageElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_ImageElementConfig *internalArray;
 });
 Clay__ImageElementConfigArray Clay__ImageElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ImageElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ImageElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ImageElementConfig), CLAY__ALIGNMENT(Clay_ImageElementConfig), arena)};
@@ -799,10 +807,11 @@ Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_FloatingElementConfig NAME=Clay__FloatingElementConfigArray DEFAULT_VALUE=&CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__FloatingElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_FloatingElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__FloatingElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_FloatingElementConfig *internalArray;
 });
 Clay__FloatingElementConfigArray Clay__FloatingElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__FloatingElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_FloatingElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_FloatingElementConfig), CLAY__ALIGNMENT(Clay_FloatingElementConfig), arena)};
@@ -821,10 +830,11 @@ Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_CustomElementConfig NAME=Clay__CustomElementConfigArray DEFAULT_VALUE=&CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__CustomElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_CustomElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__CustomElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_CustomElementConfig *internalArray;
 });
 Clay__CustomElementConfigArray Clay__CustomElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__CustomElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_CustomElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_CustomElementConfig), CLAY__ALIGNMENT(Clay_CustomElementConfig), arena)};
@@ -843,10 +853,11 @@ Clay_ScrollElementConfig CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ScrollElementConfig NAME=Clay__ScrollElementConfigArray DEFAULT_VALUE=&CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__ScrollElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_ScrollElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__ScrollElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_ScrollElementConfig *internalArray;
 });
 Clay__ScrollElementConfigArray Clay__ScrollElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ScrollElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ScrollElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ScrollElementConfig), CLAY__ALIGNMENT(Clay_ScrollElementConfig), arena)};
@@ -863,9 +874,10 @@ Clay_ScrollElementConfig *Clay__ScrollElementConfigArray_Add(Clay__ScrollElement
 
 // __GENERATED__ template array_define_slice,array_allocate,array_add TYPE=Clay_String NAME=Clay__StringArray DEFAULT_VALUE=&CLAY__STRING_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__StringArraySlice, struct {
-    uint32_t length;
-    Clay_String *internalArray;
+CLAY__TYPEDEF(Clay__StringArraySlice, struct
+{
+	uint32_t length;
+	Clay_String *internalArray;
 });
 Clay__StringArray Clay__StringArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__StringArray){.capacity = capacity, .length = 0, .internalArray = (Clay_String *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_String), CLAY__ALIGNMENT(Clay_String), arena)};
@@ -889,24 +901,26 @@ Clay__WrappedTextLine CLAY__WRAPPED_TEXT_LINE_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_define_slice,array_allocate,array_add,array_get TYPE=Clay__WrappedTextLine NAME=Clay__WrappedTextLineArray DEFAULT_VALUE=&CLAY__WRAPPED_TEXT_LINE_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__WrappedTextLineArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay__WrappedTextLine *internalArray;
+CLAY__TYPEDEF(Clay__WrappedTextLineArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay__WrappedTextLine *internalArray;
 });
-CLAY__TYPEDEF(Clay__WrappedTextLineArraySlice, struct {
-    uint32_t length;
-    Clay__WrappedTextLine *internalArray;
+CLAY__TYPEDEF(Clay__WrappedTextLineArraySlice, struct
+{
+	uint32_t length;
+	Clay__WrappedTextLine *internalArray;
 });
 Clay__WrappedTextLineArray Clay__WrappedTextLineArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__WrappedTextLineArray){.capacity = capacity, .length = 0, .internalArray = (Clay__WrappedTextLine *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__WrappedTextLine), CLAY__ALIGNMENT(Clay__WrappedTextLine), arena)};
 }
 Clay__WrappedTextLine *Clay__WrappedTextLineArray_Add(Clay__WrappedTextLineArray *array, Clay__WrappedTextLine item) {
-    if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {
-        array->internalArray[array->length++] = item;
-        return &array->internalArray[array->length - 1];
-    }
-    return &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
+	if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {
+		array->internalArray[array->length++] = item;
+		return &array->internalArray[array->length - 1];
+	}
+	return &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
 }
 Clay__WrappedTextLine *Clay__WrappedTextLineArray_Get(Clay__WrappedTextLineArray *array, int index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
@@ -925,10 +939,11 @@ Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay__TextElementData NAME=Clay__TextElementDataArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_DATA_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__TextElementDataArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay__TextElementData *internalArray;
+CLAY__TYPEDEF(Clay__TextElementDataArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay__TextElementData *internalArray;
 });
 Clay__TextElementDataArray Clay__TextElementDataArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__TextElementDataArray){.capacity = capacity, .length = 0, .internalArray = (Clay__TextElementData *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__TextElementData), CLAY__ALIGNMENT(Clay__TextElementData), arena)};
@@ -950,10 +965,11 @@ Clay_BorderElementConfig CLAY__BORDER_ELEMENT_CONFIG_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_BorderElementConfig NAME=Clay__BorderElementConfigArray DEFAULT_VALUE=&CLAY__BORDER_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__BorderElementConfigArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_BorderElementConfig *internalArray;
+CLAY__TYPEDEF(Clay__BorderElementConfigArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_BorderElementConfig *internalArray;
 });
 Clay__BorderElementConfigArray Clay__BorderElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__BorderElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_BorderElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_BorderElementConfig), CLAY__ALIGNMENT(Clay_BorderElementConfig), arena)};
@@ -990,10 +1006,11 @@ Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay_LayoutElement NAME=Clay_LayoutElementArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay_LayoutElementArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_LayoutElement *internalArray;
+CLAY__TYPEDEF(Clay_LayoutElementArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_LayoutElement *internalArray;
 });
 Clay_LayoutElementArray Clay_LayoutElementArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay_LayoutElementArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutElement *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutElement), CLAY__ALIGNMENT(Clay_LayoutElement), arena)};
@@ -1011,12 +1028,13 @@ Clay_LayoutElement *Clay_LayoutElementArray_Get(Clay_LayoutElementArray *array, 
 #pragma endregion
 // __GENERATED__ template
 
-// __GENERATED__ template array_define,array_allocate,array_add,array_get_value,array_remove_swapback TYPE=Clay_LayoutElement* NAME=Clay__LayoutElementPointerArray DEFAULT_VALUE=CLAY__NULL
+// __GENERATED__ template array_define,array_allocate_pointer,array_add,array_get_value,array_remove_swapback TYPE=Clay_LayoutElement* NAME=Clay__LayoutElementPointerArray DEFAULT_VALUE=CLAY__NULL
 #pragma region generated
-CLAY__TYPEDEF(Clay__LayoutElementPointerArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_LayoutElement* *internalArray;
+CLAY__TYPEDEF(Clay__LayoutElementPointerArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_LayoutElement* *internalArray;
 });
 Clay__LayoutElementPointerArray Clay__LayoutElementPointerArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__LayoutElementPointerArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutElement* *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutElement*), CLAY__POINTER_ALIGNMENT, arena)};
@@ -1057,7 +1075,7 @@ Clay_RenderCommand *Clay_RenderCommandArray_Add(Clay_RenderCommandArray *array, 
 	}
 	return &CLAY__RENDER_COMMAND_DEFAULT;
 }
-Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int32_t index) {
+Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__RENDER_COMMAND_DEFAULT;
 }
 #pragma endregion
@@ -1082,10 +1100,11 @@ Clay__ScrollContainerDataInternal CLAY__SCROLL_CONTAINER_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__ScrollContainerDataInternal NAME=Clay__ScrollContainerDataInternalArray DEFAULT_VALUE=&CLAY__SCROLL_CONTAINER_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__ScrollContainerDataInternalArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay__ScrollContainerDataInternal *internalArray;
+CLAY__TYPEDEF(Clay__ScrollContainerDataInternalArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay__ScrollContainerDataInternal *internalArray;
 });
 Clay__ScrollContainerDataInternalArray Clay__ScrollContainerDataInternalArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ScrollContainerDataInternalArray){.capacity = capacity, .length = 0, .internalArray = (Clay__ScrollContainerDataInternal *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__ScrollContainerDataInternal), CLAY__ALIGNMENT(Clay__ScrollContainerDataInternal), arena)};
@@ -1126,10 +1145,11 @@ Clay__DebugElementData CLAY__DEBUG_ELEMENT_DATA_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__DebugElementData NAME=Clay__DebugElementDataArray DEFAULT_VALUE=&CLAY__DEBUG_ELEMENT_DATA_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__DebugElementDataArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay__DebugElementData *internalArray;
+CLAY__TYPEDEF(Clay__DebugElementDataArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay__DebugElementData *internalArray;
 });
 Clay__DebugElementDataArray Clay__DebugElementDataArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__DebugElementDataArray){.capacity = capacity, .length = 0, .internalArray = (Clay__DebugElementData *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__DebugElementData), CLAY__ALIGNMENT(Clay__DebugElementData), arena)};
@@ -1162,10 +1182,11 @@ Clay_LayoutElementHashMapItem CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT = { .la
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay_LayoutElementHashMapItem NAME=Clay__LayoutElementHashMapItemArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__LayoutElementHashMapItemArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay_LayoutElementHashMapItem *internalArray;
+CLAY__TYPEDEF(Clay__LayoutElementHashMapItemArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay_LayoutElementHashMapItem *internalArray;
 });
 Clay__LayoutElementHashMapItemArray Clay__LayoutElementHashMapItemArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__LayoutElementHashMapItemArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutElementHashMapItem *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutElementHashMapItem), CLAY__ALIGNMENT(Clay_LayoutElementHashMapItem), arena)};
@@ -1194,10 +1215,11 @@ Clay__MeasuredWord CLAY__MEASURED_WORD_DEFAULT = { .next = -1 };
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_set,array_add TYPE=Clay__MeasuredWord NAME=Clay__MeasuredWordArray DEFAULT_VALUE=&CLAY__MEASURED_WORD_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__MeasuredWordArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay__MeasuredWord *internalArray;
+CLAY__TYPEDEF(Clay__MeasuredWordArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay__MeasuredWord *internalArray;
 });
 Clay__MeasuredWordArray Clay__MeasuredWordArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__MeasuredWordArray){.capacity = capacity, .length = 0, .internalArray = (Clay__MeasuredWord *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__MeasuredWord), CLAY__ALIGNMENT(Clay__MeasuredWord), arena)};
@@ -1234,10 +1256,11 @@ Clay__MeasureTextCacheItem CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT = { .measuredWo
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add,array_set TYPE=Clay__MeasureTextCacheItem NAME=Clay__MeasureTextCacheItemArray DEFAULT_VALUE=&CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__MeasureTextCacheItemArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    Clay__MeasureTextCacheItem *internalArray;
+CLAY__TYPEDEF(Clay__MeasureTextCacheItemArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	Clay__MeasureTextCacheItem *internalArray;
 });
 Clay__MeasureTextCacheItemArray Clay__MeasureTextCacheItemArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__MeasureTextCacheItemArray){.capacity = capacity, .length = 0, .internalArray = (Clay__MeasureTextCacheItem *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__MeasureTextCacheItem), CLAY__ALIGNMENT(Clay__MeasureTextCacheItem), arena)};
@@ -1263,10 +1286,11 @@ void Clay__MeasureTextCacheItemArray_Set(Clay__MeasureTextCacheItemArray *array,
 
 // __GENERATED__ template array_define,array_allocate,array_get_value,array_add_value,array_set,array_remove_swapback TYPE=int32_t NAME=Clay__int32_tArray DEFAULT_VALUE=-1
 #pragma region generated
-CLAY__TYPEDEF(Clay__int32_tArray, struct {
-    uint32_t capacity;
-    uint32_t length;
-    int32_t *internalArray;
+CLAY__TYPEDEF(Clay__int32_tArray, struct
+{
+	uint32_t capacity;
+	uint32_t length;
+	int32_t *internalArray;
 });
 Clay__int32_tArray Clay__int32_tArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__int32_tArray){.capacity = capacity, .length = 0, .internalArray = (int32_t *)Clay__Array_Allocate_Arena(capacity, sizeof(int32_t), CLAY__ALIGNMENT(int32_t), arena)};
@@ -1307,7 +1331,8 @@ Clay__LayoutElementTreeNode CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__LayoutElementTreeNode NAME=Clay__LayoutElementTreeNodeArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__LayoutElementTreeNodeArray, struct {
+CLAY__TYPEDEF(Clay__LayoutElementTreeNodeArray, struct
+{
 	uint32_t capacity;
 	uint32_t length;
 	Clay__LayoutElementTreeNode *internalArray;
@@ -1340,7 +1365,8 @@ Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = {0};
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__LayoutElementTreeRoot NAME=Clay__LayoutElementTreeRootArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT
 #pragma region generated
-CLAY__TYPEDEF(Clay__LayoutElementTreeRootArray, struct {
+CLAY__TYPEDEF(Clay__LayoutElementTreeRootArray, struct
+{
 	uint32_t capacity;
 	uint32_t length;
 	Clay__LayoutElementTreeRoot *internalArray;
@@ -1363,7 +1389,8 @@ Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Get(Clay__LayoutEl
 
 // __GENERATED__ template array_define,array_allocate TYPE=uint8_t NAME=Clay__CharArray DEFAULT_VALUE=0
 #pragma region generated
-CLAY__TYPEDEF(Clay__CharArray, struct {
+CLAY__TYPEDEF(Clay__CharArray, struct
+{
 	uint32_t capacity;
 	uint32_t length;
 	uint8_t *internalArray;
