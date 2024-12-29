@@ -38,8 +38,28 @@ typedef struct
     };
 } CustomLayoutElement;
 
+// Precompute the matrices at start of the frame
+Matrix PrecomputeViewMatrix(const Camera camera){
+    return MatrixLookAt(camera.position, camera.target, camera.up);
+}
+
+Matrix PrecomputeProjectionMatrix(const Camera camera, int screenWidth, int screenHeight, float zDistance) {
+    Matrix matProj = MatrixIdentity();
+    if (camera.projection == CAMERA_PERSPECTIVE) {
+        // Calculate projection matrix from perspective
+        matProj = MatrixPerspective(camera.fovy * DEG2RAD, ((double)screenWidth / (double)screenHeight), 0.01f, zDistance);
+    } else if (camera.projection == CAMERA_ORTHOGRAPHIC) {
+        double aspect = (double)screenWidth / (double)screenHeight;
+        double top = camera.fovy / 2.0;
+        double right = top * aspect;
+        // Calculate projection matrix from orthographic
+        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
+    }
+    return matProj;
+}
+
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
-Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance)
+Ray GetScreenToWorldPointWithZDistance(Vector2 position, const Matrix matView, const Matrix matProj, int screenWidth, int screenHeight) {
 {
     Ray ray = { 0 };
 
@@ -51,26 +71,6 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
 
     // Store values in a vector
     Vector3 deviceCoords = { x, y, z };
-
-    // Calculate view matrix from camera look at
-    Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-
-    Matrix matProj = MatrixIdentity();
-
-    if (camera.projection == CAMERA_PERSPECTIVE)
-    {
-        // Calculate projection matrix from perspective
-        matProj = MatrixPerspective(camera.fovy*DEG2RAD, ((double)screenWidth/(double)screenHeight), 0.01f, zDistance);
-    }
-    else if (camera.projection == CAMERA_ORTHOGRAPHIC)
-    {
-        double aspect = (double)screenWidth/(double)screenHeight;
-        double top = camera.fovy/2.0;
-        double right = top*aspect;
-
-        // Calculate projection matrix from orthographic
-        matProj = MatrixOrtho(-right, right, -top, top, 0.01, 1000.0);
-    }
 
     // Unproject far/near points
     Vector3 nearPoint = Vector3Unproject((Vector3){ deviceCoords.x, deviceCoords.y, 0.0f }, matProj, matView);
