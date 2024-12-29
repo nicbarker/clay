@@ -477,6 +477,7 @@ void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_Str
 void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId));
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
+bool Clay_IsDebugModeEnabled(void);
 void Clay_SetCullingEnabled(bool enabled);
 void Clay_SetMaxElementCount(uint32_t maxElementCount);
 void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount);
@@ -3850,6 +3851,11 @@ Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
 CLAY_WASM_EXPORT("Clay_SetDebugModeEnabled")
 void Clay_SetDebugModeEnabled(bool enabled) {
     Clay__debugModeEnabled = enabled;
+}
+
+CLAY_WASM_EXPORT("Clay_IsDebugModeEnabled")
+bool Clay_IsDebugModeEnabled(void) {
+    return Clay__debugModeEnabled;
 }
 
 CLAY_WASM_EXPORT("Clay_SetCullingEnabled")
