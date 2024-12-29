@@ -516,17 +516,23 @@ _The official Clay website with debug tooling visible_
 **Each Frame**
 `Clay_SetLayoutDimensions` -> `Clay_SetPointerState` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY() etc...` -> `Clay_EndLayout`
 
+---
+
 ### Clay_MinMemorySize
 
 `uint32_t Clay_MinMemorySize()`
 
 Returns the minimum amount of memory **in bytes** that clay needs to accomodate the current [CLAY_MAX_ELEMENT_COUNT](#preprocessor-directives).
 
+---
+
 ### Clay_CreateArenaWithCapacityAndMemory
 
 `Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset)`
 
 Creates a `Clay_Arena` struct with the given capacity and base memory pointer, which can be passed to [Clay_Initialize](#clay_initialize).
+
+---
 
 ### Clay_SetMeasureTextFunction
 
@@ -538,6 +544,8 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 
 **Note 2: It is essential that this function is as fast as possible.** For text heavy use-cases this function is called many times, and despite the fact that clay caches text measurements internally, it can easily become the dominant overall layout cost if the provided function is slow. **This is on the hot path!**
 
+---
+
 ### Clay_SetMaxElementCount
 
 `void Clay_SetMaxElementCount(uint32_t maxElementCount)`
@@ -545,6 +553,8 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 Updates the internal maximum element count, allowing clay to allocate larger UI hierarchies.
 
 **Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
+
+---
 
 ### Clay_SetMaxMeasureTextCacheWordCount
 
@@ -554,6 +564,8 @@ Updates the internal text measurement cache size, allowing clay to allocate more
 
 **Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
 
+---
+
 ### Clay_Initialize
 
 `void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler)`
@@ -562,17 +574,23 @@ Initializes the internal memory mapping, sets the internal dimensions for layout
 
 Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler)
 
+---
+
 ### Clay_SetLayoutDimensions
 
 `void Clay_SetLayoutDimensions(Clay_Dimensions dimensions)`
 
 Sets the internal layout dimensions. Cheap enough to be called every frame with your screen dimensions to automatically respond to window resizing, etc.
 
+---
+
 ### Clay_SetPointerState
 
 `void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown)`
 
 Sets the internal pointer position and state (i.e. current mouse / touch position) and recalculates overlap info, which is used for mouseover / click calculation (via [Clay_PointerOver](#clay_pointerover) and updating scroll containers with [Clay_UpdateScrollContainers](#clay_updatescrollcontainers). **isPointerDown should represent the current state this frame, e.g. it should be `true` for the entire duration the left mouse button is held down.** Clay has internal handling for detecting click / touch start & end.
+
+---
 
 ### Clay_UpdateScrollContainers
 
@@ -584,11 +602,15 @@ Touch / drag scrolling only occurs if the `enableDragScrolling` parameter is `tr
 
 `deltaTime` is the time **in seconds** since the last frame (e.g. 0.016 is **16 milliseconds**), and is used to normalize & smooth scrolling across different refresh rates.
 
+---
+
 ### Clay_BeginLayout
 
 `void Clay_BeginLayout()`
 
 Prepares clay to calculate a new layout. Called each frame / layout **before** any of the [Element Macros](#element-macros).
+
+---
 
 ### Clay_EndLayout
 
@@ -596,11 +618,15 @@ Prepares clay to calculate a new layout. Called each frame / layout **before** a
 
 Ends declaration of element macros and calculates the results of the current layout. Renders a [Clay_RenderCommandArray](#clay_rendercommandarray) containing the results of the layout calculation.
 
+---
+
 ### Clay_Hovered
 
 `bool Clay_Hovered()`
 
 Called **during** layout declaration, and returns `true` if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the currently open element. Note: this is based on the element's position from the **last** frame.
+
+---
 
 ### Clay_OnHover
 
@@ -626,6 +652,8 @@ CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, 
 }
 ```
 
+---
+
 ### Clay_PointerOver
 
 `bool Clay_PointerOver(Clay_ElementId id)`
@@ -637,6 +665,8 @@ Returns `true` if the pointer position previously set with `Clay_SetPointerState
 `Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id)`
 
 Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll container matching the provided ID. This function allows imperative manipulation of scroll position, allowing you to build things such as scroll bars, buttons that "jump" to somewhere in a scroll container, etc.
+
+---
 
 ### Clay_GetElementId
 
@@ -678,6 +708,8 @@ CLAY(CLAY_ID("Outer"), CLAY_LAYOUT({ .padding = {16, 16} })) {
 }
 ```
 
+---
+
 ### CLAY_ID
 
 **Usage**
@@ -712,11 +744,15 @@ if (buttonIsHovered && leftMouseButtonPressed) {
 }
 ```
 
+---
+
 ### CLAY_IDI()
 
 `Clay_ElementId CLAY_IDI(char *label, int index)`
 
 An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+
+---
 
 ### CLAY_LAYOUT
 
@@ -829,6 +865,8 @@ CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .si
 }
 ``` 
 
+---
+
 ### CLAY_RECTANGLE
 **Usage**
 
@@ -909,6 +947,8 @@ CLAY(
     // child elements
 }
 ```
+
+---
 
 ### CLAY_TEXT
 **Usage**
@@ -1031,6 +1071,8 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 
 `Clay_RenderCommand.textContent` will be populated with a `Clay_String` _slice_ of the original string passed in (i.e. wrapping doesn't reallocate, it just returns a `Clay_String` pointing to the start of the new line with a `length`)
 
+---
+
 ### CLAY_IMAGE
 **Usage**
 
@@ -1128,6 +1170,8 @@ Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageDat
 
 Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->elementConfig.imageElementConfig->imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `rectangleElementConfig->color` with the image.
 
+---
+
 ### CLAY_SCROLL
 **Usage**
 
@@ -1186,6 +1230,8 @@ CLAY(CLAY_SCROLL(.vertical = true)) {
     CLAY(CLAY_ID("ScrollInner"), CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(5000) } })) {}
 }
 ```
+
+---
 
 ### CLAY_BORDER
 **Usage**
@@ -1303,6 +1349,8 @@ CLAY(
 
 Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_BORDER` representing the container will be created.
 Rendering of borders and rounded corners is left up to the user. See the provided [Raylib Renderer](https://github.com/nicbarker/clay/tree/main/renderers/raylib) for examples of how to draw borders using line and curve primitives.
+
+---
 
 ### CLAY_FLOATING
 **Usage**
@@ -1515,6 +1563,8 @@ When using `.parentId`, the floating container can be declared anywhere after `B
 
 `CLAY_FLOATING` elements will not generate any render commands.
 
+---
+
 ### CLAY_CUSTOM_ELEMENT
 **Usage**
 
@@ -1641,6 +1691,8 @@ The number of characters in the string, _not including an optional null terminat
 
 A pointer to the contents of the string. This data is not guaranteed to be null terminated, so if you are passing it to code that expects standard null terminated C strings, you will need to copy the data and append a null terminator.
 
+---
+
 ### Clay_ElementId
 
 ```C
@@ -1678,6 +1730,7 @@ If this id was generated using [CLAY_IDI](#clay_idi), `.baseId` is the hash of t
 
 Stores the original string that was passed in when [CLAY_ID](#clay_id) or [CLAY_IDI](#clay_idi) were called.
 
+---
 
 ### Clay_RenderCommandArray
 
@@ -1710,6 +1763,8 @@ Represents the total number of `Clay_RenderCommand` elements stored consecutivel
 **`.internalArray`** - `Clay_RenderCommand`
 
 An array of [Clay_RenderCommand](#clay_rendercommand)s representing the calculated layout. If there was at least one render command, this array will contain elements from `.internalArray[0]` to `.internalArray[.length - 1]`.
+
+---
 
 ### Clay_RenderCommand
 
@@ -1777,6 +1832,8 @@ Only used if `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. A `Clay_String` co
 
 The id that was originally used with the element macro that created this render command. See [CLAY_ID](#clay_id) for details.
 
+---
+
 ### Clay_ScrollContainerData
 
 ```C
@@ -1825,6 +1882,8 @@ Dimensions representing the inner width and height of the content _inside_ the s
 **`.config`** - `Clay_ScrollElementConfig`
 
 The [Clay_ScrollElementConfig](#clay_scroll) for the matching scroll container element.
+
+---
 
 ### Clay_PointerData
 
