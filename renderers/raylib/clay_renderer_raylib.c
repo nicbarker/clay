@@ -129,6 +129,12 @@ void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned i
 
 void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
 {
+    
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    Matrix matView = PrecomputeViewMatrix(Raylib_camera);
+    Matrix matProj = PrecomputeProjectionMatrix(Raylib_camera, screenWidth, screenHeight, 140.0f);
+
     measureCalls = 0;
     for (int j = 0; j < renderCommands.length; j++)
     {
