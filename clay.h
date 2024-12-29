@@ -243,13 +243,13 @@ CLAY__TYPEDEF(Clay_SizingMinMax, struct {
     float max;
 });
 
-typedef struct {
+CLAY__TYPEDEF(Clay_SizingAxis, struct {
     union {
         Clay_SizingMinMax minMax;
         float percent;
     } size;
     Clay__SizingType type;
-} Clay_SizingAxis;
+});
 
 CLAY__TYPEDEF(Clay_Sizing, struct {
     Clay_SizingAxis width;
