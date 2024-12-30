@@ -33,8 +33,9 @@ target_link_libraries(SDL2_video_demo PUBLIC
     SDL2::SDL2-static
     SDL2_ttf::SDL2_ttf-static
 )
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror -DCLAY_DEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+set(CMAKE_C_FLAGS_DEBUG "-Wall -Werror -Wno-error=missing-braces -DCLAY_DEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_custom_command(
         TARGET SDL2_video_demo POST_BUILD

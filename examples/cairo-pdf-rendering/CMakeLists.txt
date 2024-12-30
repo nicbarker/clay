@@ -8,8 +8,9 @@ target_compile_options(clay_examples_cairo_pdf_rendering PUBLIC)
 target_include_directories(clay_examples_cairo_pdf_rendering PUBLIC .)
 
 target_link_libraries(clay_examples_cairo_pdf_rendering PUBLIC cairo)
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Werror")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+set(CMAKE_C_FLAGS_DEBUG "-Wall -Werror -Wno-error=missing-braces")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_custom_command(
         TARGET clay_examples_cairo_pdf_rendering POST_BUILD

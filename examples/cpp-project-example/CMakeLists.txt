@@ -8,5 +8,5 @@ add_executable(clay_examples_cpp_project_example main.cpp)
 
 target_include_directories(clay_examples_cpp_project_example PUBLIC .)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-Werror -Wall")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS_DEBUG "-Werror -Wall -Wno-error=missing-braces")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
