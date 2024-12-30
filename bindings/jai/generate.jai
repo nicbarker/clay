@@ -33,6 +33,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
 
     could_copy := FileUtils.copy_file("../../clay.h", "source/clay.h");
     if !could_copy then return false;
+    defer File.file_delete("source/clay.h");
 
     if compile {
         source_file := tprint("%/clay.c", SOURCE_PATH);
@@ -41,8 +42,10 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
         #if OS == .WINDOWS {
             File.make_directory_if_it_does_not_exist("clay-jai/windows", true);
 
+            // success &&= BuildCpp.build_cpp_static_lib("clay-jai/windows/clay", source_file, extra=.["/w"], debug=compile_debug);
+
             command := ifx compile_debug {
-                Process.break_command_into_strings("clang g -gcodeview -c source\\clay.c");
+                Process.break_command_into_strings("clang -g -gcodeview -c source\\clay.c");
             } else {
                 Process.break_command_into_strings("clang -O3 -c source\\clay.c");
             }
@@ -52,7 +55,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
 
             command = Process.break_command_into_strings("llvm-ar -rc clay-jai/windows/clay.lib clay.o");
             result = Process.run_command(..command, capture_and_return_output=true, print_captured_output=true);
-            if result.exit_code != 0 then return false;
+            // if result.exit_code != 0 then return false;
         } else {
             // TODO MacOS
             // TODO Linux
@@ -87,8 +90,6 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
     }
 
     could_generate := Generator.generate_bindings(options, output_filename);
-
-    File.file_delete("source/clay.h");
 
     return could_generate;
 }
