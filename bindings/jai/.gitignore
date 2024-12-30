@@ -1,3 +1,4 @@
 .build/
 examples/clay_official_website.exe
 examples/clay_official_website.pdb
+source/clay.h
