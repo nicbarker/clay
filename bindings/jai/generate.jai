@@ -2,9 +2,16 @@ AT_COMPILE_TIME :: true;
 
 SOURCE_PATH :: "source";
 
+// These have custom declaration in module.jai
 DECLARATIONS_TO_OMIT :: string.[
     "Clay_Vector2",
-    "Clay_Color",
+    // "Clay_Color",
+];
+
+// These types must be included because they are referenced by public types
+PRIVATE_DECLARATION_TO_INCLUDE :: string.[
+    "Clay__SizingType",
+    "Clay__ElementConfigType"
 ];
 
 #if AT_COMPILE_TIME {
@@ -95,10 +102,13 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
 }
 
 clay_visitor :: (decl: *Generator.Declaration, parent_decl: *Generator.Declaration) -> Generator.Declaration_Visit_Result {
-    if !parent_decl
-    {
-        if array_find(DECLARATIONS_TO_OMIT, decl.name) || String.begins_with(decl.name, "Clay__")
-        {
+    if !parent_decl {
+        if array_find(DECLARATIONS_TO_OMIT, decl.name) {
+            decl.decl_flags |= .OMIT_FROM_OUTPUT;
+            return .STOP;
+        }
+
+        if String.begins_with(decl.name, "Clay__") && !array_find(PRIVATE_DECLARATION_TO_INCLUDE, decl.name) {
             decl.decl_flags |= .OMIT_FROM_OUTPUT;
             return .STOP;
         }

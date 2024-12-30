@@ -25,6 +25,13 @@ Dimensions :: struct {
     height: float;
 }
 
+Color :: struct {
+    r: float;
+    g: float;
+    b: float;
+    a: float;
+}
+
 BoundingBox :: struct {
     x:      float;
     y:      float;
@@ -45,6 +52,25 @@ CornerRadius :: struct {
     topRight:    float;
     bottomLeft:  float;
     bottomRight: float;
+}
+
+ElementConfigType :: enum s32 {
+    NONE               :: 0;
+    RECTANGLE          :: 1;
+    BORDER_CONTAINER   :: 2;
+    FLOATING_CONTAINER :: 4;
+    SCROLL_CONTAINER   :: 8;
+    IMAGE              :: 16;
+    TEXT               :: 32;
+    CUSTOM             :: 64;
+    CLAY__ELEMENT_CONFIG_TYPE_NONE               :: NONE;
+    CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE          :: RECTANGLE;
+    CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER   :: BORDER_CONTAINER;
+    CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER :: FLOATING_CONTAINER;
+    CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER   :: SCROLL_CONTAINER;
+    CLAY__ELEMENT_CONFIG_TYPE_IMAGE              :: IMAGE;
+    CLAY__ELEMENT_CONFIG_TYPE_TEXT               :: TEXT;
+    CLAY__ELEMENT_CONFIG_TYPE_CUSTOM             :: CUSTOM;
 }
 
 LayoutDirection :: enum s32 {
@@ -70,6 +96,17 @@ LayoutAlignmentY :: enum s32 {
     CLAY_ALIGN_Y_TOP    :: TOP;
     CLAY_ALIGN_Y_BOTTOM :: BOTTOM;
     CLAY_ALIGN_Y_CENTER :: CENTER;
+}
+
+SizingType :: enum s32 {
+    FIT     :: 0;
+    GROW    :: 1;
+    PERCENT :: 2;
+    FIXED   :: 3;
+    CLAY__SIZING_TYPE_FIT     :: FIT;
+    CLAY__SIZING_TYPE_GROW    :: GROW;
+    CLAY__SIZING_TYPE_PERCENT :: PERCENT;
+    CLAY__SIZING_TYPE_FIXED   :: FIXED;
 }
 
 ChildAlignment :: struct {
@@ -372,6 +409,19 @@ clay :: #library,no_dll "clay-jai/windows/clay";
         assert(((cast(*void)(*instance.height)) - cast(*void)(*instance)) == 4, "Dimensions.height has unexpected offset % instead of 4", ((cast(*void)(*instance.height)) - cast(*void)(*instance)));
         assert(size_of(type_of(Dimensions.height)) == 4, "Dimensions.height has unexpected size % instead of 4", size_of(type_of(Dimensions.height)));
         assert(size_of(Dimensions) == 8, "Dimensions has size % instead of 8", size_of(Dimensions));
+    }
+
+    {
+        instance: Color;
+        assert(((cast(*void)(*instance.r)) - cast(*void)(*instance)) == 0, "Color.r has unexpected offset % instead of 0", ((cast(*void)(*instance.r)) - cast(*void)(*instance)));
+        assert(size_of(type_of(Color.r)) == 4, "Color.r has unexpected size % instead of 4", size_of(type_of(Color.r)));
+        assert(((cast(*void)(*instance.g)) - cast(*void)(*instance)) == 4, "Color.g has unexpected offset % instead of 4", ((cast(*void)(*instance.g)) - cast(*void)(*instance)));
+        assert(size_of(type_of(Color.g)) == 4, "Color.g has unexpected size % instead of 4", size_of(type_of(Color.g)));
+        assert(((cast(*void)(*instance.b)) - cast(*void)(*instance)) == 8, "Color.b has unexpected offset % instead of 8", ((cast(*void)(*instance.b)) - cast(*void)(*instance)));
+        assert(size_of(type_of(Color.b)) == 4, "Color.b has unexpected size % instead of 4", size_of(type_of(Color.b)));
+        assert(((cast(*void)(*instance.a)) - cast(*void)(*instance)) == 12, "Color.a has unexpected offset % instead of 12", ((cast(*void)(*instance.a)) - cast(*void)(*instance)));
+        assert(size_of(type_of(Color.a)) == 4, "Color.a has unexpected size % instead of 4", size_of(type_of(Color.a)));
+        assert(size_of(Color) == 16, "Color has size % instead of 16", size_of(Color));
     }
 
     {
