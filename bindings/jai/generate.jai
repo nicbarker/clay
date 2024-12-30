@@ -97,7 +97,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
 clay_visitor :: (decl: *Generator.Declaration, parent_decl: *Generator.Declaration) -> Generator.Declaration_Visit_Result {
     if !parent_decl
     {
-        if array_find(DECLARATIONS_TO_OMIT, decl.name)
+        if array_find(DECLARATIONS_TO_OMIT, decl.name) || String.begins_with(decl.name, "Clay__")
         {
             decl.decl_flags |= .OMIT_FROM_OUTPUT;
             return .STOP;
