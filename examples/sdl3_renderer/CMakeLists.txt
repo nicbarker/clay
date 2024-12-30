@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.27)
 
 # Project setup
 project(clay_sdl3_renderer C)
-set(CMAKE_C_FLAGS_DEBUG "-g -Wall -Werror")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -Wall -Werror")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
@@ -18,19 +18,19 @@ FetchContent_Declare(
 )
 message(STATUS "Using SDL via FetchContent")
 FetchContent_MakeAvailable(SDL)
-set_property(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl-src" PROPERTY EXCLUDE_FROM_ALL TRUE)
+set_property(DIRECTORY "${sdl_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 # Download SDL_ttf
 FetchContent_Declare(
 	SDL_ttf
 	GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
-	GIT_TAG 40219a6
+	GIT_TAG main # Slightly risky to use main branch, but it's the only one available
 	GIT_SHALLOW TRUE
 	GIT_PROGRESS TRUE
 )
 message(STATUS "Using SDL_ttf via FetchContent")
 FetchContent_MakeAvailable(SDL_ttf)
-set_property(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/_deps/sdl_ttf-src" PROPERTY EXCLUDE_FROM_ALL TRUE)
+set_property(DIRECTORY "${sdl_ttf_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 # Example executable
 add_executable(${PROJECT_NAME} main.c)
