@@ -8,4 +8,4 @@ add_executable(clay_official_website main.c)
 target_compile_options(clay_official_website PUBLIC -Wall -Werror -Wno-unknown-pragmas -Wno-error=missing-braces)
 target_include_directories(clay_official_website PUBLIC .)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
