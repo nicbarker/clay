@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai d:/c/clay//bindings/jai/generate.jai jails_diagnostics modules import_dir c:/Users/Stowy/scoop/apps/vscode/1.96.2/data/extensions/apparentlystudio.jails-0.0.11/out/metaprogram
+// jai generate.jai - -compile
 //
 
 
@@ -10,14 +10,8 @@
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
 String :: struct {
-    length: s32;
+    length: u64;
     chars:  *u8;
-}
-
-StringArray :: struct {
-    capacity:      u32;
-    length:        u32;
-    internalArray: *String;
 }
 
 Arena :: struct {
@@ -53,30 +47,9 @@ CornerRadius :: struct {
     bottomRight: float;
 }
 
-ElementConfigType :: enum s32 {
-    RECTANGLE          :: 1;
-    BORDER_CONTAINER   :: 2;
-    FLOATING_CONTAINER :: 4;
-    SCROLL_CONTAINER   :: 8;
-    IMAGE              :: 16;
-    TEXT               :: 32;
-    CUSTOM             :: 64;
-
-    CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE          :: RECTANGLE;
-    CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER   :: BORDER_CONTAINER;
-    CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER :: FLOATING_CONTAINER;
-    CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER   :: SCROLL_CONTAINER;
-    CLAY__ELEMENT_CONFIG_TYPE_IMAGE              :: IMAGE;
-    CLAY__ELEMENT_CONFIG_TYPE_TEXT               :: TEXT;
-    CLAY__ELEMENT_CONFIG_TYPE_CUSTOM             :: CUSTOM;
-}
-
-// Element Configs ---------------------------
-// Layout
 LayoutDirection :: enum s32 {
     LEFT_TO_RIGHT :: 0;
     TOP_TO_BOTTOM :: 1;
-
     CLAY_LEFT_TO_RIGHT :: LEFT_TO_RIGHT;
     CLAY_TOP_TO_BOTTOM :: TOP_TO_BOTTOM;
 }
@@ -85,7 +58,6 @@ LayoutAlignmentX :: enum s32 {
     LEFT   :: 0;
     RIGHT  :: 1;
     CENTER :: 2;
-
     CLAY_ALIGN_X_LEFT   :: LEFT;
     CLAY_ALIGN_X_RIGHT  :: RIGHT;
     CLAY_ALIGN_X_CENTER :: CENTER;
@@ -95,22 +67,9 @@ LayoutAlignmentY :: enum s32 {
     TOP    :: 0;
     BOTTOM :: 1;
     CENTER :: 2;
-
     CLAY_ALIGN_Y_TOP    :: TOP;
     CLAY_ALIGN_Y_BOTTOM :: BOTTOM;
     CLAY_ALIGN_Y_CENTER :: CENTER;
-}
-
-SizingType :: enum s32 {
-    FIT     :: 0;
-    GROW    :: 1;
-    PERCENT :: 2;
-    FIXED   :: 3;
-
-    CLAY__SIZING_TYPE_FIT     :: FIT;
-    CLAY__SIZING_TYPE_GROW    :: GROW;
-    CLAY__SIZING_TYPE_PERCENT :: PERCENT;
-    CLAY__SIZING_TYPE_FIXED   :: FIXED;
 }
 
 ChildAlignment :: struct {
@@ -128,7 +87,6 @@ SizingAxis :: struct {
         minMax:  SizingMinMax;
         percent: float;
     };
-
     type: SizingType;
 }
 
@@ -153,6 +111,7 @@ LayoutConfig :: struct {
 CLAY_LAYOUT_DEFAULT: LayoutConfig #elsewhere clay;
 
 // Rectangle
+// NOTE: Not declared in the typedef as an ifdef inside macro arguments is UB
 RectangleElementConfig :: struct {
     color:        Color;
     cornerRadius: CornerRadius;
@@ -163,7 +122,6 @@ TextElementConfigWrapMode :: enum s32 {
     WORDS    :: 0;
     NEWLINES :: 1;
     NONE     :: 2;
-
     CLAY_TEXT_WRAP_WORDS    :: WORDS;
     CLAY_TEXT_WRAP_NEWLINES :: NEWLINES;
     CLAY_TEXT_WRAP_NONE     :: NONE;
@@ -184,7 +142,6 @@ ImageElementConfig :: struct {
     sourceDimensions: Dimensions;
 }
 
-// Floating
 FloatingAttachPointType :: enum s32 {
     LEFT_TOP      :: 0;
     LEFT_CENTER   :: 1;
@@ -195,7 +152,6 @@ FloatingAttachPointType :: enum s32 {
     RIGHT_TOP     :: 6;
     RIGHT_CENTER  :: 7;
     RIGHT_BOTTOM  :: 8;
-
     CLAY_ATTACH_POINT_LEFT_TOP      :: LEFT_TOP;
     CLAY_ATTACH_POINT_LEFT_CENTER   :: LEFT_CENTER;
     CLAY_ATTACH_POINT_LEFT_BOTTOM   :: LEFT_BOTTOM;
@@ -214,11 +170,8 @@ FloatingAttachPoints :: struct {
 
 PointerCaptureMode :: enum s32 {
     CAPTURE     :: 0;
-
     PASSTHROUGH :: 1;
-
     CLAY_POINTER_CAPTURE_MODE_CAPTURE     :: CAPTURE;
-
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH :: PASSTHROUGH;
 }
 
@@ -280,8 +233,6 @@ ScrollContainerData :: struct {
     scrollContainerDimensions: Dimensions;
     contentDimensions:         Dimensions;
     config:                    ScrollElementConfig;
-
-    // Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
     found:                     bool;
 }
 
@@ -294,7 +245,6 @@ RenderCommandType :: enum s32 {
     SCISSOR_START :: 5;
     SCISSOR_END   :: 6;
     CUSTOM        :: 7;
-
     CLAY_RENDER_COMMAND_TYPE_NONE          :: NONE;
     CLAY_RENDER_COMMAND_TYPE_RECTANGLE     :: RECTANGLE;
     CLAY_RENDER_COMMAND_TYPE_BORDER        :: BORDER;
@@ -324,7 +274,6 @@ PointerDataInteractionState :: enum s32 {
     PRESSED             :: 1;
     RELEASED_THIS_FRAME :: 2;
     RELEASED            :: 3;
-
     CLAY_POINTER_DATA_PRESSED_THIS_FRAME  :: PRESSED_THIS_FRAME;
     CLAY_POINTER_DATA_PRESSED             :: PRESSED;
     CLAY_POINTER_DATA_RELEASED_THIS_FRAME :: RELEASED_THIS_FRAME;
@@ -344,7 +293,6 @@ ErrorType :: enum s32 {
     DUPLICATE_ID                           :: 4;
     FLOATING_CONTAINER_PARENT_NOT_FOUND    :: 5;
     INTERNAL_ERROR                         :: 6;
-
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED :: TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED;
     CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED                :: ARENA_CAPACITY_EXCEEDED;
     CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED             :: ELEMENTS_CAPACITY_EXCEEDED;
@@ -385,31 +333,10 @@ SetMeasureTextFunction :: (measureTextFunction: #type (text: *String, config: *T
 SetQueryScrollOffsetFunction :: (queryScrollOffsetFunction: #type (elementId: u32) -> Vector2 #c_call) -> void #foreign clay "Clay_SetQueryScrollOffsetFunction";
 RenderCommandArray_Get :: (array: *RenderCommandArray, index: s32) -> *RenderCommand #foreign clay "Clay_RenderCommandArray_Get";
 SetDebugModeEnabled :: (enabled: bool) -> void #foreign clay "Clay_SetDebugModeEnabled";
+IsDebugModeEnabled :: () -> bool #foreign clay "Clay_IsDebugModeEnabled";
 SetCullingEnabled :: (enabled: bool) -> void #foreign clay "Clay_SetCullingEnabled";
 SetMaxElementCount :: (maxElementCount: u32) -> void #foreign clay "Clay_SetMaxElementCount";
 SetMaxMeasureTextCacheWordCount :: (maxMeasureTextCacheWordCount: u32) -> void #foreign clay "Clay_SetMaxMeasureTextCacheWordCount";
-
-// Internal API functions required by macros
-OpenElement :: () -> void #foreign clay "Clay__OpenElement";
-CloseElement :: () -> void #foreign clay "Clay__CloseElement";
-StoreLayoutConfig :: (config: LayoutConfig) -> *LayoutConfig #foreign clay "Clay__StoreLayoutConfig";
-ElementPostConfiguration :: () -> void #foreign clay "Clay__ElementPostConfiguration";
-AttachId :: (id: ElementId) -> void #foreign clay "Clay__AttachId";
-AttachLayoutConfig :: (config: *LayoutConfig) -> void #foreign clay "Clay__AttachLayoutConfig";
-AttachElementConfig :: (config: ElementConfigUnion, type: ElementConfigType) -> void #foreign clay "Clay__AttachElementConfig";
-StoreRectangleElementConfig :: (config: RectangleElementConfig) -> *RectangleElementConfig #foreign clay "Clay__StoreRectangleElementConfig";
-StoreTextElementConfig :: (config: TextElementConfig) -> *TextElementConfig #foreign clay "Clay__StoreTextElementConfig";
-StoreImageElementConfig :: (config: ImageElementConfig) -> *ImageElementConfig #foreign clay "Clay__StoreImageElementConfig";
-StoreFloatingElementConfig :: (config: FloatingElementConfig) -> *FloatingElementConfig #foreign clay "Clay__StoreFloatingElementConfig";
-StoreCustomElementConfig :: (config: CustomElementConfig) -> *CustomElementConfig #foreign clay "Clay__StoreCustomElementConfig";
-StoreScrollElementConfig :: (config: ScrollElementConfig) -> *ScrollElementConfig #foreign clay "Clay__StoreScrollElementConfig";
-StoreBorderElementConfig :: (config: BorderElementConfig) -> *BorderElementConfig #foreign clay "Clay__StoreBorderElementConfig";
-HashString :: (key: String, offset: u32, seed: u32) -> ElementId #foreign clay "Clay__HashString";
-Noop :: () -> void #foreign clay "Clay__Noop";
-OpenTextElement :: (text: String, textConfig: *TextElementConfig) -> void #foreign clay "Clay__OpenTextElement";
-
-Clay__debugViewHighlightColor: Color #elsewhere clay;
-Clay__debugViewWidth: u32 #elsewhere clay;
 
 #scope_file
 
@@ -421,21 +348,10 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     {
         instance: String;
         assert(((cast(*void)(*instance.length)) - cast(*void)(*instance)) == 0, "String.length has unexpected offset % instead of 0", ((cast(*void)(*instance.length)) - cast(*void)(*instance)));
-        assert(size_of(type_of(String.length)) == 4, "String.length has unexpected size % instead of 4", size_of(type_of(String.length)));
+        assert(size_of(type_of(String.length)) == 8, "String.length has unexpected size % instead of 8", size_of(type_of(String.length)));
         assert(((cast(*void)(*instance.chars)) - cast(*void)(*instance)) == 8, "String.chars has unexpected offset % instead of 8", ((cast(*void)(*instance.chars)) - cast(*void)(*instance)));
         assert(size_of(type_of(String.chars)) == 8, "String.chars has unexpected size % instead of 8", size_of(type_of(String.chars)));
         assert(size_of(String) == 16, "String has size % instead of 16", size_of(String));
-    }
-
-    {
-        instance: StringArray;
-        assert(((cast(*void)(*instance.capacity)) - cast(*void)(*instance)) == 0, "StringArray.capacity has unexpected offset % instead of 0", ((cast(*void)(*instance.capacity)) - cast(*void)(*instance)));
-        assert(size_of(type_of(StringArray.capacity)) == 4, "StringArray.capacity has unexpected size % instead of 4", size_of(type_of(StringArray.capacity)));
-        assert(((cast(*void)(*instance.length)) - cast(*void)(*instance)) == 4, "StringArray.length has unexpected offset % instead of 4", ((cast(*void)(*instance.length)) - cast(*void)(*instance)));
-        assert(size_of(type_of(StringArray.length)) == 4, "StringArray.length has unexpected size % instead of 4", size_of(type_of(StringArray.length)));
-        assert(((cast(*void)(*instance.internalArray)) - cast(*void)(*instance)) == 8, "StringArray.internalArray has unexpected offset % instead of 8", ((cast(*void)(*instance.internalArray)) - cast(*void)(*instance)));
-        assert(size_of(type_of(StringArray.internalArray)) == 8, "StringArray.internalArray has unexpected size % instead of 8", size_of(type_of(StringArray.internalArray)));
-        assert(size_of(StringArray) == 16, "StringArray has size % instead of 16", size_of(StringArray));
     }
 
     {
