@@ -64,6 +64,8 @@
 
 #define CLAY_CORNER_RADIUS(radius) (CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius })
 
+#ifndef CLAY_STRICT
+
 #define CLAY__STRUCT_1_ARGS(a) a
 #define CLAY__STRUCT_0_ARGS() {0}
 #define CLAY__STRUCT_OVERRIDE(_0, _1, NAME, ...) NAME
@@ -73,6 +75,13 @@
 
 #define CLAY__SIZING_GROW_INTERNAL(...) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_GROW })
 #define CLAY_SIZING_GROW(...) CLAY__SIZING_GROW_INTERNAL(CLAY__STRUCT_OVERRIDE("empty", ##__VA_ARGS__, CLAY__STRUCT_1_ARGS, CLAY__STRUCT_0_ARGS)(__VA_ARGS__))
+
+#else
+
+#define CLAY_SIZING_FIT(...) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_FIT })
+#define CLAY_SIZING_GROW(...) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_GROW })
+
+#endif // CLAY_STRICT
 
 #define CLAY_SIZING_FIXED(fixedSize) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = { fixedSize, fixedSize } }, .type = CLAY__SIZING_TYPE_FIXED })
 
@@ -93,12 +102,21 @@
 static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
 // Publicly visible layout element macros -----------------------------------------------------
+#ifndef CLAY_STRICT
 #define CLAY(...) \
 	for (\
 		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), ##__VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
 		CLAY__ELEMENT_DEFINITION_LATCH < 1; \
 		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
 	)
+#else
+#define CLAY(...) \
+	for (\
+		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), __VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
+		CLAY__ELEMENT_DEFINITION_LATCH < 1; \
+		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
+	)
+#endif
 
 #define CLAY_TEXT(text, textConfig) Clay__OpenTextElement(text, textConfig)
 
