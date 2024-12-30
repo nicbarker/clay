@@ -1,6 +1,5 @@
 
 Vector2 :: Math.Vector2;
-Color :: Math.Vector4;
 
 #scope_module
 
