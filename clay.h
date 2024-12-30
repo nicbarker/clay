@@ -1464,7 +1464,7 @@ Clay__BoolArray Clay__treeNodeVisited;
 Clay__CharArray Clay__dynamicStringData;
 Clay__DebugElementDataArray Clay__debugElementData;
 
-#if CLAY_WASM
+#ifdef CLAY_WASM
     __attribute__((import_module("clay"), import_name("measureTextFunction"))) Clay_Dimensions Clay__MeasureText(Clay_String *text, Clay_TextElementConfig *config);
     __attribute__((import_module("clay"), import_name("queryScrollOffsetFunction"))) Clay_Vector2 Clay__QueryScrollOffset(uint32_t elementId);
 #else
