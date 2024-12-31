@@ -134,7 +134,7 @@ CLAY__ALIGNMENT_STRUCT(bool);
 CLAY__ALIGNMENT_STRUCT(uint8_t);
 CLAY__ALIGNMENT_STRUCT(int32_t);
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
 #define CLAY_PACKED_ENUM __pragma(pack(push, 1)) enum __pragma(pack(pop))
 #else
 #define CLAY_PACKED_ENUM enum __attribute__((__packed__))

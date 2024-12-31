@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.27)
 project(clay)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 add_subdirectory("examples/cpp-project-example")
 
 # Don't try to compile C99 projects using MSVC
