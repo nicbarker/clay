@@ -1,10 +1,28 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai generate.jai - -compile
+// jai generate.jai - -compile -debug
 //
 
 
+
+// NOTE: If you need to get the offset for other standard types in the future, add them here.
+_Alignpointer :: struct {
+    c: u8;
+    x: *void;
+}
+_Alignbool :: struct {
+    c: u8;
+    x: bool;
+}
+_Alignuint8_t :: struct {
+    c: u8;
+    x: u8;
+}
+_Alignint32_t :: struct {
+    c: u8;
+    x: s32;
+}
 
 // Utility Structs -------------------------
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
@@ -13,16 +31,46 @@ String :: struct {
     length: u64;
     chars:  *u8;
 }
+_AlignClay_String :: struct {
+    c: u8;
+    // Utility Structs -------------------------
+    // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
+    // but it is also used to represent slices.
+    x: String;
+}
+
+_StringArray :: struct {
+    capacity:      u32;
+    length:        u32;
+    internalArray: *String;
+}
+_AlignClay__StringArray :: struct {
+    c: u8;
+    x: _StringArray;
+}
 
 Arena :: struct {
     nextAllocation: u64;
     capacity:       u64;
     memory:         *u8;
 }
+_AlignClay_Arena :: struct {
+    c: u8;
+    x: Arena;
+}
 
 Dimensions :: struct {
     width:  float;
     height: float;
+}
+_AlignClay_Dimensions :: struct {
+    c: u8;
+    x: Dimensions;
+}
+
+_AlignClay_Vector2 :: struct {
+    c: u8;
+    x: Vector2;
 }
 
 Color :: struct {
@@ -31,12 +79,20 @@ Color :: struct {
     b: float;
     a: float;
 }
+_AlignClay_Color :: struct {
+    c: u8;
+    x: Color;
+}
 
 BoundingBox :: struct {
     x:      float;
     y:      float;
     width:  float;
     height: float;
+}
+_AlignClay_BoundingBox :: struct {
+    c: u8;
+    x: BoundingBox;
 }
 
 // baseId + offset = id
@@ -46,6 +102,11 @@ ElementId :: struct {
     baseId:   u32;
     stringId: String;
 }
+_AlignClay_ElementId :: struct {
+    c: u8;
+    // baseId + offset = id
+    x: ElementId;
+}
 
 CornerRadius :: struct {
     topLeft:     float;
@@ -53,8 +114,12 @@ CornerRadius :: struct {
     bottomLeft:  float;
     bottomRight: float;
 }
+_AlignClay_CornerRadius :: struct {
+    c: u8;
+    x: CornerRadius;
+}
 
-ElementConfigType :: enum s32 {
+_ElementConfigType :: enum s32 {
     NONE               :: 0;
     RECTANGLE          :: 1;
     BORDER_CONTAINER   :: 2;
@@ -72,12 +137,22 @@ ElementConfigType :: enum s32 {
     CLAY__ELEMENT_CONFIG_TYPE_TEXT               :: TEXT;
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM             :: CUSTOM;
 }
+_AlignClay__ElementConfigType :: struct {
+    c: u8;
+    x: _ElementConfigType;
+}
 
 LayoutDirection :: enum s32 {
     LEFT_TO_RIGHT :: 0;
     TOP_TO_BOTTOM :: 1;
     CLAY_LEFT_TO_RIGHT :: LEFT_TO_RIGHT;
     CLAY_TOP_TO_BOTTOM :: TOP_TO_BOTTOM;
+}
+_AlignClay_LayoutDirection :: struct {
+    c: u8;
+    // Element Configs ---------------------------
+    // Layout
+    x: LayoutDirection;
 }
 
 LayoutAlignmentX :: enum s32 {
@@ -88,6 +163,10 @@ LayoutAlignmentX :: enum s32 {
     CLAY_ALIGN_X_RIGHT  :: RIGHT;
     CLAY_ALIGN_X_CENTER :: CENTER;
 }
+_AlignClay_LayoutAlignmentX :: struct {
+    c: u8;
+    x: LayoutAlignmentX;
+}
 
 LayoutAlignmentY :: enum s32 {
     TOP    :: 0;
@@ -97,8 +176,12 @@ LayoutAlignmentY :: enum s32 {
     CLAY_ALIGN_Y_BOTTOM :: BOTTOM;
     CLAY_ALIGN_Y_CENTER :: CENTER;
 }
+_AlignClay_LayoutAlignmentY :: struct {
+    c: u8;
+    x: LayoutAlignmentY;
+}
 
-SizingType :: enum s32 {
+_SizingType :: enum s32 {
     FIT     :: 0;
     GROW    :: 1;
     PERCENT :: 2;
@@ -108,15 +191,27 @@ SizingType :: enum s32 {
     CLAY__SIZING_TYPE_PERCENT :: PERCENT;
     CLAY__SIZING_TYPE_FIXED   :: FIXED;
 }
+_AlignClay__SizingType :: struct {
+    c: u8;
+    x: _SizingType;
+}
 
 ChildAlignment :: struct {
     x: LayoutAlignmentX;
     y: LayoutAlignmentY;
 }
+_AlignClay_ChildAlignment :: struct {
+    c: u8;
+    x: ChildAlignment;
+}
 
 SizingMinMax :: struct {
     min: float;
     max: float;
+}
+_AlignClay_SizingMinMax :: struct {
+    c: u8;
+    x: SizingMinMax;
 }
 
 SizingAxis :: struct {
@@ -124,17 +219,29 @@ SizingAxis :: struct {
         minMax:  SizingMinMax;
         percent: float;
     };
-    type: SizingType;
+    type: _SizingType;
+}
+_AlignClay_SizingAxis :: struct {
+    c: u8;
+    x: SizingAxis;
 }
 
 Sizing :: struct {
     width:  SizingAxis;
     height: SizingAxis;
 }
+_AlignClay_Sizing :: struct {
+    c: u8;
+    x: Sizing;
+}
 
 Padding :: struct {
     x: u16;
     y: u16;
+}
+_AlignClay_Padding :: struct {
+    c: u8;
+    x: Padding;
 }
 
 LayoutConfig :: struct {
@@ -143,6 +250,10 @@ LayoutConfig :: struct {
     childGap:        u16;
     childAlignment:  ChildAlignment;
     layoutDirection: LayoutDirection;
+}
+_AlignClay_LayoutConfig :: struct {
+    c: u8;
+    x: LayoutConfig;
 }
 
 CLAY_LAYOUT_DEFAULT: LayoutConfig #elsewhere clay;
@@ -154,6 +265,11 @@ RectangleElementConfig :: struct {
     cornerRadius: CornerRadius;
 }
 
+_AlignClay_RectangleElementConfig :: struct {
+    c: u8;
+    x: RectangleElementConfig;
+}
+
 // Text
 TextElementConfigWrapMode :: enum s32 {
     WORDS    :: 0;
@@ -162,6 +278,11 @@ TextElementConfigWrapMode :: enum s32 {
     CLAY_TEXT_WRAP_WORDS    :: WORDS;
     CLAY_TEXT_WRAP_NEWLINES :: NEWLINES;
     CLAY_TEXT_WRAP_NONE     :: NONE;
+}
+_AlignClay_TextElementConfigWrapMode :: struct {
+    c: u8;
+    // Text
+    x: TextElementConfigWrapMode;
 }
 
 TextElementConfig :: struct {
@@ -173,10 +294,20 @@ TextElementConfig :: struct {
     wrapMode:      TextElementConfigWrapMode;
 }
 
+_AlignClay_TextElementConfig :: struct {
+    c: u8;
+    x: TextElementConfig;
+}
+
 // Image
 ImageElementConfig :: struct {
     imageData:        *void;
     sourceDimensions: Dimensions;
+}
+
+_AlignClay_ImageElementConfig :: struct {
+    c: u8;
+    x: ImageElementConfig;
 }
 
 FloatingAttachPointType :: enum s32 {
@@ -199,10 +330,19 @@ FloatingAttachPointType :: enum s32 {
     CLAY_ATTACH_POINT_RIGHT_CENTER  :: RIGHT_CENTER;
     CLAY_ATTACH_POINT_RIGHT_BOTTOM  :: RIGHT_BOTTOM;
 }
+_AlignClay_FloatingAttachPointType :: struct {
+    c: u8;
+    // Floating
+    x: FloatingAttachPointType;
+}
 
 FloatingAttachPoints :: struct {
     element: FloatingAttachPointType;
     parent:  FloatingAttachPointType;
+}
+_AlignClay_FloatingAttachPoints :: struct {
+    c: u8;
+    x: FloatingAttachPoints;
 }
 
 PointerCaptureMode :: enum s32 {
@@ -210,6 +350,10 @@ PointerCaptureMode :: enum s32 {
     PASSTHROUGH :: 1;
     CLAY_POINTER_CAPTURE_MODE_CAPTURE     :: CAPTURE;
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH :: PASSTHROUGH;
+}
+_AlignClay_PointerCaptureMode :: struct {
+    c: u8;
+    x: PointerCaptureMode;
 }
 
 FloatingElementConfig :: struct {
@@ -220,10 +364,19 @@ FloatingElementConfig :: struct {
     attachment:         FloatingAttachPoints;
     pointerCaptureMode: PointerCaptureMode;
 }
+_AlignClay_FloatingElementConfig :: struct {
+    c: u8;
+    x: FloatingElementConfig;
+}
 
 // Custom
 CustomElementConfig :: struct {
     customData: *void;
+}
+
+_AlignClay_CustomElementConfig :: struct {
+    c: u8;
+    x: CustomElementConfig;
 }
 
 // Scroll
@@ -231,11 +384,21 @@ ScrollElementConfig :: struct {
     horizontal: bool;
     vertical:   bool;
 }
+_AlignClay_ScrollElementConfig :: struct {
+    c: u8;
+    // Scroll
+    x: ScrollElementConfig;
+}
 
 // Border
 Border :: struct {
     width: u32;
     color: Color;
+}
+_AlignClay_Border :: struct {
+    c: u8;
+    // Border
+    x: Border;
 }
 
 BorderElementConfig :: struct {
@@ -245,6 +408,10 @@ BorderElementConfig :: struct {
     bottom:          Border;
     betweenChildren: Border;
     cornerRadius:    CornerRadius;
+}
+_AlignClay_BorderElementConfig :: struct {
+    c: u8;
+    x: BorderElementConfig;
 }
 
 ElementConfigUnion :: union {
@@ -256,10 +423,18 @@ ElementConfigUnion :: union {
     scrollElementConfig:    *ScrollElementConfig;
     borderElementConfig:    *BorderElementConfig;
 }
+_AlignClay_ElementConfigUnion :: struct {
+    c: u8;
+    x: ElementConfigUnion;
+}
 
 ElementConfig :: struct {
-    type:   ElementConfigType;
+    type:   _ElementConfigType;
     config: ElementConfigUnion;
+}
+_AlignClay_ElementConfig :: struct {
+    c: u8;
+    x: ElementConfig;
 }
 
 // Miscellaneous Structs & Enums ---------------------------------
@@ -271,6 +446,11 @@ ScrollContainerData :: struct {
     contentDimensions:         Dimensions;
     config:                    ScrollElementConfig;
     found:                     bool;
+}
+_AlignClay_ScrollContainerData :: struct {
+    c: u8;
+    // Miscellaneous Structs & Enums ---------------------------------
+    x: ScrollContainerData;
 }
 
 RenderCommandType :: enum s32 {
@@ -291,6 +471,10 @@ RenderCommandType :: enum s32 {
     CLAY_RENDER_COMMAND_TYPE_SCISSOR_END   :: SCISSOR_END;
     CLAY_RENDER_COMMAND_TYPE_CUSTOM        :: CUSTOM;
 }
+_AlignClay_RenderCommandType :: struct {
+    c: u8;
+    x: RenderCommandType;
+}
 
 RenderCommand :: struct {
     boundingBox: BoundingBox;
@@ -299,11 +483,19 @@ RenderCommand :: struct {
     id:          u32;
     commandType: RenderCommandType;
 }
+_AlignClay_RenderCommand :: struct {
+    c: u8;
+    x: RenderCommand;
+}
 
 RenderCommandArray :: struct {
     capacity:      u32;
     length:        u32;
     internalArray: *RenderCommand;
+}
+_AlignClay_RenderCommandArray :: struct {
+    c: u8;
+    x: RenderCommandArray;
 }
 
 PointerDataInteractionState :: enum s32 {
@@ -316,10 +508,18 @@ PointerDataInteractionState :: enum s32 {
     CLAY_POINTER_DATA_RELEASED_THIS_FRAME :: RELEASED_THIS_FRAME;
     CLAY_POINTER_DATA_RELEASED            :: RELEASED;
 }
+_AlignClay_PointerDataInteractionState :: struct {
+    c: u8;
+    x: PointerDataInteractionState;
+}
 
 PointerData :: struct {
     position: Vector2;
     state:    PointerDataInteractionState;
+}
+_AlignClay_PointerData :: struct {
+    c: u8;
+    x: PointerData;
 }
 
 ErrorType :: enum s32 {
@@ -338,16 +538,28 @@ ErrorType :: enum s32 {
     CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND    :: FLOATING_CONTAINER_PARENT_NOT_FOUND;
     CLAY_ERROR_TYPE_INTERNAL_ERROR                         :: INTERNAL_ERROR;
 }
+_AlignClay_ErrorType :: struct {
+    c: u8;
+    x: ErrorType;
+}
 
 ErrorData :: struct {
     errorType: ErrorType;
     errorText: String;
     userData:  u64;
 }
+_AlignClay_ErrorData :: struct {
+    c: u8;
+    x: ErrorData;
+}
 
 ErrorHandler :: struct {
     errorHandlerFunction: #type (errorText: ErrorData) -> void #c_call;
     userData:             u64;
+}
+_AlignClay_ErrorHandler :: struct {
+    c: u8;
+    x: ErrorHandler;
 }
 
 // Function Forward Declarations ---------------------------------
@@ -375,6 +587,28 @@ SetCullingEnabled :: (enabled: bool) -> void #foreign clay "Clay_SetCullingEnabl
 SetMaxElementCount :: (maxElementCount: u32) -> void #foreign clay "Clay_SetMaxElementCount";
 SetMaxMeasureTextCacheWordCount :: (maxMeasureTextCacheWordCount: u32) -> void #foreign clay "Clay_SetMaxMeasureTextCacheWordCount";
 
+// Internal API functions required by macros
+_OpenElement :: () -> void #foreign clay "Clay__OpenElement";
+_CloseElement :: () -> void #foreign clay "Clay__CloseElement";
+_StoreLayoutConfig :: (config: LayoutConfig) -> *LayoutConfig #foreign clay "Clay__StoreLayoutConfig";
+_ElementPostConfiguration :: () -> void #foreign clay "Clay__ElementPostConfiguration";
+_AttachId :: (id: ElementId) -> void #foreign clay "Clay__AttachId";
+_AttachLayoutConfig :: (config: *LayoutConfig) -> void #foreign clay "Clay__AttachLayoutConfig";
+_AttachElementConfig :: (config: ElementConfigUnion, type: _ElementConfigType) -> void #foreign clay "Clay__AttachElementConfig";
+_StoreRectangleElementConfig :: (config: RectangleElementConfig) -> *RectangleElementConfig #foreign clay "Clay__StoreRectangleElementConfig";
+_StoreTextElementConfig :: (config: TextElementConfig) -> *TextElementConfig #foreign clay "Clay__StoreTextElementConfig";
+_StoreImageElementConfig :: (config: ImageElementConfig) -> *ImageElementConfig #foreign clay "Clay__StoreImageElementConfig";
+_StoreFloatingElementConfig :: (config: FloatingElementConfig) -> *FloatingElementConfig #foreign clay "Clay__StoreFloatingElementConfig";
+_StoreCustomElementConfig :: (config: CustomElementConfig) -> *CustomElementConfig #foreign clay "Clay__StoreCustomElementConfig";
+_StoreScrollElementConfig :: (config: ScrollElementConfig) -> *ScrollElementConfig #foreign clay "Clay__StoreScrollElementConfig";
+_StoreBorderElementConfig :: (config: BorderElementConfig) -> *BorderElementConfig #foreign clay "Clay__StoreBorderElementConfig";
+_HashString :: (key: String, offset: u32, seed: u32) -> ElementId #foreign clay "Clay__HashString";
+_Noop :: () -> void #foreign clay "Clay__Noop";
+_OpenTextElement :: (text: String, textConfig: *TextElementConfig) -> void #foreign clay "Clay__OpenTextElement";
+
+_debugViewHighlightColor: Color #elsewhere clay "Clay__debugViewHighlightColor";
+_debugViewWidth: u32 #elsewhere clay "Clay__debugViewWidth";
+
 #scope_file
 
 #import "Basic"; // For assert
@@ -383,12 +617,77 @@ clay :: #library,no_dll "clay-jai/windows/clay";
 
 #run {
     {
+        instance: _Alignpointer;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_Alignpointer.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignpointer.c)) == 1, "_Alignpointer.c has unexpected size % instead of 1", size_of(type_of(_Alignpointer.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_Alignpointer.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignpointer.x)) == 8, "_Alignpointer.x has unexpected size % instead of 8", size_of(type_of(_Alignpointer.x)));
+        assert(size_of(_Alignpointer) == 16, "_Alignpointer has size % instead of 16", size_of(_Alignpointer));
+    }
+
+    {
+        instance: _Alignbool;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_Alignbool.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignbool.c)) == 1, "_Alignbool.c has unexpected size % instead of 1", size_of(type_of(_Alignbool.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 1, "_Alignbool.x has unexpected offset % instead of 1", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignbool.x)) == 1, "_Alignbool.x has unexpected size % instead of 1", size_of(type_of(_Alignbool.x)));
+        assert(size_of(_Alignbool) == 2, "_Alignbool has size % instead of 2", size_of(_Alignbool));
+    }
+
+    {
+        instance: _Alignuint8_t;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_Alignuint8_t.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignuint8_t.c)) == 1, "_Alignuint8_t.c has unexpected size % instead of 1", size_of(type_of(_Alignuint8_t.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 1, "_Alignuint8_t.x has unexpected offset % instead of 1", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignuint8_t.x)) == 1, "_Alignuint8_t.x has unexpected size % instead of 1", size_of(type_of(_Alignuint8_t.x)));
+        assert(size_of(_Alignuint8_t) == 2, "_Alignuint8_t has size % instead of 2", size_of(_Alignuint8_t));
+    }
+
+    {
+        instance: _Alignint32_t;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_Alignint32_t.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignint32_t.c)) == 1, "_Alignint32_t.c has unexpected size % instead of 1", size_of(type_of(_Alignint32_t.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_Alignint32_t.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_Alignint32_t.x)) == 4, "_Alignint32_t.x has unexpected size % instead of 4", size_of(type_of(_Alignint32_t.x)));
+        assert(size_of(_Alignint32_t) == 8, "_Alignint32_t has size % instead of 8", size_of(_Alignint32_t));
+    }
+
+    {
         instance: String;
         assert(((cast(*void)(*instance.length)) - cast(*void)(*instance)) == 0, "String.length has unexpected offset % instead of 0", ((cast(*void)(*instance.length)) - cast(*void)(*instance)));
         assert(size_of(type_of(String.length)) == 8, "String.length has unexpected size % instead of 8", size_of(type_of(String.length)));
         assert(((cast(*void)(*instance.chars)) - cast(*void)(*instance)) == 8, "String.chars has unexpected offset % instead of 8", ((cast(*void)(*instance.chars)) - cast(*void)(*instance)));
         assert(size_of(type_of(String.chars)) == 8, "String.chars has unexpected size % instead of 8", size_of(type_of(String.chars)));
         assert(size_of(String) == 16, "String has size % instead of 16", size_of(String));
+    }
+
+    {
+        instance: _AlignClay_String;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_String.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_String.c)) == 1, "_AlignClay_String.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_String.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_String.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_String.x)) == 16, "_AlignClay_String.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_String.x)));
+        assert(size_of(_AlignClay_String) == 24, "_AlignClay_String has size % instead of 24", size_of(_AlignClay_String));
+    }
+
+    {
+        instance: _StringArray;
+        assert(((cast(*void)(*instance.capacity)) - cast(*void)(*instance)) == 0, "_StringArray.capacity has unexpected offset % instead of 0", ((cast(*void)(*instance.capacity)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_StringArray.capacity)) == 4, "_StringArray.capacity has unexpected size % instead of 4", size_of(type_of(_StringArray.capacity)));
+        assert(((cast(*void)(*instance.length)) - cast(*void)(*instance)) == 4, "_StringArray.length has unexpected offset % instead of 4", ((cast(*void)(*instance.length)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_StringArray.length)) == 4, "_StringArray.length has unexpected size % instead of 4", size_of(type_of(_StringArray.length)));
+        assert(((cast(*void)(*instance.internalArray)) - cast(*void)(*instance)) == 8, "_StringArray.internalArray has unexpected offset % instead of 8", ((cast(*void)(*instance.internalArray)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_StringArray.internalArray)) == 8, "_StringArray.internalArray has unexpected size % instead of 8", size_of(type_of(_StringArray.internalArray)));
+        assert(size_of(_StringArray) == 16, "_StringArray has size % instead of 16", size_of(_StringArray));
+    }
+
+    {
+        instance: _AlignClay__StringArray;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay__StringArray.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay__StringArray.c)) == 1, "_AlignClay__StringArray.c has unexpected size % instead of 1", size_of(type_of(_AlignClay__StringArray.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay__StringArray.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay__StringArray.x)) == 16, "_AlignClay__StringArray.x has unexpected size % instead of 16", size_of(type_of(_AlignClay__StringArray.x)));
+        assert(size_of(_AlignClay__StringArray) == 24, "_AlignClay__StringArray has size % instead of 24", size_of(_AlignClay__StringArray));
     }
 
     {
@@ -403,12 +702,39 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_Arena;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Arena.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Arena.c)) == 1, "_AlignClay_Arena.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Arena.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_Arena.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Arena.x)) == 24, "_AlignClay_Arena.x has unexpected size % instead of 24", size_of(type_of(_AlignClay_Arena.x)));
+        assert(size_of(_AlignClay_Arena) == 32, "_AlignClay_Arena has size % instead of 32", size_of(_AlignClay_Arena));
+    }
+
+    {
         instance: Dimensions;
         assert(((cast(*void)(*instance.width)) - cast(*void)(*instance)) == 0, "Dimensions.width has unexpected offset % instead of 0", ((cast(*void)(*instance.width)) - cast(*void)(*instance)));
         assert(size_of(type_of(Dimensions.width)) == 4, "Dimensions.width has unexpected size % instead of 4", size_of(type_of(Dimensions.width)));
         assert(((cast(*void)(*instance.height)) - cast(*void)(*instance)) == 4, "Dimensions.height has unexpected offset % instead of 4", ((cast(*void)(*instance.height)) - cast(*void)(*instance)));
         assert(size_of(type_of(Dimensions.height)) == 4, "Dimensions.height has unexpected size % instead of 4", size_of(type_of(Dimensions.height)));
         assert(size_of(Dimensions) == 8, "Dimensions has size % instead of 8", size_of(Dimensions));
+    }
+
+    {
+        instance: _AlignClay_Dimensions;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Dimensions.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Dimensions.c)) == 1, "_AlignClay_Dimensions.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Dimensions.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_Dimensions.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Dimensions.x)) == 8, "_AlignClay_Dimensions.x has unexpected size % instead of 8", size_of(type_of(_AlignClay_Dimensions.x)));
+        assert(size_of(_AlignClay_Dimensions) == 12, "_AlignClay_Dimensions has size % instead of 12", size_of(_AlignClay_Dimensions));
+    }
+
+    {
+        instance: _AlignClay_Vector2;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Vector2.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Vector2.c)) == 1, "_AlignClay_Vector2.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Vector2.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_Vector2.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Vector2.x)) == 8, "_AlignClay_Vector2.x has unexpected size % instead of 8", size_of(type_of(_AlignClay_Vector2.x)));
+        assert(size_of(_AlignClay_Vector2) == 12, "_AlignClay_Vector2 has size % instead of 12", size_of(_AlignClay_Vector2));
     }
 
     {
@@ -425,6 +751,15 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_Color;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Color.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Color.c)) == 1, "_AlignClay_Color.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Color.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_Color.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Color.x)) == 16, "_AlignClay_Color.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_Color.x)));
+        assert(size_of(_AlignClay_Color) == 20, "_AlignClay_Color has size % instead of 20", size_of(_AlignClay_Color));
+    }
+
+    {
         instance: BoundingBox;
         assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 0, "BoundingBox.x has unexpected offset % instead of 0", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
         assert(size_of(type_of(BoundingBox.x)) == 4, "BoundingBox.x has unexpected size % instead of 4", size_of(type_of(BoundingBox.x)));
@@ -435,6 +770,15 @@ clay :: #library,no_dll "clay-jai/windows/clay";
         assert(((cast(*void)(*instance.height)) - cast(*void)(*instance)) == 12, "BoundingBox.height has unexpected offset % instead of 12", ((cast(*void)(*instance.height)) - cast(*void)(*instance)));
         assert(size_of(type_of(BoundingBox.height)) == 4, "BoundingBox.height has unexpected size % instead of 4", size_of(type_of(BoundingBox.height)));
         assert(size_of(BoundingBox) == 16, "BoundingBox has size % instead of 16", size_of(BoundingBox));
+    }
+
+    {
+        instance: _AlignClay_BoundingBox;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_BoundingBox.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_BoundingBox.c)) == 1, "_AlignClay_BoundingBox.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_BoundingBox.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_BoundingBox.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_BoundingBox.x)) == 16, "_AlignClay_BoundingBox.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_BoundingBox.x)));
+        assert(size_of(_AlignClay_BoundingBox) == 20, "_AlignClay_BoundingBox has size % instead of 20", size_of(_AlignClay_BoundingBox));
     }
 
     {
@@ -451,6 +795,15 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_ElementId;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ElementId.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ElementId.c)) == 1, "_AlignClay_ElementId.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ElementId.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_ElementId.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ElementId.x)) == 32, "_AlignClay_ElementId.x has unexpected size % instead of 32", size_of(type_of(_AlignClay_ElementId.x)));
+        assert(size_of(_AlignClay_ElementId) == 40, "_AlignClay_ElementId has size % instead of 40", size_of(_AlignClay_ElementId));
+    }
+
+    {
         instance: CornerRadius;
         assert(((cast(*void)(*instance.topLeft)) - cast(*void)(*instance)) == 0, "CornerRadius.topLeft has unexpected offset % instead of 0", ((cast(*void)(*instance.topLeft)) - cast(*void)(*instance)));
         assert(size_of(type_of(CornerRadius.topLeft)) == 4, "CornerRadius.topLeft has unexpected size % instead of 4", size_of(type_of(CornerRadius.topLeft)));
@@ -464,12 +817,75 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_CornerRadius;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_CornerRadius.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_CornerRadius.c)) == 1, "_AlignClay_CornerRadius.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_CornerRadius.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_CornerRadius.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_CornerRadius.x)) == 16, "_AlignClay_CornerRadius.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_CornerRadius.x)));
+        assert(size_of(_AlignClay_CornerRadius) == 20, "_AlignClay_CornerRadius has size % instead of 20", size_of(_AlignClay_CornerRadius));
+    }
+
+    {
+        instance: _AlignClay__ElementConfigType;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay__ElementConfigType.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay__ElementConfigType.c)) == 1, "_AlignClay__ElementConfigType.c has unexpected size % instead of 1", size_of(type_of(_AlignClay__ElementConfigType.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay__ElementConfigType.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay__ElementConfigType.x)) == 4, "_AlignClay__ElementConfigType.x has unexpected size % instead of 4", size_of(type_of(_AlignClay__ElementConfigType.x)));
+        assert(size_of(_AlignClay__ElementConfigType) == 8, "_AlignClay__ElementConfigType has size % instead of 8", size_of(_AlignClay__ElementConfigType));
+    }
+
+    {
+        instance: _AlignClay_LayoutDirection;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_LayoutDirection.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutDirection.c)) == 1, "_AlignClay_LayoutDirection.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_LayoutDirection.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_LayoutDirection.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutDirection.x)) == 4, "_AlignClay_LayoutDirection.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_LayoutDirection.x)));
+        assert(size_of(_AlignClay_LayoutDirection) == 8, "_AlignClay_LayoutDirection has size % instead of 8", size_of(_AlignClay_LayoutDirection));
+    }
+
+    {
+        instance: _AlignClay_LayoutAlignmentX;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_LayoutAlignmentX.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutAlignmentX.c)) == 1, "_AlignClay_LayoutAlignmentX.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_LayoutAlignmentX.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_LayoutAlignmentX.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutAlignmentX.x)) == 4, "_AlignClay_LayoutAlignmentX.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_LayoutAlignmentX.x)));
+        assert(size_of(_AlignClay_LayoutAlignmentX) == 8, "_AlignClay_LayoutAlignmentX has size % instead of 8", size_of(_AlignClay_LayoutAlignmentX));
+    }
+
+    {
+        instance: _AlignClay_LayoutAlignmentY;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_LayoutAlignmentY.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutAlignmentY.c)) == 1, "_AlignClay_LayoutAlignmentY.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_LayoutAlignmentY.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_LayoutAlignmentY.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutAlignmentY.x)) == 4, "_AlignClay_LayoutAlignmentY.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_LayoutAlignmentY.x)));
+        assert(size_of(_AlignClay_LayoutAlignmentY) == 8, "_AlignClay_LayoutAlignmentY has size % instead of 8", size_of(_AlignClay_LayoutAlignmentY));
+    }
+
+    {
+        instance: _AlignClay__SizingType;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay__SizingType.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay__SizingType.c)) == 1, "_AlignClay__SizingType.c has unexpected size % instead of 1", size_of(type_of(_AlignClay__SizingType.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay__SizingType.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay__SizingType.x)) == 4, "_AlignClay__SizingType.x has unexpected size % instead of 4", size_of(type_of(_AlignClay__SizingType.x)));
+        assert(size_of(_AlignClay__SizingType) == 8, "_AlignClay__SizingType has size % instead of 8", size_of(_AlignClay__SizingType));
+    }
+
+    {
         instance: ChildAlignment;
         assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 0, "ChildAlignment.x has unexpected offset % instead of 0", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
         assert(size_of(type_of(ChildAlignment.x)) == 4, "ChildAlignment.x has unexpected size % instead of 4", size_of(type_of(ChildAlignment.x)));
         assert(((cast(*void)(*instance.y)) - cast(*void)(*instance)) == 4, "ChildAlignment.y has unexpected offset % instead of 4", ((cast(*void)(*instance.y)) - cast(*void)(*instance)));
         assert(size_of(type_of(ChildAlignment.y)) == 4, "ChildAlignment.y has unexpected size % instead of 4", size_of(type_of(ChildAlignment.y)));
         assert(size_of(ChildAlignment) == 8, "ChildAlignment has size % instead of 8", size_of(ChildAlignment));
+    }
+
+    {
+        instance: _AlignClay_ChildAlignment;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ChildAlignment.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ChildAlignment.c)) == 1, "_AlignClay_ChildAlignment.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ChildAlignment.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_ChildAlignment.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ChildAlignment.x)) == 8, "_AlignClay_ChildAlignment.x has unexpected size % instead of 8", size_of(type_of(_AlignClay_ChildAlignment.x)));
+        assert(size_of(_AlignClay_ChildAlignment) == 12, "_AlignClay_ChildAlignment has size % instead of 12", size_of(_AlignClay_ChildAlignment));
     }
 
     {
@@ -482,12 +898,30 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_SizingMinMax;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_SizingMinMax.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_SizingMinMax.c)) == 1, "_AlignClay_SizingMinMax.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_SizingMinMax.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_SizingMinMax.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_SizingMinMax.x)) == 8, "_AlignClay_SizingMinMax.x has unexpected size % instead of 8", size_of(type_of(_AlignClay_SizingMinMax.x)));
+        assert(size_of(_AlignClay_SizingMinMax) == 12, "_AlignClay_SizingMinMax has size % instead of 12", size_of(_AlignClay_SizingMinMax));
+    }
+
+    {
         instance: SizingAxis;
         assert(((cast(*void)(*instance.size)) - cast(*void)(*instance)) == 0, "SizingAxis.size has unexpected offset % instead of 0", ((cast(*void)(*instance.size)) - cast(*void)(*instance)));
         assert(size_of(type_of(SizingAxis.size)) == 8, "SizingAxis.size has unexpected size % instead of 8", size_of(type_of(SizingAxis.size)));
         assert(((cast(*void)(*instance.type)) - cast(*void)(*instance)) == 8, "SizingAxis.type has unexpected offset % instead of 8", ((cast(*void)(*instance.type)) - cast(*void)(*instance)));
         assert(size_of(type_of(SizingAxis.type)) == 4, "SizingAxis.type has unexpected size % instead of 4", size_of(type_of(SizingAxis.type)));
         assert(size_of(SizingAxis) == 12, "SizingAxis has size % instead of 12", size_of(SizingAxis));
+    }
+
+    {
+        instance: _AlignClay_SizingAxis;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_SizingAxis.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_SizingAxis.c)) == 1, "_AlignClay_SizingAxis.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_SizingAxis.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_SizingAxis.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_SizingAxis.x)) == 12, "_AlignClay_SizingAxis.x has unexpected size % instead of 12", size_of(type_of(_AlignClay_SizingAxis.x)));
+        assert(size_of(_AlignClay_SizingAxis) == 16, "_AlignClay_SizingAxis has size % instead of 16", size_of(_AlignClay_SizingAxis));
     }
 
     {
@@ -500,12 +934,30 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_Sizing;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Sizing.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Sizing.c)) == 1, "_AlignClay_Sizing.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Sizing.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_Sizing.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Sizing.x)) == 24, "_AlignClay_Sizing.x has unexpected size % instead of 24", size_of(type_of(_AlignClay_Sizing.x)));
+        assert(size_of(_AlignClay_Sizing) == 28, "_AlignClay_Sizing has size % instead of 28", size_of(_AlignClay_Sizing));
+    }
+
+    {
         instance: Padding;
         assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 0, "Padding.x has unexpected offset % instead of 0", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
         assert(size_of(type_of(Padding.x)) == 2, "Padding.x has unexpected size % instead of 2", size_of(type_of(Padding.x)));
         assert(((cast(*void)(*instance.y)) - cast(*void)(*instance)) == 2, "Padding.y has unexpected offset % instead of 2", ((cast(*void)(*instance.y)) - cast(*void)(*instance)));
         assert(size_of(type_of(Padding.y)) == 2, "Padding.y has unexpected size % instead of 2", size_of(type_of(Padding.y)));
         assert(size_of(Padding) == 4, "Padding has size % instead of 4", size_of(Padding));
+    }
+
+    {
+        instance: _AlignClay_Padding;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Padding.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Padding.c)) == 1, "_AlignClay_Padding.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Padding.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 2, "_AlignClay_Padding.x has unexpected offset % instead of 2", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Padding.x)) == 4, "_AlignClay_Padding.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_Padding.x)));
+        assert(size_of(_AlignClay_Padding) == 6, "_AlignClay_Padding has size % instead of 6", size_of(_AlignClay_Padding));
     }
 
     {
@@ -524,12 +976,39 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_LayoutConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_LayoutConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutConfig.c)) == 1, "_AlignClay_LayoutConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_LayoutConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_LayoutConfig.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_LayoutConfig.x)) == 44, "_AlignClay_LayoutConfig.x has unexpected size % instead of 44", size_of(type_of(_AlignClay_LayoutConfig.x)));
+        assert(size_of(_AlignClay_LayoutConfig) == 48, "_AlignClay_LayoutConfig has size % instead of 48", size_of(_AlignClay_LayoutConfig));
+    }
+
+    {
         instance: RectangleElementConfig;
         assert(((cast(*void)(*instance.color)) - cast(*void)(*instance)) == 0, "RectangleElementConfig.color has unexpected offset % instead of 0", ((cast(*void)(*instance.color)) - cast(*void)(*instance)));
         assert(size_of(type_of(RectangleElementConfig.color)) == 16, "RectangleElementConfig.color has unexpected size % instead of 16", size_of(type_of(RectangleElementConfig.color)));
         assert(((cast(*void)(*instance.cornerRadius)) - cast(*void)(*instance)) == 16, "RectangleElementConfig.cornerRadius has unexpected offset % instead of 16", ((cast(*void)(*instance.cornerRadius)) - cast(*void)(*instance)));
         assert(size_of(type_of(RectangleElementConfig.cornerRadius)) == 16, "RectangleElementConfig.cornerRadius has unexpected size % instead of 16", size_of(type_of(RectangleElementConfig.cornerRadius)));
         assert(size_of(RectangleElementConfig) == 32, "RectangleElementConfig has size % instead of 32", size_of(RectangleElementConfig));
+    }
+
+    {
+        instance: _AlignClay_RectangleElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_RectangleElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RectangleElementConfig.c)) == 1, "_AlignClay_RectangleElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_RectangleElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_RectangleElementConfig.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RectangleElementConfig.x)) == 32, "_AlignClay_RectangleElementConfig.x has unexpected size % instead of 32", size_of(type_of(_AlignClay_RectangleElementConfig.x)));
+        assert(size_of(_AlignClay_RectangleElementConfig) == 36, "_AlignClay_RectangleElementConfig has size % instead of 36", size_of(_AlignClay_RectangleElementConfig));
+    }
+
+    {
+        instance: _AlignClay_TextElementConfigWrapMode;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_TextElementConfigWrapMode.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_TextElementConfigWrapMode.c)) == 1, "_AlignClay_TextElementConfigWrapMode.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_TextElementConfigWrapMode.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_TextElementConfigWrapMode.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_TextElementConfigWrapMode.x)) == 4, "_AlignClay_TextElementConfigWrapMode.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_TextElementConfigWrapMode.x)));
+        assert(size_of(_AlignClay_TextElementConfigWrapMode) == 8, "_AlignClay_TextElementConfigWrapMode has size % instead of 8", size_of(_AlignClay_TextElementConfigWrapMode));
     }
 
     {
@@ -550,6 +1029,15 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_TextElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_TextElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_TextElementConfig.c)) == 1, "_AlignClay_TextElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_TextElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_TextElementConfig.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_TextElementConfig.x)) == 28, "_AlignClay_TextElementConfig.x has unexpected size % instead of 28", size_of(type_of(_AlignClay_TextElementConfig.x)));
+        assert(size_of(_AlignClay_TextElementConfig) == 32, "_AlignClay_TextElementConfig has size % instead of 32", size_of(_AlignClay_TextElementConfig));
+    }
+
+    {
         instance: ImageElementConfig;
         assert(((cast(*void)(*instance.imageData)) - cast(*void)(*instance)) == 0, "ImageElementConfig.imageData has unexpected offset % instead of 0", ((cast(*void)(*instance.imageData)) - cast(*void)(*instance)));
         assert(size_of(type_of(ImageElementConfig.imageData)) == 8, "ImageElementConfig.imageData has unexpected size % instead of 8", size_of(type_of(ImageElementConfig.imageData)));
@@ -559,12 +1047,48 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_ImageElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ImageElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ImageElementConfig.c)) == 1, "_AlignClay_ImageElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ImageElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_ImageElementConfig.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ImageElementConfig.x)) == 16, "_AlignClay_ImageElementConfig.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_ImageElementConfig.x)));
+        assert(size_of(_AlignClay_ImageElementConfig) == 24, "_AlignClay_ImageElementConfig has size % instead of 24", size_of(_AlignClay_ImageElementConfig));
+    }
+
+    {
+        instance: _AlignClay_FloatingAttachPointType;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_FloatingAttachPointType.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_FloatingAttachPointType.c)) == 1, "_AlignClay_FloatingAttachPointType.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_FloatingAttachPointType.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_FloatingAttachPointType.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_FloatingAttachPointType.x)) == 4, "_AlignClay_FloatingAttachPointType.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_FloatingAttachPointType.x)));
+        assert(size_of(_AlignClay_FloatingAttachPointType) == 8, "_AlignClay_FloatingAttachPointType has size % instead of 8", size_of(_AlignClay_FloatingAttachPointType));
+    }
+
+    {
         instance: FloatingAttachPoints;
         assert(((cast(*void)(*instance.element)) - cast(*void)(*instance)) == 0, "FloatingAttachPoints.element has unexpected offset % instead of 0", ((cast(*void)(*instance.element)) - cast(*void)(*instance)));
         assert(size_of(type_of(FloatingAttachPoints.element)) == 4, "FloatingAttachPoints.element has unexpected size % instead of 4", size_of(type_of(FloatingAttachPoints.element)));
         assert(((cast(*void)(*instance.parent)) - cast(*void)(*instance)) == 4, "FloatingAttachPoints.parent has unexpected offset % instead of 4", ((cast(*void)(*instance.parent)) - cast(*void)(*instance)));
         assert(size_of(type_of(FloatingAttachPoints.parent)) == 4, "FloatingAttachPoints.parent has unexpected size % instead of 4", size_of(type_of(FloatingAttachPoints.parent)));
         assert(size_of(FloatingAttachPoints) == 8, "FloatingAttachPoints has size % instead of 8", size_of(FloatingAttachPoints));
+    }
+
+    {
+        instance: _AlignClay_FloatingAttachPoints;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_FloatingAttachPoints.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_FloatingAttachPoints.c)) == 1, "_AlignClay_FloatingAttachPoints.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_FloatingAttachPoints.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_FloatingAttachPoints.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_FloatingAttachPoints.x)) == 8, "_AlignClay_FloatingAttachPoints.x has unexpected size % instead of 8", size_of(type_of(_AlignClay_FloatingAttachPoints.x)));
+        assert(size_of(_AlignClay_FloatingAttachPoints) == 12, "_AlignClay_FloatingAttachPoints has size % instead of 12", size_of(_AlignClay_FloatingAttachPoints));
+    }
+
+    {
+        instance: _AlignClay_PointerCaptureMode;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_PointerCaptureMode.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_PointerCaptureMode.c)) == 1, "_AlignClay_PointerCaptureMode.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_PointerCaptureMode.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_PointerCaptureMode.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_PointerCaptureMode.x)) == 4, "_AlignClay_PointerCaptureMode.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_PointerCaptureMode.x)));
+        assert(size_of(_AlignClay_PointerCaptureMode) == 8, "_AlignClay_PointerCaptureMode has size % instead of 8", size_of(_AlignClay_PointerCaptureMode));
     }
 
     {
@@ -585,10 +1109,28 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_FloatingElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_FloatingElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_FloatingElementConfig.c)) == 1, "_AlignClay_FloatingElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_FloatingElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_FloatingElementConfig.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_FloatingElementConfig.x)) == 36, "_AlignClay_FloatingElementConfig.x has unexpected size % instead of 36", size_of(type_of(_AlignClay_FloatingElementConfig.x)));
+        assert(size_of(_AlignClay_FloatingElementConfig) == 40, "_AlignClay_FloatingElementConfig has size % instead of 40", size_of(_AlignClay_FloatingElementConfig));
+    }
+
+    {
         instance: CustomElementConfig;
         assert(((cast(*void)(*instance.customData)) - cast(*void)(*instance)) == 0, "CustomElementConfig.customData has unexpected offset % instead of 0", ((cast(*void)(*instance.customData)) - cast(*void)(*instance)));
         assert(size_of(type_of(CustomElementConfig.customData)) == 8, "CustomElementConfig.customData has unexpected size % instead of 8", size_of(type_of(CustomElementConfig.customData)));
         assert(size_of(CustomElementConfig) == 8, "CustomElementConfig has size % instead of 8", size_of(CustomElementConfig));
+    }
+
+    {
+        instance: _AlignClay_CustomElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_CustomElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_CustomElementConfig.c)) == 1, "_AlignClay_CustomElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_CustomElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_CustomElementConfig.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_CustomElementConfig.x)) == 8, "_AlignClay_CustomElementConfig.x has unexpected size % instead of 8", size_of(type_of(_AlignClay_CustomElementConfig.x)));
+        assert(size_of(_AlignClay_CustomElementConfig) == 16, "_AlignClay_CustomElementConfig has size % instead of 16", size_of(_AlignClay_CustomElementConfig));
     }
 
     {
@@ -601,12 +1143,30 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_ScrollElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ScrollElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ScrollElementConfig.c)) == 1, "_AlignClay_ScrollElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ScrollElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 1, "_AlignClay_ScrollElementConfig.x has unexpected offset % instead of 1", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ScrollElementConfig.x)) == 2, "_AlignClay_ScrollElementConfig.x has unexpected size % instead of 2", size_of(type_of(_AlignClay_ScrollElementConfig.x)));
+        assert(size_of(_AlignClay_ScrollElementConfig) == 3, "_AlignClay_ScrollElementConfig has size % instead of 3", size_of(_AlignClay_ScrollElementConfig));
+    }
+
+    {
         instance: Border;
         assert(((cast(*void)(*instance.width)) - cast(*void)(*instance)) == 0, "Border.width has unexpected offset % instead of 0", ((cast(*void)(*instance.width)) - cast(*void)(*instance)));
         assert(size_of(type_of(Border.width)) == 4, "Border.width has unexpected size % instead of 4", size_of(type_of(Border.width)));
         assert(((cast(*void)(*instance.color)) - cast(*void)(*instance)) == 4, "Border.color has unexpected offset % instead of 4", ((cast(*void)(*instance.color)) - cast(*void)(*instance)));
         assert(size_of(type_of(Border.color)) == 16, "Border.color has unexpected size % instead of 16", size_of(type_of(Border.color)));
         assert(size_of(Border) == 20, "Border has size % instead of 20", size_of(Border));
+    }
+
+    {
+        instance: _AlignClay_Border;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Border.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Border.c)) == 1, "_AlignClay_Border.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Border.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_Border.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_Border.x)) == 20, "_AlignClay_Border.x has unexpected size % instead of 20", size_of(type_of(_AlignClay_Border.x)));
+        assert(size_of(_AlignClay_Border) == 24, "_AlignClay_Border has size % instead of 24", size_of(_AlignClay_Border));
     }
 
     {
@@ -624,6 +1184,15 @@ clay :: #library,no_dll "clay-jai/windows/clay";
         assert(((cast(*void)(*instance.cornerRadius)) - cast(*void)(*instance)) == 100, "BorderElementConfig.cornerRadius has unexpected offset % instead of 100", ((cast(*void)(*instance.cornerRadius)) - cast(*void)(*instance)));
         assert(size_of(type_of(BorderElementConfig.cornerRadius)) == 16, "BorderElementConfig.cornerRadius has unexpected size % instead of 16", size_of(type_of(BorderElementConfig.cornerRadius)));
         assert(size_of(BorderElementConfig) == 116, "BorderElementConfig has size % instead of 116", size_of(BorderElementConfig));
+    }
+
+    {
+        instance: _AlignClay_BorderElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_BorderElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_BorderElementConfig.c)) == 1, "_AlignClay_BorderElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_BorderElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_BorderElementConfig.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_BorderElementConfig.x)) == 116, "_AlignClay_BorderElementConfig.x has unexpected size % instead of 116", size_of(type_of(_AlignClay_BorderElementConfig.x)));
+        assert(size_of(_AlignClay_BorderElementConfig) == 120, "_AlignClay_BorderElementConfig has size % instead of 120", size_of(_AlignClay_BorderElementConfig));
     }
 
     {
@@ -646,12 +1215,30 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_ElementConfigUnion;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ElementConfigUnion.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ElementConfigUnion.c)) == 1, "_AlignClay_ElementConfigUnion.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ElementConfigUnion.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_ElementConfigUnion.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ElementConfigUnion.x)) == 8, "_AlignClay_ElementConfigUnion.x has unexpected size % instead of 8", size_of(type_of(_AlignClay_ElementConfigUnion.x)));
+        assert(size_of(_AlignClay_ElementConfigUnion) == 16, "_AlignClay_ElementConfigUnion has size % instead of 16", size_of(_AlignClay_ElementConfigUnion));
+    }
+
+    {
         instance: ElementConfig;
         assert(((cast(*void)(*instance.type)) - cast(*void)(*instance)) == 0, "ElementConfig.type has unexpected offset % instead of 0", ((cast(*void)(*instance.type)) - cast(*void)(*instance)));
         assert(size_of(type_of(ElementConfig.type)) == 4, "ElementConfig.type has unexpected size % instead of 4", size_of(type_of(ElementConfig.type)));
         assert(((cast(*void)(*instance.config)) - cast(*void)(*instance)) == 8, "ElementConfig.config has unexpected offset % instead of 8", ((cast(*void)(*instance.config)) - cast(*void)(*instance)));
         assert(size_of(type_of(ElementConfig.config)) == 8, "ElementConfig.config has unexpected size % instead of 8", size_of(type_of(ElementConfig.config)));
         assert(size_of(ElementConfig) == 16, "ElementConfig has size % instead of 16", size_of(ElementConfig));
+    }
+
+    {
+        instance: _AlignClay_ElementConfig;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ElementConfig.c)) == 1, "_AlignClay_ElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ElementConfig.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_ElementConfig.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ElementConfig.x)) == 16, "_AlignClay_ElementConfig.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_ElementConfig.x)));
+        assert(size_of(_AlignClay_ElementConfig) == 24, "_AlignClay_ElementConfig has size % instead of 24", size_of(_AlignClay_ElementConfig));
     }
 
     {
@@ -670,6 +1257,24 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_ScrollContainerData;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ScrollContainerData.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ScrollContainerData.c)) == 1, "_AlignClay_ScrollContainerData.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ScrollContainerData.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_ScrollContainerData.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ScrollContainerData.x)) == 32, "_AlignClay_ScrollContainerData.x has unexpected size % instead of 32", size_of(type_of(_AlignClay_ScrollContainerData.x)));
+        assert(size_of(_AlignClay_ScrollContainerData) == 40, "_AlignClay_ScrollContainerData has size % instead of 40", size_of(_AlignClay_ScrollContainerData));
+    }
+
+    {
+        instance: _AlignClay_RenderCommandType;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_RenderCommandType.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RenderCommandType.c)) == 1, "_AlignClay_RenderCommandType.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_RenderCommandType.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_RenderCommandType.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RenderCommandType.x)) == 4, "_AlignClay_RenderCommandType.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_RenderCommandType.x)));
+        assert(size_of(_AlignClay_RenderCommandType) == 8, "_AlignClay_RenderCommandType has size % instead of 8", size_of(_AlignClay_RenderCommandType));
+    }
+
+    {
         instance: RenderCommand;
         assert(((cast(*void)(*instance.boundingBox)) - cast(*void)(*instance)) == 0, "RenderCommand.boundingBox has unexpected offset % instead of 0", ((cast(*void)(*instance.boundingBox)) - cast(*void)(*instance)));
         assert(size_of(type_of(RenderCommand.boundingBox)) == 16, "RenderCommand.boundingBox has unexpected size % instead of 16", size_of(type_of(RenderCommand.boundingBox)));
@@ -685,6 +1290,15 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_RenderCommand;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_RenderCommand.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RenderCommand.c)) == 1, "_AlignClay_RenderCommand.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_RenderCommand.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_RenderCommand.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RenderCommand.x)) == 48, "_AlignClay_RenderCommand.x has unexpected size % instead of 48", size_of(type_of(_AlignClay_RenderCommand.x)));
+        assert(size_of(_AlignClay_RenderCommand) == 56, "_AlignClay_RenderCommand has size % instead of 56", size_of(_AlignClay_RenderCommand));
+    }
+
+    {
         instance: RenderCommandArray;
         assert(((cast(*void)(*instance.capacity)) - cast(*void)(*instance)) == 0, "RenderCommandArray.capacity has unexpected offset % instead of 0", ((cast(*void)(*instance.capacity)) - cast(*void)(*instance)));
         assert(size_of(type_of(RenderCommandArray.capacity)) == 4, "RenderCommandArray.capacity has unexpected size % instead of 4", size_of(type_of(RenderCommandArray.capacity)));
@@ -696,12 +1310,48 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_RenderCommandArray;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_RenderCommandArray.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RenderCommandArray.c)) == 1, "_AlignClay_RenderCommandArray.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_RenderCommandArray.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_RenderCommandArray.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_RenderCommandArray.x)) == 16, "_AlignClay_RenderCommandArray.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_RenderCommandArray.x)));
+        assert(size_of(_AlignClay_RenderCommandArray) == 24, "_AlignClay_RenderCommandArray has size % instead of 24", size_of(_AlignClay_RenderCommandArray));
+    }
+
+    {
+        instance: _AlignClay_PointerDataInteractionState;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_PointerDataInteractionState.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_PointerDataInteractionState.c)) == 1, "_AlignClay_PointerDataInteractionState.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_PointerDataInteractionState.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_PointerDataInteractionState.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_PointerDataInteractionState.x)) == 4, "_AlignClay_PointerDataInteractionState.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_PointerDataInteractionState.x)));
+        assert(size_of(_AlignClay_PointerDataInteractionState) == 8, "_AlignClay_PointerDataInteractionState has size % instead of 8", size_of(_AlignClay_PointerDataInteractionState));
+    }
+
+    {
         instance: PointerData;
         assert(((cast(*void)(*instance.position)) - cast(*void)(*instance)) == 0, "PointerData.position has unexpected offset % instead of 0", ((cast(*void)(*instance.position)) - cast(*void)(*instance)));
         assert(size_of(type_of(PointerData.position)) == 8, "PointerData.position has unexpected size % instead of 8", size_of(type_of(PointerData.position)));
         assert(((cast(*void)(*instance.state)) - cast(*void)(*instance)) == 8, "PointerData.state has unexpected offset % instead of 8", ((cast(*void)(*instance.state)) - cast(*void)(*instance)));
         assert(size_of(type_of(PointerData.state)) == 4, "PointerData.state has unexpected size % instead of 4", size_of(type_of(PointerData.state)));
         assert(size_of(PointerData) == 12, "PointerData has size % instead of 12", size_of(PointerData));
+    }
+
+    {
+        instance: _AlignClay_PointerData;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_PointerData.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_PointerData.c)) == 1, "_AlignClay_PointerData.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_PointerData.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_PointerData.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_PointerData.x)) == 12, "_AlignClay_PointerData.x has unexpected size % instead of 12", size_of(type_of(_AlignClay_PointerData.x)));
+        assert(size_of(_AlignClay_PointerData) == 16, "_AlignClay_PointerData has size % instead of 16", size_of(_AlignClay_PointerData));
+    }
+
+    {
+        instance: _AlignClay_ErrorType;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ErrorType.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ErrorType.c)) == 1, "_AlignClay_ErrorType.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ErrorType.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_ErrorType.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ErrorType.x)) == 4, "_AlignClay_ErrorType.x has unexpected size % instead of 4", size_of(type_of(_AlignClay_ErrorType.x)));
+        assert(size_of(_AlignClay_ErrorType) == 8, "_AlignClay_ErrorType has size % instead of 8", size_of(_AlignClay_ErrorType));
     }
 
     {
@@ -716,12 +1366,30 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     }
 
     {
+        instance: _AlignClay_ErrorData;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ErrorData.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ErrorData.c)) == 1, "_AlignClay_ErrorData.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ErrorData.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_ErrorData.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ErrorData.x)) == 32, "_AlignClay_ErrorData.x has unexpected size % instead of 32", size_of(type_of(_AlignClay_ErrorData.x)));
+        assert(size_of(_AlignClay_ErrorData) == 40, "_AlignClay_ErrorData has size % instead of 40", size_of(_AlignClay_ErrorData));
+    }
+
+    {
         instance: ErrorHandler;
         assert(((cast(*void)(*instance.errorHandlerFunction)) - cast(*void)(*instance)) == 0, "ErrorHandler.errorHandlerFunction has unexpected offset % instead of 0", ((cast(*void)(*instance.errorHandlerFunction)) - cast(*void)(*instance)));
         assert(size_of(type_of(ErrorHandler.errorHandlerFunction)) == 8, "ErrorHandler.errorHandlerFunction has unexpected size % instead of 8", size_of(type_of(ErrorHandler.errorHandlerFunction)));
         assert(((cast(*void)(*instance.userData)) - cast(*void)(*instance)) == 8, "ErrorHandler.userData has unexpected offset % instead of 8", ((cast(*void)(*instance.userData)) - cast(*void)(*instance)));
         assert(size_of(type_of(ErrorHandler.userData)) == 8, "ErrorHandler.userData has unexpected size % instead of 8", size_of(type_of(ErrorHandler.userData)));
         assert(size_of(ErrorHandler) == 16, "ErrorHandler has size % instead of 16", size_of(ErrorHandler));
+    }
+
+    {
+        instance: _AlignClay_ErrorHandler;
+        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_ErrorHandler.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ErrorHandler.c)) == 1, "_AlignClay_ErrorHandler.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_ErrorHandler.c)));
+        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 8, "_AlignClay_ErrorHandler.x has unexpected offset % instead of 8", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
+        assert(size_of(type_of(_AlignClay_ErrorHandler.x)) == 16, "_AlignClay_ErrorHandler.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_ErrorHandler.x)));
+        assert(size_of(_AlignClay_ErrorHandler) == 24, "_AlignClay_ErrorHandler has size % instead of 24", size_of(_AlignClay_ErrorHandler));
     }
 }
 
