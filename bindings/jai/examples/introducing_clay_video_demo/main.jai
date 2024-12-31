@@ -30,7 +30,7 @@ to_jai_string :: (str: Clay.String) -> string {
 
 handle_clay_errors :: (error_data: Clay.ErrorData) #c_call {
     push_context {
-        print("%", to_jai_string(error_data.errorText));
+        log_error("Clay Error : %", to_jai_string(error_data.errorText));
     }
 }
 
@@ -39,15 +39,65 @@ main :: () {
     raylib_initialize(1024, 768, "Introducing Clay Demo", flags);
 
     clay_required_memory := Clay.MinMemorySize();
-    clay_memory := Clay.CreateArenaWithCapacityAndMemory(clay_required_memory, alloc(clay_required_memory));
+    memory := NewArray(clay_required_memory, u8);
+    clay_memory := Clay.CreateArenaWithCapacityAndMemory(clay_required_memory, memory.data);
     Clay.Initialize(
         clay_memory, 
         Clay.Dimensions.{cast(float, Raylib.GetScreenWidth()), cast(float, Raylib.GetScreenHeight())},
         .{handle_clay_errors, 0}
     );
+
     Clay.SetMeasureTextFunction(raylib_measure_text);
     g_raylib_fonts[FONT_ID_BODY_16] = .{
         FONT_ID_BODY_16,
         Raylib.LoadFontEx("resources/Roboto-Regular.ttf", 48, null, 400),
     };
+    Raylib.SetTextureFilter(g_raylib_fonts[FONT_ID_BODY_16].font.texture, .BILINEAR);
+
+    while !Raylib.WindowShouldClose() {
+        Clay.SetLayoutDimensions(.{
+            cast(float, Raylib.GetScreenWidth()),
+            cast(float, Raylib.GetScreenHeight()),
+        });
+
+        mouse_position := Raylib.GetMousePosition();
+        scroll_delta := Raylib.GetMouseWheelMoveV();
+        Clay.SetPointerState(mouse_position, Raylib.IsMouseButtonDown(0));
+        Clay.UpdateScrollContainers(true, scroll_delta, Raylib.GetFrameTime());
+
+        layout_expand := Clay.Sizing.{
+            Clay.SizingGrow(),
+            Clay.SizingGrow(),
+        };
+
+        content_background_config := Clay.RectangleElementConfig.{
+            color = .{90, 90, 90, 255},
+            cornerRadius = .{8, 8, 8, 8},
+        };
+
+        Clay.BeginLayout();
+        if Clay.UI(
+            Clay.ID("OuterContainer"),
+            Clay.Layout(.{
+                layoutDirection = .TOP_TO_BOTTOM,
+                sizing = Clay.Sizing.{
+                    Clay.SizingGrow(),
+                    Clay.SizingGrow(),
+                },
+                padding = .{16, 16},
+                childGap = 16,
+            }),
+            Clay.Rectangle(.{color = .{43, 41, 51, 255}})
+        ) {
+
+        }
+
+        render_commands := Clay.EndLayout();
+
+        Raylib.BeginDrawing();
+        Raylib.ClearBackground(Raylib.BLACK);
+        clay_raylib_render(render_commands);
+        Raylib.EndDrawing();
+    }
+
 }

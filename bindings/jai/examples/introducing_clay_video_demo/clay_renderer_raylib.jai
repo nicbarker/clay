@@ -54,9 +54,9 @@ raylib_initialize :: (width: s32, height: s32, $$title: string, flags: Raylib.Co
 	Raylib.InitWindow(width, height, c_string_title);
 }
 
-clay_raylib_render :: (render_commands: *Clay.RenderCommandArray) {
+clay_raylib_render :: (render_commands: Clay.RenderCommandArray) {
 	for 0..render_commands.length - 1 {
-		render_command := Clay.RenderCommandArray_Get(render_commands, cast(s32) it);
+		render_command := Clay.RenderCommandArray_Get(*render_commands, cast(s32) it);
 		bounding_box := render_command.boundingBox;
 
 		if #complete render_command.commandType == {

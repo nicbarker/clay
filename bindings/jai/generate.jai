@@ -5,13 +5,6 @@ SOURCE_PATH :: "source";
 // These have custom declaration in module.jai
 DECLARATIONS_TO_OMIT :: string.[
     "Clay_Vector2",
-    // "Clay_Color",
-];
-
-// These types must be included because they are referenced by public types
-PRIVATE_DECLARATION_TO_INCLUDE :: string.[
-    "Clay__SizingType",
-    "Clay__ElementConfigType"
 ];
 
 #if AT_COMPILE_TIME {
@@ -40,7 +33,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
 
     could_copy := FileUtils.copy_file("../../clay.h", "source/clay.h");
     if !could_copy then return false;
-    defer File.file_delete("source/clay.h");
+    defer if !compile_debug then File.file_delete("source/clay.h");
 
     if compile {
         source_file := tprint("%/clay.c", SOURCE_PATH);
@@ -49,20 +42,21 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
         #if OS == .WINDOWS {
             File.make_directory_if_it_does_not_exist("clay-jai/windows", true);
 
-            // success &&= BuildCpp.build_cpp_static_lib("clay-jai/windows/clay", source_file, extra=.["/w"], debug=compile_debug);
-
             command := ifx compile_debug {
+                write_string("Compiling debug...\n");
                 Process.break_command_into_strings("clang -g -gcodeview -c source\\clay.c");
             } else {
+                write_string("Compiling release...\n");
                 Process.break_command_into_strings("clang -O3 -c source\\clay.c");
             }
             result := Process.run_command(..command, capture_and_return_output=true, print_captured_output=true);
             if result.exit_code != 0 then return false;
             defer File.file_delete("clay.o");
 
-            command = Process.break_command_into_strings("llvm-ar -rc clay-jai/windows/clay.lib clay.o");
+            write_string("Linking...\n");
+            command = Process.break_command_into_strings("llvm-ar -rcs clay-jai/windows/clay.lib clay.o");
             result = Process.run_command(..command, capture_and_return_output=true, print_captured_output=true);
-            // if result.exit_code != 0 then return false;
+            if result.exit_code != 0 then return false;
         } else {
             // TODO MacOS
             // TODO Linux
@@ -70,6 +64,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
         }
 
         if !success then return false;
+        write_string("Succesfully built clay\n");
     }
 
     output_filename: string;
@@ -108,9 +103,8 @@ clay_visitor :: (decl: *Generator.Declaration, parent_decl: *Generator.Declarati
             return .STOP;
         }
 
-        if String.begins_with(decl.name, "Clay__") && !array_find(PRIVATE_DECLARATION_TO_INCLUDE, decl.name) {
-            decl.decl_flags |= .OMIT_FROM_OUTPUT;
-            return .STOP;
+        if String.begins_with(decl.name, "Clay__") {
+            decl.output_name = String.slice(decl.name, 5, decl.name.count - 5);
         }
     }
 

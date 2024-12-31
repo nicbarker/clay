@@ -1,4 +1,5 @@
 .build/
-examples/clay_official_website.exe
-examples/clay_official_website.pdb
+examples/introducing_clay_video_demo/main.exe
+examples/introducing_clay_video_demo/main.pdb
+examples/introducing_clay_video_demo/main.rdi
 source/clay.h
