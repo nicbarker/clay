@@ -38,7 +38,7 @@ make_string :: (str: string) -> String {
 }
 
 // The way of handling this is inspired by the odin bindings
-UI :: (configs: ..TypedConfig, $call := #caller_code) -> bool #must #expand {
+UI :: (configs: ..TypedConfig, $children: Code = #code {}, $call := #caller_code) {
     _OpenElement();
     for config : configs {
         if config.type == {
@@ -56,12 +56,35 @@ UI :: (configs: ..TypedConfig, $call := #caller_code) -> bool #must #expand {
     }
     _ElementPostConfiguration();
 
-    // !IMPORTANT
-    // TODO Fix the need to have to add the namespace here
-    #insert,scope(call) #code defer Clay._CloseElement();;
+    #insert,scope(call) children;
 
-    return true;
+    _CloseElement();
 }
+
+// Not sure yet wich of these two methods is better
+// Idealy there should be a way to mimic the style of how it's done in C
+// ElementScope :: (configs: ..TypedConfig) #expand {
+//     _OpenElement();
+//     for config : configs {
+//         if config.type == {
+//         case .ID;
+//             _AttachId(config.id);
+//         case .LAYOUT;
+//             _AttachLayoutConfig(cast(*LayoutConfig, config.config));
+//         case;
+//             // config.config is a *void, it stores the address of the pointer that is stored in the union
+//             // as ElementConfigUnion is a union of structs. We can't cast pointers directly to structs,
+//             // we first cast the address of the *void and then dereference it.
+//             // Maybe there's a cast modifier to avoid this, but I don't know it (no_check and trunc didn't work).
+//             _AttachElementConfig(cast(*ElementConfigUnion, *config.config).*, config.type);
+//         }
+//     }
+//     _ElementPostConfiguration();
+
+//     `defer _CloseElement();
+// }
+
+
 
 ID :: (label: string, index: u32 = 0) -> TypedConfig {
     return .{type = .ID, id = _HashString(make_string(label), index, 0)};
@@ -78,8 +101,24 @@ Rectangle :: (config: RectangleElementConfig) -> TypedConfig {
     };
 }
 
+Text :: (text: string, config: *TextElementConfig) {
+    _OpenTextElement(make_string(text), config);
+}
+
+TextConfig :: (config: TextElementConfig) -> *TextElementConfig {
+    return _StoreTextElementConfig(config);
+}
+
 SizingGrow :: (size_min_max: SizingMinMax = .{}) -> SizingAxis {
     return .{type = .GROW, size = .{minMax = size_min_max}};
+}
+
+SizingFixed :: (size: float) -> SizingAxis {
+    return .{type = .FIXED, size = .{minMax = .{size, size}}};
+}
+
+GetElementId :: (str: string) -> ElementId {
+    return GetElementId(make_string(str));
 }
 
 #scope_module

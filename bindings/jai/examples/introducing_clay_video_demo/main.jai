@@ -76,18 +76,57 @@ main :: () {
         };
 
         Clay.BeginLayout();
-        if Clay.UI(
+        Clay.UI(
             Clay.ID("OuterContainer"),
+            Clay.Rectangle(.{color = .{43, 41, 51, 255}}),
             Clay.Layout(.{
                 layoutDirection = .TOP_TO_BOTTOM,
                 sizing = layout_expand,
                 padding = .{16, 16},
                 childGap = 16,
             }),
-            Clay.Rectangle(.{color = .{43, 41, 51, 255}})
-        ) {
+            children = #code {
+            Clay.UI(
+                Clay.ID("HeaderBar"),
+                Clay.Rectangle(content_background_config),
+                Clay.Layout(.{
+                    sizing = .{
+                        height = Clay.SizingFixed(60),
+                        width = Clay.SizingGrow(),
+                    },
+                    padding = .{16, 16},
+                    childGap = 16,
+                    childAlignment = .{
+                        y = .CENTER,
+                    }
+                }),
+                children = #code {
+                Clay.UI(
+                    Clay.ID("FileButton"),
+                    Clay.Layout(.{padding = .{16, 8}}),
+                    Clay.Rectangle(.{
+                        color = .{140, 140, 140, 255},
+                        cornerRadius = .{5, 5, 5, 5},
+                    }),
+                    children = #code {
+                    Clay.Text("File", Clay.TextConfig(.{
+                            fontId = FONT_ID_BODY_16,
+                            fontSize = 16,
+                            textColor = Clay.Color.{255, 255, 255, 255},
+                    }));
 
-        }
+                    file_menu_visible := Clay.PointerOver(Clay.GetElementId("FileButton")) ||
+                        Clay.PointerOver(Clay.GetElementId("FileMenu"));
+                    
+                    if file_menu_visible {
+                        
+                    }
+                    }
+                );
+                }
+            );
+            }
+        );
 
         render_commands := Clay.EndLayout();
 
