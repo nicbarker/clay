@@ -1,3 +1,0 @@
-/home/archlinux/Documents/coding/clay-rsgl/examples/RSGL_rendering/GLFW_windowing/CMakeFiles/main.dir
-/home/archlinux/Documents/coding/clay-rsgl/examples/RSGL_rendering/GLFW_windowing/CMakeFiles/edit_cache.dir
-/home/archlinux/Documents/coding/clay-rsgl/examples/RSGL_rendering/GLFW_windowing/CMakeFiles/rebuild_cache.dir
