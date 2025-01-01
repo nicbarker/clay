@@ -80,10 +80,7 @@ main :: () {
             Clay.ID("OuterContainer"),
             Clay.Layout(.{
                 layoutDirection = .TOP_TO_BOTTOM,
-                sizing = Clay.Sizing.{
-                    Clay.SizingGrow(),
-                    Clay.SizingGrow(),
-                },
+                sizing = layout_expand,
                 padding = .{16, 16},
                 childGap = 16,
             }),

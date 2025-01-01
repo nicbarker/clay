@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai generate.jai - -compile -debug
+// jai generate.jai - -compile
 //
 
 
@@ -117,29 +117,6 @@ CornerRadius :: struct {
 _AlignClay_CornerRadius :: struct {
     c: u8;
     x: CornerRadius;
-}
-
-_ElementConfigType :: enum s32 {
-    NONE               :: 0;
-    RECTANGLE          :: 1;
-    BORDER_CONTAINER   :: 2;
-    FLOATING_CONTAINER :: 4;
-    SCROLL_CONTAINER   :: 8;
-    IMAGE              :: 16;
-    TEXT               :: 32;
-    CUSTOM             :: 64;
-    CLAY__ELEMENT_CONFIG_TYPE_NONE               :: NONE;
-    CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE          :: RECTANGLE;
-    CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER   :: BORDER_CONTAINER;
-    CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER :: FLOATING_CONTAINER;
-    CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER   :: SCROLL_CONTAINER;
-    CLAY__ELEMENT_CONFIG_TYPE_IMAGE              :: IMAGE;
-    CLAY__ELEMENT_CONFIG_TYPE_TEXT               :: TEXT;
-    CLAY__ELEMENT_CONFIG_TYPE_CUSTOM             :: CUSTOM;
-}
-_AlignClay__ElementConfigType :: struct {
-    c: u8;
-    x: _ElementConfigType;
 }
 
 LayoutDirection :: enum s32 {
@@ -429,7 +406,7 @@ _AlignClay_ElementConfigUnion :: struct {
 }
 
 ElementConfig :: struct {
-    type:   _ElementConfigType;
+    type:   ElementConfigType;
     config: ElementConfigUnion;
 }
 _AlignClay_ElementConfig :: struct {
@@ -594,7 +571,7 @@ _StoreLayoutConfig :: (config: LayoutConfig) -> *LayoutConfig #foreign clay "Cla
 _ElementPostConfiguration :: () -> void #foreign clay "Clay__ElementPostConfiguration";
 _AttachId :: (id: ElementId) -> void #foreign clay "Clay__AttachId";
 _AttachLayoutConfig :: (config: *LayoutConfig) -> void #foreign clay "Clay__AttachLayoutConfig";
-_AttachElementConfig :: (config: ElementConfigUnion, type: _ElementConfigType) -> void #foreign clay "Clay__AttachElementConfig";
+_AttachElementConfig :: (config: ElementConfigUnion, type: ElementConfigType) -> void #foreign clay "Clay__AttachElementConfig";
 _StoreRectangleElementConfig :: (config: RectangleElementConfig) -> *RectangleElementConfig #foreign clay "Clay__StoreRectangleElementConfig";
 _StoreTextElementConfig :: (config: TextElementConfig) -> *TextElementConfig #foreign clay "Clay__StoreTextElementConfig";
 _StoreImageElementConfig :: (config: ImageElementConfig) -> *ImageElementConfig #foreign clay "Clay__StoreImageElementConfig";
@@ -823,15 +800,6 @@ clay :: #library,no_dll "clay-jai/windows/clay";
         assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_CornerRadius.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
         assert(size_of(type_of(_AlignClay_CornerRadius.x)) == 16, "_AlignClay_CornerRadius.x has unexpected size % instead of 16", size_of(type_of(_AlignClay_CornerRadius.x)));
         assert(size_of(_AlignClay_CornerRadius) == 20, "_AlignClay_CornerRadius has size % instead of 20", size_of(_AlignClay_CornerRadius));
-    }
-
-    {
-        instance: _AlignClay__ElementConfigType;
-        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay__ElementConfigType.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
-        assert(size_of(type_of(_AlignClay__ElementConfigType.c)) == 1, "_AlignClay__ElementConfigType.c has unexpected size % instead of 1", size_of(type_of(_AlignClay__ElementConfigType.c)));
-        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay__ElementConfigType.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
-        assert(size_of(type_of(_AlignClay__ElementConfigType.x)) == 4, "_AlignClay__ElementConfigType.x has unexpected size % instead of 4", size_of(type_of(_AlignClay__ElementConfigType.x)));
-        assert(size_of(_AlignClay__ElementConfigType) == 8, "_AlignClay__ElementConfigType has size % instead of 8", size_of(_AlignClay__ElementConfigType));
     }
 
     {
