@@ -5,6 +5,8 @@ SOURCE_PATH :: "source";
 // These have custom declaration in module.jai
 DECLARATIONS_TO_OMIT :: string.[
     "Clay_Vector2",
+    "Clay__ElementConfigType",
+    "Clay__AlignClay__ElementConfigType",
 ];
 
 #if AT_COMPILE_TIME {
