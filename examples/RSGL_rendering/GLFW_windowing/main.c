@@ -311,6 +311,8 @@ int main(void) {
         RSGL_clear(RSGL_RGB(0, 0, 0));
         Clay_RenderCommandArray renderCommands = CreateLayout();
         Clay_RSGL_Render(renderCommands);
+        RSGL_draw();
+
         glfwSwapBuffers(window);
     }
 

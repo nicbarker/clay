@@ -264,6 +264,7 @@ RSGLDEF void RSGL_init(
                             void* loader /* opengl prozc address ex. wglProcAddress */
                             ); 
 RSGLDEF void RSGL_updateSize(RSGL_area r);
+RSGLDEF void RSGL_draw(void); /* draw current batch */
 RSGLDEF void RSGL_clear(RSGL_color c);
 RSGLDEF void RSGL_free(void);
 
@@ -403,6 +404,10 @@ RSGLDEF RSGL_texture RSGL_renderCreateTexture(u8* bitmap, RSGL_area memsize,  u8
 RSGLDEF void RSGL_renderUpdateTexture(RSGL_texture texture, u8* bitmap, RSGL_area memsize, u8 channels);
 /* delete a texture */
 RSGLDEF void RSGL_renderDeleteTexture(RSGL_texture tex);
+/* starts scissoring */
+RSGLDEF void RSGL_renderScissorStart(RSGL_rectF scissor);
+/* stops scissoring */
+RSGLDEF void RSGL_renderScissorEnd(void);
 
 /* custom shader program */
 typedef struct RSGL_programInfo {
@@ -498,6 +503,7 @@ struct RFont_font;
 RSGLDEF void RSGL_setRFont(struct RFont_font* font);
 
 RSGLDEF void RSGL_drawText_len(const char* text, size_t len, RSGL_circle c, RSGL_color color);
+RSGLDEF void RSGL_drawText_pro(const char* text, size_t len, float spacing, RSGL_circle c, RSGL_color color);
 RSGLDEF void RSGL_drawText(const char* text, RSGL_circle c, RSGL_color color);
 #define RSGL_drawTextF(text, font, c, color) \
     RSGL_setFont(font);\
@@ -854,10 +860,12 @@ void RSGL_init(RSGL_area r, void* loader) {
     }
 }
 
+void RSGL_draw(void) {
+    RSGL_renderBatch(&RSGL_renderInfo);
+}
+
 void RSGL_clear(RSGL_color color) {
     RSGL_renderClear(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f);
-
-    RSGL_renderBatch(&RSGL_renderInfo);
 }
 
 void RSGL_updateSize(RSGL_area r) {
@@ -1389,11 +1397,15 @@ void RSGL_setRFont(RFont_font* font) {
 }
 
 void RSGL_drawText_len(const char* text, size_t len, RSGL_circle c, RSGL_color color) {
+    RSGL_drawText_pro(text, len, 0.0f, c, color);
+}
+
+void RSGL_drawText_pro(const char* text, size_t len, float spacing, RSGL_circle c, RSGL_color color) {
     if (text == NULL || RSGL_font.f == NULL)
         return;
 
     RFont_set_color(color.r / 255.0f, color.b / 255.0f, color.g / 255.0f, color.a / 255.0f);
-    RFont_draw_text_len(RSGL_font.f, text, len, c.x, c.y, c.d, 0.0f);
+    RFont_draw_text_len(RSGL_font.f, text, len, c.x, c.y, c.d, spacing);
 }
 
 void RSGL_drawText(const char* text, RSGL_circle c, RSGL_color color) {

@@ -295,13 +295,15 @@ int main(void) {
         deltaTime = NOW - LAST;
 
         Clay_Vector2 scrollDelta = {};
-        while (RGFW_window_checkEvent(win)); {
+        while (RGFW_window_checkEvent(win)) {
             clay_RGFW_update(win, deltaTime);
         }
-
+        
         RSGL_clear(RSGL_RGB(0, 0, 0));
         Clay_RenderCommandArray renderCommands = CreateLayout();
         Clay_RSGL_Render(renderCommands);
+        RSGL_draw();
+        
         RGFW_window_swapBuffers(win);
     }
 

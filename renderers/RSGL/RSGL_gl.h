@@ -497,6 +497,19 @@ void RSGL_renderBatch(RSGL_RENDER_INFO* info) {
     info->vert_len = 0;
 }
 
+void RSGL_renderScissorStart(RSGL_rectF scissor) {
+    RSGL_draw();
+    glEnable(GL_SCISSOR_TEST);
+
+    glScissor(scissor.x, RSGL_args.currentRect.h - (scissor.y + scissor.h), scissor.w, scissor.h);
+    glScissor(scissor.x, scissor.y, scissor.w, scissor.h);
+}
+
+void RSGL_renderScissorEnd(void) {
+    RSGL_draw();
+    glDisable(GL_SCISSOR_TEST);
+}
+
 #ifndef GL_RG
 #define GL_RG                             0x8227
 #endif
