@@ -93,6 +93,30 @@
 static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
 // Publicly visible layout element macros -----------------------------------------------------
+
+/* This macro looks scary on the surface, but is actually quite simple.
+  It turns a macro call like this:
+
+  CLAY(
+    CLAY_RECTANGLE(),
+    CLAY_ID()
+  ) {
+      ...children declared here
+  }
+
+  Into calls like this:
+
+  Clay_OpenElement();
+  CLAY_RECTANGLE();
+  CLAY_ID();
+  Clay_ElementPostConfiguration();
+  ...children declared here
+  Clay_CloseElement();
+
+  The for loop will only ever run a single iteration, putting Clay__CloseElement() in the increment of the loop
+  means that it will run after the body - where the children are declared. It just exists to make sure you don't forget
+  to call Clay_CloseElement().
+*/
 #define CLAY(...) \
 	for (\
 		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), ##__VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
