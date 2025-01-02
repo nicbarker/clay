@@ -111,8 +111,8 @@ int main(void) {
         );
 
         Clay_Sizing layoutExpand = {
-            .width = CLAY_SIZING_GROW(),
-            .height = CLAY_SIZING_GROW()
+            .width = CLAY_SIZING_GROW(0),
+            .height = CLAY_SIZING_GROW(0)
         };
 
         Clay_RectangleElementConfig contentBackgroundConfig = {
@@ -139,7 +139,7 @@ int main(void) {
                 CLAY_LAYOUT({
                     .sizing = {
                         .height = CLAY_SIZING_FIXED(60),
-                        .width = CLAY_SIZING_GROW()
+                        .width = CLAY_SIZING_GROW(0)
                     },
                     .padding = { 16 },
                     .childGap = 16,
@@ -201,7 +201,7 @@ int main(void) {
                     }
                 }
                 RenderHeaderButton(CLAY_STRING("Edit"));
-                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW() }})) {}
+                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0) }})) {}
                 RenderHeaderButton(CLAY_STRING("Upload"));
                 RenderHeaderButton(CLAY_STRING("Media"));
                 RenderHeaderButton(CLAY_STRING("Support"));
@@ -220,14 +220,14 @@ int main(void) {
                         .childGap = 8,
                         .sizing = {
                             .width = CLAY_SIZING_FIXED(250),
-                            .height = CLAY_SIZING_GROW()
+                            .height = CLAY_SIZING_GROW(0)
                         }
                     })
                 ) {
                     for (int i = 0; i < documents.length; i++) {
                         Document document = documents.documents[i];
                         Clay_LayoutConfig sidebarButtonLayout = {
-                            .sizing = { .width = CLAY_SIZING_GROW() },
+                            .sizing = { .width = CLAY_SIZING_GROW(0) },
                             .padding = { 16, 16 }
                         };
 
