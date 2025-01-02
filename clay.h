@@ -90,26 +90,15 @@
 
 #define CLAY_STRING(string) (CLAY__INIT(Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = (string) })
 
-static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
+static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
-#define CLAY__ELEMENT_INTERNAL(...) \
+// Publicly visible layout element macros -----------------------------------------------------
+#define CLAY(...) \
 	for (\
-		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), __VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
+		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), ##__VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
 		CLAY__ELEMENT_DEFINITION_LATCH < 1; \
 		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
 	)
-
-#define CLAY__6_ARGS(a, b, c, d, e, f) a, b, c, d, e, f
-#define CLAY__5_ARGS(a, b, c, d, e) a, b, c, d, e
-#define CLAY__4_ARGS(a, b, c, d) a, b, c, d
-#define CLAY__3_ARGS(a, b, c) a, b, c
-#define CLAY__2_ARGS(a, b) a, b
-#define CLAY__1_ARGS(a) a
-#define CLAY__0_ARGS() Clay__Noop()
-#define CLAY__ARGS_OVERRIDE(_0, _1, _2, _3, _4, _5, _6, NAME, ...) NAME
-
-// Publicly visible layout element macros -----------------------------------------------------
-#define CLAY(...) CLAY__ELEMENT_INTERNAL(CLAY__ARGS_OVERRIDE("empty", ##__VA_ARGS__, CLAY__6_ARGS, CLAY__5_ARGS, CLAY__4_ARGS, CLAY__3_ARGS, CLAY__2_ARGS, CLAY__1_ARGS, CLAY__0_ARGS)(__VA_ARGS__))
 
 #define CLAY_TEXT(text, textConfig) Clay__OpenTextElement(text, textConfig)
 
@@ -502,7 +491,6 @@ Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConf
 Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
-void Clay__Noop(void);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
 
 extern Clay_Color Clay__debugViewHighlightColor;
@@ -535,8 +523,6 @@ void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
     (void) errorText;
 }
 Clay_ErrorHandler Clay__errorHandler = { .errorHandlerFunction = Clay__ErrorHandlerFunctionDefault };
-
-void Clay__Noop(void) {}
 
 Clay_String CLAY__SPACECHAR = { .length = 1, .chars = " " };
 Clay_String CLAY__STRING_DEFAULT = { .length = 0, .chars = NULL };
