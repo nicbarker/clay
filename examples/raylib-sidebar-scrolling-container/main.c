@@ -40,27 +40,27 @@ void RenderDropdownTextItem(int index) {
 
 Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
-    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }, .padding = { 16, 16 }, .childGap = 16 }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {
-        CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE({ .color = {150, 150, 255, 255} })) {
-            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .padding = { 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE({ .color = {130, 130, 255, 255} })) {
+    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .padding = { 16, 16 }, .childGap = 16 }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {
+        CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE({ .color = {150, 150, 255, 255} })) {
+            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = { 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE({ .color = {130, 130, 255, 255} })) {
                 CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) } }), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
                 CLAY_TEXT(profileText, CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {0, 0, 0, 255} }));
             }
-            CLAY(CLAY_ID("SidebarBlob1"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
-            CLAY(CLAY_ID("SidebarBlob2"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
-            CLAY(CLAY_ID("SidebarBlob3"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
-            CLAY(CLAY_ID("SidebarBlob4"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
+            CLAY(CLAY_ID("SidebarBlob1"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
+            CLAY(CLAY_ID("SidebarBlob2"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
+            CLAY(CLAY_ID("SidebarBlob3"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
+            CLAY(CLAY_ID("SidebarBlob4"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }}), CLAY_RECTANGLE({ .color = {110, 110, 255, 255} })) {}
         }
 
-        CLAY(CLAY_ID("RightPanel"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }, .childGap = 16 })) {
-            CLAY(CLAY_ID("HeaderBar"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT }, .padding = {8, 8}, .childGap = 8 }), CLAY_RECTANGLE({ .color =  {180, 180, 180, 255} })) {
+        CLAY(CLAY_ID("RightPanel"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .childGap = 16 })) {
+            CLAY(CLAY_ID("HeaderBar"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT }, .padding = {8, 8}, .childGap = 8 }), CLAY_RECTANGLE({ .color =  {180, 180, 180, 255} })) {
                 RenderHeaderButton(CLAY_STRING("Header Item 1"));
                 RenderHeaderButton(CLAY_STRING("Header Item 2"));
                 RenderHeaderButton(CLAY_STRING("Header Item 3"));
             }
             CLAY(CLAY_ID("MainContent"),
                 CLAY_SCROLL({ .vertical = true }),
-                CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {16, 16}, .childGap = 16, .sizing = { CLAY_SIZING_GROW() } }),
+                CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {16, 16}, .childGap = 16, .sizing = { CLAY_SIZING_GROW(0) } }),
                 CLAY_RECTANGLE({ .color = {200, 200, 255, 255} }))
             {
                  CLAY(CLAY_ID("FloatingContainer"),
@@ -87,7 +87,7 @@ Clay_RenderCommandArray CreateLayout() {
                  CLAY_TEXT(CLAY_STRING("Suspendisse in est ante in nibh. Amet venenatis urna cursus eget nunc scelerisque viverra. Elementum sagittis vitae et leo duis ut diam quam nulla. Enim nulla aliquet porttitor lacus. Pellentesque habitant morbi tristique senectus et. Facilisi nullam vehicula ipsum a arcu cursus vitae.\nSem fringilla ut morbi tincidunt. Euismod quis viverra nibh cras pulvinar mattis nunc sed. Velit sed ullamcorper morbi tincidunt ornare massa. Varius quam quisque id diam vel quam. Nulla pellentesque dignissim enim sit amet venenatis. Enim lobortis scelerisque fermentum dui faucibus in. Pretium viverra suspendisse potenti nullam ac tortor vitae. Lectus vestibulum mattis ullamcorper velit sed. Eget mauris pharetra et ultrices neque ornare aenean euismod elementum. Habitant morbi tristique senectus et. Integer vitae justo eget magna fermentum iaculis eu. Semper quis lectus nulla at volutpat diam. Enim praesent elementum facilisis leo. Massa vitae tortor condimentum lacinia quis vel."),
                      CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {0,0,0,255} }));
 
-                 CLAY(CLAY_ID("Photos"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }, .childGap = 16, .padding = {16, 16} }), CLAY_RECTANGLE({ .color = {180, 180, 220, 255} })) {
+                 CLAY(CLAY_ID("Photos"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }, .childGap = 16, .padding = {16, 16} }), CLAY_RECTANGLE({ .color = {180, 180, 220, 255} })) {
                      CLAY(CLAY_ID("Picture2"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {120, 120} })) {}
                      CLAY(CLAY_ID("Picture1"), CLAY_LAYOUT({ .childAlignment = { .x = CLAY_ALIGN_X_CENTER }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8} }), CLAY_RECTANGLE({ .color = {170, 170, 220, 255} })) {
                          CLAY(CLAY_ID("ProfilePicture2"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
