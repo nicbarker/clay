@@ -20,7 +20,7 @@ FetchContent_MakeAvailable(raylib)
 
 add_executable(clay_examples_raylib_sidebar_scrolling_container main.c multi-compilation-unit.c)
 
-target_compile_options(clay_examples_raylib_sidebar_scrolling_container PUBLIC)
+target_compile_options(clay_examples_raylib_sidebar_scrolling_container PUBLIC -Wall -Werror)
 target_include_directories(clay_examples_raylib_sidebar_scrolling_container PUBLIC .)
 
 target_link_libraries(clay_examples_raylib_sidebar_scrolling_container PUBLIC raylib)
