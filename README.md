@@ -187,7 +187,7 @@ CLAY(CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
     }
     // Only render this element if we're on a mobile screen
     if (isMobileScreen) {
-        CLAY() {
+        CLAY(0) {
             // etc
         }
     }
@@ -362,7 +362,7 @@ typedef struct t_CustomElementData {
 Model myModel = Load3DModel(filePath);
 CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
 // ...
-CLAY() {
+CLAY(0) {
     // This config is type safe and contains the CustomElementData struct
     CLAY(CLAY_CUSTOM_ELEMENT({ .customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel } })) {}
 }
@@ -644,6 +644,7 @@ Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for
 **Notes**
 
 **CLAY** opens a generic empty container, that is configurable and supports nested children.
+**CLAY** requires at least 1 parameter, so if you want to create an element without any configuration, use `CLAY(0)`.
 
 **Examples**
 ```C
