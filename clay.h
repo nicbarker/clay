@@ -1413,7 +1413,7 @@ Clay__CharArray Clay__CharArray_Allocate_Arena(int32_t capacity, Clay_Arena *are
 // __GENERATED__ template
 
 Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String string) {
-    for (size_t i = 0; i < string.length; i++) {
+    for (int32_t i = 0; i < string.length; i++) {
         buffer->internalArray[buffer->length + i] = string.chars[i];
     }
     buffer->length += string.length;
@@ -1516,7 +1516,7 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
     uint32_t hash = 0;
     uint32_t base = seed;
 
-    for (size_t i = 0; i < key.length; i++) {
+    for (int32_t i = 0; i < key.length; i++) {
         base += key.chars[i];
         base += (base << 10);
         base ^= (base >> 6);
@@ -2959,8 +2959,8 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
 }
 
 CLAY__TYPEDEF(Clay__RenderDebugLayoutData, struct {
-    uint32_t rowCount;
-    uint32_t selectedElementRowIndex;
+    int32_t rowCount;
+    int32_t selectedElementRowIndex;
 });
 
 // Returns row count
@@ -2983,7 +2983,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             layoutData.rowCount++;
         }
         while (dfsBuffer.length > 0) {
-            uint32_t currentElementIndex = Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
+            int32_t currentElementIndex = Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)currentElementIndex);
             if (Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
                 if (!Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) && currentElement->childrenOrTextContent.children.length > 0) {
