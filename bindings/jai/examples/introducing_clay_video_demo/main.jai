@@ -3,6 +3,8 @@ using Basic :: #import "Basic";
 Clay :: #import,file "../../module.jai";
 Raylib :: #import "raylib-jai";
 
+for_expansion :: Clay.for_expansion;;
+
 #load "clay_renderer_raylib.jai";
 
 FONT_ID_BODY_16 :: 0;
@@ -28,14 +30,60 @@ to_jai_string :: (str: Clay.String) -> string {
     return .{data = str.chars, count = cast(s64, str.length)};
 }
 
+// handle_sidebar_interaction :: (
+//     element_id: Clay.ElementId,
+//     pointer_data: Clay.PointerData,
+//     user_data: s64
+// ) #c_call {
+//     // If this button was clicked
+//     if pointer_data.state == .PRESSED_THIS_FRAME {
+//         selected_document_index = user_data;
+//     }
+// }
+
 handle_clay_errors :: (error_data: Clay.ErrorData) #c_call {
     push_context {
-        log_error("Clay Error : %", to_jai_string(error_data.errorText));
+        log_error(
+            "Clay Error [%]: % | %", 
+            error_data.errorType, 
+            to_jai_string(error_data.errorText),
+            error_data.userData
+        );
     }
 }
 
+render_header_button :: (text: string) {
+    for Clay.Element(
+        Clay.Layout(.{padding = .{16, 8}}),
+        Clay.Rectangle(.{
+            color = .{140, 140, 140, 255},
+            cornerRadius = .{5, 5, 5, 5},
+        })
+    ) {
+        Clay.Text(text, Clay.TextConfig(.{
+            fontId = FONT_ID_BODY_16,
+            fontSize = 16,
+            textColor = COLOR_WHITE,
+        }));
+    }
+}
+
+render_dropdown_menu_item :: (text: string) {
+    for Clay.Element(
+        Clay.Layout(.{padding = .{16, 16}})
+    ) {
+        Clay.Text(text, Clay.TextConfig(.{
+            fontId = FONT_ID_BODY_16,
+            fontSize = 16,
+            textColor = COLOR_WHITE,
+        }));
+    }
+}
+
+selected_document_index : int = 0;
+
 main :: () {
-    flags := Raylib.ConfigFlags.WINDOW_RESIZABLE | .WINDOW_HIGHDPI | .MSAA_4X_HINT | .VSYNC_HINT;
+    flags := Raylib.ConfigFlags.WINDOW_RESIZABLE | .MSAA_4X_HINT | .VSYNC_HINT;
     raylib_initialize(1024, 768, "Introducing Clay Demo", flags);
 
     clay_required_memory := Clay.MinMemorySize();
@@ -76,7 +124,7 @@ main :: () {
         };
 
         Clay.BeginLayout();
-        Clay.UI(
+        for Clay.Element(
             Clay.ID("OuterContainer"),
             Clay.Rectangle(.{color = .{43, 41, 51, 255}}),
             Clay.Layout(.{
@@ -85,8 +133,8 @@ main :: () {
                 padding = .{16, 16},
                 childGap = 16,
             }),
-            children = #code {
-            Clay.UI(
+        ) {
+            for Clay.Element(
                 Clay.ID("HeaderBar"),
                 Clay.Rectangle(content_background_config),
                 Clay.Layout(.{
@@ -100,33 +148,148 @@ main :: () {
                         y = .CENTER,
                     }
                 }),
-                children = #code {
-                Clay.UI(
+            ) {
+                for Clay.Element(
                     Clay.ID("FileButton"),
                     Clay.Layout(.{padding = .{16, 8}}),
                     Clay.Rectangle(.{
                         color = .{140, 140, 140, 255},
                         cornerRadius = .{5, 5, 5, 5},
                     }),
-                    children = #code {
+                ) {
                     Clay.Text("File", Clay.TextConfig(.{
-                            fontId = FONT_ID_BODY_16,
-                            fontSize = 16,
-                            textColor = Clay.Color.{255, 255, 255, 255},
+                        fontId = FONT_ID_BODY_16,
+                        fontSize = 16,
+                        textColor = COLOR_WHITE,
                     }));
 
                     file_menu_visible := Clay.PointerOver(Clay.GetElementId("FileButton")) ||
-                        Clay.PointerOver(Clay.GetElementId("FileMenu"));
-                    
+                    Clay.PointerOver(Clay.GetElementId("FileMenu"));
+
                     if file_menu_visible {
-                        
+                        for Clay.Element(
+                            Clay.ID("FileMenu"),
+                            Clay.Floating(.{attachment = .{parent = .LEFT_BOTTOM}}),
+                            Clay.Layout(.{padding = .{0, 8}})
+                        ) {
+                            for Clay.Element(
+                                Clay.Layout(.{
+                                    layoutDirection=.TOP_TO_BOTTOM,
+                                    sizing = .{width = Clay.SizingFixed(200)}
+                                }),
+                                Clay.Rectangle(.{
+                                    color = .{40, 40, 40, 255},
+                                    cornerRadius = .{8, 8, 8, 8}
+                                })
+                            ) {
+                                // Render dropdown items here
+                                render_dropdown_menu_item("New");
+                                render_dropdown_menu_item("Open");
+                                render_dropdown_menu_item("Close");
+                            }
+                        }
                     }
-                    }
-                );
                 }
-            );
+
+                // Render header buttons
+                render_header_button("Edit");
+                for Clay.Element(Clay.Layout(.{
+                    sizing = .{Clay.SizingGrow(), Clay.SizingGrow()}})) {}
+                render_header_button("Upload");
+                render_header_button("Media");
+                render_header_button("Support");
             }
-        );
+
+            for Clay.Element(
+                Clay.ID("LowerContent"),
+                Clay.Layout(.{sizing = layout_expand, childGap = 16}),
+            ) {
+                for Clay.Element(
+                    Clay.ID("Sidebar"),
+                    Clay.Rectangle(content_background_config),
+                    Clay.Layout(.{
+                        layoutDirection = .TOP_TO_BOTTOM,
+                        padding = .{16, 16},
+                        childGap = 8,
+                        sizing = .{
+                            width = Clay.SizingFixed(250),
+                            height = Clay.SizingGrow(),
+                        }
+                    })
+                ) {
+                    for document : documents {
+                        sidebar_button_layout := Clay.LayoutConfig.{
+                            sizing = .{width = Clay.SizingGrow()},
+                            padding = .{16, 16},
+                        };
+
+                        if it_index == selected_document_index {
+                            for Clay.Element(
+                                Clay.Layout(sidebar_button_layout),
+                                Clay.Rectangle(.{
+                                    color = .{120, 120, 120, 255},
+                                    cornerRadius = .{8, 8, 8, 8},
+                                })
+                            ) {
+                                Clay.Text(document.title, Clay.TextConfig(.{
+                                    fontId = FONT_ID_BODY_16,
+                                    fontSize = 20,
+                                    textColor = COLOR_WHITE,
+                                }));
+                            }
+                        } else {
+                            id := tprint("Parnets %", it_index);
+                            is_hovered := Clay.PointerOver(Clay.GetElementId(id));
+                            if is_hovered && Raylib.IsMouseButtonPressed(0) {
+                                selected_document_index = it_index;
+                            }
+
+                            for Clay.Element(
+                                Clay.ID(id)
+                            ) {
+                                for Clay.Element(
+                                    Clay.Layout(sidebar_button_layout),
+                                    ifx is_hovered then Clay.Rectangle(.{
+                                        color = .{120, 120, 120, 120},
+                                        cornerRadius = .{8, 8, 8, 8},
+                                    }) else .{}
+                                ) {
+                                    Clay.Text(document.title, Clay.TextConfig(.{
+                                        fontId = FONT_ID_BODY_16,
+                                        fontSize = 20,
+                                        textColor = COLOR_WHITE
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for Clay.Element(
+                    Clay.ID("MainContent"),
+                    Clay.Rectangle(content_background_config),
+                    Clay.Scroll(.{vertical = true}),
+                    Clay.Layout(.{
+                        layoutDirection = .TOP_TO_BOTTOM,
+                        childGap = 16,
+                        padding = .{16, 16},
+                        sizing = layout_expand,
+                    }),
+                ) {
+                    selected_document := documents[selected_document_index];
+                    Clay.Text(selected_document.title, Clay.TextConfig(.{
+                        fontId = FONT_ID_BODY_16,
+                        fontSize = 24,
+                        textColor = COLOR_WHITE,
+                    }));
+                    Clay.Text(selected_document.contents, Clay.TextConfig(.{
+                        fontId = FONT_ID_BODY_16,
+                        fontSize = 24,
+                        textColor = COLOR_WHITE
+                    }));
+                }
+            }
+        }
 
         render_commands := Clay.EndLayout();
 
@@ -134,6 +297,7 @@ main :: () {
         Raylib.ClearBackground(Raylib.BLACK);
         clay_raylib_render(render_commands);
         Raylib.EndDrawing();
-    }
 
+        reset_temporary_storage();
+    }
 }

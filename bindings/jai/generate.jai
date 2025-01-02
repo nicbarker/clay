@@ -2,11 +2,15 @@ AT_COMPILE_TIME :: true;
 
 SOURCE_PATH :: "source";
 
-// These have custom declaration in module.jai
 DECLARATIONS_TO_OMIT :: string.[
+    // These have custom declaration in module.jai
     "Clay_Vector2",
     "Clay__ElementConfigType",
     "Clay__AlignClay__ElementConfigType",
+
+    // These are not supported yet
+    "Clay_OnHover",
+    "Clay_Hovered",
 ];
 
 #if AT_COMPILE_TIME {

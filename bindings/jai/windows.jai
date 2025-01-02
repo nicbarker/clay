@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai generate.jai - -compile
+// jai ./generate.jai - -compile
 //
 
 
@@ -551,8 +551,7 @@ BeginLayout :: () -> void #foreign clay "Clay_BeginLayout";
 EndLayout :: () -> RenderCommandArray #foreign clay "Clay_EndLayout";
 GetElementId :: (idString: String) -> ElementId #foreign clay "Clay_GetElementId";
 GetElementIdWithIndex :: (idString: String, index: u32) -> ElementId #foreign clay "Clay_GetElementIdWithIndex";
-Hovered :: () -> bool #foreign clay "Clay_Hovered";
-OnHover :: (onHoverFunction: #type (elementId: ElementId, pointerData: PointerData, userData: s64) -> void #c_call, userData: s64) -> void #foreign clay "Clay_OnHover";
+
 PointerOver :: (elementId: ElementId) -> bool #foreign clay "Clay_PointerOver";
 GetScrollContainerData :: (id: ElementId) -> ScrollContainerData #foreign clay "Clay_GetScrollContainerData";
 SetMeasureTextFunction :: (measureTextFunction: #type (text: *String, config: *TextElementConfig) -> Dimensions #c_call) -> void #foreign clay "Clay_SetMeasureTextFunction";
