@@ -258,8 +258,8 @@ LayoutConfig :: struct {
 }
 
 ClayArray :: struct($type: typeid) {
-    capacity:      u32,
-    length:        u32,
+    capacity:      i32,
+    length:        i32,
     internalArray: [^]type,
 }
 
