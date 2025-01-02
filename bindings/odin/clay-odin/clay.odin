@@ -18,7 +18,7 @@ when ODIN_OS == .Windows {
 }
 
 String :: struct {
-    length: c.int,
+    length: c.int32_t,
     chars:  [^]c.char,
 }
 
