@@ -942,7 +942,7 @@ Clay__WrappedTextLine *Clay__WrappedTextLineArray_Get(Clay__WrappedTextLineArray
 CLAY__TYPEDEF(Clay__TextElementData, struct {
     Clay_String text;
     Clay_Dimensions preferredDimensions;
-    uint32_t elementIndex;
+    int32_t elementIndex;
     Clay__WrappedTextLineArraySlice wrappedLines;
 });
 
