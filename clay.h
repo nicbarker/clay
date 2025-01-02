@@ -63,7 +63,7 @@
 #define CLAY_CORNER_RADIUS(radius) (CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius })
 
 #define CLAY__STRUCT_1_ARGS(a) a
-#define CLAY__STRUCT_0_ARGS() {0}
+#define CLAY__STRUCT_0_ARGS() CLAY__DEFAULT_STRUCT
 #define CLAY__STRUCT_OVERRIDE(_0, _1, NAME, ...) NAME
 
 #define CLAY__SIZING_FIT_INTERNAL(...) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_FIT })
@@ -125,11 +125,16 @@ static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 #define CLAY_TEXT(text, textConfig) Clay__OpenTextElement(text, textConfig)
 
 #ifdef __cplusplus
+
 #define CLAY__INIT(type) type
 #define CLAY__TYPEDEF(name, ...) typedef __VA_ARGS__ name; CLAY__WRAPPER_STRUCT(name)
 #define CLAY__ALIGNMENT(type) alignof(type)
 #define CLAY__POINTER_ALIGNMENT alignof(void *)
+
 #define CLAY_PACKED_ENUM enum : uint8_t
+
+#define CLAY__DEFAULT_STRUCT {}
+
 #else
 
 #define CLAY__INIT(type) (type)
@@ -150,7 +155,14 @@ CLAY__ALIGNMENT_STRUCT(int32_t);
 #else
 #define CLAY_PACKED_ENUM enum __attribute__((__packed__))
 #endif
+
+#if __STDC_VERSION__ >= 202311L
+#define CLAY__DEFAULT_STRUCT {}
+#else
+#define CLAY__DEFAULT_STRUCT {0}
 #endif
+
+#endif // __cplusplus
 
 #ifdef __cplusplus
 extern "C" {
@@ -563,7 +575,7 @@ CLAY__TYPEDEF(Clay__Warning, struct {
     Clay_String dynamicMessage;
 });
 
-Clay__Warning CLAY__WARNING_DEFAULT = {0};
+Clay__Warning CLAY__WARNING_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 #pragma region generated
 CLAY__TYPEDEF(Clay__WarningArray, struct {
@@ -591,7 +603,7 @@ Clay__WarningArray Clay__WarningArray_Allocate_Arena(int32_t capacity, Clay_Aren
     return array;
 }
 
-Clay__WarningArray Clay_warnings = {0};
+Clay__WarningArray Clay_warnings = CLAY__DEFAULT_STRUCT;
 
 Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning item)
 {
@@ -661,7 +673,7 @@ Clay__BoolArray Clay__BoolArray_Allocate_Arena(int32_t capacity, Clay_Arena *are
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = {0};
+Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay_ElementId NAME=Clay__ElementIdArray DEFAULT_VALUE=&CLAY__ELEMENT_ID_DEFAULT
 #pragma region generated
@@ -687,7 +699,7 @@ Clay_ElementId *Clay__ElementIdArray_Add(Clay__ElementIdArray *array, Clay_Eleme
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ElementConfig CLAY__ELEMENT_CONFIG_DEFAULT = {CLAY__ELEMENT_CONFIG_TYPE_NONE, {0}};
+Clay_ElementConfig CLAY__ELEMENT_CONFIG_DEFAULT = {CLAY__ELEMENT_CONFIG_TYPE_NONE, CLAY__DEFAULT_STRUCT};
 
 // __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_add,array_get_slice TYPE=Clay_ElementConfig NAME=Clay__ElementConfigArray DEFAULT_VALUE=&CLAY__ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -744,7 +756,7 @@ Clay_LayoutConfig *Clay__LayoutConfigArray_Add(Clay__LayoutConfigArray *array, C
 #pragma endregion
 // __GENERATED__ template
 
-Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = {0};
+Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_RectangleElementConfig NAME=Clay__RectangleElementConfigArray DEFAULT_VALUE=&CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -767,7 +779,7 @@ Clay_RectangleElementConfig *Clay__RectangleElementConfigArray_Add(Clay__Rectang
 #pragma endregion
 // __GENERATED__ template
 
-Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = {0};
+Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_TextElementConfig NAME=Clay__TextElementConfigArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -790,7 +802,7 @@ Clay_TextElementConfig *Clay__TextElementConfigArray_Add(Clay__TextElementConfig
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = {0};
+Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ImageElementConfig NAME=Clay__ImageElementConfigArray DEFAULT_VALUE=&CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -813,7 +825,7 @@ Clay_ImageElementConfig *Clay__ImageElementConfigArray_Add(Clay__ImageElementCon
 #pragma endregion
 // __GENERATED__ template
 
-Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = {0};
+Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_FloatingElementConfig NAME=Clay__FloatingElementConfigArray DEFAULT_VALUE=&CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -836,7 +848,7 @@ Clay_FloatingElementConfig *Clay__FloatingElementConfigArray_Add(Clay__FloatingE
 #pragma endregion
 // __GENERATED__ template
 
-Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = {0};
+Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_CustomElementConfig NAME=Clay__CustomElementConfigArray DEFAULT_VALUE=&CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -859,7 +871,7 @@ Clay_CustomElementConfig *Clay__CustomElementConfigArray_Add(Clay__CustomElement
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ScrollElementConfig CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT = {0};
+Clay_ScrollElementConfig CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ScrollElementConfig NAME=Clay__ScrollElementConfigArray DEFAULT_VALUE=&CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -907,7 +919,7 @@ CLAY__TYPEDEF(Clay__WrappedTextLine, struct {
     Clay_String line;
 });
 
-Clay__WrappedTextLine CLAY__WRAPPED_TEXT_LINE_DEFAULT = {0};
+Clay__WrappedTextLine CLAY__WRAPPED_TEXT_LINE_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_define_slice,array_allocate,array_add,array_get TYPE=Clay__WrappedTextLine NAME=Clay__WrappedTextLineArray DEFAULT_VALUE=&CLAY__WRAPPED_TEXT_LINE_DEFAULT
 #pragma region generated
@@ -945,7 +957,7 @@ CLAY__TYPEDEF(Clay__TextElementData, struct {
     Clay__WrappedTextLineArraySlice wrappedLines;
 });
 
-Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = {0};
+Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay__TextElementData NAME=Clay__TextElementDataArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_DATA_DEFAULT
 #pragma region generated
@@ -971,7 +983,7 @@ Clay__TextElementData *Clay__TextElementDataArray_Add(Clay__TextElementDataArray
 #pragma endregion
 // __GENERATED__ template
 
-Clay_BorderElementConfig CLAY__BORDER_ELEMENT_CONFIG_DEFAULT = {0};
+Clay_BorderElementConfig CLAY__BORDER_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_BorderElementConfig NAME=Clay__BorderElementConfigArray DEFAULT_VALUE=&CLAY__BORDER_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
@@ -1012,7 +1024,7 @@ CLAY__TYPEDEF(Clay_LayoutElement, struct {
     uint32_t id;
 });
 
-Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = {0};
+Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay_LayoutElement NAME=Clay_LayoutElementArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_DEFAULT
 #pragma region generated
@@ -1071,7 +1083,7 @@ Clay_LayoutElement* Clay__LayoutElementPointerArray_RemoveSwapback(Clay__LayoutE
 #pragma endregion
 // __GENERATED__ template
 
-Clay_RenderCommand CLAY__RENDER_COMMAND_DEFAULT = {0};
+Clay_RenderCommand CLAY__RENDER_COMMAND_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_allocate,array_add,array_get TYPE=Clay_RenderCommand NAME=Clay_RenderCommandArray DEFAULT_VALUE=&CLAY__RENDER_COMMAND_DEFAULT
 #pragma region generated
@@ -1106,7 +1118,7 @@ CLAY__TYPEDEF(Clay__ScrollContainerDataInternal, struct {
     bool pointerScrollActive;
 });
 
-Clay__ScrollContainerDataInternal CLAY__SCROLL_CONTAINER_DEFAULT = {0};
+Clay__ScrollContainerDataInternal CLAY__SCROLL_CONTAINER_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__ScrollContainerDataInternal NAME=Clay__ScrollContainerDataInternalArray DEFAULT_VALUE=&CLAY__SCROLL_CONTAINER_DEFAULT
 #pragma region generated
@@ -1151,7 +1163,7 @@ CLAY__TYPEDEF(Clay__DebugElementData, struct {
     bool collapsed;
 });
 
-Clay__DebugElementData CLAY__DEBUG_ELEMENT_DATA_DEFAULT = {0};
+Clay__DebugElementData CLAY__DEBUG_ELEMENT_DATA_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__DebugElementData NAME=Clay__DebugElementDataArray DEFAULT_VALUE=&CLAY__DEBUG_ELEMENT_DATA_DEFAULT
 #pragma region generated
@@ -1337,7 +1349,7 @@ CLAY__TYPEDEF(Clay__LayoutElementTreeNode, struct {
     Clay_Vector2 nextChildOffset;
 });
 
-Clay__LayoutElementTreeNode CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT = {0};
+Clay__LayoutElementTreeNode CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__LayoutElementTreeNode NAME=Clay__LayoutElementTreeNodeArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT
 #pragma region generated
@@ -1371,7 +1383,7 @@ CLAY__TYPEDEF(Clay__LayoutElementTreeRoot, struct {
     Clay_Vector2 pointerOffset; // Only used when scroll containers are managed externally
 });
 
-Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = {0};
+Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__LayoutElementTreeRoot NAME=Clay__LayoutElementTreeRootArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT
 #pragma region generated
@@ -1421,7 +1433,7 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
 
 // Global Variable Definitions ----------------------------------------------
 Clay_PointerData Clay__pointerInfo = { .position = {-1, -1} };
-Clay_Dimensions Clay__layoutDimensions = {0};
+Clay_Dimensions Clay__layoutDimensions = CLAY__DEFAULT_STRUCT;
 Clay_ElementId Clay__dynamicElementIndexBaseHash = { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
 uint32_t Clay__dynamicElementIndex = 0;
 bool Clay__debugModeEnabled = false;
@@ -1774,7 +1786,7 @@ Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Cl
         hashItemIndex = hashItem->nextIndex;
     }
     Clay_LayoutElementHashMapItem *hashItem = Clay__LayoutElementHashMapItemArray_Add(&Clay__layoutElementsHashMapInternal, item);
-    hashItem->debugData = Clay__DebugElementDataArray_Add(&Clay__debugElementData, CLAY__INIT(Clay__DebugElementData) {0});
+    hashItem->debugData = Clay__DebugElementDataArray_Add(&Clay__debugElementData, CLAY__INIT(Clay__DebugElementData) CLAY__DEFAULT_STRUCT);
     if (hashItemPrevious != -1) {
         Clay__LayoutElementHashMapItemArray_Get(&Clay__layoutElementsHashMapInternal, hashItemPrevious)->nextIndex = (int32_t)Clay__layoutElementsHashMapInternal.length - 1;
     } else {
@@ -1993,7 +2005,7 @@ void Clay__OpenElement(void) {
         Clay__booleanWarnings.maxElementsExceeded = true;
         return;
     }
-    Clay_LayoutElement layoutElement = {0};
+    Clay_LayoutElement layoutElement = CLAY__DEFAULT_STRUCT;
     Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
     Clay__int32_tArray_Add(&Clay__openLayoutElementStack, Clay__layoutElements.length - 1);
     if (Clay__openClipElementStack.length > 0) {
@@ -2489,7 +2501,7 @@ void Clay__CalculateFinalLayout(void) {
         dfsBuffer.length = 0;
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, rootIndex);
         Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)root->layoutElementIndex);
-        Clay_Vector2 rootPosition = {0};
+        Clay_Vector2 rootPosition = CLAY__DEFAULT_STRUCT;
         Clay_LayoutElementHashMapItem *parentHashMapItem = Clay__GetHashMapItem(root->parentId);
         // Position root floating containers
         if (Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER) && parentHashMapItem) {
@@ -2497,7 +2509,7 @@ void Clay__CalculateFinalLayout(void) {
             Clay_Dimensions rootDimensions = rootElement->dimensions;
             Clay_BoundingBox parentBoundingBox = parentHashMapItem->boundingBox;
             // Set X position
-            Clay_Vector2 targetAttachPosition = {0};
+            Clay_Vector2 targetAttachPosition = CLAY__DEFAULT_STRUCT;
             switch (config->attachment.parent) {
                 case CLAY_ATTACH_POINT_LEFT_TOP:
                 case CLAY_ATTACH_POINT_LEFT_CENTER:
@@ -2568,7 +2580,7 @@ void Clay__CalculateFinalLayout(void) {
                 }
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
-                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig){0}) },
+                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig)CLAY__DEFAULT_STRUCT) },
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
                 });
@@ -2581,7 +2593,7 @@ void Clay__CalculateFinalLayout(void) {
             Clay__LayoutElementTreeNode *currentElementTreeNode = Clay__LayoutElementTreeNodeArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
             Clay_LayoutElement *currentElement = currentElementTreeNode->layoutElement;
             Clay_LayoutConfig *layoutConfig = currentElement->layoutConfig;
-            Clay_Vector2 scrollOffset = {0};
+            Clay_Vector2 scrollOffset = CLAY__DEFAULT_STRUCT;
 
             // This will only be run a single time for each element in downwards DFS order
             if (!Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
@@ -2615,7 +2627,7 @@ void Clay__CalculateFinalLayout(void) {
                                 scrollOffset.y = mapping->scrollPosition.y;
                             }
                             if (Clay__externalScrollHandlingEnabled) {
-                                scrollOffset = CLAY__INIT(Clay_Vector2) {0};
+                                scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
                             }
                             break;
                         }
@@ -2779,7 +2791,7 @@ void Clay__CalculateFinalLayout(void) {
                             if (scrollConfig->horizontal) { scrollOffset.x = mapping->scrollPosition.x; }
                             if (scrollConfig->vertical) { scrollOffset.y = mapping->scrollPosition.y; }
                             if (Clay__externalScrollHandlingEnabled) {
-                                scrollOffset = CLAY__INIT(Clay_Vector2) {0};
+                                scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
                             }
                             break;
                         }
@@ -2942,7 +2954,7 @@ const int32_t CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
 const int32_t CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int32_t CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
 Clay_TextElementConfig Clay__DebugView_TextNameConfig = {.textColor = {238, 226, 231, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
-Clay_LayoutConfig Clay__DebugView_ScrollViewItemLayoutConfig = {0};
+Clay_LayoutConfig Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__DEFAULT_STRUCT;
 
 CLAY__TYPEDEF(Clay__DebugElementConfigTypeLabelConfig, struct {
     Clay_String label;
@@ -2972,7 +2984,7 @@ CLAY__TYPEDEF(Clay__RenderDebugLayoutData, struct {
 Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialRootsLength, int32_t highlightedRowIndex) {
     Clay__int32_tArray dfsBuffer = Clay__reusableElementIndexBuffer;
     Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__INIT(Clay_LayoutConfig) { .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT) }, .childGap = 6, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }};
-    Clay__RenderDebugLayoutData layoutData = {0};
+    Clay__RenderDebugLayoutData layoutData = CLAY__DEFAULT_STRUCT;
 
     uint32_t highlightedElementId = 0;
 
@@ -2982,8 +2994,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
         Clay__int32_tArray_Add(&dfsBuffer, (int32_t)root->layoutElementIndex);
         Clay__treeNodeVisited.internalArray[0] = false;
         if (rootIndex > 0) {
-            CLAY(CLAY_IDI("Clay__DebugView_EmptyRowOuter", rootIndex), CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW({0})}, .padding = {CLAY__DEBUGVIEW_INDENT_WIDTH / 2, 0} })) {
-                CLAY(CLAY_IDI("Clay__DebugView_EmptyRow", rootIndex), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW({0}), .height = CLAY_SIZING_FIXED((float)CLAY__DEBUGVIEW_ROW_HEIGHT) }}), CLAY_BORDER({ .top = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 } })) {}
+            CLAY(CLAY_IDI("Clay__DebugView_EmptyRowOuter", rootIndex), CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)}, .padding = {CLAY__DEBUGVIEW_INDENT_WIDTH / 2, 0} })) {
+                CLAY(CLAY_IDI("Clay__DebugView_EmptyRow", rootIndex), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), .height = CLAY_SIZING_FIXED((float)CLAY__DEBUGVIEW_ROW_HEIGHT) }}), CLAY_BORDER({ .top = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 } })) {}
             }
             layoutData.rowCount++;
         }
@@ -3060,8 +3072,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 layoutData.rowCount++;
                 Clay__TextElementData *textElementData = currentElement->childrenOrTextContent.textElementData;
                 Clay_TextElementConfig *rawTextConfig = offscreen ? CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }) : &Clay__DebugView_TextNameConfig;
-                CLAY(CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE({0})) {
-                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16), {0}} })) {}
+                CLAY(CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE(CLAY__DEFAULT_STRUCT)) {
+                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16), CLAY__DEFAULT_STRUCT} })) {}
                     CLAY_TEXT(CLAY_STRING("\""), rawTextConfig);
                     CLAY_TEXT(textElementData->text.length > 40 ? (CLAY__INIT(Clay_String) { .length = 40, .chars = textElementData->text.chars }) : textElementData->text, rawTextConfig);
                     if (textElementData->text.length > 40) {
@@ -3076,7 +3088,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 Clay__OpenElement();
                 CLAY_BORDER({ .left = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }});
                 Clay__ElementPostConfiguration();
-                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED( CLAY__DEBUGVIEW_INDENT_WIDTH), {0}}, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT } })) {}
+                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED( CLAY__DEBUGVIEW_INDENT_WIDTH), CLAY__DEFAULT_STRUCT}, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT } })) {}
                 Clay__OpenElement();
                 CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM });
                 Clay__ElementPostConfiguration();
@@ -3105,8 +3117,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
     }
 
     if (highlightedElementId) {
-        CLAY(CLAY_ID("Clay__DebugView_ElementHighlight"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_GROW({0})} }), CLAY_FLOATING({ .zIndex = 65535, .parentId = highlightedElementId })) {
-            CLAY(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_GROW({0})} }), CLAY_RECTANGLE({.color = Clay__debugViewHighlightColor })) {}
+        CLAY(CLAY_ID("Clay__DebugView_ElementHighlight"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_FLOATING({ .zIndex = 65535, .parentId = highlightedElementId })) {
+            CLAY(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_RECTANGLE({.color = Clay__debugViewHighlightColor })) {}
         }
     }
     return layoutData;
@@ -3141,11 +3153,11 @@ void Clay__RenderDebugViewElementConfigHeader(Clay_String elementId, Clay__Eleme
     Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(type);
     Clay_Color backgroundColor = config.color;
     backgroundColor.a = 90;
-    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = { .x = CLAY__DEBUGVIEW_OUTER_PADDING }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } })) {
+    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = { .x = CLAY__DEBUGVIEW_OUTER_PADDING }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } })) {
         CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_RECTANGLE({ .color = backgroundColor, .cornerRadius = CLAY_CORNER_RADIUS(4) }), CLAY_BORDER_OUTSIDE_RADIUS(1, config.color, 4)) {
             CLAY_TEXT(config.label, CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
         }
-        CLAY(CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW({0}) } })) {}
+        CLAY(CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT) } })) {}
         CLAY_TEXT(elementId, CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE }));
     }
 }
@@ -3161,7 +3173,7 @@ void Clay__RenderDebugViewColor(Clay_Color color, Clay_TextElementConfig *textCo
         CLAY_TEXT(CLAY_STRING(", a: "), textConfig);
         CLAY_TEXT(Clay__IntToString(color.a), textConfig);
         CLAY_TEXT(CLAY_STRING(" }"), textConfig);
-        CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(10), {0} } })) {}
+        CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(10), CLAY__DEFAULT_STRUCT } })) {}
         CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }), CLAY_BORDER_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_4, 4)) {
             CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }), CLAY_RECTANGLE({ .color = color, .cornerRadius = CLAY_CORNER_RADIUS(4) })) {}
         }
@@ -3233,15 +3245,15 @@ void Clay__RenderDebugView(void) {
     if (Clay__pointerInfo.position.x < Clay__layoutDimensions.width - (float)Clay__debugViewWidth) {
         highlightedRow = -1;
     }
-    Clay__RenderDebugLayoutData layoutData = {0};
+    Clay__RenderDebugLayoutData layoutData = CLAY__DEFAULT_STRUCT;
     CLAY(CLAY_ID("Clay__DebugView"),
         CLAY_FLOATING({ .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }}),
         CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(Clay__layoutDimensions.height) }, .layoutDirection = CLAY_TOP_TO_BOTTOM }),
         CLAY_BORDER({ .bottom = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }})
     ) {
-        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
+        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
             CLAY_TEXT(CLAY_STRING("Clay Debug Tools"), infoTextConfig);
-            CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({0}), {0} } })) {}
+            CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY__DEFAULT_STRUCT } })) {}
             // Close button
             CLAY(CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){217,91,67,255}), 4),
                 CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} }),
@@ -3251,18 +3263,18 @@ void Clay__RenderDebugView(void) {
                 CLAY_TEXT(CLAY_STRING("x"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
             }
         }
-        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
-        CLAY(Clay__AttachId(scrollId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_GROW({0})} }), CLAY_SCROLL({ .horizontal = true, .vertical = true })) {
-            CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_GROW({0})}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1 })) {
+        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
+        CLAY(Clay__AttachId(scrollId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_SCROLL({ .horizontal = true, .vertical = true })) {
+            CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1 })) {
                 Clay_ElementId panelContentsId = Clay__HashString(CLAY_STRING("Clay__DebugViewPaneOuter"), 0, 0);
                 // Element list
-                CLAY(Clay__AttachId(panelContentsId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_GROW({0})} }), CLAY_FLOATING({ .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH })) {
-                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_GROW({0})}, .padding = {.x = CLAY__DEBUGVIEW_OUTER_PADDING }, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
+                CLAY(Clay__AttachId(panelContentsId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_FLOATING({ .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH })) {
+                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)}, .padding = {.x = CLAY__DEBUGVIEW_OUTER_PADDING }, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
                         layoutData = Clay__RenderDebugLayoutElementsList((int32_t)initialRootsLength, highlightedRow);
                     }
                 }
                 float contentWidth = Clay__GetHashMapItem(panelContentsId.id)->layoutElement->dimensions.width;
-                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(contentWidth), {0}}, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {}
+                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(contentWidth), CLAY__DEFAULT_STRUCT}, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {}
                 for (int32_t i = 0; i < layoutData.rowCount; i++) {
                     Clay_Color rowColor = (i & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1;
                     if (i == layoutData.selectedElementRowIndex) {
@@ -3273,22 +3285,22 @@ void Clay__RenderDebugView(void) {
                         rowColor.g *= 1.25f;
                         rowColor.b *= 1.25f;
                     }
-                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = rowColor })) {}
+                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = rowColor })) {}
                 }
             }
         }
-        CLAY(CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW({0}), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
+        CLAY(CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
         if (Clay__debugSelectedElementId != 0) {
             Clay_LayoutElementHashMapItem *selectedItem = Clay__GetHashMapItem(Clay__debugSelectedElementId);
             CLAY(
                 CLAY_SCROLL({ .vertical = true }),
-                CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(300)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }),
+                CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(300)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }),
                 CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 }),
                 CLAY_BORDER({ .betweenChildren = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }})
             ) {
-                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
+                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
                     CLAY_TEXT(CLAY_STRING("Layout Config"), infoTextConfig);
-                    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({0}), {0} } })) {}
+                    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY__DEFAULT_STRUCT } })) {}
                     if (selectedItem->elementId.stringId.length != 0) {
                         CLAY_TEXT(selectedItem->elementId.stringId, infoTitleConfig);
                         if (selectedItem->elementId.offset != 0) {
@@ -3302,7 +3314,7 @@ void Clay__RenderDebugView(void) {
                 CLAY(CLAY_LAYOUT({ .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
                     // .boundingBox
                     CLAY_TEXT(CLAY_STRING("Bounding Box"), infoTitleConfig);
-                    CLAY(CLAY_LAYOUT({0})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
                         CLAY_TEXT(Clay__IntToString(selectedItem->boundingBox.x), infoTextConfig);
                         CLAY_TEXT(CLAY_STRING(", y: "), infoTextConfig);
@@ -3319,11 +3331,11 @@ void Clay__RenderDebugView(void) {
                     CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : CLAY_STRING("LEFT_TO_RIGHT"), infoTextConfig);
                     // .sizing
                     CLAY_TEXT(CLAY_STRING("Sizing"), infoTitleConfig);
-                    CLAY(CLAY_LAYOUT({0})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("width: "), infoTextConfig);
                         Clay__RenderDebugLayoutSizing(layoutConfig->sizing.width, infoTextConfig);
                     }
-                    CLAY(CLAY_LAYOUT({0})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("height: "), infoTextConfig);
                         Clay__RenderDebugLayoutSizing(layoutConfig->sizing.height, infoTextConfig);
                     }
@@ -3341,7 +3353,7 @@ void Clay__RenderDebugView(void) {
                     CLAY_TEXT(Clay__IntToString(layoutConfig->childGap), infoTextConfig);
                     // .childAlignment
                     CLAY_TEXT(CLAY_STRING("Child Alignment"), infoTitleConfig);
-                    CLAY(CLAY_LAYOUT({0})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
                         Clay_String alignX = CLAY_STRING("LEFT");
                         if (layoutConfig->childAlignment.x == CLAY_ALIGN_X_CENTER) {
@@ -3421,7 +3433,7 @@ void Clay__RenderDebugView(void) {
                                 }
                                 // Image Preview
                                 CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
-                                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({ .max = imageConfig->sourceDimensions.width }), {0} }}), Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = imageConfig }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {}
+                                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({ .max = imageConfig->sourceDimensions.width }), CLAY__DEFAULT_STRUCT }}), Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = imageConfig }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {}
                             }
                             break;
                         }
@@ -3442,7 +3454,7 @@ void Clay__RenderDebugView(void) {
                             CLAY(CLAY_LAYOUT({ .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
                                 // .offset
                                 CLAY_TEXT(CLAY_STRING("Offset"), infoTitleConfig);
-                                CLAY(CLAY_LAYOUT({0})) {
+                                CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                                     CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(floatingConfig->offset.x), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING(", y: "), infoTextConfig);
@@ -3451,7 +3463,7 @@ void Clay__RenderDebugView(void) {
                                 }
                                 // .expand
                                 CLAY_TEXT(CLAY_STRING("Expand"), infoTitleConfig);
-                                CLAY(CLAY_LAYOUT({0})) {
+                                CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                                     CLAY_TEXT(CLAY_STRING("{ width: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(floatingConfig->expand.width), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING(", height: "), infoTextConfig);
@@ -3498,12 +3510,12 @@ void Clay__RenderDebugView(void) {
                 }
             }
         } else {
-            CLAY(CLAY_ID("Clay__DebugViewWarningsScrollPane"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(300)}, .childGap = 6, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_SCROLL({ .horizontal = true, .vertical = true }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
+            CLAY(CLAY_ID("Clay__DebugViewWarningsScrollPane"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(300)}, .childGap = 6, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_SCROLL({ .horizontal = true, .vertical = true }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
                 Clay_TextElementConfig *warningConfig = CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE });
                 CLAY(CLAY_ID("Clay__DebugViewWarningItemHeader"), CLAY_LAYOUT({ .sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childGap = 8, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
                     CLAY_TEXT(CLAY_STRING("Warnings"), warningConfig);
                 }
-                CLAY(CLAY_ID("Clay__DebugViewWarningsTopBorder"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW({0}), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {}
+                CLAY(CLAY_ID("Clay__DebugViewWarningsTopBorder"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {}
                 int32_t previousWarningsLength = (int)Clay_warnings.length;
                 for (int32_t i = 0; i < previousWarningsLength; i++) {
                     Clay__Warning warning = Clay_warnings.internalArray[i];
@@ -3714,7 +3726,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
         }
         // Handle click / touch scroll
         if (isPointerActive) {
-            highestPriorityScrollData->scrollMomentum = CLAY__INIT(Clay_Vector2){0};
+            highestPriorityScrollData->scrollMomentum = CLAY__INIT(Clay_Vector2)CLAY__DEFAULT_STRUCT;
             if (!highestPriorityScrollData->pointerScrollActive) {
                 highestPriorityScrollData->pointerOrigin = Clay__pointerInfo.position;
                 highestPriorityScrollData->scrollOrigin = highestPriorityScrollData->scrollPosition;
@@ -3855,7 +3867,7 @@ Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
             };
         }
     }
-    return CLAY__INIT(Clay_ScrollContainerData) {0};
+    return CLAY__INIT(Clay_ScrollContainerData) CLAY__DEFAULT_STRUCT;
 }
 
 CLAY_WASM_EXPORT("Clay_SetDebugModeEnabled")
