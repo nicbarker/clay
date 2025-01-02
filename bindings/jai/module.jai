@@ -1,3 +1,4 @@
+// TODO Documentation about the for_expansion
 
 Vector2 :: Math.Vector2;
 
@@ -31,6 +32,20 @@ TypedConfig :: struct {
     type:   ElementConfigType;
     config: *void;
     id:     ElementId;
+}
+
+BorderData :: struct {
+    width: u32;
+    color: Color;
+}
+
+BorderElementConfig :: struct {
+    left:            BorderData;
+    right:           BorderData;
+    top:             BorderData;
+    bottom:          BorderData;
+    betweenChildren: BorderData;
+    cornerRadius:    CornerRadius;
 }
 
 make_string :: (str: string) -> String {
@@ -94,12 +109,83 @@ Scroll :: (config: ScrollElementConfig) -> TypedConfig {
     return .{type = .SCROLL_CONTAINER, config = _StoreScrollElementConfig(config)};
 }
 
+Image :: (config: ImageElementConfig) -> TypedConfig {
+    return .{type = .IMAGE, config = _StoreImageElementConfig(config)};
+}
+
+Custom :: (config: CustomElementConfig) -> TypedConfig {
+    return .{type = .CUSTOM, config = _StoreCustomElementConfig(config)};
+}
+
+Border :: (config: BorderElementConfig) -> TypedConfig {
+    return .{type = .BORDER, _StoreBorderElementConfig(config)};
+}
+
+BorderOutside :: (outside_borders: BorderData) -> TypedConfig {
+    return .{
+        type = .BORDER, 
+        config = _StoreBorderElementConfig(BorderElementConfig.{
+            left = outside_borders,
+            right = outside_borders,
+            top = outside_borders,
+            bottom = outside_borders,
+        }),
+    };
+}
+
+BorderOutsideRadius :: (outside_borders: BorderData, radius: float) -> TypedConfig {
+    return .{
+        type = .BORDER,
+        config = _StoreBorderElementConfig(.{
+            left = outside_borders,
+            right = outside_borders,
+            top = outside_borders,
+            bottom = outside_borders,
+            cornerRadius = .{radius, radius, radius, radius},
+        })
+    };
+}
+
+BorderAll :: (all_borders: BorderData) -> TypedConfig {
+    return .{
+        type = .BORDER,
+        config = _StoreBorderElementConfig(.{
+            left = all_borders,
+            right = all_borders,
+            top = all_borders,
+            bottom = all_borders,
+            betweenChildren = all_borders,
+        })
+    };
+}
+
+BorderAllRadius :: (all_borders: BorderData, radius: float) -> TypedConfig {
+    return .{
+        type = .BORDER,
+        config = _StoreBorderElementConfig(.{
+            left = all_borders,
+            right = all_borders,
+            top = all_borders,
+            bottom = all_borders,
+            cornerRadius = .{radius, radius, radius, radius},
+        })
+    };
+}
+
+CornerRadiusAll :: (radius: float) -> CornerRadius {
+    return .{radius, radius, radius, radius};
+}
+
 Text :: (text: string, config: *TextElementConfig) {
     _OpenTextElement(make_string(text), config);
 }
 
 TextConfig :: (config: TextElementConfig) -> *TextElementConfig {
     return _StoreTextElementConfig(config);
+}
+
+SizingFit :: (size_min_max: SizingMinMax) -> SizingAxis {
+    return .{type = .FIT, size = .{minMax = size_min_max}};
 }
 
 SizingGrow :: (size_min_max: SizingMinMax = .{}) -> SizingAxis {
@@ -110,16 +196,13 @@ SizingFixed :: (size: float) -> SizingAxis {
     return .{type = .FIXED, size = .{minMax = .{size, size}}};
 }
 
+SizingPercent :: (size_percent: float) -> SizingAxis {
+    return .{type = .PERCENT, size = .{percent = size_percent}};
+}
+
 GetElementId :: (str: string) -> ElementId {
     return GetElementId(make_string(str));
 }
-
-// OnHover :: (onHoverFunction: #type (elementId: ElementId, pointerData: PointerData, userData: s64) -> void #c_call, userData: s64) -> TypedConfig {
-//     OnHover(onHoverFunction, userData);
-//     return TypedConfig.{
-//         type = .NONE,
-//     };
-// }
 
 #scope_module
 
