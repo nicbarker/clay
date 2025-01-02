@@ -18,7 +18,7 @@ when ODIN_OS == .Windows {
 }
 
 String :: struct {
-    length: c.int,
+    length: c.int32_t,
     chars:  [^]c.char,
 }
 
@@ -258,8 +258,8 @@ LayoutConfig :: struct {
 }
 
 ClayArray :: struct($type: typeid) {
-    capacity:      u32,
-    length:        u32,
+    capacity:      i32,
+    length:        i32,
     internalArray: [^]type,
 }
 

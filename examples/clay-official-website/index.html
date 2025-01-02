@@ -178,6 +178,7 @@
             }
             case 'float': return 4;
             case 'uint32_t': return 4;
+            case 'int32_t': return 4;
             case 'uint16_t': return 2;
             case 'uint8_t': return 1;
             case 'bool': return 1;
@@ -206,6 +207,7 @@
             }
             case 'float': return { value: memoryDataView.getFloat32(address, true), __size: 4 };
             case 'uint32_t': return { value: memoryDataView.getUint32(address, true), __size: 4 };
+            case 'int32_t': return { value: memoryDataView.getUint32(address, true), __size: 4 };
             case 'uint16_t': return { value: memoryDataView.getUint16(address, true), __size: 2 };
             case 'uint8_t': return { value: memoryDataView.getUint8(address, true), __size: 1 };
             case 'bool': return { value: memoryDataView.getUint8(address, true), __size: 1 };
@@ -312,7 +314,6 @@
 
         const importObject = {
             clay: {
-
                 measureTextFunction: (addressOfDimensions, textToMeasure, addressOfConfig) => {
                     let stringLength = memoryDataView.getUint32(textToMeasure, true);
                     let pointerToString = memoryDataView.getUint32(textToMeasure + 4, true);
@@ -358,8 +359,8 @@
     }
 
     function renderLoopHTML() {
-        let capacity = memoryDataView.getUint32(scratchSpaceAddress, true);
-        let length = memoryDataView.getUint32(scratchSpaceAddress + 4, true);
+        let capacity = memoryDataView.getInt32(scratchSpaceAddress, true);
+        let length = memoryDataView.getInt32(scratchSpaceAddress + 4, true);
         let arrayOffset = memoryDataView.getUint32(scratchSpaceAddress + 8, true);
         let scissorStack = [{ nextAllocation: { x: 0, y: 0 }, element: htmlRoot, nextElementIndex: 0 }];
         let previousId = 0;
