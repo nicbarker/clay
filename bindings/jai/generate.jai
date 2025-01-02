@@ -7,6 +7,10 @@ DECLARATIONS_TO_OMIT :: string.[
     "Clay_Vector2",
     "Clay__ElementConfigType",
     "Clay__AlignClay__ElementConfigType",
+    "Clay_Border",
+    "Clay__AlignClay_Border",
+    "Clay_BorderElementConfig",
+    "Clay__AlignClay_BorderElementConfig",
 
     // These are not supported yet
     "Clay_OnHover",

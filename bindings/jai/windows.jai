@@ -367,30 +367,6 @@ _AlignClay_ScrollElementConfig :: struct {
     x: ScrollElementConfig;
 }
 
-// Border
-Border :: struct {
-    width: u32;
-    color: Color;
-}
-_AlignClay_Border :: struct {
-    c: u8;
-    // Border
-    x: Border;
-}
-
-BorderElementConfig :: struct {
-    left:            Border;
-    right:           Border;
-    top:             Border;
-    bottom:          Border;
-    betweenChildren: Border;
-    cornerRadius:    CornerRadius;
-}
-_AlignClay_BorderElementConfig :: struct {
-    c: u8;
-    x: BorderElementConfig;
-}
-
 ElementConfigUnion :: union {
     rectangleElementConfig: *RectangleElementConfig;
     textElementConfig:      *TextElementConfig;
@@ -1116,50 +1092,6 @@ clay :: #library,no_dll "clay-jai/windows/clay";
         assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 1, "_AlignClay_ScrollElementConfig.x has unexpected offset % instead of 1", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
         assert(size_of(type_of(_AlignClay_ScrollElementConfig.x)) == 2, "_AlignClay_ScrollElementConfig.x has unexpected size % instead of 2", size_of(type_of(_AlignClay_ScrollElementConfig.x)));
         assert(size_of(_AlignClay_ScrollElementConfig) == 3, "_AlignClay_ScrollElementConfig has size % instead of 3", size_of(_AlignClay_ScrollElementConfig));
-    }
-
-    {
-        instance: Border;
-        assert(((cast(*void)(*instance.width)) - cast(*void)(*instance)) == 0, "Border.width has unexpected offset % instead of 0", ((cast(*void)(*instance.width)) - cast(*void)(*instance)));
-        assert(size_of(type_of(Border.width)) == 4, "Border.width has unexpected size % instead of 4", size_of(type_of(Border.width)));
-        assert(((cast(*void)(*instance.color)) - cast(*void)(*instance)) == 4, "Border.color has unexpected offset % instead of 4", ((cast(*void)(*instance.color)) - cast(*void)(*instance)));
-        assert(size_of(type_of(Border.color)) == 16, "Border.color has unexpected size % instead of 16", size_of(type_of(Border.color)));
-        assert(size_of(Border) == 20, "Border has size % instead of 20", size_of(Border));
-    }
-
-    {
-        instance: _AlignClay_Border;
-        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_Border.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
-        assert(size_of(type_of(_AlignClay_Border.c)) == 1, "_AlignClay_Border.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_Border.c)));
-        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_Border.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
-        assert(size_of(type_of(_AlignClay_Border.x)) == 20, "_AlignClay_Border.x has unexpected size % instead of 20", size_of(type_of(_AlignClay_Border.x)));
-        assert(size_of(_AlignClay_Border) == 24, "_AlignClay_Border has size % instead of 24", size_of(_AlignClay_Border));
-    }
-
-    {
-        instance: BorderElementConfig;
-        assert(((cast(*void)(*instance.left)) - cast(*void)(*instance)) == 0, "BorderElementConfig.left has unexpected offset % instead of 0", ((cast(*void)(*instance.left)) - cast(*void)(*instance)));
-        assert(size_of(type_of(BorderElementConfig.left)) == 20, "BorderElementConfig.left has unexpected size % instead of 20", size_of(type_of(BorderElementConfig.left)));
-        assert(((cast(*void)(*instance.right)) - cast(*void)(*instance)) == 20, "BorderElementConfig.right has unexpected offset % instead of 20", ((cast(*void)(*instance.right)) - cast(*void)(*instance)));
-        assert(size_of(type_of(BorderElementConfig.right)) == 20, "BorderElementConfig.right has unexpected size % instead of 20", size_of(type_of(BorderElementConfig.right)));
-        assert(((cast(*void)(*instance.top)) - cast(*void)(*instance)) == 40, "BorderElementConfig.top has unexpected offset % instead of 40", ((cast(*void)(*instance.top)) - cast(*void)(*instance)));
-        assert(size_of(type_of(BorderElementConfig.top)) == 20, "BorderElementConfig.top has unexpected size % instead of 20", size_of(type_of(BorderElementConfig.top)));
-        assert(((cast(*void)(*instance.bottom)) - cast(*void)(*instance)) == 60, "BorderElementConfig.bottom has unexpected offset % instead of 60", ((cast(*void)(*instance.bottom)) - cast(*void)(*instance)));
-        assert(size_of(type_of(BorderElementConfig.bottom)) == 20, "BorderElementConfig.bottom has unexpected size % instead of 20", size_of(type_of(BorderElementConfig.bottom)));
-        assert(((cast(*void)(*instance.betweenChildren)) - cast(*void)(*instance)) == 80, "BorderElementConfig.betweenChildren has unexpected offset % instead of 80", ((cast(*void)(*instance.betweenChildren)) - cast(*void)(*instance)));
-        assert(size_of(type_of(BorderElementConfig.betweenChildren)) == 20, "BorderElementConfig.betweenChildren has unexpected size % instead of 20", size_of(type_of(BorderElementConfig.betweenChildren)));
-        assert(((cast(*void)(*instance.cornerRadius)) - cast(*void)(*instance)) == 100, "BorderElementConfig.cornerRadius has unexpected offset % instead of 100", ((cast(*void)(*instance.cornerRadius)) - cast(*void)(*instance)));
-        assert(size_of(type_of(BorderElementConfig.cornerRadius)) == 16, "BorderElementConfig.cornerRadius has unexpected size % instead of 16", size_of(type_of(BorderElementConfig.cornerRadius)));
-        assert(size_of(BorderElementConfig) == 116, "BorderElementConfig has size % instead of 116", size_of(BorderElementConfig));
-    }
-
-    {
-        instance: _AlignClay_BorderElementConfig;
-        assert(((cast(*void)(*instance.c)) - cast(*void)(*instance)) == 0, "_AlignClay_BorderElementConfig.c has unexpected offset % instead of 0", ((cast(*void)(*instance.c)) - cast(*void)(*instance)));
-        assert(size_of(type_of(_AlignClay_BorderElementConfig.c)) == 1, "_AlignClay_BorderElementConfig.c has unexpected size % instead of 1", size_of(type_of(_AlignClay_BorderElementConfig.c)));
-        assert(((cast(*void)(*instance.x)) - cast(*void)(*instance)) == 4, "_AlignClay_BorderElementConfig.x has unexpected offset % instead of 4", ((cast(*void)(*instance.x)) - cast(*void)(*instance)));
-        assert(size_of(type_of(_AlignClay_BorderElementConfig.x)) == 116, "_AlignClay_BorderElementConfig.x has unexpected size % instead of 116", size_of(type_of(_AlignClay_BorderElementConfig.x)));
-        assert(size_of(_AlignClay_BorderElementConfig) == 120, "_AlignClay_BorderElementConfig has size % instead of 120", size_of(_AlignClay_BorderElementConfig));
     }
 
     {
