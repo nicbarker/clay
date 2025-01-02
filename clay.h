@@ -403,7 +403,7 @@ CLAY__TYPEDEF(Clay_ScrollContainerData, struct {
     bool found;
 });
 
-CLAY__TYPEDEF(Clay_RenderCommandType, enum {
+CLAY__TYPEDEF(Clay_RenderCommandType, CLAY_PACKED_ENUM {
     CLAY_RENDER_COMMAND_TYPE_NONE,
     CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
     CLAY_RENDER_COMMAND_TYPE_BORDER,
@@ -3619,7 +3619,9 @@ void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_Er
     }
     Clay__measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
     Clay__layoutDimensions = layoutDimensions;
-    Clay__errorHandler = errorHandler;
+    if (errorHandler.errorHandlerFunction) {
+        Clay__errorHandler = errorHandler;
+    }
 }
 
 CLAY_WASM_EXPORT("Clay_UpdateScrollContainers")
