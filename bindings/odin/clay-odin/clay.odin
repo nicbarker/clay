@@ -63,7 +63,11 @@ ElementId :: struct {
     stringId: String,
 }
 
-EnumBackingType :: u8
+when ODIN_OS == .Windows {
+    EnumBackingType :: u32
+} else {
+    EnumBackingType :: u8
+}
 
 ElementConfigType :: enum EnumBackingType {
     Rectangle = 1,
