@@ -34,13 +34,19 @@ TypedConfig :: struct {
 }
 
 make_string :: (str: string) -> String {
-    return .{cast(u64, str.count), str.data};
+    clay_string := String.{cast(u64, str.count), str.data};
+    return clay_string;
 }
 
-// The way of handling this is inspired by the odin bindings
-UI :: (configs: ..TypedConfig, $children: Code = #code {}, $call := #caller_code) {
+global_counter := 0;
+
+for_expansion :: (configs_array: InternalElementConfigArray, body: Code, _: For_Flags) #expand {
+    // Jai forces the definition of these
+    `it_index := 0;
+    `it := 0;
+
     _OpenElement();
-    for config : configs {
+    for config : configs_array.configs {
         if config.type == {
         case .ID;
             _AttachId(config.id);
@@ -56,35 +62,14 @@ UI :: (configs: ..TypedConfig, $children: Code = #code {}, $call := #caller_code
     }
     _ElementPostConfiguration();
 
-    #insert,scope(call) children;
+    #insert body;
 
     _CloseElement();
 }
 
-// Not sure yet wich of these two methods is better
-// Idealy there should be a way to mimic the style of how it's done in C
-// ElementScope :: (configs: ..TypedConfig) #expand {
-//     _OpenElement();
-//     for config : configs {
-//         if config.type == {
-//         case .ID;
-//             _AttachId(config.id);
-//         case .LAYOUT;
-//             _AttachLayoutConfig(cast(*LayoutConfig, config.config));
-//         case;
-//             // config.config is a *void, it stores the address of the pointer that is stored in the union
-//             // as ElementConfigUnion is a union of structs. We can't cast pointers directly to structs,
-//             // we first cast the address of the *void and then dereference it.
-//             // Maybe there's a cast modifier to avoid this, but I don't know it (no_check and trunc didn't work).
-//             _AttachElementConfig(cast(*ElementConfigUnion, *config.config).*, config.type);
-//         }
-//     }
-//     _ElementPostConfiguration();
-
-//     `defer _CloseElement();
-// }
-
-
+Element :: (configs: ..TypedConfig) -> InternalElementConfigArray #expand {
+    return .{configs};
+}
 
 ID :: (label: string, index: u32 = 0) -> TypedConfig {
     return .{type = .ID, id = _HashString(make_string(label), index, 0)};
@@ -99,6 +84,14 @@ Rectangle :: (config: RectangleElementConfig) -> TypedConfig {
         type = .RECTANGLE,
         config = _StoreRectangleElementConfig(config)
     };
+}
+
+Floating :: (config: FloatingElementConfig) -> TypedConfig {
+    return .{type = .FLOATING_CONTAINER, config = _StoreFloatingElementConfig(config)};
+}
+
+Scroll :: (config: ScrollElementConfig) -> TypedConfig {
+    return .{type = .SCROLL_CONTAINER, config = _StoreScrollElementConfig(config)};
 }
 
 Text :: (text: string, config: *TextElementConfig) {
@@ -121,11 +114,22 @@ GetElementId :: (str: string) -> ElementId {
     return GetElementId(make_string(str));
 }
 
+// OnHover :: (onHoverFunction: #type (elementId: ElementId, pointerData: PointerData, userData: s64) -> void #c_call, userData: s64) -> TypedConfig {
+//     OnHover(onHoverFunction, userData);
+//     return TypedConfig.{
+//         type = .NONE,
+//     };
+// }
+
 #scope_module
 
 Math :: #import "Math";
 Compiler :: #import "Compiler";
 ProgramPrint :: #import "Program_Print";
+
+InternalElementConfigArray :: struct {
+    configs: [] TypedConfig;
+}
 
 #if OS == .WINDOWS {
     #load "windows.jai";

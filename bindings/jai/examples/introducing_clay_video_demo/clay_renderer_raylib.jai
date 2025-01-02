@@ -19,18 +19,20 @@ raylib_measure_text :: (text: *Clay.String, config: *Clay.TextElementConfig) -> 
 	text_height := cast(float)config.fontSize;
 	font_to_use := g_raylib_fonts[config.fontId].font;
 
-	for 0..text.length - 1 {
-		if text.chars[it] == #char "\n" {
-			max_text_width = c_max(max_text_width, line_text_width);
-			line_text_width = 0;
-			continue;
-		}
+	if text.length > 0 {
+		for 0..(text.length - 1) {
+			if text.chars[it] == #char "\n" {
+				max_text_width = c_max(max_text_width, line_text_width);
+				line_text_width = 0;
+				continue;
+			}
 
-		index := cast(s32) text.chars[it] - 32;
-		if font_to_use.glyphs[index].advanceX != 0 {
-			line_text_width += cast(float) font_to_use.glyphs[index].advanceX;
-		} else {
-			line_text_width += (font_to_use.recs[index].width + cast(float) font_to_use.glyphs[index].offsetX);
+			index := cast(s32, text.chars[it]) - 32;
+			if font_to_use.glyphs[index].advanceX != 0 {
+				line_text_width += cast(float) font_to_use.glyphs[index].advanceX;
+			} else {
+				line_text_width += (font_to_use.recs[index].width + cast(float) font_to_use.glyphs[index].offsetX);
+			}
 		}
 	}
 
