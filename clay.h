@@ -2944,6 +2944,7 @@ Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_SCROLL_CONTAINER = {242, 196, 90, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_BORDER_CONTAINER = {108, 91, 123,  255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_CUSTOM = {11, 72, 107, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_ERROR = {0, 0, 0, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_DUP_ID_BORDER = {177, 147, 8, 255};
 const int32_t CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
 const int32_t CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int32_t CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
@@ -3036,7 +3037,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 // Collisions and offscreen info
                 if (currentElementData) {
                     if (currentElementData->debugData->collision) {
-                        CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){177, 147, 8, 255}), 4)) {
+                        CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_BORDER_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_DUP_ID_BORDER, 4)) {
                             CLAY_TEXT(CLAY_STRING("Duplicate ID"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }));
                         }
                     }
