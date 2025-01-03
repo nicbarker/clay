@@ -1,4 +1,75 @@
-// TODO Documentation about the for_expansion
+/*
+These bindings adapt the CLAY macro using some for_expansion trickery, allowing a syntax similar to the one in the Odin bindings. 
+I'll try to explain here why I did it that way.
+
+In Odin, they can mark the procedure with deferred_none, allowing to call a proc after the current one, which works well with ifs.
+
+@(require_results, deferred_none = _CloseElement)
+UI :: proc(configs: ..TypedConfig) -> bool {}
+
+You can then use it like so : 
+
+if UI(Layout(), etc..) {Children ...}
+
+So I tried to replicate this in Jai. The first thing I did was to try making a macro returning a bool with a backticked defer in it.
+
+UI :: (configs: ..TypedConfig) -> bool #must #expand {
+    `defer EndElement();
+    return true;
+}
+
+But this doesn't work if you have two elements side to side, as the end of the first element will be called after the start and the end of the second one.
+
+Another option used in these bindings : https://github.com/nick-celestin-zizic/clay-jai is to have that defer like above and have the macro return nothing. You can then use it like that : 
+
+{ UI(Layout()); Children(); }
+
+But I'm not a big fan of that since it's possible to forget the scope braces or to put the children before the element.
+
+Another option to consider is to pass a code block to a macro that puts it between the start and the end.
+
+UI :: (id: ElementId, layout: LayoutConfig, configs: ..ElementConfig, $code: Code) {
+    OpenElement();
+    ...
+    #insert code;
+    CloseElement();
+}
+
+UI(..., #code {
+    Children();
+});
+
+However this prevents to refer to variables from the previous scope, and it's also a bit akward to type.
+
+The final solution I found, inspired by the fact that CLAY uses a for loop behind the scene, was to use Jai's for_expansions.
+Here is how it works :
+
+InternalElementConfigArray :: struct {
+    configs: [] TypedConfig;
+}
+
+Element :: (configs: ..TypedConfig) -> InternalElementConfigArray #expand {
+    return .{configs};
+}
+
+for_expansion :: (configs_array: InternalElementConfigArray, body: Code, _: For_Flags) #expand {
+    Jai forces the definition of these
+    `it_index := 0;
+    `it := 0;
+    _OpenElement();
+    ...
+    #insert body;
+    _CloseElement();
+}
+
+As you can see it's kinda similar to the previous one, but doesn't have the limitation on refering to variable from the calling scope.
+Element builds an InternalElementConfigArray that has an array to the TypedConfigs, which will be passed to the for_expansion when placed after a for (this is a Jai feature).
+This then allows to write something like :
+
+for Element(Layout()) { Children(); }
+
+With the downside that it's not obvious why the for is there before reading the documentation.
+*/
 
 Vector2 :: Math.Vector2;
 
