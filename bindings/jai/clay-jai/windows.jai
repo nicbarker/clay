@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai ./generate.jai - -compile
+// jai generate.jai - -compile
 //
 
 
@@ -28,7 +28,7 @@ _Alignint32_t :: struct {
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
 String :: struct {
-    length: u64;
+    length: s32;
     chars:  *u8;
 }
 _AlignClay_String :: struct {
@@ -40,8 +40,8 @@ _AlignClay_String :: struct {
 }
 
 _StringArray :: struct {
-    capacity:      u32;
-    length:        u32;
+    capacity:      s32;
+    length:        s32;
     internalArray: *String;
 }
 _AlignClay__StringArray :: struct {
@@ -442,8 +442,8 @@ _AlignClay_RenderCommand :: struct {
 }
 
 RenderCommandArray :: struct {
-    capacity:      u32;
-    length:        u32;
+    capacity:      s32;
+    length:        s32;
     internalArray: *RenderCommand;
 }
 _AlignClay_RenderCommandArray :: struct {
@@ -536,8 +536,8 @@ RenderCommandArray_Get :: (array: *RenderCommandArray, index: s32) -> *RenderCom
 SetDebugModeEnabled :: (enabled: bool) -> void #foreign clay "Clay_SetDebugModeEnabled";
 IsDebugModeEnabled :: () -> bool #foreign clay "Clay_IsDebugModeEnabled";
 SetCullingEnabled :: (enabled: bool) -> void #foreign clay "Clay_SetCullingEnabled";
-SetMaxElementCount :: (maxElementCount: u32) -> void #foreign clay "Clay_SetMaxElementCount";
-SetMaxMeasureTextCacheWordCount :: (maxMeasureTextCacheWordCount: u32) -> void #foreign clay "Clay_SetMaxMeasureTextCacheWordCount";
+SetMaxElementCount :: (maxElementCount: s32) -> void #foreign clay "Clay_SetMaxElementCount";
+SetMaxMeasureTextCacheWordCount :: (maxMeasureTextCacheWordCount: s32) -> void #foreign clay "Clay_SetMaxMeasureTextCacheWordCount";
 
 // Internal API functions required by macros
 _OpenElement :: () -> void #foreign clay "Clay__OpenElement";
@@ -555,7 +555,6 @@ _StoreCustomElementConfig :: (config: CustomElementConfig) -> *CustomElementConf
 _StoreScrollElementConfig :: (config: ScrollElementConfig) -> *ScrollElementConfig #foreign clay "Clay__StoreScrollElementConfig";
 _StoreBorderElementConfig :: (config: BorderElementConfig) -> *BorderElementConfig #foreign clay "Clay__StoreBorderElementConfig";
 _HashString :: (key: String, offset: u32, seed: u32) -> ElementId #foreign clay "Clay__HashString";
-_Noop :: () -> void #foreign clay "Clay__Noop";
 _OpenTextElement :: (text: String, textConfig: *TextElementConfig) -> void #foreign clay "Clay__OpenTextElement";
 
 _debugViewHighlightColor: Color #elsewhere clay "Clay__debugViewHighlightColor";
@@ -607,7 +606,7 @@ clay :: #library,no_dll "clay-jai/windows/clay";
     {
         instance: String;
         assert(((cast(*void)(*instance.length)) - cast(*void)(*instance)) == 0, "String.length has unexpected offset % instead of 0", ((cast(*void)(*instance.length)) - cast(*void)(*instance)));
-        assert(size_of(type_of(String.length)) == 8, "String.length has unexpected size % instead of 8", size_of(type_of(String.length)));
+        assert(size_of(type_of(String.length)) == 4, "String.length has unexpected size % instead of 4", size_of(type_of(String.length)));
         assert(((cast(*void)(*instance.chars)) - cast(*void)(*instance)) == 8, "String.chars has unexpected offset % instead of 8", ((cast(*void)(*instance.chars)) - cast(*void)(*instance)));
         assert(size_of(type_of(String.chars)) == 8, "String.chars has unexpected size % instead of 8", size_of(type_of(String.chars)));
         assert(size_of(String) == 16, "String has size % instead of 16", size_of(String));

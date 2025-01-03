@@ -49,7 +49,7 @@ BorderElementConfig :: struct {
 }
 
 make_string :: (str: string) -> String {
-    clay_string := String.{cast(u64, str.count), str.data};
+    clay_string := String.{cast(s32, str.count), str.data};
     return clay_string;
 }
 

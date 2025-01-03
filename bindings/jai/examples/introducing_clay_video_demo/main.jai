@@ -1,6 +1,6 @@
 using Basic :: #import "Basic";
 
-Clay :: #import,file "../../module.jai";
+Clay :: #import,file "../../clay-jai/module.jai";
 Raylib :: #import "raylib-jai";
 
 for_expansion :: Clay.for_expansion;;
