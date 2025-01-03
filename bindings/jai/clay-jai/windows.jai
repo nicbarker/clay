@@ -564,7 +564,7 @@ _debugViewWidth: u32 #elsewhere clay "Clay__debugViewWidth";
 
 #import "Basic"; // For assert
 
-clay :: #library,no_dll "clay-jai/windows/clay";
+clay :: #library,no_dll "windows/clay";
 
 #run {
     {
