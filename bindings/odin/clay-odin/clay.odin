@@ -18,7 +18,7 @@ when ODIN_OS == .Windows {
 }
 
 String :: struct {
-    length: c.int,
+    length: c.int32_t,
     chars:  [^]c.char,
 }
 
@@ -30,9 +30,8 @@ Dimensions :: struct {
 }
 
 Arena :: struct {
-    label:          String,
-    nextAllocation: u64,
-    capacity:       u64,
+    nextAllocation: uintptr,
+    capacity:       uintptr,
     memory:         [^]c.char,
 }
 
@@ -259,8 +258,8 @@ LayoutConfig :: struct {
 }
 
 ClayArray :: struct($type: typeid) {
-    capacity:      u32,
-    length:        u32,
+    capacity:      i32,
+    length:        i32,
     internalArray: [^]type,
 }
 
@@ -270,12 +269,33 @@ TypedConfig :: struct {
     id:     ElementId,
 }
 
+ErrorType :: enum {
+    TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
+    ARENA_CAPACITY_EXCEEDED,
+    ELEMENTS_CAPACITY_EXCEEDED,
+    TEXT_MEASUREMENT_CAPACITY_EXCEEDED,
+    DUPLICATE_ID,
+    FLOATING_CONTAINER_PARENT_NOT_FOUND,
+    INTERNAL_ERROR,
+}
+
+ErrorData :: struct {
+    errorType: ErrorType,
+    errorText: String,
+    userData: rawptr
+}
+
+ErrorHandler :: struct {
+    handler: proc "c" (errorData: ErrorData),
+    userData: rawptr
+}
+
 @(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
     MinMemorySize :: proc() -> u32 ---
     CreateArenaWithCapacityAndMemory :: proc(capacity: u32, offset: [^]u8) -> Arena ---
     SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
-    Initialize :: proc(arena: Arena, layoutDimensions: Dimensions) ---
+    Initialize :: proc(arena: Arena, layoutDimensions: Dimensions, errorHandler: ErrorHandler) ---
     UpdateScrollContainers :: proc(enableDragScrolling: bool, scrollDelta: Vector2, deltaTime: c.float) ---
     SetLayoutDimensions :: proc(dimensions: Dimensions) ---
     BeginLayout :: proc() ---
