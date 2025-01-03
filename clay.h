@@ -29,7 +29,7 @@
 
 // Public Macro API ------------------------
 
-#define CLAY__WRAPPER_TYPE(type) type##Wrapper
+#define CLAY__WRAPPER_TYPE(type) Clay__##type##Wrapper
 #define CLAY__WRAPPER_STRUCT(type) typedef struct { type wrapped; } CLAY__WRAPPER_TYPE(type)
 #define CLAY__CONFIG_WRAPPER(type, ...) (CLAY__INIT(CLAY__WRAPPER_TYPE(type)) { __VA_ARGS__ }).wrapped
 
