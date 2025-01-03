@@ -41,7 +41,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
     compile := array_find(args, "-compile");
     compile_debug := array_find(args, "-debug");
 
-    could_copy := FileUtils.copy_file("../../clay.h", "source/clay.h");
+    could_copy := FileUtils.copy_file("../../../clay.h", "source/clay.h");
     if !could_copy then return false;
     defer if !compile_debug then File.file_delete("source/clay.h");
 
@@ -50,7 +50,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
 
         success := true;
         #if OS == .WINDOWS {
-            File.make_directory_if_it_does_not_exist("clay-jai/windows", true);
+            File.make_directory_if_it_does_not_exist("windows", true);
 
             command := ifx compile_debug {
                 write_string("Compiling debug...\n");
@@ -64,7 +64,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
             defer File.file_delete("clay.o");
 
             write_string("Linking...\n");
-            command = Process.break_command_into_strings("llvm-ar -rcs clay-jai/windows/clay.lib clay.o");
+            command = Process.break_command_into_strings("llvm-ar -rcs windows/clay.lib clay.o");
             result = Process.run_command(..command, capture_and_return_output=true, print_captured_output=true);
             if result.exit_code != 0 then return false;
         } else {
@@ -83,7 +83,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
         using options;
 
         #if OS == .WINDOWS {
-            array_add(*libpaths, "clay-jai/windows");
+            array_add(*libpaths, "windows");
             output_filename = "windows.jai";
         } else {
             assert(false);
