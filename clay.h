@@ -29,38 +29,36 @@
 
 // Public Macro API ------------------------
 
-#ifdef __cplusplus
-#define CLAY__CONFIG_WRAPPER(type, ...) __VA_ARGS__
-#else
-#define CLAY__CONFIG_WRAPPER(type, ...) (type) __VA_ARGS__
-#endif
+#define CLAY__WRAPPER_TYPE(type) type##Wrapper
+#define CLAY__WRAPPER_STRUCT(type) typedef struct { type wrapped; } CLAY__WRAPPER_TYPE(type)
+#define CLAY__CONFIG_WRAPPER(type, ...) CLAY__INIT(CLAY__WRAPPER_TYPE(type)) { __VA_ARGS__ }
 
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define CLAY_LAYOUT(...) Clay__AttachLayoutConfig(Clay__StoreLayoutConfig(CLAY__CONFIG_WRAPPER(Clay_LayoutConfig, __VA_ARGS__)))
 
-#define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE))
+#define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__CONFIG_WRAPPER(Clay_RectangleElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE)
 
 #define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__))
 
-#define CLAY_IMAGE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .imageElementConfig = Clay__StoreImageElementConfig(CLAY__INIT(Clay_ImageElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE))
+#define CLAY_IMAGE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(CLAY__CONFIG_WRAPPER(Clay_ImageElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)
 
-#define CLAY_FLOATING(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .floatingElementConfig = Clay__StoreFloatingElementConfig(CLAY__INIT(Clay_FloatingElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER))
+#define CLAY_FLOATING(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(CLAY__CONFIG_WRAPPER(Clay_FloatingElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)
 
-#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__INIT(Clay_CustomElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM))
+#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__CONFIG_WRAPPER(Clay_CustomElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM)
 
-#define CLAY_SCROLL(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER))
+#define CLAY_SCROLL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__CONFIG_WRAPPER(Clay_ScrollElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)
 
-#define CLAY_BORDER(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__CONFIG_WRAPPER(Clay_BorderElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_OUTSIDE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER_OUTSIDE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(CLAY__WRAPPER_TYPE(Clay_BorderElementConfig)) {{ .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ }}) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_OUTSIDE_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } })}, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER_OUTSIDE_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(CLAY__WRAPPER_TYPE(Clay_BorderElementConfig)) {{ .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } }})}, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_ALL(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER_ALL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(CLAY__WRAPPER_TYPE(Clay_BorderElementConfig)) {{ .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ }}) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_ALL_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = { radius, radius, radius, radius }}) }))
+#define CLAY_BORDER_ALL_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(CLAY__WRAPPER_TYPE(Clay_BorderElementConfig)) {{ .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = { radius, radius, radius, radius }}}) })
 
 #define CLAY_CORNER_RADIUS(radius) (CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius })
 
@@ -128,7 +126,7 @@ static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
 #ifdef __cplusplus
 #define CLAY__INIT(type) type
-#define CLAY__TYPEDEF(name, ...) typedef __VA_ARGS__ name
+#define CLAY__TYPEDEF(name, ...) typedef __VA_ARGS__ name; CLAY__WRAPPER_STRUCT(name)
 #define CLAY__ALIGNMENT(type) alignof(type)
 #define CLAY__POINTER_ALIGNMENT alignof(void *)
 #define CLAY_PACKED_ENUM enum : uint8_t
@@ -137,7 +135,7 @@ static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 #define CLAY__INIT(type) (type)
 
 #define CLAY__ALIGNMENT_STRUCT(type) struct Clay__Align##type { char c; type x; }
-#define CLAY__TYPEDEF(name, ...) typedef __VA_ARGS__ name; CLAY__ALIGNMENT_STRUCT(name)
+#define CLAY__TYPEDEF(name, ...) typedef __VA_ARGS__ name; CLAY__ALIGNMENT_STRUCT(name); CLAY__WRAPPER_STRUCT(name)
 #define CLAY__ALIGNMENT(type) (offsetof(struct Clay__Align##type, x))
 #define CLAY__POINTER_ALIGNMENT CLAY__ALIGNMENT(pointer)
 
@@ -502,18 +500,18 @@ void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 // Internal API functions required by macros
 void Clay__OpenElement(void);
 void Clay__CloseElement(void);
-Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
+Clay_LayoutConfig * Clay__StoreLayoutConfig(CLAY__WRAPPER_TYPE(Clay_LayoutConfig) config);
 void Clay__ElementPostConfiguration(void);
 void Clay__AttachId(Clay_ElementId id);
 void Clay__AttachLayoutConfig(Clay_LayoutConfig *config);
 void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type);
-Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config);
-Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config);
-Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config);
-Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config);
-Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config);
-Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
-Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
+Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(CLAY__WRAPPER_TYPE(Clay_RectangleElementConfig) config);
+Clay_TextElementConfig * Clay__StoreTextElementConfig(CLAY__WRAPPER_TYPE(Clay_TextElementConfig) config);
+Clay_ImageElementConfig * Clay__StoreImageElementConfig(CLAY__WRAPPER_TYPE(Clay_ImageElementConfig) config);
+Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(CLAY__WRAPPER_TYPE(Clay_FloatingElementConfig) config);
+Clay_CustomElementConfig * Clay__StoreCustomElementConfig(CLAY__WRAPPER_TYPE(Clay_CustomElementConfig) config);
+Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(CLAY__WRAPPER_TYPE(Clay_ScrollElementConfig) config);
+Clay_BorderElementConfig * Clay__StoreBorderElementConfig(CLAY__WRAPPER_TYPE(Clay_BorderElementConfig) config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
 
@@ -2563,7 +2561,7 @@ void Clay__CalculateFinalLayout(void) {
                 }
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
-                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig){0}) },
+                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(CLAY__WRAPPER_TYPE(Clay_ScrollElementConfig)){0}) },
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
                 });
@@ -2796,7 +2794,7 @@ void Clay__CalculateFinalLayout(void) {
                         };
                         Clay__AddRenderCommand(renderCommand);
                         if (borderConfig->betweenChildren.width > 0 && borderConfig->betweenChildren.color.a > 0) {
-                            Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {.color = borderConfig->betweenChildren.color});
+                            Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(CLAY__WRAPPER_TYPE(Clay_RectangleElementConfig)) {{.color = borderConfig->betweenChildren.color}});
                             Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x, (float)layoutConfig->padding.y };
                             if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                                 for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
@@ -2918,14 +2916,14 @@ void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConf
     openLayoutElement->elementConfigs.length++;
     Clay__ElementConfigArray_Add(&Clay__elementConfigBuffer, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
 }
-Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config); }
-Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config); }
-Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__TEXT_ELEMENT_CONFIG_DEFAULT : Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config); }
-Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config); }
-Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config); }
-Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config); }
-Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config); }
-Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
+Clay_LayoutConfig * Clay__StoreLayoutConfig(CLAY__WRAPPER_TYPE(Clay_LayoutConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay__layoutConfigs, config.wrapped); }
+Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(CLAY__WRAPPER_TYPE(Clay_RectangleElementConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay__rectangleElementConfigs, config.wrapped); }
+Clay_TextElementConfig * Clay__StoreTextElementConfig(CLAY__WRAPPER_TYPE(Clay_TextElementConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__TEXT_ELEMENT_CONFIG_DEFAULT : Clay__TextElementConfigArray_Add(&Clay__textElementConfigs, config.wrapped); }
+Clay_ImageElementConfig * Clay__StoreImageElementConfig(CLAY__WRAPPER_TYPE(Clay_ImageElementConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay__imageElementConfigs, config.wrapped); }
+Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(CLAY__WRAPPER_TYPE(Clay_FloatingElementConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay__floatingElementConfigs, config.wrapped); }
+Clay_CustomElementConfig * Clay__StoreCustomElementConfig(CLAY__WRAPPER_TYPE(Clay_CustomElementConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay__customElementConfigs, config.wrapped); }
+Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(CLAY__WRAPPER_TYPE(Clay_ScrollElementConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay__scrollElementConfigs, config.wrapped); }
+Clay_BorderElementConfig * Clay__StoreBorderElementConfig(CLAY__WRAPPER_TYPE(Clay_BorderElementConfig) config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config.wrapped); }
 
 #pragma region DebugTools
 Clay_Color CLAY__DEBUGVIEW_COLOR_1 = {58, 56, 52, 255};
