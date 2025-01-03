@@ -30,17 +30,6 @@ to_jai_string :: (str: Clay.String) -> string {
     return .{data = str.chars, count = cast(s64, str.length)};
 }
 
-// handle_sidebar_interaction :: (
-//     element_id: Clay.ElementId,
-//     pointer_data: Clay.PointerData,
-//     user_data: s64
-// ) #c_call {
-//     // If this button was clicked
-//     if pointer_data.state == .PRESSED_THIS_FRAME {
-//         selected_document_index = user_data;
-//     }
-// }
-
 handle_clay_errors :: (error_data: Clay.ErrorData) #c_call {
     push_context {
         log_error(
@@ -87,8 +76,8 @@ main :: () {
     raylib_initialize(1024, 768, "Introducing Clay Demo", flags);
 
     clay_required_memory := Clay.MinMemorySize();
-    memory := NewArray(clay_required_memory, u8);
-    clay_memory := Clay.CreateArenaWithCapacityAndMemory(clay_required_memory, memory.data);
+    memory := alloc(clay_required_memory);
+    clay_memory := Clay.CreateArenaWithCapacityAndMemory(clay_required_memory, memory);
     Clay.Initialize(
         clay_memory, 
         Clay.Dimensions.{cast(float, Raylib.GetScreenWidth()), cast(float, Raylib.GetScreenHeight())},
