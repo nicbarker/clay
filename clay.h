@@ -1842,12 +1842,13 @@ void Clay__ElementPostConfiguration(void) {
                     }
                 } else {
                     Clay_LayoutElementHashMapItem *parentItem = Clay__GetHashMapItem(floatingConfig->parentId);
-                    clipElementId = Clay__int32_tArray_Get(&Clay__layoutElementClipElementIds, (int32_t)(parentItem->layoutElement - Clay__layoutElements.internalArray));
                     if (!parentItem) {
                         Clay__errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
                             .errorType = CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND,
                             .errorText = CLAY_STRING("A floating element was declared with a parentId, but no element with that ID was found."),
                             .userData = Clay__errorHandler.userData });
+                    } else {
+                        clipElementId = Clay__int32_tArray_Get(&Clay__layoutElementClipElementIds, parentItem->layoutElement - Clay__layoutElements.internalArray);
                     }
                 }
                 Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
