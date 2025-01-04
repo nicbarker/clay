@@ -336,7 +336,7 @@
             let element = null;
             if (!elementCache[renderCommand.id.value]) {
                 let elementType = 'div';
-                switch (renderCommand.commandType.value) {
+                switch (renderCommand.commandType.value & 0xff) {
                     case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                         if (readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition).link.length.value > 0) {
                             elementType = 'a';
@@ -384,7 +384,8 @@
                 element.style.height = Math.round(renderCommand.boundingBox.height.value) + 'px';
             }
 
-            switch(renderCommand.commandType.value) {
+            // note: commandType is packed to uint8_t and has 3 garbage bytes of padding
+            switch(renderCommand.commandType.value & 0xff) {
                 case (CLAY_RENDER_COMMAND_TYPE_NONE): {
                     break;
                 }
