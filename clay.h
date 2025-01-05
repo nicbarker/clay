@@ -2935,6 +2935,18 @@ Clay_Color CLAY__DEBUGVIEW_COLOR_2 = {62, 60, 58, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_3 = {141, 133, 135, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_4 = {238, 226, 231, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = {102, 80, 78, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_CLOSE_BUTTON_1 = {217, 91, 67, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_CLOSE_BUTTON_2 = {217, 91, 67, 80};
+float      CLAY__DEBUGVIEW_COLOR_TYPE_BACKGROUND_ALPHA = 90;
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_RECTANGLE = {243, 134, 48, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_TEXT = {105, 210, 231, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_IMAGE = {121, 189, 154, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_FLOATING_CONTAINER = {250, 105, 0, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_SCROLL_CONTAINER = {242, 196, 90, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_BORDER_CONTAINER = {108, 91, 123,  255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_CUSTOM = {11, 72, 107, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_TYPE_ERROR = {0, 0, 0, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_DUP_ID_BORDER = {177, 147, 8, 255};
 const int32_t CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
 const int32_t CLAY__DEBUGVIEW_OUTER_PADDING = 10;
 const int32_t CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
@@ -2948,16 +2960,16 @@ CLAY__TYPEDEF(Clay__DebugElementConfigTypeLabelConfig, struct {
 
 Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Clay__ElementConfigType type) {
     switch (type) {
-        case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Rectangle"), {243,134,48,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Scroll"), {242,196,90,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), {108,91,123, 255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), {11,72,107,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Rectangle"), CLAY__DEBUGVIEW_COLOR_TYPE_RECTANGLE };
+        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), CLAY__DEBUGVIEW_COLOR_TYPE_TEXT };
+        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), CLAY__DEBUGVIEW_COLOR_TYPE_IMAGE };
+        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), CLAY__DEBUGVIEW_COLOR_TYPE_FLOATING_CONTAINER };
+        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Scroll"), CLAY__DEBUGVIEW_COLOR_TYPE_SCROLL_CONTAINER };
+        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), CLAY__DEBUGVIEW_COLOR_TYPE_BORDER_CONTAINER };
+        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), CLAY__DEBUGVIEW_COLOR_TYPE_CUSTOM };
         default: break;
     }
-    return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Error"), {0,0,0,255} };
+    return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Error"), CLAY__DEBUGVIEW_COLOR_TYPE_ERROR };
 }
 
 CLAY__TYPEDEF(Clay__RenderDebugLayoutData, struct {
@@ -3027,7 +3039,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 // Collisions and offscreen info
                 if (currentElementData) {
                     if (currentElementData->debugData->collision) {
-                        CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){177, 147, 8, 255}), 4)) {
+                        CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_BORDER_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_DUP_ID_BORDER, 4)) {
                             CLAY_TEXT(CLAY_STRING("Duplicate ID"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }));
                         }
                     }
@@ -3045,7 +3057,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, elementConfigIndex);
                     Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(elementConfig->type);
                     Clay_Color backgroundColor = config.color;
-                    backgroundColor.a = 90;
+                    backgroundColor.a = CLAY__DEBUGVIEW_COLOR_TYPE_BACKGROUND_ALPHA;
                     CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_RECTANGLE({ .color = backgroundColor, .cornerRadius = CLAY_CORNER_RADIUS(4) }), CLAY_BORDER_OUTSIDE_RADIUS(1, config.color, 4)) {
                         CLAY_TEXT(config.label, CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
                     }
@@ -3137,7 +3149,7 @@ void Clay__RenderDebugLayoutSizing(Clay_SizingAxis sizing, Clay_TextElementConfi
 void Clay__RenderDebugViewElementConfigHeader(Clay_String elementId, Clay__ElementConfigType type) {
     Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(type);
     Clay_Color backgroundColor = config.color;
-    backgroundColor.a = 90;
+    backgroundColor.a = CLAY__DEBUGVIEW_COLOR_TYPE_BACKGROUND_ALPHA;
     CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({0}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = { .x = CLAY__DEBUGVIEW_OUTER_PADDING }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } })) {
         CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_RECTANGLE({ .color = backgroundColor, .cornerRadius = CLAY_CORNER_RADIUS(4) }), CLAY_BORDER_OUTSIDE_RADIUS(1, config.color, 4)) {
             CLAY_TEXT(config.label, CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
@@ -3240,9 +3252,9 @@ void Clay__RenderDebugView(void) {
             CLAY_TEXT(CLAY_STRING("Clay Debug Tools"), infoTextConfig);
             CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({0}), {0} } })) {}
             // Close button
-            CLAY(CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){217,91,67,255}), 4),
+            CLAY(CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__DEBUGVIEW_COLOR_CLOSE_BUTTON_1), 4),
                 CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} }),
-                CLAY_RECTANGLE({ .color = {217,91,67,80} }),
+                CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_CLOSE_BUTTON_2 }),
                 Clay_OnHover(HandleDebugViewCloseButtonInteraction, 0)
             ) {
                 CLAY_TEXT(CLAY_STRING("x"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
