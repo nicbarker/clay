@@ -165,7 +165,7 @@ Clay_Color ColorLerp(Clay_Color a, Clay_Color b, float amount) {
 Clay_String LOREM_IPSUM_TEXT = CLAY_STRING("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
 
 void HighPerformancePageDesktop(float lerpValue) {
-    CLAY(CLAY_ID("PerformanceDesktop"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT({ .min = windowHeight - 50 }) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 82, 32}, .childGap = 64 }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+    CLAY(CLAY_ID("PerformancePageOuter"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT({ .min = windowHeight - 50 }) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 82, 32}, .childGap = 64 }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
         CLAY(CLAY_ID("PerformanceLeftText"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_PERCENT(0.5) }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8 })) {
             CLAY_TEXT(CLAY_STRING("High Performance"), CLAY_TEXT_CONFIG({ .fontSize = 52, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT }));
             CLAY(CLAY_ID("PerformanceSpacer"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({ .max = 16 }) }})) {}
@@ -187,7 +187,7 @@ void HighPerformancePageDesktop(float lerpValue) {
 }
 
 void HighPerformancePageMobile(float lerpValue) {
-    CLAY(CLAY_ID("PerformanceMobile"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT({ .min = windowHeight - 50 }) }, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 16, 32}, .childGap = 32 }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+    CLAY(CLAY_ID("PerformancePageOuter"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIT({ .min = windowHeight - 50 }) }, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}, .padding = {.x = 16, 32}, .childGap = 32 }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
         CLAY(CLAY_ID("PerformanceLeftText"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW() }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8 })) {
             CLAY_TEXT(CLAY_STRING("High Performance"), CLAY_TEXT_CONFIG({ .fontSize = 48, .fontId = FONT_ID_TITLE_56, .textColor = COLOR_LIGHT }));
             CLAY(CLAY_ID("PerformanceSpacer"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({ .max = 16 }) }})) {}
@@ -390,7 +390,11 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
     windowWidth = width;
     windowHeight = height;
     Clay_SetLayoutDimensions((Clay_Dimensions) { width, height });
-    if (deltaTime == deltaTime) { // NaN propagation can cause pain here
+    Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
+    Clay_LayoutElementHashMapItem *perfPage = Clay__GetHashMapItem(Clay_GetElementId(CLAY_STRING("PerformancePageOuter")).id);
+    // NaN propagation can cause pain here
+    float perfPageYOffset = perfPage->boundingBox.y + scrollContainerData.scrollPosition->y;
+    if (deltaTime == deltaTime && perfPageYOffset < height && perfPageYOffset + perfPage->boundingBox.height > 0) {
         animationLerpValue += deltaTime;
         if (animationLerpValue > 1) {
             animationLerpValue -= 2;
@@ -413,12 +417,10 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
     }
 
     if (isMouseDown && !scrollbarData.mouseDown && Clay_PointerOver(Clay_GetElementId(CLAY_STRING("ScrollBar")))) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         scrollbarData.clickOrigin = (Clay_Vector2) { mousePositionX, mousePositionY };
         scrollbarData.positionOrigin = *scrollContainerData.scrollPosition;
         scrollbarData.mouseDown = true;
     } else if (scrollbarData.mouseDown) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         if (scrollContainerData.contentDimensions.height > 0) {
             Clay_Vector2 ratio = (Clay_Vector2) {
                 scrollContainerData.contentDimensions.width / scrollContainerData.scrollContainerDimensions.width,
@@ -434,12 +436,10 @@ CLAY_WASM_EXPORT("UpdateDrawFrame") Clay_RenderCommandArray UpdateDrawFrame(floa
     }
 
     if (arrowKeyDownPressedThisFrame) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         if (scrollContainerData.contentDimensions.height > 0) {
             scrollContainerData.scrollPosition->y = scrollContainerData.scrollPosition->y - 50;
         }
     } else if (arrowKeyUpPressedThisFrame) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay_GetElementId(CLAY_STRING("OuterScrollContainer")));
         if (scrollContainerData.contentDimensions.height > 0) {
             scrollContainerData.scrollPosition->y = scrollContainerData.scrollPosition->y + 50;
         }
