@@ -1,0 +1,5 @@
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/CMakeFiles/clay_examples_textui_sidebar_scrolling_container.dir
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/CMakeFiles/package.dir
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/CMakeFiles/package_source.dir
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/CMakeFiles/edit_cache.dir
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/CMakeFiles/rebuild_cache.dir

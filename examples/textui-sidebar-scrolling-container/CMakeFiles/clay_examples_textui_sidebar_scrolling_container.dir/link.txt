@@ -1,0 +1,1 @@
+/usr/bin/cc -g CMakeFiles/clay_examples_textui_sidebar_scrolling_container.dir/main.c.o "CMakeFiles/clay_examples_textui_sidebar_scrolling_container.dir/multi-compilation-unit.c.o" -o clay_examples_textui_sidebar_scrolling_container  -lncurses

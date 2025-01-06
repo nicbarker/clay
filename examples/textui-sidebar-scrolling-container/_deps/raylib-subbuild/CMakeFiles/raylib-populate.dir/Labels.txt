@@ -1,0 +1,14 @@
+# Target labels
+ raylib-populate
+# Source files and their labels
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/CMakeFiles/raylib-populate
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/CMakeFiles/raylib-populate.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/CMakeFiles/raylib-populate-complete.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-build.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-configure.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-download.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-install.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-mkdir.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-patch.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-test.rule
+/home/phillip/Projects/clay/examples/textui-sidebar-scrolling-container/_deps/raylib-subbuild/raylib-populate-prefix/src/raylib-populate-stamp/raylib-populate-update.rule
