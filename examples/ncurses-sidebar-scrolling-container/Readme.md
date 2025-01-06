@@ -1,6 +1,6 @@
 # textui/console renderer example
 
-## Inroduction
+## Introduction
 This renderer example utilizes ncurses and a mostly implemented library which converts the clay draw commands into ncurses commands.
 A console rendering is very limited, and all coordinates are simply rounded via integer division to the coordinate system of a terminal.
 
