@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/clay_examples_raylib_sidebar_scrolling_container.dir/main.c.o "CMakeFiles/clay_examples_raylib_sidebar_scrolling_container.dir/multi-compilation-unit.c.o" -o clay_examples_raylib_sidebar_scrolling_container  _deps/raylib-build/raylib/libraylib.a -lm -lpthread /usr/lib64/libOpenGL.so /usr/lib64/libGLX.so /usr/lib64/libGLU.so /usr/lib64/librt.a -lm -ldl
