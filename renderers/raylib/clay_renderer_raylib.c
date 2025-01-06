@@ -4,9 +4,6 @@
 #include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
-#ifdef CLAY_OVERFLOW_TRAP
-#include "signal.h"
-#endif
 
 #define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) (Rectangle) { .x = rectangle.x, .y = rectangle.y, .width = rectangle.width, .height = rectangle.height }
 #define CLAY_COLOR_TO_RAYLIB_COLOR(color) (Color) { .r = (unsigned char)roundf(color.r), .g = (unsigned char)roundf(color.g), .b = (unsigned char)roundf(color.b), .a = (unsigned char)roundf(color.a) }
@@ -229,9 +226,6 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
             }
             default: {
                 printf("Error: unhandled render command.");
-                #ifdef CLAY_OVERFLOW_TRAP
-                raise(SIGTRAP);
-                #endif
                 exit(1);
             }
         }

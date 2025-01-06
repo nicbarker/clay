@@ -87,7 +87,7 @@ LandingPageDesktop :: proc() {
                     "Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance.",
                     clay.TextConfig({fontSize = 56, fontId = FONT_ID_TITLE_56, textColor = COLOR_RED}),
                 )
-                if clay.UI(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({}), height = clay.SizingFixed(32)}})) {}
+//                if clay.UI(clay.Layout({sizing = {width = clay.SizingGrow({}), height = clay.SizingFixed(32)}})) {}
                 clay.Text(
                     "Clay is laying out this webpage right now!",
                     clay.TextConfig({fontSize = 36, fontId = FONT_ID_TITLE_36, textColor = COLOR_ORANGE}),
@@ -125,7 +125,7 @@ LandingPageMobile :: proc() {
                 "Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance.",
                 clay.TextConfig({fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_RED}),
             )
-            if clay.UI(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({}), height = clay.SizingFixed(32)}})) {}
+            if clay.UI(clay.Layout({sizing = {width = clay.SizingGrow({}), height = clay.SizingFixed(32)}})) {}
             clay.Text(
                 "Clay is laying out this webpage right now!",
                 clay.TextConfig({fontSize = 32, fontId = FONT_ID_TITLE_32, textColor = COLOR_ORANGE}),
@@ -207,7 +207,7 @@ DeclarativeSyntaxPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizi
     }
     if clay.UI(clay.ID("SyntaxPageRightImage"), clay.Layout({sizing = {width = widthSizing}, childAlignment = {x = .CENTER}})) {
         if clay.UI(
-            clay.ID("SyntaxPageRightImage"),
+            clay.ID("SyntaxPageRightImageInner"),
             clay.Layout({sizing = {width = clay.SizingGrow({max = 568})}}),
             clay.Image({imageData = &syntaxImage, sourceDimensions = {1136, 1194}}),
         ) {}
@@ -255,7 +255,7 @@ LOREM_IPSUM_TEXT := "Lorem ipsum dolor sit amet, consectetur adipiscing elit, se
 HighPerformancePage :: proc(lerpValue: f32, titleTextConfig: clay.TextElementConfig, widthSizing: clay.SizingAxis) {
     if clay.UI(clay.ID("PerformanceLeftText"), clay.Layout({sizing = {width = widthSizing}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
         clay.Text("High Performance", clay.TextConfig(titleTextConfig))
-        if clay.UI(clay.ID("SyntaxSpacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
+        if clay.UI(clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
         clay.Text(
             "Fast enough to recompute your entire UI every frame.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_LIGHT}),
@@ -347,7 +347,7 @@ RendererButtonInactive :: proc(index: u32, text: string) {
 RendererPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizing: clay.SizingAxis) {
     if clay.UI(clay.ID("RendererLeftText"), clay.Layout({sizing = {width = widthSizing}, layoutDirection = .TOP_TO_BOTTOM, childGap = 8})) {
         clay.Text("Renderer & Platform Agnostic", clay.TextConfig(titleTextConfig))
-        if clay.UI(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
+        if clay.UI(clay.Layout({sizing = {width = clay.SizingGrow({max = 16})}})) {}
         clay.Text(
             "Clay outputs a sorted array of primitive render commands, such as RECTANGLE, TEXT or IMAGE.",
             clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_36, textColor = COLOR_RED}),
@@ -366,7 +366,7 @@ RendererPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizing: clay.
         clay.Layout({sizing = {width = widthSizing}, childAlignment = {x = .CENTER}, layoutDirection = .TOP_TO_BOTTOM, childGap = 16}),
     ) {
         clay.Text("Try changing renderer!", clay.TextConfig({fontSize = 36, fontId = FONT_ID_BODY_36, textColor = COLOR_ORANGE}))
-        if clay.UI(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({max = 32})}})) {}
+        if clay.UI(clay.Layout({sizing = {width = clay.SizingGrow({max = 32})}})) {}
         RendererButtonActive(0, "Raylib Renderer")
     }
 }
@@ -426,7 +426,7 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
             clay.Layout({sizing = {clay.SizingGrow({}), clay.SizingFixed(50)}, childAlignment = {y = .CENTER}, childGap = 24, padding = {x = 32}}),
         ) {
             clay.Text("Clay", &headerTextConfig)
-            if clay.UI(clay.ID("Spacer"), clay.Layout({sizing = {width = clay.SizingGrow({})}})) {}
+            if clay.UI(clay.Layout({sizing = {width = clay.SizingGrow({})}})) {}
 
             if (!mobileScreen) {
                 if clay.UI(clay.ID("LinkExamplesOuter"), clay.Layout({}), clay.Rectangle({color = {0, 0, 0, 0}})) {
@@ -483,12 +483,18 @@ loadFont :: proc(fontId: u16, fontSize: u16, path: cstring) {
     raylib.SetTextureFilter(raylibFonts[fontId].font.texture, raylib.TextureFilter.TRILINEAR)
 }
 
+errorHandler :: proc "c" (errorData: clay.ErrorData) {
+    if (errorData.errorType == clay.ErrorType.DUPLICATE_ID) {
+
+    }
+}
+
 main :: proc() {
     minMemorySize: u32 = clay.MinMemorySize()
     memory := make([^]u8, minMemorySize)
     arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
     clay.SetMeasureTextFunction(measureText)
-    clay.Initialize(arena, {cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()})
+    clay.Initialize(arena, {cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()}, { handler = errorHandler })
 
     raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE, .WINDOW_HIGHDPI, .MSAA_4X_HINT})
     raylib.InitWindow(windowWidth, windowHeight, "Raylib Odin Example")

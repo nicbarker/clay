@@ -245,7 +245,7 @@ This ID (or, if not provided, an auto generated ID) will be forwarded to the fin
 
 Clay provides several functions for handling mouse and pointer interactions.
 
-All pointer interactions depend on the function `void Clay_SetPointerState(Clay_Vector2 position)` being called after each mouse position update and before any other clay functions.
+All pointer interactions depend on the function `void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown)` being called after each mouse position update and before any other clay functions.
 
 **During UI declaration**
 

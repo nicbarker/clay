@@ -317,7 +317,9 @@
         for (let i = 0; i < length; i++, arrayOffset += renderCommandSize) {
             let renderCommand = readStructAtAddress(arrayOffset, renderCommandDefinition);
             let boundingBox = renderCommand.boundingBox;
-            switch(renderCommand.commandType.value) {
+            
+            // note: commandType is packed to uint8_t and has 3 garbage bytes of padding
+            switch(renderCommand.commandType.value & 0xff) {
                 case (CLAY_RENDER_COMMAND_TYPE_NONE): {
                     break;
                 }
