@@ -6,9 +6,9 @@
 #define HPIXELS_PER_CHAR 5 //these are used to convert between Clay pixel space and terminal character locations
 #define VPIXELS_PER_CHAR 8
 
-void Clay_textui_Render(WINDOW * win, Clay_RenderCommandArray renderCommands);
+void Clay_ncurses_Render(WINDOW * win, Clay_RenderCommandArray renderCommands);
 
-void Clay_textui_Render(WINDOW * win, Clay_RenderCommandArray renderCommands){
+void Clay_ncurses_Render(WINDOW * win, Clay_RenderCommandArray renderCommands){
     short color_pair = 1; //increment on use, 0 is reserved
     short color = 10; //get passed reserved colors
     //maybe keep a list of Clay colors and only init a new color if required.
@@ -104,7 +104,7 @@ void Clay_textui_Render(WINDOW * win, Clay_RenderCommandArray renderCommands){
 
 
 //written by EmmanuelMess: https://github.com/nicbarker/clay/pull/91/commits/7ce74ba46c01f32e4517032e9da76bf54ecf7a43
-static inline Clay_Dimensions Textui_MeasureText(Clay_String *text, Clay_TextElementConfig *config) {
+static inline Clay_Dimensions ncurses_MeasureText(Clay_String *text, Clay_TextElementConfig *config) {
 	Clay_Dimensions textSize = { 0 };
 	float maxTextWidth = 0.0f;
 	float lineTextWidth = 0;

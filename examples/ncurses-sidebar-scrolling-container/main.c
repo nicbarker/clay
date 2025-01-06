@@ -1,7 +1,6 @@
 #include <curses.h>
 #define CLAY_IMPLEMENTATION
-#include "../../clay.h"
-#include "../../renderers/textui/clay_renderer_textui.c"
+#include "../../renderers/ncurses/clay_renderer_ncurses.c"
 #include <stdlib.h>
 
 const uint32_t FONT_ID_BODY_24 = 0;
@@ -217,7 +216,7 @@ bool UpdateDrawFrame(WINDOW* win, int ch)
     //printf("layout time: %f microseconds\n", (GetTime() - currentTime) * 1000 * 1000);
     // RENDERING ---------------------------------
 //    currentTime = GetTime();
-    Clay_textui_Render(win, renderCommands);
+    Clay_ncurses_Render(win, renderCommands);
 
     attr_on(color_set(0,0),0);
     mvwprintw(win, 1, 0, "Left mouse button at %d, %d", event.x, event.y);
@@ -262,7 +261,7 @@ int main(void) {
     getmaxyx(win, y, x);
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-    Clay_SetMeasureTextFunction(Textui_MeasureText);//clay segfaults if this isn't defined, which is a bummer.
+    Clay_SetMeasureTextFunction(ncurses_MeasureText);//clay segfaults if this isn't defined, which is a bummer.
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)x*HPIXELS_PER_CHAR, (float)y*VPIXELS_PER_CHAR }, (Clay_ErrorHandler) { HandleClayErrors });
 
     //Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
