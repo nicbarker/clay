@@ -1,4 +1,3 @@
-#pragma once
 // VERSION: 0.11
 
 /*
@@ -11,9 +10,9 @@
     See the examples folder for details.
 */
 
-#include "stdint.h"
-#include "stdbool.h"
-#include "stddef.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 // -----------------------------------------
 // HEADER DECLARATIONS ---------------------
@@ -30,54 +29,52 @@
 
 // Public Macro API ------------------------
 
-#ifdef __cplusplus
-#define CLAY__CONFIG_WRAPPER(type, ...) __VA_ARGS__
-#else
-#define CLAY__CONFIG_WRAPPER(type, ...) (type) __VA_ARGS__
-#endif
+#define CLAY__WRAPPER_TYPE(type) Clay__##type##Wrapper
+#define CLAY__WRAPPER_STRUCT(type) typedef struct { type wrapped; } CLAY__WRAPPER_TYPE(type)
+#define CLAY__CONFIG_WRAPPER(type, ...) (CLAY__INIT(CLAY__WRAPPER_TYPE(type)) { __VA_ARGS__ }).wrapped
 
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define CLAY_LAYOUT(...) Clay__AttachLayoutConfig(Clay__StoreLayoutConfig(CLAY__CONFIG_WRAPPER(Clay_LayoutConfig, __VA_ARGS__)))
 
-#define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE))
+#define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__CONFIG_WRAPPER(Clay_RectangleElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE)
 
 #define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__))
 
-#define CLAY_IMAGE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .imageElementConfig = Clay__StoreImageElementConfig(CLAY__INIT(Clay_ImageElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE))
+#define CLAY_IMAGE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(CLAY__CONFIG_WRAPPER(Clay_ImageElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)
 
-#define CLAY_FLOATING(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .floatingElementConfig = Clay__StoreFloatingElementConfig(CLAY__INIT(Clay_FloatingElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER))
+#define CLAY_FLOATING(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(CLAY__CONFIG_WRAPPER(Clay_FloatingElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)
 
-#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__INIT(Clay_CustomElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM))
+#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__CONFIG_WRAPPER(Clay_CustomElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM)
 
-#define CLAY_SCROLL(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER))
+#define CLAY_SCROLL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__CONFIG_WRAPPER(Clay_ScrollElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)
 
-#define CLAY_BORDER(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__CONFIG_WRAPPER(Clay_BorderElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_OUTSIDE(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER_OUTSIDE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_OUTSIDE_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = { radius, radius, radius, radius } })}, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER_OUTSIDE_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = CLAY_CORNER_RADIUS(radius) })}, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_ALL(...) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER))
+#define CLAY_BORDER_ALL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_ALL_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__CONFIG_WRAPPER(Clay_ElementConfigUnion, { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = { radius, radius, radius, radius }}) }))
+#define CLAY_BORDER_ALL_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = CLAY_CORNER_RADIUS(radius)}) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_CORNER_RADIUS(radius) CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius }
+#define CLAY_CORNER_RADIUS(radius) (CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius })
 
 #define CLAY__STRUCT_1_ARGS(a) a
-#define CLAY__STRUCT_0_ARGS() {}
+#define CLAY__STRUCT_0_ARGS() CLAY__DEFAULT_STRUCT
 #define CLAY__STRUCT_OVERRIDE(_0, _1, NAME, ...) NAME
 
-#define CLAY__SIZING_FIT_INTERNAL(...) CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = CLAY__INIT(Clay_SizingMinMax) __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_FIT }
+#define CLAY__SIZING_FIT_INTERNAL(...) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_FIT })
 #define CLAY_SIZING_FIT(...) CLAY__SIZING_FIT_INTERNAL(CLAY__STRUCT_OVERRIDE("empty", ##__VA_ARGS__, CLAY__STRUCT_1_ARGS, CLAY__STRUCT_0_ARGS)(__VA_ARGS__))
 
-#define CLAY__SIZING_GROW_INTERNAL(...) CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = CLAY__INIT(Clay_SizingMinMax) __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_GROW }
+#define CLAY__SIZING_GROW_INTERNAL(...) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = __VA_ARGS__ }, .type = CLAY__SIZING_TYPE_GROW })
 #define CLAY_SIZING_GROW(...) CLAY__SIZING_GROW_INTERNAL(CLAY__STRUCT_OVERRIDE("empty", ##__VA_ARGS__, CLAY__STRUCT_1_ARGS, CLAY__STRUCT_0_ARGS)(__VA_ARGS__))
 
-#define CLAY_SIZING_FIXED(fixedSize) CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = { fixedSize, fixedSize } }, .type = CLAY__SIZING_TYPE_FIXED }
+#define CLAY_SIZING_FIXED(fixedSize) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = { fixedSize, fixedSize } }, .type = CLAY__SIZING_TYPE_FIXED })
 
-#define CLAY_SIZING_PERCENT(percentOfParent) CLAY__INIT(Clay_SizingAxis) { .size = { .percent = (percentOfParent) }, .type = CLAY__SIZING_TYPE_PERCENT }
+#define CLAY_SIZING_PERCENT(percentOfParent) (CLAY__INIT(Clay_SizingAxis) { .size = { .percent = (percentOfParent) }, .type = CLAY__SIZING_TYPE_PERCENT })
 
 #define CLAY_ID(label) Clay__AttachId(Clay__HashString(CLAY_STRING(label), 0, 0))
 
@@ -85,44 +82,87 @@
 
 #define CLAY_ID_LOCAL(label) CLAY_IDI_LOCAL(label, 0)
 
-#define CLAY_IDI_LOCAL(label, index) Clay__AttachId(Clay__HashString(CLAY_STRING(label), Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 2))->children.length + 1, Clay__GetOpenLayoutElement()->id))
+#define CLAY_IDI_LOCAL(label, index) Clay__AttachId(Clay__HashString(CLAY_STRING(label), index, Clay__GetParentElementId()))
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
-#define CLAY_STRING(string) CLAY__INIT(Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = (string) }
+#define CLAY_STRING(string) (CLAY__INIT(Clay_String) { .length = CLAY__STRING_LENGTH(string), .chars = (string) })
 
-static int CLAY__ELEMENT_DEFINITION_LATCH = 0;
+static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
-#define CLAY__ELEMENT_INTERNAL(...) \
+// Publicly visible layout element macros -----------------------------------------------------
+
+/* This macro looks scary on the surface, but is actually quite simple.
+  It turns a macro call like this:
+
+  CLAY(
+    CLAY_RECTANGLE(),
+    CLAY_ID()
+  ) {
+      ...children declared here
+  }
+
+  Into calls like this:
+
+  Clay_OpenElement();
+  CLAY_RECTANGLE();
+  CLAY_ID();
+  Clay_ElementPostConfiguration();
+  ...children declared here
+  Clay_CloseElement();
+
+  The for loop will only ever run a single iteration, putting Clay__CloseElement() in the increment of the loop
+  means that it will run after the body - where the children are declared. It just exists to make sure you don't forget
+  to call Clay_CloseElement().
+*/
+#define CLAY(...) \
 	for (\
-		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), __VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
+		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), ##__VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
 		CLAY__ELEMENT_DEFINITION_LATCH < 1; \
 		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
 	)
 
-#define CLAY__6_ARGS(a, b, c, d, e, f) a, b, c, d, e, f
-#define CLAY__5_ARGS(a, b, c, d, e) a, b, c, d, e
-#define CLAY__4_ARGS(a, b, c, d) a, b, c, d
-#define CLAY__3_ARGS(a, b, c) a, b, c
-#define CLAY__2_ARGS(a, b) a, b
-#define CLAY__1_ARGS(a) a
-#define CLAY__0_ARGS() Clay__Noop()
-#define CLAY__ARGS_OVERRIDE(_0, _1, _2, _3, _4, _5, _6, NAME, ...) NAME
-
-// Publicly visible layout element macros -----------------------------------------------------
-#define CLAY(...) CLAY__ELEMENT_INTERNAL(CLAY__ARGS_OVERRIDE("empty", ##__VA_ARGS__, CLAY__6_ARGS, CLAY__5_ARGS, CLAY__4_ARGS, CLAY__3_ARGS, CLAY__2_ARGS, CLAY__1_ARGS, CLAY__0_ARGS)(__VA_ARGS__))
-
 #define CLAY_TEXT(text, textConfig) Clay__OpenTextElement(text, textConfig)
 
 #ifdef __cplusplus
+
 #define CLAY__INIT(type) type
+#define CLAY__TYPEDEF(name, ...) typedef __VA_ARGS__ name; CLAY__WRAPPER_STRUCT(name)
 #define CLAY__ALIGNMENT(type) alignof(type)
-#define CLAY_PACKED_ENUM : uint8_t
+#define CLAY__POINTER_ALIGNMENT alignof(void *)
+
+#define CLAY_PACKED_ENUM enum : uint8_t
+
+#define CLAY__DEFAULT_STRUCT {}
+
 #else
+
 #define CLAY__INIT(type) (type)
-#define CLAY__ALIGNMENT(type) (offsetof(struct { char c; type x; }, x))
-#define CLAY_PACKED_ENUM __attribute__((__packed__))
+
+#define CLAY__ALIGNMENT_STRUCT(type) struct Clay__Align##type { char c; type x; }
+#define CLAY__TYPEDEF(name, ...) typedef __VA_ARGS__ name; CLAY__ALIGNMENT_STRUCT(name); CLAY__WRAPPER_STRUCT(name)
+#define CLAY__ALIGNMENT(type) (offsetof(struct Clay__Align##type, x))
+#define CLAY__POINTER_ALIGNMENT CLAY__ALIGNMENT(pointer)
+
+// NOTE: If you need to get the offset for other standard types in the future, add them here.
+struct Clay__Alignpointer { char c; void *x; };
+CLAY__ALIGNMENT_STRUCT(bool);
+CLAY__ALIGNMENT_STRUCT(uint8_t);
+CLAY__ALIGNMENT_STRUCT(int32_t);
+
+#if defined(_MSC_VER) && !defined(__clang__)
+#define CLAY_PACKED_ENUM __pragma(pack(push, 1)) enum __pragma(pack(pop))
+#else
+#define CLAY_PACKED_ENUM enum __attribute__((__packed__))
 #endif
+
+#if __STDC_VERSION__ >= 202311L
+#define CLAY__DEFAULT_STRUCT {}
+#else
+#define CLAY__DEFAULT_STRUCT {0}
+#endif
+
+#endif // __cplusplus
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,56 +171,56 @@ extern "C" {
 // Utility Structs -------------------------
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
-typedef struct {
-    int length;
+CLAY__TYPEDEF(Clay_String, struct {
+    int32_t length;
     const char *chars;
-} Clay_String;
+});
 
-typedef struct
-{
-	uint32_t capacity;
-	uint32_t length;
-	Clay_String *internalArray;
-} Clay__StringArray;
+CLAY__TYPEDEF(Clay__StringArray, struct {
+    int32_t capacity;
+    int32_t length;
+    Clay_String *internalArray;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_Arena, struct {
     uintptr_t nextAllocation;
     size_t capacity;
     char *memory;
-} Clay_Arena;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_Dimensions, struct {
     float width, height;
-} Clay_Dimensions;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_Vector2, struct {
     float x, y;
-} Clay_Vector2;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_Color, struct {
     float r, g, b, a;
-} Clay_Color;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_BoundingBox, struct {
     float x, y, width, height;
-} Clay_BoundingBox;
+});
 
 // baseId + offset = id
-typedef struct {
+CLAY__TYPEDEF(Clay_ElementId, struct {
     uint32_t id;
     uint32_t offset;
     uint32_t baseId;
     Clay_String stringId;
-} Clay_ElementId;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_CornerRadius, struct {
     float topLeft;
     float topRight;
     float bottomLeft;
     float bottomRight;
-} Clay_CornerRadius;
+});
 
-typedef enum CLAY_PACKED_ENUM {
+CLAY__TYPEDEF(Clay__ElementConfigType, CLAY_PACKED_ENUM {
+    CLAY__ELEMENT_CONFIG_TYPE_NONE = 0,
     CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE = 1,
     CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER = 2,
     CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER = 4,
@@ -188,91 +228,91 @@ typedef enum CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_IMAGE = 16,
     CLAY__ELEMENT_CONFIG_TYPE_TEXT = 32,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM = 64,
-} Clay__ElementConfigType;
+});
 
 // Element Configs ---------------------------
 // Layout
-typedef enum CLAY_PACKED_ENUM {
+CLAY__TYPEDEF(Clay_LayoutDirection, CLAY_PACKED_ENUM {
     CLAY_LEFT_TO_RIGHT,
     CLAY_TOP_TO_BOTTOM,
-} Clay_LayoutDirection;
+});
 
-typedef enum CLAY_PACKED_ENUM {
+CLAY__TYPEDEF(Clay_LayoutAlignmentX, CLAY_PACKED_ENUM {
     CLAY_ALIGN_X_LEFT,
     CLAY_ALIGN_X_RIGHT,
     CLAY_ALIGN_X_CENTER,
-} Clay_LayoutAlignmentX;
+});
 
-typedef enum CLAY_PACKED_ENUM {
+CLAY__TYPEDEF(Clay_LayoutAlignmentY, CLAY_PACKED_ENUM {
     CLAY_ALIGN_Y_TOP,
     CLAY_ALIGN_Y_BOTTOM,
     CLAY_ALIGN_Y_CENTER,
-} Clay_LayoutAlignmentY;
+});
 
-typedef enum CLAY_PACKED_ENUM {
+CLAY__TYPEDEF(Clay__SizingType, CLAY_PACKED_ENUM {
     CLAY__SIZING_TYPE_FIT,
     CLAY__SIZING_TYPE_GROW,
     CLAY__SIZING_TYPE_PERCENT,
     CLAY__SIZING_TYPE_FIXED,
-} Clay__SizingType;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_ChildAlignment, struct {
     Clay_LayoutAlignmentX x;
     Clay_LayoutAlignmentY y;
-} Clay_ChildAlignment;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_SizingMinMax, struct {
     float min;
     float max;
-} Clay_SizingMinMax;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_SizingAxis, struct {
     union {
         Clay_SizingMinMax minMax;
         float percent;
     } size;
     Clay__SizingType type;
-} Clay_SizingAxis;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_Sizing, struct {
     Clay_SizingAxis width;
     Clay_SizingAxis height;
-} Clay_Sizing;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_Padding, struct {
     uint16_t x;
     uint16_t y;
-} Clay_Padding;
+});
 
-typedef struct {
+CLAY__TYPEDEF(Clay_LayoutConfig, struct {
     Clay_Sizing sizing;
     Clay_Padding padding;
     uint16_t childGap;
     Clay_ChildAlignment childAlignment;
     Clay_LayoutDirection layoutDirection;
-} Clay_LayoutConfig;
+});
 
 extern Clay_LayoutConfig CLAY_LAYOUT_DEFAULT;
 
 // Rectangle
-typedef struct {
+// NOTE: Not declared in the typedef as an ifdef inside macro arguments is UB
+struct Clay_RectangleElementConfig {
     Clay_Color color;
     Clay_CornerRadius cornerRadius;
     #ifdef CLAY_EXTEND_CONFIG_RECTANGLE
     CLAY_EXTEND_CONFIG_RECTANGLE
     #endif
-} Clay_RectangleElementConfig;
+};
+CLAY__TYPEDEF(Clay_RectangleElementConfig, struct Clay_RectangleElementConfig);
 
 // Text
-typedef enum
-{
+CLAY__TYPEDEF(Clay_TextElementConfigWrapMode, enum {
     CLAY_TEXT_WRAP_WORDS,
     CLAY_TEXT_WRAP_NEWLINES,
     CLAY_TEXT_WRAP_NONE,
-} Clay_TextElementConfigWrapMode;
+});
 
-typedef struct
-{
+struct Clay_TextElementConfig {
     Clay_Color textColor;
     uint16_t fontId;
     uint16_t fontSize;
@@ -282,20 +322,21 @@ typedef struct
     #ifdef CLAY_EXTEND_CONFIG_TEXT
     CLAY_EXTEND_CONFIG_TEXT
     #endif
-} Clay_TextElementConfig;
+};
+CLAY__TYPEDEF(Clay_TextElementConfig, struct Clay_TextElementConfig);
 
 // Image
-typedef struct
-{
-    void * imageData;
+struct Clay_ImageElementConfig {
+    void *imageData;
     Clay_Dimensions sourceDimensions;
     #ifdef CLAY_EXTEND_CONFIG_IMAGE
     CLAY_EXTEND_CONFIG_IMAGE
     #endif
-} Clay_ImageElementConfig;
+};
+CLAY__TYPEDEF(Clay_ImageElementConfig, struct Clay_ImageElementConfig);
 
 // Floating
-typedef enum CLAY_PACKED_ENUM {
+CLAY__TYPEDEF(Clay_FloatingAttachPointType, CLAY_PACKED_ENUM {
     CLAY_ATTACH_POINT_LEFT_TOP,
     CLAY_ATTACH_POINT_LEFT_CENTER,
     CLAY_ATTACH_POINT_LEFT_BOTTOM,
@@ -305,66 +346,60 @@ typedef enum CLAY_PACKED_ENUM {
     CLAY_ATTACH_POINT_RIGHT_TOP,
     CLAY_ATTACH_POINT_RIGHT_CENTER,
     CLAY_ATTACH_POINT_RIGHT_BOTTOM,
-} Clay_FloatingAttachPointType;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_FloatingAttachPoints, struct {
     Clay_FloatingAttachPointType element;
     Clay_FloatingAttachPointType parent;
-} Clay_FloatingAttachPoints;
+});
 
-typedef enum {
+CLAY__TYPEDEF(Clay_PointerCaptureMode, enum {
     CLAY_POINTER_CAPTURE_MODE_CAPTURE,
 //    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
-} Clay_PointerCaptureMode;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_FloatingElementConfig, struct {
     Clay_Vector2 offset;
     Clay_Dimensions expand;
     uint16_t zIndex;
     uint32_t parentId;
     Clay_FloatingAttachPoints attachment;
     Clay_PointerCaptureMode pointerCaptureMode;
-} Clay_FloatingElementConfig;
+});
 
 // Custom
-typedef struct
-{
+struct Clay_CustomElementConfig {
     #ifndef CLAY_EXTEND_CONFIG_CUSTOM
-    void* customData;
+    void *customData;
     #else
     CLAY_EXTEND_CONFIG_CUSTOM
     #endif
-} Clay_CustomElementConfig;
+};
+CLAY__TYPEDEF(Clay_CustomElementConfig, struct Clay_CustomElementConfig);
 
 // Scroll
-typedef struct
-{
+CLAY__TYPEDEF(Clay_ScrollElementConfig, struct {
     bool horizontal;
     bool vertical;
-} Clay_ScrollElementConfig;
+});
 
 // Border
-typedef struct
-{
+CLAY__TYPEDEF(Clay_Border, struct {
     uint32_t width;
     Clay_Color color;
-} Clay_Border;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_BorderElementConfig, struct {
     Clay_Border left;
     Clay_Border right;
     Clay_Border top;
     Clay_Border bottom;
     Clay_Border betweenChildren;
     Clay_CornerRadius cornerRadius;
-} Clay_BorderElementConfig;
+});
 
-typedef union
-{
+CLAY__TYPEDEF(Clay_ElementConfigUnion, union {
     Clay_RectangleElementConfig *rectangleElementConfig;
     Clay_TextElementConfig *textElementConfig;
     Clay_ImageElementConfig *imageElementConfig;
@@ -372,17 +407,15 @@ typedef union
     Clay_CustomElementConfig *customElementConfig;
     Clay_ScrollElementConfig *scrollElementConfig;
     Clay_BorderElementConfig *borderElementConfig;
-} Clay_ElementConfigUnion;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_ElementConfig, struct {
     Clay__ElementConfigType type;
     Clay_ElementConfigUnion config;
-} Clay_ElementConfig;
+});
 
 // Miscellaneous Structs & Enums ---------------------------------
-typedef struct
-{
+CLAY__TYPEDEF(Clay_ScrollContainerData, struct {
     // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
     // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
     Clay_Vector2 *scrollPosition;
@@ -391,9 +424,9 @@ typedef struct
     Clay_ScrollElementConfig config;
     // Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
     bool found;
-} Clay_ScrollContainerData;
+});
 
-typedef enum {
+CLAY__TYPEDEF(Clay_RenderCommandType, CLAY_PACKED_ENUM {
     CLAY_RENDER_COMMAND_TYPE_NONE,
     CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
     CLAY_RENDER_COMMAND_TYPE_BORDER,
@@ -402,39 +435,35 @@ typedef enum {
     CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
     CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
     CLAY_RENDER_COMMAND_TYPE_CUSTOM,
-} Clay_RenderCommandType;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_RenderCommand, struct {
     Clay_BoundingBox boundingBox;
     Clay_ElementConfigUnion config;
     Clay_String text; // TODO I wish there was a way to avoid having to have this on every render command
     uint32_t id;
     Clay_RenderCommandType commandType;
-} Clay_RenderCommand;
+});
 
-typedef struct
-{
-	uint32_t capacity;
-	uint32_t length;
-	Clay_RenderCommand *internalArray;
-} Clay_RenderCommandArray;
+CLAY__TYPEDEF(Clay_RenderCommandArray, struct {
+    int32_t capacity;
+    int32_t length;
+    Clay_RenderCommand *internalArray;
+});
 
-typedef enum
-{
+CLAY__TYPEDEF(Clay_PointerDataInteractionState, enum {
     CLAY_POINTER_DATA_PRESSED_THIS_FRAME,
     CLAY_POINTER_DATA_PRESSED,
     CLAY_POINTER_DATA_RELEASED_THIS_FRAME,
     CLAY_POINTER_DATA_RELEASED,
-} Clay_PointerDataInteractionState;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_PointerData, struct {
     Clay_Vector2 position;
     Clay_PointerDataInteractionState state;
-} Clay_PointerData;
+});
 
-typedef enum {
+CLAY__TYPEDEF(Clay_ErrorType, enum {
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
     CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED,
     CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED,
@@ -442,20 +471,18 @@ typedef enum {
     CLAY_ERROR_TYPE_DUPLICATE_ID,
     CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND,
     CLAY_ERROR_TYPE_INTERNAL_ERROR,
-} Clay_ErrorType;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_ErrorData, struct {
     Clay_ErrorType errorType;
     Clay_String errorText;
     uintptr_t userData;
-} Clay_ErrorData;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_ErrorHandler, struct {
     void (*errorHandlerFunction)(Clay_ErrorData errorText);
     uintptr_t userData;
-} Clay_ErrorHandler;
+});
 
 // Function Forward Declarations ---------------------------------
 // Public API functions ---
@@ -477,9 +504,10 @@ void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_Str
 void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId));
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
+bool Clay_IsDebugModeEnabled(void);
 void Clay_SetCullingEnabled(bool enabled);
-void Clay_SetMaxElementCount(uint32_t maxElementCount);
-void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount);
+void Clay_SetMaxElementCount(int32_t maxElementCount);
+void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 
 // Internal API functions required by macros
 void Clay__OpenElement(void);
@@ -497,8 +525,8 @@ Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConf
 Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
-void Clay__Noop(void);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
+uint32_t Clay__GetParentElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -507,7 +535,7 @@ extern uint32_t Clay__debugViewWidth;
 }
 #endif
 
-#endif
+#endif // CLAY_HEADER
 
 // -----------------------------------------
 // IMPLEMENTATION --------------------------
@@ -524,44 +552,41 @@ extern uint32_t Clay__debugViewWidth;
 #endif
 
 bool Clay__warningsEnabled = true;
-uint32_t Clay__maxElementCount = 8192;
-uint32_t Clay__maxMeasureTextCacheWordCount = 16384;
-void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {}
-Clay_ErrorHandler Clay__errorHandler = CLAY__INIT(Clay_ErrorHandler) { .errorHandlerFunction = Clay__ErrorHandlerFunctionDefault };
+int32_t Clay__maxElementCount = 8192;
+int32_t Clay__maxMeasureTextCacheWordCount = 16384;
+void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
+    (void) errorText;
+}
+Clay_ErrorHandler Clay__errorHandler = { .errorHandlerFunction = Clay__ErrorHandlerFunctionDefault };
 
-void Clay__Noop(void) {}
+Clay_String CLAY__SPACECHAR = { .length = 1, .chars = " " };
+Clay_String CLAY__STRING_DEFAULT = { .length = 0, .chars = NULL };
 
-Clay_String CLAY__SPACECHAR = CLAY__INIT(Clay_String) { .length = 1, .chars = " " };
-Clay_String CLAY__STRING_DEFAULT = CLAY__INIT(Clay_String) { .length = 0, .chars = NULL };
-
-typedef struct
-{
+CLAY__TYPEDEF(Clay_BooleanWarnings, struct {
     bool maxElementsExceeded;
     bool maxRenderCommandsExceeded;
     bool maxTextMeasureCacheExceeded;
-} Clay_BooleanWarnings;
+});
 
 Clay_BooleanWarnings Clay__booleanWarnings;
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__Warning, struct {
     Clay_String baseMessage;
     Clay_String dynamicMessage;
-} Clay__Warning;
+});
 
-Clay__Warning CLAY__WARNING_DEFAULT = CLAY__INIT(Clay__Warning) {};
+Clay__Warning CLAY__WARNING_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 #pragma region generated
-typedef struct
-{
-	uint32_t capacity;
-	uint32_t length;
-	Clay__Warning *internalArray;
-} Clay__WarningArray;
+CLAY__TYPEDEF(Clay__WarningArray, struct {
+    int32_t capacity;
+    int32_t length;
+    Clay__Warning *internalArray;
+});
 
-Clay__WarningArray Clay__WarningArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+Clay__WarningArray Clay__WarningArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     size_t totalSizeBytes = capacity * sizeof(Clay_String);
-    Clay__WarningArray array = CLAY__INIT(Clay__WarningArray){.capacity = capacity, .length = 0};
+    Clay__WarningArray array = {.capacity = capacity, .length = 0};
     uintptr_t nextAllocAddress = arena->nextAllocation + (uintptr_t)arena->memory;
     uintptr_t arenaOffsetAligned = nextAllocAddress + (CLAY__ALIGNMENT(Clay_String) - (nextAllocAddress % CLAY__ALIGNMENT(Clay_String)));
     arenaOffsetAligned -= (uintptr_t)arena->memory;
@@ -578,7 +603,7 @@ Clay__WarningArray Clay__WarningArray_Allocate_Arena(uint32_t capacity, Clay_Are
     return array;
 }
 
-Clay__WarningArray Clay_warnings = CLAY__INIT(Clay__WarningArray) {};
+Clay__WarningArray Clay_warnings = CLAY__DEFAULT_STRUCT;
 
 Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning item)
 {
@@ -589,7 +614,7 @@ Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning i
     return &CLAY__WARNING_DEFAULT;
 }
 
-void* Clay__Array_Allocate_Arena(uint32_t capacity, uint32_t itemSize, uint32_t alignment, Clay_Arena *arena)
+void* Clay__Array_Allocate_Arena(int32_t capacity, uint32_t itemSize, uint32_t alignment, Clay_Arena *arena)
 {
     size_t totalSizeBytes = capacity * itemSize;
     uintptr_t nextAllocAddress = arena->nextAllocation + (uintptr_t)arena->memory;
@@ -608,7 +633,7 @@ void* Clay__Array_Allocate_Arena(uint32_t capacity, uint32_t itemSize, uint32_t 
     return CLAY__NULL;
 }
 
-bool Clay__Array_RangeCheck(int index, uint32_t length)
+bool Clay__Array_RangeCheck(int32_t index, int32_t length)
 {
     if (index < length && index >= 0) {
         return true;
@@ -620,7 +645,7 @@ bool Clay__Array_RangeCheck(int index, uint32_t length)
     return false;
 }
 
-bool Clay__Array_AddCapacityCheck(uint32_t length, uint32_t capacity)
+bool Clay__Array_AddCapacityCheck(int32_t length, int32_t capacity)
 {
     if (length < capacity) {
         return true;
@@ -636,32 +661,32 @@ bool CLAY__BOOL_DEFAULT = false;
 
 // __GENERATED__ template array_define,array_allocate TYPE=bool NAME=Clay__BoolArray
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__BoolArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	bool *internalArray;
-} Clay__BoolArray;
-Clay__BoolArray Clay__BoolArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__BoolArray Clay__BoolArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__BoolArray){.capacity = capacity, .length = 0, .internalArray = (bool *)Clay__Array_Allocate_Arena(capacity, sizeof(bool), CLAY__ALIGNMENT(bool), arena)};
 }
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = CLAY__INIT(Clay_ElementId) {};
+Clay_ElementId CLAY__ELEMENT_ID_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay_ElementId NAME=Clay__ElementIdArray DEFAULT_VALUE=&CLAY__ELEMENT_ID_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__ElementIdArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_ElementId *internalArray;
-} Clay__ElementIdArray;
-Clay__ElementIdArray Clay__ElementIdArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__ElementIdArray Clay__ElementIdArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ElementIdArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ElementId *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ElementId), CLAY__ALIGNMENT(Clay_ElementId), arena)};
 }
-Clay_ElementId *Clay__ElementIdArray_Get(Clay__ElementIdArray *array, int index) {
+Clay_ElementId *Clay__ElementIdArray_Get(Clay__ElementIdArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__ELEMENT_ID_DEFAULT;
 }
 Clay_ElementId *Clay__ElementIdArray_Add(Clay__ElementIdArray *array, Clay_ElementId item) {
@@ -674,25 +699,25 @@ Clay_ElementId *Clay__ElementIdArray_Add(Clay__ElementIdArray *array, Clay_Eleme
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ElementConfig CLAY__ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ElementConfig) {};
+Clay_ElementConfig CLAY__ELEMENT_CONFIG_DEFAULT = {CLAY__ELEMENT_CONFIG_TYPE_NONE, CLAY__DEFAULT_STRUCT};
 
 // __GENERATED__ template array_define,array_define_slice,array_allocate,array_get,array_add,array_get_slice TYPE=Clay_ElementConfig NAME=Clay__ElementConfigArray DEFAULT_VALUE=&CLAY__ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__ElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_ElementConfig *internalArray;
-} Clay__ElementConfigArray;
-typedef struct
+});
+CLAY__TYPEDEF(Clay__ElementConfigArraySlice, struct
 {
-	uint32_t length;
+	int32_t length;
 	Clay_ElementConfig *internalArray;
-} Clay__ElementConfigArraySlice;
-Clay__ElementConfigArray Clay__ElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__ElementConfigArray Clay__ElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ElementConfig), CLAY__ALIGNMENT(Clay_ElementConfig), arena)};
 }
-Clay_ElementConfig *Clay__ElementConfigArray_Get(Clay__ElementConfigArray *array, int index) {
+Clay_ElementConfig *Clay__ElementConfigArray_Get(Clay__ElementConfigArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__ELEMENT_CONFIG_DEFAULT;
 }
 Clay_ElementConfig *Clay__ElementConfigArray_Add(Clay__ElementConfigArray *array, Clay_ElementConfig item) {
@@ -702,23 +727,23 @@ Clay_ElementConfig *Clay__ElementConfigArray_Add(Clay__ElementConfigArray *array
 	}
 	return &CLAY__ELEMENT_CONFIG_DEFAULT;
 }
-Clay_ElementConfig *Clay__ElementConfigArraySlice_Get(Clay__ElementConfigArraySlice *slice, int index) {
+Clay_ElementConfig *Clay__ElementConfigArraySlice_Get(Clay__ElementConfigArraySlice *slice, int32_t index) {
     return Clay__Array_RangeCheck(index, slice->length) ? &slice->internalArray[index] : &CLAY__ELEMENT_CONFIG_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
 
-Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = CLAY__INIT(Clay_LayoutConfig){ .sizing = { .width = { .size = { .minMax = {0, CLAY__MAXFLOAT } }, .type = CLAY__SIZING_TYPE_FIT }, .height = { .size = { .minMax = {0, CLAY__MAXFLOAT } }, .type = CLAY__SIZING_TYPE_FIT } } };
+Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = { .sizing = { .width = { .size = { .minMax = {0, CLAY__MAXFLOAT } }, .type = CLAY__SIZING_TYPE_FIT }, .height = { .size = { .minMax = {0, CLAY__MAXFLOAT } }, .type = CLAY__SIZING_TYPE_FIT } } };
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_LayoutConfig NAME=Clay__LayoutConfigArray DEFAULT_VALUE=&CLAY_LAYOUT_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__LayoutConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_LayoutConfig *internalArray;
-} Clay__LayoutConfigArray;
-Clay__LayoutConfigArray Clay__LayoutConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__LayoutConfigArray Clay__LayoutConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__LayoutConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutConfig), CLAY__ALIGNMENT(Clay_LayoutConfig), arena)};
 }
 Clay_LayoutConfig *Clay__LayoutConfigArray_Add(Clay__LayoutConfigArray *array, Clay_LayoutConfig item) {
@@ -731,17 +756,17 @@ Clay_LayoutConfig *Clay__LayoutConfigArray_Add(Clay__LayoutConfigArray *array, C
 #pragma endregion
 // __GENERATED__ template
 
-Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_RectangleElementConfig){{0}};
+Clay_RectangleElementConfig CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_RectangleElementConfig NAME=Clay__RectangleElementConfigArray DEFAULT_VALUE=&CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__RectangleElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_RectangleElementConfig *internalArray;
-} Clay__RectangleElementConfigArray;
-Clay__RectangleElementConfigArray Clay__RectangleElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__RectangleElementConfigArray Clay__RectangleElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__RectangleElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_RectangleElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_RectangleElementConfig), CLAY__ALIGNMENT(Clay_RectangleElementConfig), arena)};
 }
 Clay_RectangleElementConfig *Clay__RectangleElementConfigArray_Add(Clay__RectangleElementConfigArray *array, Clay_RectangleElementConfig item) {
@@ -754,17 +779,17 @@ Clay_RectangleElementConfig *Clay__RectangleElementConfigArray_Add(Clay__Rectang
 #pragma endregion
 // __GENERATED__ template
 
-Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_TextElementConfig) {};
+Clay_TextElementConfig CLAY__TEXT_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_TextElementConfig NAME=Clay__TextElementConfigArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__TextElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_TextElementConfig *internalArray;
-} Clay__TextElementConfigArray;
-Clay__TextElementConfigArray Clay__TextElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__TextElementConfigArray Clay__TextElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__TextElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_TextElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_TextElementConfig), CLAY__ALIGNMENT(Clay_TextElementConfig), arena)};
 }
 Clay_TextElementConfig *Clay__TextElementConfigArray_Add(Clay__TextElementConfigArray *array, Clay_TextElementConfig item) {
@@ -777,17 +802,17 @@ Clay_TextElementConfig *Clay__TextElementConfigArray_Add(Clay__TextElementConfig
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ImageElementConfig) {};
+Clay_ImageElementConfig CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ImageElementConfig NAME=Clay__ImageElementConfigArray DEFAULT_VALUE=&CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__ImageElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_ImageElementConfig *internalArray;
-} Clay__ImageElementConfigArray;
-Clay__ImageElementConfigArray Clay__ImageElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__ImageElementConfigArray Clay__ImageElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ImageElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ImageElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ImageElementConfig), CLAY__ALIGNMENT(Clay_ImageElementConfig), arena)};
 }
 Clay_ImageElementConfig *Clay__ImageElementConfigArray_Add(Clay__ImageElementConfigArray *array, Clay_ImageElementConfig item) {
@@ -800,17 +825,17 @@ Clay_ImageElementConfig *Clay__ImageElementConfigArray_Add(Clay__ImageElementCon
 #pragma endregion
 // __GENERATED__ template
 
-Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_FloatingElementConfig) {};
+Clay_FloatingElementConfig CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_FloatingElementConfig NAME=Clay__FloatingElementConfigArray DEFAULT_VALUE=&CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__FloatingElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_FloatingElementConfig *internalArray;
-} Clay__FloatingElementConfigArray;
-Clay__FloatingElementConfigArray Clay__FloatingElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__FloatingElementConfigArray Clay__FloatingElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__FloatingElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_FloatingElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_FloatingElementConfig), CLAY__ALIGNMENT(Clay_FloatingElementConfig), arena)};
 }
 Clay_FloatingElementConfig *Clay__FloatingElementConfigArray_Add(Clay__FloatingElementConfigArray *array, Clay_FloatingElementConfig item) {
@@ -823,17 +848,17 @@ Clay_FloatingElementConfig *Clay__FloatingElementConfigArray_Add(Clay__FloatingE
 #pragma endregion
 // __GENERATED__ template
 
-Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_CustomElementConfig) {};
+Clay_CustomElementConfig CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_CustomElementConfig NAME=Clay__CustomElementConfigArray DEFAULT_VALUE=&CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__CustomElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_CustomElementConfig *internalArray;
-} Clay__CustomElementConfigArray;
-Clay__CustomElementConfigArray Clay__CustomElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__CustomElementConfigArray Clay__CustomElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__CustomElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_CustomElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_CustomElementConfig), CLAY__ALIGNMENT(Clay_CustomElementConfig), arena)};
 }
 Clay_CustomElementConfig *Clay__CustomElementConfigArray_Add(Clay__CustomElementConfigArray *array, Clay_CustomElementConfig item) {
@@ -846,17 +871,17 @@ Clay_CustomElementConfig *Clay__CustomElementConfigArray_Add(Clay__CustomElement
 #pragma endregion
 // __GENERATED__ template
 
-Clay_ScrollElementConfig CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_ScrollElementConfig ) {};
+Clay_ScrollElementConfig CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_ScrollElementConfig NAME=Clay__ScrollElementConfigArray DEFAULT_VALUE=&CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__ScrollElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_ScrollElementConfig *internalArray;
-} Clay__ScrollElementConfigArray;
-Clay__ScrollElementConfigArray Clay__ScrollElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__ScrollElementConfigArray Clay__ScrollElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ScrollElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_ScrollElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_ScrollElementConfig), CLAY__ALIGNMENT(Clay_ScrollElementConfig), arena)};
 }
 Clay_ScrollElementConfig *Clay__ScrollElementConfigArray_Add(Clay__ScrollElementConfigArray *array, Clay_ScrollElementConfig item) {
@@ -871,12 +896,12 @@ Clay_ScrollElementConfig *Clay__ScrollElementConfigArray_Add(Clay__ScrollElement
 
 // __GENERATED__ template array_define_slice,array_allocate,array_add TYPE=Clay_String NAME=Clay__StringArray DEFAULT_VALUE=&CLAY__STRING_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__StringArraySlice, struct
 {
-	uint32_t length;
+	int32_t length;
 	Clay_String *internalArray;
-} Clay__StringArraySlice;
-Clay__StringArray Clay__StringArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__StringArray Clay__StringArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__StringArray){.capacity = capacity, .length = 0, .internalArray = (Clay_String *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_String), CLAY__ALIGNMENT(Clay_String), arena)};
 }
 Clay_String *Clay__StringArray_Add(Clay__StringArray *array, Clay_String item) {
@@ -889,64 +914,63 @@ Clay_String *Clay__StringArray_Add(Clay__StringArray *array, Clay_String item) {
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct {
+CLAY__TYPEDEF(Clay__WrappedTextLine, struct {
     Clay_Dimensions dimensions;
     Clay_String line;
-} Clay__WrappedTextLine;
+});
 
-Clay__WrappedTextLine CLAY__WRAPPED_TEXT_LINE_DEFAULT = CLAY__INIT(Clay__WrappedTextLine) {};
+Clay__WrappedTextLine CLAY__WRAPPED_TEXT_LINE_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_define_slice,array_allocate,array_add,array_get TYPE=Clay__WrappedTextLine NAME=Clay__WrappedTextLineArray DEFAULT_VALUE=&CLAY__WRAPPED_TEXT_LINE_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__WrappedTextLineArray, struct
 {
-    uint32_t capacity;
-    uint32_t length;
-    Clay__WrappedTextLine *internalArray;
-} Clay__WrappedTextLineArray;
-typedef struct
+	int32_t capacity;
+	int32_t length;
+	Clay__WrappedTextLine *internalArray;
+});
+CLAY__TYPEDEF(Clay__WrappedTextLineArraySlice, struct
 {
-    uint32_t length;
-    Clay__WrappedTextLine *internalArray;
-} Clay__WrappedTextLineArraySlice;
-Clay__WrappedTextLineArray Clay__WrappedTextLineArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+	int32_t length;
+	Clay__WrappedTextLine *internalArray;
+});
+Clay__WrappedTextLineArray Clay__WrappedTextLineArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__WrappedTextLineArray){.capacity = capacity, .length = 0, .internalArray = (Clay__WrappedTextLine *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__WrappedTextLine), CLAY__ALIGNMENT(Clay__WrappedTextLine), arena)};
 }
 Clay__WrappedTextLine *Clay__WrappedTextLineArray_Add(Clay__WrappedTextLineArray *array, Clay__WrappedTextLine item) {
-    if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {
-        array->internalArray[array->length++] = item;
-        return &array->internalArray[array->length - 1];
-    }
-    return &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
+	if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {
+		array->internalArray[array->length++] = item;
+		return &array->internalArray[array->length - 1];
+	}
+	return &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
 }
-Clay__WrappedTextLine *Clay__WrappedTextLineArray_Get(Clay__WrappedTextLineArray *array, int index) {
+Clay__WrappedTextLine *Clay__WrappedTextLineArray_Get(Clay__WrappedTextLineArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__WRAPPED_TEXT_LINE_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__TextElementData, struct {
     Clay_String text;
     Clay_Dimensions preferredDimensions;
-    uint32_t elementIndex;
+    int32_t elementIndex;
     Clay__WrappedTextLineArraySlice wrappedLines;
-} Clay__TextElementData;
+});
 
-Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = CLAY__INIT(Clay__TextElementData) {};
+Clay__TextElementData CLAY__TEXT_ELEMENT_DATA_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay__TextElementData NAME=Clay__TextElementDataArray DEFAULT_VALUE=&CLAY__TEXT_ELEMENT_DATA_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__TextElementDataArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay__TextElementData *internalArray;
-} Clay__TextElementDataArray;
-Clay__TextElementDataArray Clay__TextElementDataArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__TextElementDataArray Clay__TextElementDataArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__TextElementDataArray){.capacity = capacity, .length = 0, .internalArray = (Clay__TextElementData *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__TextElementData), CLAY__ALIGNMENT(Clay__TextElementData), arena)};
 }
-Clay__TextElementData *Clay__TextElementDataArray_Get(Clay__TextElementDataArray *array, int index) {
+Clay__TextElementData *Clay__TextElementDataArray_Get(Clay__TextElementDataArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__TEXT_ELEMENT_DATA_DEFAULT;
 }
 Clay__TextElementData *Clay__TextElementDataArray_Add(Clay__TextElementDataArray *array, Clay__TextElementData item) {
@@ -959,17 +983,17 @@ Clay__TextElementData *Clay__TextElementDataArray_Add(Clay__TextElementDataArray
 #pragma endregion
 // __GENERATED__ template
 
-Clay_BorderElementConfig CLAY__BORDER_ELEMENT_CONFIG_DEFAULT = CLAY__INIT(Clay_BorderElementConfig ) {};
+Clay_BorderElementConfig CLAY__BORDER_ELEMENT_CONFIG_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add TYPE=Clay_BorderElementConfig NAME=Clay__BorderElementConfigArray DEFAULT_VALUE=&CLAY__BORDER_ELEMENT_CONFIG_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__BorderElementConfigArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_BorderElementConfig *internalArray;
-} Clay__BorderElementConfigArray;
-Clay__BorderElementConfigArray Clay__BorderElementConfigArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__BorderElementConfigArray Clay__BorderElementConfigArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__BorderElementConfigArray){.capacity = capacity, .length = 0, .internalArray = (Clay_BorderElementConfig *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_BorderElementConfig), CLAY__ALIGNMENT(Clay_BorderElementConfig), arena)};
 }
 Clay_BorderElementConfig *Clay__BorderElementConfigArray_Add(Clay__BorderElementConfigArray *array, Clay_BorderElementConfig item) {
@@ -982,37 +1006,35 @@ Clay_BorderElementConfig *Clay__BorderElementConfigArray_Add(Clay__BorderElement
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__LayoutElementChildren, struct {
     int32_t *elements;
     uint16_t length;
-} Clay__LayoutElementChildren;
+});
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay_LayoutElement, struct {
     union {
         Clay__LayoutElementChildren children;
         Clay__TextElementData *textElementData;
-    };
+    } childrenOrTextContent;
     Clay_Dimensions dimensions;
     Clay_Dimensions minDimensions;
     Clay_LayoutConfig *layoutConfig;
     Clay__ElementConfigArraySlice elementConfigs;
     uint32_t configsEnabled;
     uint32_t id;
-} Clay_LayoutElement;
+});
 
-Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = CLAY__INIT(Clay_LayoutElement) {};
+Clay_LayoutElement CLAY__LAYOUT_ELEMENT_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay_LayoutElement NAME=Clay_LayoutElementArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay_LayoutElementArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_LayoutElement *internalArray;
-} Clay_LayoutElementArray;
-Clay_LayoutElementArray Clay_LayoutElementArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay_LayoutElementArray Clay_LayoutElementArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay_LayoutElementArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutElement *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutElement), CLAY__ALIGNMENT(Clay_LayoutElement), arena)};
 }
 Clay_LayoutElement *Clay_LayoutElementArray_Add(Clay_LayoutElementArray *array, Clay_LayoutElement item) {
@@ -1022,22 +1044,22 @@ Clay_LayoutElement *Clay_LayoutElementArray_Add(Clay_LayoutElementArray *array, 
 	}
 	return &CLAY__LAYOUT_ELEMENT_DEFAULT;
 }
-Clay_LayoutElement *Clay_LayoutElementArray_Get(Clay_LayoutElementArray *array, int index) {
+Clay_LayoutElement *Clay_LayoutElementArray_Get(Clay_LayoutElementArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__LAYOUT_ELEMENT_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
 
-// __GENERATED__ template array_define,array_allocate,array_add,array_get_value,array_remove_swapback TYPE=Clay_LayoutElement* NAME=Clay__LayoutElementPointerArray DEFAULT_VALUE=CLAY__NULL
+// __GENERATED__ template array_define,array_allocate_pointer,array_add,array_get_value,array_remove_swapback TYPE=Clay_LayoutElement* NAME=Clay__LayoutElementPointerArray DEFAULT_VALUE=CLAY__NULL
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__LayoutElementPointerArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_LayoutElement* *internalArray;
-} Clay__LayoutElementPointerArray;
-Clay__LayoutElementPointerArray Clay__LayoutElementPointerArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
-    return CLAY__INIT(Clay__LayoutElementPointerArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutElement* *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutElement*), CLAY__ALIGNMENT(Clay_LayoutElement*), arena)};
+});
+Clay__LayoutElementPointerArray Clay__LayoutElementPointerArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
+    return CLAY__INIT(Clay__LayoutElementPointerArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutElement* *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutElement*), CLAY__POINTER_ALIGNMENT, arena)};
 }
 Clay_LayoutElement* *Clay__LayoutElementPointerArray_Add(Clay__LayoutElementPointerArray *array, Clay_LayoutElement* item) {
 	if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {
@@ -1046,10 +1068,10 @@ Clay_LayoutElement* *Clay__LayoutElementPointerArray_Add(Clay__LayoutElementPoin
 	}
 	return CLAY__NULL;
 }
-Clay_LayoutElement* Clay__LayoutElementPointerArray_Get(Clay__LayoutElementPointerArray *array, int index) {
+Clay_LayoutElement* Clay__LayoutElementPointerArray_Get(Clay__LayoutElementPointerArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? array->internalArray[index] : CLAY__NULL;
 }
-Clay_LayoutElement* Clay__LayoutElementPointerArray_RemoveSwapback(Clay__LayoutElementPointerArray *array, int index) {
+Clay_LayoutElement* Clay__LayoutElementPointerArray_RemoveSwapback(Clay__LayoutElementPointerArray *array, int32_t index) {
 	if (Clay__Array_RangeCheck(index, array->length)) {
 		array->length--;
 		Clay_LayoutElement* removed = array->internalArray[index];
@@ -1061,11 +1083,11 @@ Clay_LayoutElement* Clay__LayoutElementPointerArray_RemoveSwapback(Clay__LayoutE
 #pragma endregion
 // __GENERATED__ template
 
-Clay_RenderCommand CLAY__RENDER_COMMAND_DEFAULT = CLAY__INIT(Clay_RenderCommand) {};
+Clay_RenderCommand CLAY__RENDER_COMMAND_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_allocate,array_add,array_get TYPE=Clay_RenderCommand NAME=Clay_RenderCommandArray DEFAULT_VALUE=&CLAY__RENDER_COMMAND_DEFAULT
 #pragma region generated
-Clay_RenderCommandArray Clay_RenderCommandArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+Clay_RenderCommandArray Clay_RenderCommandArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay_RenderCommandArray){.capacity = capacity, .length = 0, .internalArray = (Clay_RenderCommand *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_RenderCommand), CLAY__ALIGNMENT(Clay_RenderCommand), arena)};
 }
 Clay_RenderCommand *Clay_RenderCommandArray_Add(Clay_RenderCommandArray *array, Clay_RenderCommand item) {
@@ -1075,14 +1097,13 @@ Clay_RenderCommand *Clay_RenderCommandArray_Add(Clay_RenderCommandArray *array, 
 	}
 	return &CLAY__RENDER_COMMAND_DEFAULT;
 }
-Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int index) {
+Clay_RenderCommand *Clay_RenderCommandArray_Get(Clay_RenderCommandArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__RENDER_COMMAND_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__ScrollContainerDataInternal, struct {
     Clay_LayoutElement *layoutElement;
     Clay_BoundingBox boundingBox;
     Clay_Dimensions contentSize;
@@ -1095,19 +1116,19 @@ typedef struct
     uint32_t elementId;
     bool openThisFrame;
     bool pointerScrollActive;
-} Clay__ScrollContainerDataInternal;
+});
 
-Clay__ScrollContainerDataInternal CLAY__SCROLL_CONTAINER_DEFAULT = CLAY__INIT(Clay__ScrollContainerDataInternal) {};
+Clay__ScrollContainerDataInternal CLAY__SCROLL_CONTAINER_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__ScrollContainerDataInternal NAME=Clay__ScrollContainerDataInternalArray DEFAULT_VALUE=&CLAY__SCROLL_CONTAINER_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__ScrollContainerDataInternalArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay__ScrollContainerDataInternal *internalArray;
-} Clay__ScrollContainerDataInternalArray;
-Clay__ScrollContainerDataInternalArray Clay__ScrollContainerDataInternalArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__ScrollContainerDataInternalArray Clay__ScrollContainerDataInternalArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__ScrollContainerDataInternalArray){.capacity = capacity, .length = 0, .internalArray = (Clay__ScrollContainerDataInternal *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__ScrollContainerDataInternal), CLAY__ALIGNMENT(Clay__ScrollContainerDataInternal), arena)};
 }
 Clay__ScrollContainerDataInternal *Clay__ScrollContainerDataInternalArray_Add(Clay__ScrollContainerDataInternalArray *array, Clay__ScrollContainerDataInternal item) {
@@ -1117,7 +1138,7 @@ Clay__ScrollContainerDataInternal *Clay__ScrollContainerDataInternalArray_Add(Cl
 	}
 	return &CLAY__SCROLL_CONTAINER_DEFAULT;
 }
-Clay__ScrollContainerDataInternal *Clay__ScrollContainerDataInternalArray_Get(Clay__ScrollContainerDataInternalArray *array, int index) {
+Clay__ScrollContainerDataInternal *Clay__ScrollContainerDataInternalArray_Get(Clay__ScrollContainerDataInternalArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__SCROLL_CONTAINER_DEFAULT;
 }
 #pragma endregion
@@ -1125,7 +1146,7 @@ Clay__ScrollContainerDataInternal *Clay__ScrollContainerDataInternalArray_Get(Cl
 
 // __GENERATED__ template array_remove_swapback TYPE=Clay__ScrollContainerDataInternal NAME=Clay__ScrollContainerDataInternalArray DEFAULT_VALUE=CLAY__SCROLL_CONTAINER_DEFAULT
 #pragma region generated
-Clay__ScrollContainerDataInternal Clay__ScrollContainerDataInternalArray_RemoveSwapback(Clay__ScrollContainerDataInternalArray *array, int index) {
+Clay__ScrollContainerDataInternal Clay__ScrollContainerDataInternalArray_RemoveSwapback(Clay__ScrollContainerDataInternalArray *array, int32_t index) {
 	if (Clay__Array_RangeCheck(index, array->length)) {
 		array->length--;
 		Clay__ScrollContainerDataInternal removed = array->internalArray[index];
@@ -1137,23 +1158,22 @@ Clay__ScrollContainerDataInternal Clay__ScrollContainerDataInternalArray_RemoveS
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__DebugElementData, struct {
     bool collision;
     bool collapsed;
-} Clay__DebugElementData;
+});
 
-Clay__DebugElementData CLAY__DEBUG_ELEMENT_DATA_DEFAULT = CLAY__INIT(Clay__DebugElementData) {};
+Clay__DebugElementData CLAY__DEBUG_ELEMENT_DATA_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__DebugElementData NAME=Clay__DebugElementDataArray DEFAULT_VALUE=&CLAY__DEBUG_ELEMENT_DATA_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__DebugElementDataArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay__DebugElementData *internalArray;
-} Clay__DebugElementDataArray;
-Clay__DebugElementDataArray Clay__DebugElementDataArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__DebugElementDataArray Clay__DebugElementDataArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__DebugElementDataArray){.capacity = capacity, .length = 0, .internalArray = (Clay__DebugElementData *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__DebugElementData), CLAY__ALIGNMENT(Clay__DebugElementData), arena)};
 }
 Clay__DebugElementData *Clay__DebugElementDataArray_Add(Clay__DebugElementDataArray *array, Clay__DebugElementData item) {
@@ -1163,14 +1183,13 @@ Clay__DebugElementData *Clay__DebugElementDataArray_Add(Clay__DebugElementDataAr
 	}
 	return &CLAY__DEBUG_ELEMENT_DATA_DEFAULT;
 }
-Clay__DebugElementData *Clay__DebugElementDataArray_Get(Clay__DebugElementDataArray *array, int index) {
+Clay__DebugElementData *Clay__DebugElementDataArray_Get(Clay__DebugElementDataArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__DEBUG_ELEMENT_DATA_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct // todo get this struct into a single cache line
-{
+CLAY__TYPEDEF(Clay_LayoutElementHashMapItem, struct { // todo get this struct into a single cache line
     Clay_BoundingBox boundingBox;
     Clay_ElementId elementId;
     Clay_LayoutElement* layoutElement;
@@ -1179,22 +1198,22 @@ typedef struct // todo get this struct into a single cache line
     int32_t nextIndex;
     uint32_t generation;
     Clay__DebugElementData *debugData;
-} Clay_LayoutElementHashMapItem;
+});
 
-Clay_LayoutElementHashMapItem CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT = CLAY__INIT(Clay_LayoutElementHashMapItem) { .layoutElement = &CLAY__LAYOUT_ELEMENT_DEFAULT };
+Clay_LayoutElementHashMapItem CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT = { .layoutElement = &CLAY__LAYOUT_ELEMENT_DEFAULT };
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add TYPE=Clay_LayoutElementHashMapItem NAME=Clay__LayoutElementHashMapItemArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__LayoutElementHashMapItemArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_LayoutElementHashMapItem *internalArray;
-} Clay__LayoutElementHashMapItemArray;
-Clay__LayoutElementHashMapItemArray Clay__LayoutElementHashMapItemArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__LayoutElementHashMapItemArray Clay__LayoutElementHashMapItemArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__LayoutElementHashMapItemArray){.capacity = capacity, .length = 0, .internalArray = (Clay_LayoutElementHashMapItem *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay_LayoutElementHashMapItem), CLAY__ALIGNMENT(Clay_LayoutElementHashMapItem), arena)};
 }
-Clay_LayoutElementHashMapItem *Clay__LayoutElementHashMapItemArray_Get(Clay__LayoutElementHashMapItemArray *array, int index) {
+Clay_LayoutElementHashMapItem *Clay__LayoutElementHashMapItemArray_Get(Clay__LayoutElementHashMapItemArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT;
 }
 Clay_LayoutElementHashMapItem *Clay__LayoutElementHashMapItemArray_Add(Clay__LayoutElementHashMapItemArray *array, Clay_LayoutElementHashMapItem item) {
@@ -1207,31 +1226,30 @@ Clay_LayoutElementHashMapItem *Clay__LayoutElementHashMapItemArray_Add(Clay__Lay
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
-    uint32_t startOffset;
-    uint32_t length;
+CLAY__TYPEDEF(Clay__MeasuredWord, struct {
+    int32_t startOffset;
+    int32_t length;
     float width;
     int32_t next;
-} Clay__MeasuredWord;
+});
 
-Clay__MeasuredWord CLAY__MEASURED_WORD_DEFAULT = CLAY__INIT(Clay__MeasuredWord) { .next = -1 };
+Clay__MeasuredWord CLAY__MEASURED_WORD_DEFAULT = { .next = -1 };
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_set,array_add TYPE=Clay__MeasuredWord NAME=Clay__MeasuredWordArray DEFAULT_VALUE=&CLAY__MEASURED_WORD_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__MeasuredWordArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay__MeasuredWord *internalArray;
-} Clay__MeasuredWordArray;
-Clay__MeasuredWordArray Clay__MeasuredWordArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__MeasuredWordArray Clay__MeasuredWordArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__MeasuredWordArray){.capacity = capacity, .length = 0, .internalArray = (Clay__MeasuredWord *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__MeasuredWord), CLAY__ALIGNMENT(Clay__MeasuredWord), arena)};
 }
-Clay__MeasuredWord *Clay__MeasuredWordArray_Get(Clay__MeasuredWordArray *array, int index) {
+Clay__MeasuredWord *Clay__MeasuredWordArray_Get(Clay__MeasuredWordArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__MEASURED_WORD_DEFAULT;
 }
-void Clay__MeasuredWordArray_Set(Clay__MeasuredWordArray *array, int index, Clay__MeasuredWord value) {
+void Clay__MeasuredWordArray_Set(Clay__MeasuredWordArray *array, int32_t index, Clay__MeasuredWord value) {
 	if (Clay__Array_RangeCheck(index, array->capacity)) {
 		array->internalArray[index] = value;
 		array->length = index < array->length ? array->length : index + 1;
@@ -1247,30 +1265,29 @@ Clay__MeasuredWord *Clay__MeasuredWordArray_Add(Clay__MeasuredWordArray *array, 
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__MeasureTextCacheItem, struct {
     Clay_Dimensions unwrappedDimensions;
     int32_t measuredWordsStartIndex;
     // Hash map data
     uint32_t id;
     int32_t nextIndex;
     uint32_t generation;
-} Clay__MeasureTextCacheItem;
+});
 
-Clay__MeasureTextCacheItem CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT = CLAY__INIT(Clay__MeasureTextCacheItem) { .measuredWordsStartIndex = -1 };
+Clay__MeasureTextCacheItem CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT = { .measuredWordsStartIndex = -1 };
 
 // __GENERATED__ template array_define,array_allocate,array_get,array_add,array_set TYPE=Clay__MeasureTextCacheItem NAME=Clay__MeasureTextCacheItemArray DEFAULT_VALUE=&CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__MeasureTextCacheItemArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay__MeasureTextCacheItem *internalArray;
-} Clay__MeasureTextCacheItemArray;
-Clay__MeasureTextCacheItemArray Clay__MeasureTextCacheItemArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__MeasureTextCacheItemArray Clay__MeasureTextCacheItemArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__MeasureTextCacheItemArray){.capacity = capacity, .length = 0, .internalArray = (Clay__MeasureTextCacheItem *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__MeasureTextCacheItem), CLAY__ALIGNMENT(Clay__MeasureTextCacheItem), arena)};
 }
-Clay__MeasureTextCacheItem *Clay__MeasureTextCacheItemArray_Get(Clay__MeasureTextCacheItemArray *array, int index) {
+Clay__MeasureTextCacheItem *Clay__MeasureTextCacheItemArray_Get(Clay__MeasureTextCacheItemArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT;
 }
 Clay__MeasureTextCacheItem *Clay__MeasureTextCacheItemArray_Add(Clay__MeasureTextCacheItemArray *array, Clay__MeasureTextCacheItem item) {
@@ -1280,7 +1297,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCacheItemArray_Add(Clay__MeasureTex
 	}
 	return &CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT;
 }
-void Clay__MeasureTextCacheItemArray_Set(Clay__MeasureTextCacheItemArray *array, int index, Clay__MeasureTextCacheItem value) {
+void Clay__MeasureTextCacheItemArray_Set(Clay__MeasureTextCacheItemArray *array, int32_t index, Clay__MeasureTextCacheItem value) {
 	if (Clay__Array_RangeCheck(index, array->capacity)) {
 		array->internalArray[index] = value;
 		array->length = index < array->length ? array->length : index + 1;
@@ -1291,16 +1308,16 @@ void Clay__MeasureTextCacheItemArray_Set(Clay__MeasureTextCacheItemArray *array,
 
 // __GENERATED__ template array_define,array_allocate,array_get_value,array_add_value,array_set,array_remove_swapback TYPE=int32_t NAME=Clay__int32_tArray DEFAULT_VALUE=-1
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__int32_tArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	int32_t *internalArray;
-} Clay__int32_tArray;
-Clay__int32_tArray Clay__int32_tArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__int32_tArray Clay__int32_tArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__int32_tArray){.capacity = capacity, .length = 0, .internalArray = (int32_t *)Clay__Array_Allocate_Arena(capacity, sizeof(int32_t), CLAY__ALIGNMENT(int32_t), arena)};
 }
-int32_t Clay__int32_tArray_Get(Clay__int32_tArray *array, int index) {
+int32_t Clay__int32_tArray_Get(Clay__int32_tArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? array->internalArray[index] : -1;
 }
 void Clay__int32_tArray_Add(Clay__int32_tArray *array, int32_t item) {
@@ -1308,13 +1325,13 @@ void Clay__int32_tArray_Add(Clay__int32_tArray *array, int32_t item) {
 		array->internalArray[array->length++] = item;
 	}
 }
-void Clay__int32_tArray_Set(Clay__int32_tArray *array, int index, int32_t value) {
+void Clay__int32_tArray_Set(Clay__int32_tArray *array, int32_t index, int32_t value) {
 	if (Clay__Array_RangeCheck(index, array->capacity)) {
 		array->internalArray[index] = value;
 		array->length = index < array->length ? array->length : index + 1;
 	}
 }
-int32_t Clay__int32_tArray_RemoveSwapback(Clay__int32_tArray *array, int index) {
+int32_t Clay__int32_tArray_RemoveSwapback(Clay__int32_tArray *array, int32_t index) {
 	if (Clay__Array_RangeCheck(index, array->length)) {
 		array->length--;
 		int32_t removed = array->internalArray[index];
@@ -1326,24 +1343,23 @@ int32_t Clay__int32_tArray_RemoveSwapback(Clay__int32_tArray *array, int index) 
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__LayoutElementTreeNode, struct {
     Clay_LayoutElement *layoutElement;
     Clay_Vector2 position;
     Clay_Vector2 nextChildOffset;
-} Clay__LayoutElementTreeNode;
+});
 
-Clay__LayoutElementTreeNode CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT = CLAY__INIT(Clay__LayoutElementTreeNode) {};
+Clay__LayoutElementTreeNode CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__LayoutElementTreeNode NAME=Clay__LayoutElementTreeNodeArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__LayoutElementTreeNodeArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay__LayoutElementTreeNode *internalArray;
-} Clay__LayoutElementTreeNodeArray;
-Clay__LayoutElementTreeNodeArray Clay__LayoutElementTreeNodeArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__LayoutElementTreeNodeArray Clay__LayoutElementTreeNodeArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__LayoutElementTreeNodeArray){.capacity = capacity, .length = 0, .internalArray = (Clay__LayoutElementTreeNode *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__LayoutElementTreeNode), CLAY__ALIGNMENT(Clay__LayoutElementTreeNode), arena)};
 }
 Clay__LayoutElementTreeNode *Clay__LayoutElementTreeNodeArray_Add(Clay__LayoutElementTreeNodeArray *array, Clay__LayoutElementTreeNode item) {
@@ -1353,32 +1369,31 @@ Clay__LayoutElementTreeNode *Clay__LayoutElementTreeNodeArray_Add(Clay__LayoutEl
 	}
 	return &CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT;
 }
-Clay__LayoutElementTreeNode *Clay__LayoutElementTreeNodeArray_Get(Clay__LayoutElementTreeNodeArray *array, int index) {
+Clay__LayoutElementTreeNode *Clay__LayoutElementTreeNodeArray_Get(Clay__LayoutElementTreeNodeArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__LAYOUT_ELEMENT_TREE_NODE_DEFAULT;
 }
 #pragma endregion
 // __GENERATED__ template
 
-typedef struct
-{
-    uint32_t layoutElementIndex;
+CLAY__TYPEDEF(Clay__LayoutElementTreeRoot, struct {
+    int32_t layoutElementIndex;
     uint32_t parentId; // This can be zero in the case of the root layout tree
     uint32_t clipElementId; // This can be zero if there is no clip element
-    uint32_t zIndex;
+    int32_t zIndex;
     Clay_Vector2 pointerOffset; // Only used when scroll containers are managed externally
-} Clay__LayoutElementTreeRoot;
+});
 
-Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = CLAY__INIT(Clay__LayoutElementTreeRoot) {};
+Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 // __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__LayoutElementTreeRoot NAME=Clay__LayoutElementTreeRootArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__LayoutElementTreeRootArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay__LayoutElementTreeRoot *internalArray;
-} Clay__LayoutElementTreeRootArray;
-Clay__LayoutElementTreeRootArray Clay__LayoutElementTreeRootArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__LayoutElementTreeRootArray Clay__LayoutElementTreeRootArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__LayoutElementTreeRootArray){.capacity = capacity, .length = 0, .internalArray = (Clay__LayoutElementTreeRoot *)Clay__Array_Allocate_Arena(capacity, sizeof(Clay__LayoutElementTreeRoot), CLAY__ALIGNMENT(Clay__LayoutElementTreeRoot), arena)};
 }
 Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Add(Clay__LayoutElementTreeRootArray *array, Clay__LayoutElementTreeRoot item) {
@@ -1388,7 +1403,7 @@ Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Add(Clay__LayoutEl
 	}
 	return &CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT;
 }
-Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Get(Clay__LayoutElementTreeRootArray *array, int index) {
+Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Get(Clay__LayoutElementTreeRootArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT;
 }
 #pragma endregion
@@ -1396,20 +1411,20 @@ Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Get(Clay__LayoutEl
 
 // __GENERATED__ template array_define,array_allocate TYPE=uint8_t NAME=Clay__CharArray DEFAULT_VALUE=0
 #pragma region generated
-typedef struct
+CLAY__TYPEDEF(Clay__CharArray, struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	uint8_t *internalArray;
-} Clay__CharArray;
-Clay__CharArray Clay__CharArray_Allocate_Arena(uint32_t capacity, Clay_Arena *arena) {
+});
+Clay__CharArray Clay__CharArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     return CLAY__INIT(Clay__CharArray){.capacity = capacity, .length = 0, .internalArray = (uint8_t *)Clay__Array_Allocate_Arena(capacity, sizeof(uint8_t), CLAY__ALIGNMENT(uint8_t), arena)};
 }
 #pragma endregion
 // __GENERATED__ template
 
 Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String string) {
-    for (int i = 0; i < string.length; i++) {
+    for (int32_t i = 0; i < string.length; i++) {
         buffer->internalArray[buffer->length + i] = string.chars[i];
     }
     buffer->length += string.length;
@@ -1417,16 +1432,16 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
 }
 
 // Global Variable Definitions ----------------------------------------------
-Clay_PointerData Clay__pointerInfo = CLAY__INIT(Clay_PointerData) { .position = {-1, -1} };
-Clay_Dimensions Clay__layoutDimensions = CLAY__INIT(Clay_Dimensions){};
-Clay_ElementId Clay__dynamicElementIndexBaseHash = CLAY__INIT(Clay_ElementId) { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
+Clay_PointerData Clay__pointerInfo = { .position = {-1, -1} };
+Clay_Dimensions Clay__layoutDimensions = CLAY__DEFAULT_STRUCT;
+Clay_ElementId Clay__dynamicElementIndexBaseHash = { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
 uint32_t Clay__dynamicElementIndex = 0;
 bool Clay__debugModeEnabled = false;
 bool Clay__disableCulling = false;
 bool Clay__externalScrollHandlingEnabled = false;
 uint32_t Clay__debugSelectedElementId = 0;
 uint32_t Clay__debugViewWidth = 400;
-Clay_Color Clay__debugViewHighlightColor = CLAY__INIT(Clay_Color) { 168, 66, 28, 100 };
+Clay_Color Clay__debugViewHighlightColor = { 168, 66, 28, 100 };
 uint32_t Clay__generation = 0;
 uint64_t Clay__arenaResetOffset = 0;
 Clay_Arena Clay__internalArena;
@@ -1470,7 +1485,7 @@ Clay__BoolArray Clay__treeNodeVisited;
 Clay__CharArray Clay__dynamicStringData;
 Clay__DebugElementDataArray Clay__debugElementData;
 
-#if CLAY_WASM
+#ifdef CLAY_WASM
     __attribute__((import_module("clay"), import_name("measureTextFunction"))) Clay_Dimensions Clay__MeasureText(Clay_String *text, Clay_TextElementConfig *config);
     __attribute__((import_module("clay"), import_name("queryScrollOffsetFunction"))) Clay_Vector2 Clay__QueryScrollOffset(uint32_t elementId);
 #else
@@ -1478,8 +1493,12 @@ Clay__DebugElementDataArray Clay__debugElementData;
     Clay_Vector2 (*Clay__QueryScrollOffset)(uint32_t elementId);
 #endif
 
-Clay_LayoutElement* Clay__GetOpenLayoutElement() {
+Clay_LayoutElement* Clay__GetOpenLayoutElement(void) {
     return Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 1));
+}
+
+uint32_t Clay__GetParentElementId(void) {
+    return Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 2))->id;
 }
 
 bool Clay__ElementHasConfig(Clay_LayoutElement *element, Clay__ElementConfigType type) {
@@ -1487,7 +1506,7 @@ bool Clay__ElementHasConfig(Clay_LayoutElement *element, Clay__ElementConfigType
 }
 
 Clay_ElementConfigUnion Clay__FindElementConfigWithType(Clay_LayoutElement *element, Clay__ElementConfigType type) {
-    for (int i = 0; i < element->elementConfigs.length; i++) {
+    for (int32_t i = 0; i < element->elementConfigs.length; i++) {
         Clay_ElementConfig *config = Clay__ElementConfigArraySlice_Get(&element->elementConfigs, i);
         if (config->type == type) {
             return config->config;
@@ -1512,7 +1531,7 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
     uint32_t hash = 0;
     uint32_t base = seed;
 
-    for (int i = 0; i < key.length; i++) {
+    for (int32_t i = 0; i < key.length; i++) {
         base += key.chars[i];
         base += (base << 10);
         base ^= (base >> 6);
@@ -1635,7 +1654,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
                 nextWordIndex = measuredWord->next;
             }
 
-            uint32_t nextIndex = hashEntry->nextIndex;
+            int32_t nextIndex = hashEntry->nextIndex;
             Clay__MeasureTextCacheItemArray_Set(&Clay__measureTextHashMapInternal, elementIndex, CLAY__INIT(Clay__MeasureTextCacheItem) { .measuredWordsStartIndex = -1 });
             Clay__int32_tArray_Add(&Clay__measureTextHashMapInternalFreeList, elementIndex);
             if (elementIndexPrevious == 0) {
@@ -1651,8 +1670,8 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         }
     }
 
-    uint32_t newItemIndex = 0;
-    Clay__MeasureTextCacheItem newCacheItem = CLAY__INIT(Clay__MeasureTextCacheItem) { .measuredWordsStartIndex = -1, .id = id, .generation = Clay__generation };
+    int32_t newItemIndex = 0;
+    Clay__MeasureTextCacheItem newCacheItem = { .measuredWordsStartIndex = -1, .id = id, .generation = Clay__generation };
     Clay__MeasureTextCacheItem *measured = NULL;
     if (Clay__measureTextHashMapInternalFreeList.length > 0) {
         newItemIndex = Clay__int32_tArray_Get(&Clay__measureTextHashMapInternalFreeList, Clay__measureTextHashMapInternalFreeList.length - 1);
@@ -1674,8 +1693,8 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         newItemIndex = Clay__measureTextHashMapInternal.length - 1;
     }
 
-    uint32_t start = 0;
-    uint32_t end = 0;
+    int32_t start = 0;
+    int32_t end = 0;
     float measuredWidth = 0;
     float measuredHeight = 0;
     float spaceWidth = Clay__MeasureText(&CLAY__SPACECHAR, config).width;
@@ -1694,8 +1713,8 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         }
         char current = text->chars[end];
         if (current == ' ' || current == '\n') {
-            uint32_t length = end - start;
-            Clay_String word = CLAY__INIT(Clay_String) { .length = (int)length, .chars = &text->chars[start] };
+            int32_t length = end - start;
+            Clay_String word = { .length = length, .chars = &text->chars[start] };
             Clay_Dimensions dimensions = Clay__MeasureText(&word, config);
             if (current == ' ') {
                 dimensions.width += spaceWidth;
@@ -1714,7 +1733,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         end++;
     }
     if (end - start > 0) {
-        Clay_String lastWord = CLAY__INIT(Clay_String) { .length = (int)(end - start), .chars = &text->chars[start] };
+        Clay_String lastWord = { .length = end - start, .chars = &text->chars[start] };
         Clay_Dimensions dimensions = Clay__MeasureText(&lastWord, config);
         Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = end - start, .width = dimensions.width, .next = -1 }, previousWord);
         measuredWidth += dimensions.width;
@@ -1740,7 +1759,7 @@ Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Cl
     if (Clay__layoutElementsHashMapInternal.length == Clay__layoutElementsHashMapInternal.capacity - 1) {
         return NULL;
     }
-    Clay_LayoutElementHashMapItem item = CLAY__INIT(Clay_LayoutElementHashMapItem) { .elementId = elementId, .layoutElement = layoutElement, .nextIndex = -1, .generation = Clay__generation + 1 };
+    Clay_LayoutElementHashMapItem item = { .elementId = elementId, .layoutElement = layoutElement, .nextIndex = -1, .generation = Clay__generation + 1 };
     uint32_t hashBucket = elementId.id % Clay__layoutElementsHashMap.capacity;
     int32_t hashItemPrevious = -1;
     int32_t hashItemIndex = Clay__layoutElementsHashMap.internalArray[hashBucket];
@@ -1767,7 +1786,7 @@ Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Cl
         hashItemIndex = hashItem->nextIndex;
     }
     Clay_LayoutElementHashMapItem *hashItem = Clay__LayoutElementHashMapItemArray_Add(&Clay__layoutElementsHashMapInternal, item);
-    hashItem->debugData = Clay__DebugElementDataArray_Add(&Clay__debugElementData, CLAY__INIT(Clay__DebugElementData) {});
+    hashItem->debugData = Clay__DebugElementDataArray_Add(&Clay__debugElementData, CLAY__INIT(Clay__DebugElementData) CLAY__DEFAULT_STRUCT);
     if (hashItemPrevious != -1) {
         Clay__LayoutElementHashMapItemArray_Get(&Clay__layoutElementsHashMapInternal, hashItemPrevious)->nextIndex = (int32_t)Clay__layoutElementsHashMapInternal.length - 1;
     } else {
@@ -1791,7 +1810,7 @@ Clay_LayoutElementHashMapItem *Clay__GetHashMapItem(uint32_t id) {
 
 void Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) {
     Clay_LayoutElement *parentElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 2));
-    Clay_ElementId elementId = Clay__HashNumber(parentElement->children.length, parentElement->id);
+    Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
     openLayoutElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, openLayoutElement);
     Clay__StringArray_Add(&Clay__layoutElementIdStrings, elementId.stringId);
@@ -1813,7 +1832,7 @@ void Clay__ElementPostConfiguration(void) {
 
     // Loop through element configs and handle special cases
     openLayoutElement->elementConfigs.internalArray = &Clay__elementConfigs.internalArray[Clay__elementConfigs.length];
-    for (int elementConfigIndex = 0; elementConfigIndex < openLayoutElement->elementConfigs.length; elementConfigIndex++) {
+    for (int32_t elementConfigIndex = 0; elementConfigIndex < openLayoutElement->elementConfigs.length; elementConfigIndex++) {
         Clay_ElementConfig *config = Clay__ElementConfigArray_Add(&Clay__elementConfigs, *Clay__ElementConfigArray_Get(&Clay__elementConfigBuffer, Clay__elementConfigBuffer.length - openLayoutElement->elementConfigs.length + elementConfigIndex));
         openLayoutElement->configsEnabled |= config->type;
         switch (config->type) {
@@ -1826,7 +1845,7 @@ void Clay__ElementPostConfiguration(void) {
                 if (!hierarchicalParent) {
                     break;
                 }
-                int clipElementId = 0;
+                uint32_t clipElementId = 0;
                 if (floatingConfig->parentId == 0) {
                     // If no parent id was specified, attach to the elements direct hierarchical parent
                     Clay_FloatingElementConfig newConfig = *floatingConfig;
@@ -1838,18 +1857,19 @@ void Clay__ElementPostConfiguration(void) {
                     }
                 } else {
                     Clay_LayoutElementHashMapItem *parentItem = Clay__GetHashMapItem(floatingConfig->parentId);
-                    clipElementId = Clay__int32_tArray_Get(&Clay__layoutElementClipElementIds, parentItem->layoutElement - Clay__layoutElements.internalArray);
                     if (!parentItem) {
                         Clay__errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
                             .errorType = CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND,
                             .errorText = CLAY_STRING("A floating element was declared with a parentId, but no element with that ID was found."),
                             .userData = Clay__errorHandler.userData });
+                    } else {
+                        clipElementId = Clay__int32_tArray_Get(&Clay__layoutElementClipElementIds, parentItem->layoutElement - Clay__layoutElements.internalArray);
                     }
                 }
                 Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
-                    .layoutElementIndex = (uint32_t)Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 1),
+                    .layoutElementIndex = Clay__int32_tArray_Get(&Clay__openLayoutElementStack, Clay__openLayoutElementStack.length - 1),
                     .parentId = floatingConfig->parentId,
-                    .clipElementId = (uint32_t)clipElementId,
+                    .clipElementId = clipElementId,
                     .zIndex = floatingConfig->zIndex,
                 });
                 break;
@@ -1858,7 +1878,7 @@ void Clay__ElementPostConfiguration(void) {
                 Clay__int32_tArray_Add(&Clay__openClipElementStack, (int)openLayoutElement->id);
                 // Retrieve or create cached data to track scroll position across frames
                 Clay__ScrollContainerDataInternal *scrollOffset = CLAY__NULL;
-                for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
+                for (int32_t i = 0; i < Clay__scrollContainerDatas.length; i++) {
                     Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
                     if (openLayoutElement->id == mapping->elementId) {
                         scrollOffset = mapping;
@@ -1879,7 +1899,8 @@ void Clay__ElementPostConfiguration(void) {
                 Clay__LayoutElementPointerArray_Add(&Clay__imageElementPointers, openLayoutElement);
                 break;
             }
-            case CLAY__ELEMENT_CONFIG_TYPE_TEXT: break;
+            case CLAY__ELEMENT_CONFIG_TYPE_TEXT:
+            default: break;
         }
     }
     Clay__elementConfigBuffer.length -= openLayoutElement->elementConfigs.length;
@@ -1901,11 +1922,11 @@ void Clay__CloseElement(void) {
     }
 
     // Attach children to the current open element
-    openLayoutElement->children.elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length];
+    openLayoutElement->childrenOrTextContent.children.elements = &Clay__layoutElementChildren.internalArray[Clay__layoutElementChildren.length];
     if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-        openLayoutElement->dimensions.width = layoutConfig->padding.x * 2;
-        for (int i = 0; i < openLayoutElement->children.length; i++) {
-            int32_t childIndex = Clay__int32_tArray_Get(&Clay__layoutElementChildrenBuffer, (int)Clay__layoutElementChildrenBuffer.length - openLayoutElement->children.length + i);
+        openLayoutElement->dimensions.width = (float)layoutConfig->padding.x * 2;
+        for (int32_t i = 0; i < openLayoutElement->childrenOrTextContent.children.length; i++) {
+            int32_t childIndex = Clay__int32_tArray_Get(&Clay__layoutElementChildrenBuffer, (int)Clay__layoutElementChildrenBuffer.length - openLayoutElement->childrenOrTextContent.children.length + i);
             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&Clay__layoutElements, childIndex);
             openLayoutElement->dimensions.width += child->dimensions.width;
             openLayoutElement->dimensions.height = CLAY__MAX(openLayoutElement->dimensions.height, child->dimensions.height + layoutConfig->padding.y * 2);
@@ -1918,14 +1939,14 @@ void Clay__CloseElement(void) {
             }
             Clay__int32_tArray_Add(&Clay__layoutElementChildren, childIndex);
         }
-        float childGap = (float)(CLAY__MAX(openLayoutElement->children.length - 1, 0) * layoutConfig->childGap);
+        float childGap = (float)(CLAY__MAX(openLayoutElement->childrenOrTextContent.children.length - 1, 0) * layoutConfig->childGap);
         openLayoutElement->dimensions.width += childGap; // TODO this is technically a bug with childgap and scroll containers
         openLayoutElement->minDimensions.width += childGap;
     }
     else if (layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM) {
-        openLayoutElement->dimensions.height = layoutConfig->padding.y * 2;
-        for (int i = 0; i < openLayoutElement->children.length; i++) {
-            int32_t childIndex = Clay__int32_tArray_Get(&Clay__layoutElementChildrenBuffer, (int)Clay__layoutElementChildrenBuffer.length - openLayoutElement->children.length + i);
+        openLayoutElement->dimensions.height = (float)layoutConfig->padding.y * 2;
+        for (int32_t i = 0; i < openLayoutElement->childrenOrTextContent.children.length; i++) {
+            int32_t childIndex = Clay__int32_tArray_Get(&Clay__layoutElementChildrenBuffer, (int)Clay__layoutElementChildrenBuffer.length - openLayoutElement->childrenOrTextContent.children.length + i);
             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&Clay__layoutElements, childIndex);
             openLayoutElement->dimensions.height += child->dimensions.height;
             openLayoutElement->dimensions.width = CLAY__MAX(openLayoutElement->dimensions.width, child->dimensions.width + layoutConfig->padding.x * 2);
@@ -1938,12 +1959,12 @@ void Clay__CloseElement(void) {
             }
             Clay__int32_tArray_Add(&Clay__layoutElementChildren, childIndex);
         }
-        float childGap = (float)(CLAY__MAX(openLayoutElement->children.length - 1, 0) * layoutConfig->childGap);
+        float childGap = (float)(CLAY__MAX(openLayoutElement->childrenOrTextContent.children.length - 1, 0) * layoutConfig->childGap);
         openLayoutElement->dimensions.height += childGap; // TODO this is technically a bug with childgap and scroll containers
         openLayoutElement->minDimensions.height += childGap;
     }
 
-    Clay__layoutElementChildrenBuffer.length -= openLayoutElement->children.length;
+    Clay__layoutElementChildrenBuffer.length -= openLayoutElement->childrenOrTextContent.children.length;
 
     // Clamp element min and max width to the values configured in the layout
     if (layoutConfig->sizing.width.type != CLAY__SIZING_TYPE_PERCENT) {
@@ -1974,7 +1995,7 @@ void Clay__CloseElement(void) {
     openLayoutElement = Clay__GetOpenLayoutElement();
 
     if (!elementIsFloating && Clay__openLayoutElementStack.length > 1) {
-        openLayoutElement->children.length++;
+        openLayoutElement->childrenOrTextContent.children.length++;
         Clay__int32_tArray_Add(&Clay__layoutElementChildrenBuffer, closingElementIndex);
     }
 }
@@ -1984,7 +2005,7 @@ void Clay__OpenElement(void) {
         Clay__booleanWarnings.maxElementsExceeded = true;
         return;
     }
-    Clay_LayoutElement layoutElement = CLAY__INIT(Clay_LayoutElement) {};
+    Clay_LayoutElement layoutElement = CLAY__DEFAULT_STRUCT;
     Clay_LayoutElementArray_Add(&Clay__layoutElements, layoutElement);
     Clay__int32_tArray_Add(&Clay__openLayoutElementStack, Clay__layoutElements.length - 1);
     if (Clay__openClipElementStack.length > 0) {
@@ -2000,20 +2021,20 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
         return;
     }
     Clay_LayoutElement *parentElement = Clay__GetOpenLayoutElement();
-    parentElement->children.length++;
+    parentElement->childrenOrTextContent.children.length++;
 
     Clay__OpenElement();
     Clay_LayoutElement * openLayoutElement = Clay__GetOpenLayoutElement();
     Clay__int32_tArray_Add(&Clay__layoutElementChildrenBuffer, Clay__layoutElements.length - 1);
     Clay__MeasureTextCacheItem *textMeasured = Clay__MeasureTextCached(&text, textConfig);
-    Clay_ElementId elementId = Clay__HashString(CLAY_STRING("Text"), parentElement->children.length, parentElement->id);
+    Clay_ElementId elementId = Clay__HashString(CLAY_STRING("Text"), parentElement->childrenOrTextContent.children.length, parentElement->id);
     openLayoutElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, openLayoutElement);
     Clay__StringArray_Add(&Clay__layoutElementIdStrings, elementId.stringId);
-    Clay_Dimensions textDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured->unwrappedDimensions.width, .height = textConfig->lineHeight > 0 ? textConfig->lineHeight : textMeasured->unwrappedDimensions.height };
+    Clay_Dimensions textDimensions = { .width = textMeasured->unwrappedDimensions.width, .height = textConfig->lineHeight > 0 ? (float)textConfig->lineHeight : textMeasured->unwrappedDimensions.height };
     openLayoutElement->dimensions = textDimensions;
     openLayoutElement->minDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured->unwrappedDimensions.height, .height = textDimensions.height }; // TODO not sure this is the best way to decide min width for text
-    openLayoutElement->textElementData = Clay__TextElementDataArray_Add(&Clay__textElementData, CLAY__INIT(Clay__TextElementData) { .text = text, .preferredDimensions = textMeasured->unwrappedDimensions, .elementIndex = Clay__layoutElements.length - 1 });
+    openLayoutElement->childrenOrTextContent.textElementData = Clay__TextElementDataArray_Add(&Clay__textElementData, CLAY__INIT(Clay__TextElementData) { .text = text, .preferredDimensions = textMeasured->unwrappedDimensions, .elementIndex = Clay__layoutElements.length - 1 });
     openLayoutElement->elementConfigs = CLAY__INIT(Clay__ElementConfigArraySlice) {
         .length = 1,
         .internalArray = Clay__ElementConfigArray_Add(&Clay__elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = CLAY__ELEMENT_CONFIG_TYPE_TEXT, .config = { .textElementConfig = textConfig }})
@@ -2076,24 +2097,23 @@ void Clay__InitializePersistentMemory(Clay_Arena *arena) {
 }
 
 
-typedef enum
-{
+CLAY__TYPEDEF(Clay__SizeDistributionType, enum {
     CLAY__SIZE_DISTRIBUTION_TYPE_SCROLL_CONTAINER,
     CLAY__SIZE_DISTRIBUTION_TYPE_RESIZEABLE_CONTAINER,
     CLAY__SIZE_DISTRIBUTION_TYPE_GROW_CONTAINER,
-} Clay__SizeDistributionType;
+});
 
 float Clay__DistributeSizeAmongChildren(bool xAxis, float sizeToDistribute, Clay__int32_tArray resizableContainerBuffer, Clay__SizeDistributionType distributionType) {
     Clay__int32_tArray remainingElements = Clay__openClipElementStack;
     remainingElements.length = 0;
 
-    for (int i = 0; i < resizableContainerBuffer.length; ++i) {
+    for (int32_t i = 0; i < resizableContainerBuffer.length; ++i) {
         Clay__int32_tArray_Add(&remainingElements, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
     }
 
     while (sizeToDistribute != 0 && remainingElements.length > 0) {
         float dividedSize = sizeToDistribute / (float)remainingElements.length;
-        for (int childOffset = 0; childOffset < remainingElements.length; childOffset++) {
+        for (int32_t childOffset = 0; childOffset < remainingElements.length; childOffset++) {
             Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&remainingElements, childOffset));
             Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
             float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
@@ -2147,7 +2167,7 @@ float Clay__DistributeSizeAmongChildren(bool xAxis, float sizeToDistribute, Clay
 void Clay__SizeContainersAlongAxis(bool xAxis) {
     Clay__int32_tArray bfsBuffer = Clay__layoutElementChildrenBuffer;
     Clay__int32_tArray resizableContainerBuffer = Clay__openLayoutElementStack;
-    for (int rootIndex = 0; rootIndex < Clay__layoutElementTreeRoots.length; ++rootIndex) {
+    for (int32_t rootIndex = 0; rootIndex < Clay__layoutElementTreeRoots.length; ++rootIndex) {
         bfsBuffer.length = 0;
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, rootIndex);
         Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)root->layoutElementIndex);
@@ -2171,11 +2191,11 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
         rootElement->dimensions.width = CLAY__MIN(CLAY__MAX(rootElement->dimensions.width, rootElement->layoutConfig->sizing.width.size.minMax.min), rootElement->layoutConfig->sizing.width.size.minMax.max);
         rootElement->dimensions.height = CLAY__MIN(CLAY__MAX(rootElement->dimensions.height, rootElement->layoutConfig->sizing.height.size.minMax.min), rootElement->layoutConfig->sizing.height.size.minMax.max);
 
-        for (int i = 0; i < bfsBuffer.length; ++i) {
+        for (int32_t i = 0; i < bfsBuffer.length; ++i) {
             int32_t parentIndex = Clay__int32_tArray_Get(&bfsBuffer, i);
             Clay_LayoutElement *parent = Clay_LayoutElementArray_Get(&Clay__layoutElements, parentIndex);
             Clay_LayoutConfig *parentStyleConfig = parent->layoutConfig;
-            int growContainerCount = 0;
+            int32_t growContainerCount = 0;
             float parentSize = xAxis ? parent->dimensions.width : parent->dimensions.height;
             float parentPadding = (float)(xAxis ? parent->layoutConfig->padding.x : parent->layoutConfig->padding.y);
             float innerContentSize = 0, growContainerContentSize = 0, totalPaddingAndChildGaps = parentPadding * 2;
@@ -2183,13 +2203,13 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
             resizableContainerBuffer.length = 0;
             float parentChildGap = parentStyleConfig->childGap;
 
-            for (int childOffset = 0; childOffset < parent->children.length; childOffset++) {
-                int32_t childElementIndex = parent->children.elements[childOffset];
+            for (int32_t childOffset = 0; childOffset < parent->childrenOrTextContent.children.length; childOffset++) {
+                int32_t childElementIndex = parent->childrenOrTextContent.children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, childElementIndex);
                 Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
                 float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
 
-                if (!Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) && childElement->children.length > 0) {
+                if (!Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) && childElement->childrenOrTextContent.children.length > 0) {
                     Clay__int32_tArray_Add(&bfsBuffer, childElementIndex);
                 }
 
@@ -2213,8 +2233,8 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
             }
 
             // Expand percentage containers to size
-            for (int childOffset = 0; childOffset < parent->children.length; childOffset++) {
-                int32_t childElementIndex = parent->children.elements[childOffset];
+            for (int32_t childOffset = 0; childOffset < parent->childrenOrTextContent.children.length; childOffset++) {
+                int32_t childElementIndex = parent->childrenOrTextContent.children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, childElementIndex);
                 Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
                 float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
@@ -2252,8 +2272,8 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                     }
                 // The content is too small, allow SIZING_GROW containers to expand
                 } else if (sizeToDistribute > 0 && growContainerCount > 0) {
-                    float targetSize = (sizeToDistribute + growContainerContentSize) / growContainerCount;
-                    for (int childOffset = 0; childOffset < resizableContainerBuffer.length; childOffset++) {
+                    float targetSize = (sizeToDistribute + growContainerContentSize) / (float)growContainerCount;
+                    for (int32_t childOffset = 0; childOffset < resizableContainerBuffer.length; childOffset++) {
                         Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&resizableContainerBuffer, childOffset));
                         Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
                         if (childSizing.type == CLAY__SIZING_TYPE_GROW) {
@@ -2263,7 +2283,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                                 growContainerContentSize -= *minSize;
                                 Clay__int32_tArray_RemoveSwapback(&resizableContainerBuffer, childOffset);
                                 growContainerCount--;
-                                targetSize = (sizeToDistribute + growContainerContentSize) / growContainerCount;
+                                targetSize = (sizeToDistribute + growContainerContentSize) / (float)growContainerCount;
                                 childOffset = -1;
                                 continue;
                             }
@@ -2273,7 +2293,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 }
             // Sizing along the non layout axis ("off axis")
             } else {
-                for (int childOffset = 0; childOffset < resizableContainerBuffer.length; childOffset++) {
+                for (int32_t childOffset = 0; childOffset < resizableContainerBuffer.length; childOffset++) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, Clay__int32_tArray_Get(&resizableContainerBuffer, childOffset));
                     Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
                     float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
@@ -2301,13 +2321,13 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
     }
 }
 
-Clay_String Clay__IntToString(int integer) {
+Clay_String Clay__IntToString(int32_t integer) {
     if (integer == 0) {
         return CLAY__INIT(Clay_String) { .length = 1, .chars = "0" };
     }
     char *chars = (char *)(Clay__dynamicStringData.internalArray + Clay__dynamicStringData.length);
-    int length = 0;
-    int sign = integer;
+    int32_t length = 0;
+    int32_t sign = integer;
 
     if (integer < 0) {
         integer = -integer;
@@ -2322,7 +2342,7 @@ Clay_String Clay__IntToString(int integer) {
     }
 
     // Reverse the string to get the correct order
-    for (int j = 0, k = length - 1; j < k; j++, k--) {
+    for (int32_t j = 0, k = length - 1; j < k; j++, k--) {
         char temp = chars[j];
         chars[j] = chars[k];
         chars[k] = temp;
@@ -2356,21 +2376,21 @@ bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
            (boundingBox->y + boundingBox->height < 0);
 }
 
-void Clay__CalculateFinalLayout() {
+void Clay__CalculateFinalLayout(void) {
     // Calculate sizing along the X axis
     Clay__SizeContainersAlongAxis(true);
 
     // Wrap text
-    for (int textElementIndex = 0; textElementIndex < Clay__textElementData.length; ++textElementIndex) {
+    for (int32_t textElementIndex = 0; textElementIndex < Clay__textElementData.length; ++textElementIndex) {
         Clay__TextElementData *textElementData = Clay__TextElementDataArray_Get(&Clay__textElementData, textElementIndex);
         textElementData->wrappedLines = CLAY__INIT(Clay__WrappedTextLineArraySlice) { .length = 0, .internalArray = &Clay__wrappedTextLines.internalArray[Clay__wrappedTextLines.length] };
         Clay_LayoutElement *containerElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)textElementData->elementIndex);
         Clay_TextElementConfig *textConfig = Clay__FindElementConfigWithType(containerElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT).textElementConfig;
         Clay__MeasureTextCacheItem *measureTextCacheItem = Clay__MeasureTextCached(&textElementData->text, textConfig);
         float lineWidth = 0;
-        float lineHeight = textConfig->lineHeight > 0 ? textConfig->lineHeight : textElementData->preferredDimensions.height;
-        uint32_t lineLengthChars = 0;
-        uint32_t lineStartOffset = 0;
+        float lineHeight = textConfig->lineHeight > 0 ? (float)textConfig->lineHeight : textElementData->preferredDimensions.height;
+        int32_t lineLengthChars = 0;
+        int32_t lineStartOffset = 0;
         if (textElementData->preferredDimensions.width <= containerElement->dimensions.width) {
             Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { containerElement->dimensions,  textElementData->text });
             textElementData->wrappedLines.length++;
@@ -2384,14 +2404,15 @@ void Clay__CalculateFinalLayout() {
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArray_Get(&Clay__measuredWords, wordIndex);
             // Only word on the line is too large, just render it anyway
             if (lineLengthChars == 0 && lineWidth + measuredWord->width > containerElement->dimensions.width) {
-                Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { CLAY__INIT(Clay_Dimensions) { measuredWord->width, lineHeight }, CLAY__INIT(Clay_String){ .length = (int)measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] } });
+                Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { measuredWord->width, lineHeight }, { .length = measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] } });
                 textElementData->wrappedLines.length++;
                 wordIndex = measuredWord->next;
+                lineStartOffset = measuredWord->startOffset + measuredWord->length;
             }
             // measuredWord->length == 0 means a newline character
             else if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
                 // Wrapped text lines list has overflowed, just render out the line
-                Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { CLAY__INIT(Clay_Dimensions) { lineWidth, lineHeight }, CLAY__INIT(Clay_String){ .length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
+                Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth, lineHeight }, { .length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
                 textElementData->wrappedLines.length++;
                 if (lineLengthChars == 0 || measuredWord->length == 0) {
                     wordIndex = measuredWord->next;
@@ -2406,14 +2427,14 @@ void Clay__CalculateFinalLayout() {
             }
         }
         if (lineLengthChars > 0) {
-            Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { CLAY__INIT(Clay_Dimensions) { lineWidth, lineHeight }, CLAY__INIT(Clay_String) {.length = (int)lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
+            Clay__WrappedTextLineArray_Add(&Clay__wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth, lineHeight }, {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
             textElementData->wrappedLines.length++;
         }
-        containerElement->dimensions.height = lineHeight * textElementData->wrappedLines.length;
+        containerElement->dimensions.height = lineHeight * (float)textElementData->wrappedLines.length;
     }
 
     // Scale vertical image heights according to aspect ratio
-    for (int i = 0; i < Clay__imageElementPointers.length; ++i) {
+    for (int32_t i = 0; i < Clay__imageElementPointers.length; ++i) {
         Clay_LayoutElement* imageElement = Clay__LayoutElementPointerArray_Get(&Clay__imageElementPointers, i);
         Clay_ImageElementConfig *config = Clay__FindElementConfigWithType(imageElement, CLAY__ELEMENT_CONFIG_TYPE_IMAGE).imageElementConfig;
         imageElement->dimensions.height = (config->sourceDimensions.height / CLAY__MAX(config->sourceDimensions.width, 1)) * imageElement->dimensions.width;
@@ -2422,7 +2443,7 @@ void Clay__CalculateFinalLayout() {
     // Propagate effect of text wrapping, image aspect scaling etc. on height of parents
     Clay__LayoutElementTreeNodeArray dfsBuffer = Clay__layoutElementTreeNodeArray1;
     dfsBuffer.length = 0;
-    for (int i = 0; i < Clay__layoutElementTreeRoots.length; ++i) {
+    for (int32_t i = 0; i < Clay__layoutElementTreeRoots.length; ++i) {
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, i);
         Clay__treeNodeVisited.internalArray[dfsBuffer.length] = false;
         Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)root->layoutElementIndex) });
@@ -2433,14 +2454,14 @@ void Clay__CalculateFinalLayout() {
         if (!Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
             Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             // If the element has no children or is the container for a text element, don't bother inspecting it
-            if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->children.length == 0) {
+            if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->childrenOrTextContent.children.length == 0) {
                 dfsBuffer.length--;
                 continue;
             }
             // Add the children to the DFS buffer (needs to be pushed in reverse so that stack traversal is in correct layout order)
-            for (int i = 0; i < currentElement->children.length; i++) {
+            for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; i++) {
                 Clay__treeNodeVisited.internalArray[dfsBuffer.length] = false;
-                Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]) });
+                Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[i]) });
             }
             continue;
         }
@@ -2453,19 +2474,19 @@ void Clay__CalculateFinalLayout() {
         }
         if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
             // Resize any parent containers that have grown in height along their non layout axis
-            for (int j = 0; j < currentElement->children.length; ++j) {
-                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[j]);
+            for (int32_t j = 0; j < currentElement->childrenOrTextContent.children.length; ++j) {
+                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[j]);
                 float childHeightWithPadding = CLAY__MAX(childElement->dimensions.height + layoutConfig->padding.y * 2, currentElement->dimensions.height);
                 currentElement->dimensions.height = CLAY__MIN(CLAY__MAX(childHeightWithPadding, layoutConfig->sizing.height.size.minMax.min), layoutConfig->sizing.height.size.minMax.max);
             }
         } else if (layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM) {
             // Resizing along the layout axis
             float contentHeight = (float)layoutConfig->padding.y * 2;
-            for (int j = 0; j < currentElement->children.length; ++j) {
-                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[j]);
+            for (int32_t j = 0; j < currentElement->childrenOrTextContent.children.length; ++j) {
+                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[j]);
                 contentHeight += childElement->dimensions.height;
             }
-            contentHeight += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
+            contentHeight += (float)(CLAY__MAX(currentElement->childrenOrTextContent.children.length - 1, 0) * layoutConfig->childGap);
             currentElement->dimensions.height = CLAY__MIN(CLAY__MAX(contentHeight, layoutConfig->sizing.height.size.minMax.min), layoutConfig->sizing.height.size.minMax.max);
         }
     }
@@ -2476,11 +2497,11 @@ void Clay__CalculateFinalLayout() {
     // Calculate final positions and generate render commands
     Clay__renderCommands.length = 0;
     dfsBuffer.length = 0;
-    for (int rootIndex = 0; rootIndex < Clay__layoutElementTreeRoots.length; ++rootIndex) {
+    for (int32_t rootIndex = 0; rootIndex < Clay__layoutElementTreeRoots.length; ++rootIndex) {
         dfsBuffer.length = 0;
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, rootIndex);
         Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)root->layoutElementIndex);
-        Clay_Vector2 rootPosition = CLAY__INIT(Clay_Vector2) {};
+        Clay_Vector2 rootPosition = CLAY__DEFAULT_STRUCT;
         Clay_LayoutElementHashMapItem *parentHashMapItem = Clay__GetHashMapItem(root->parentId);
         // Position root floating containers
         if (Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER) && parentHashMapItem) {
@@ -2488,7 +2509,7 @@ void Clay__CalculateFinalLayout() {
             Clay_Dimensions rootDimensions = rootElement->dimensions;
             Clay_BoundingBox parentBoundingBox = parentHashMapItem->boundingBox;
             // Set X position
-            Clay_Vector2 targetAttachPosition = CLAY__INIT(Clay_Vector2){};
+            Clay_Vector2 targetAttachPosition = CLAY__DEFAULT_STRUCT;
             switch (config->attachment.parent) {
                 case CLAY_ATTACH_POINT_LEFT_TOP:
                 case CLAY_ATTACH_POINT_LEFT_CENTER:
@@ -2543,7 +2564,7 @@ void Clay__CalculateFinalLayout() {
                 // Floating elements that are attached to scrolling contents won't be correctly positioned if external scroll handling is enabled, fix here
                 if (Clay__externalScrollHandlingEnabled) {
                     Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(clipHashMapItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
-                    for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
+                    for (int32_t i = 0; i < Clay__scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
                         if (mapping->layoutElement == clipHashMapItem->layoutElement) {
                             root->pointerOffset = mapping->scrollPosition;
@@ -2559,26 +2580,26 @@ void Clay__CalculateFinalLayout() {
                 }
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
-                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig){}) },
+                    .config = { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig)CLAY__DEFAULT_STRUCT) },
                     .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
                 });
             }
         }
-        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = CLAY__INIT(Clay_Vector2) { .x = (float)rootElement->layoutConfig->padding.x, .y = (float)rootElement->layoutConfig->padding.y } });
+        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = { .x = (float)rootElement->layoutConfig->padding.x, .y = (float)rootElement->layoutConfig->padding.y } });
 
         Clay__treeNodeVisited.internalArray[0] = false;
         while (dfsBuffer.length > 0) {
             Clay__LayoutElementTreeNode *currentElementTreeNode = Clay__LayoutElementTreeNodeArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
             Clay_LayoutElement *currentElement = currentElementTreeNode->layoutElement;
             Clay_LayoutConfig *layoutConfig = currentElement->layoutConfig;
-            Clay_Vector2 scrollOffset = {0};
+            Clay_Vector2 scrollOffset = CLAY__DEFAULT_STRUCT;
 
             // This will only be run a single time for each element in downwards DFS order
             if (!Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
                 Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
 
-                Clay_BoundingBox currentElementBoundingBox = CLAY__INIT(Clay_BoundingBox) { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+                Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)) {
                     Clay_FloatingElementConfig *floatingElementConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig;
                     Clay_Dimensions expand = floatingElementConfig->expand;
@@ -2594,7 +2615,7 @@ void Clay__CalculateFinalLayout() {
                     Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
 
                     // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
-                    for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
+                    for (int32_t i = 0; i < Clay__scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
                         if (mapping->layoutElement == currentElement) {
                             scrollContainerData = mapping;
@@ -2606,7 +2627,7 @@ void Clay__CalculateFinalLayout() {
                                 scrollOffset.y = mapping->scrollPosition.y;
                             }
                             if (Clay__externalScrollHandlingEnabled) {
-                                scrollOffset = CLAY__INIT(Clay_Vector2) {};
+                                scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
                             }
                             break;
                         }
@@ -2618,15 +2639,15 @@ void Clay__CalculateFinalLayout() {
                     hashMapItem->boundingBox = currentElementBoundingBox;
                 }
 
-                int sortedConfigIndexes[20];
-                for (int elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
+                int32_t sortedConfigIndexes[20];
+                for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
                     sortedConfigIndexes[elementConfigIndex] = elementConfigIndex;
                 }
-                int sortMax = currentElement->elementConfigs.length - 1;
+                int32_t sortMax = currentElement->elementConfigs.length - 1;
                 while (sortMax > 0) { // todo dumb bubble sort
-                    for (int i = 0; i < sortMax; ++i) {
-                        int current = sortedConfigIndexes[i];
-                        int next = sortedConfigIndexes[i + 1];
+                    for (int32_t i = 0; i < sortMax; ++i) {
+                        int32_t current = sortedConfigIndexes[i];
+                        int32_t next = sortedConfigIndexes[i + 1];
                         Clay__ElementConfigType currentType = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, current)->type;
                         Clay__ElementConfigType nextType = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, next)->type;
                         if (nextType == CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER || currentType == CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER) {
@@ -2638,9 +2659,9 @@ void Clay__CalculateFinalLayout() {
                 }
 
                 // Create the render commands for this element
-                for (int elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
+                for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, sortedConfigIndexes[elementConfigIndex]);
-                    Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
+                    Clay_RenderCommand renderCommand = {
                         .boundingBox = currentElementBoundingBox,
                         .config = elementConfig->config,
                         .id = currentElement->id,
@@ -2679,12 +2700,12 @@ void Clay__CalculateFinalLayout() {
                             shouldRender = false;
                             Clay_ElementConfigUnion configUnion = elementConfig->config;
                             Clay_TextElementConfig *textElementConfig = configUnion.textElementConfig;
-                            float naturalLineHeight = currentElement->textElementData->preferredDimensions.height;
-                            float finalLineHeight = textElementConfig->lineHeight > 0 ? textElementConfig->lineHeight : naturalLineHeight;
+                            float naturalLineHeight = currentElement->childrenOrTextContent.textElementData->preferredDimensions.height;
+                            float finalLineHeight = textElementConfig->lineHeight > 0 ? (float)textElementConfig->lineHeight : naturalLineHeight;
                             float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
                             float yPosition = lineHeightOffset;
-                            for (int lineIndex = 0; lineIndex < currentElement->textElementData->wrappedLines.length; ++lineIndex) {
-                                Clay__WrappedTextLine wrappedLine = currentElement->textElementData->wrappedLines.internalArray[lineIndex]; // todo range check
+                            for (int32_t lineIndex = 0; lineIndex < currentElement->childrenOrTextContent.textElementData->wrappedLines.length; ++lineIndex) {
+                                Clay__WrappedTextLine wrappedLine = currentElement->childrenOrTextContent.textElementData->wrappedLines.internalArray[lineIndex]; // todo range check
                                 if (wrappedLine.line.length == 0) {
                                     yPosition += finalLineHeight;
                                     continue;
@@ -2722,14 +2743,14 @@ void Clay__CalculateFinalLayout() {
 
                 // Setup initial on-axis alignment
                 if (!Clay__ElementHasConfig(currentElementTreeNode->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
-                    Clay_Dimensions contentSize = CLAY__INIT(Clay_Dimensions) {0,0};
+                    Clay_Dimensions contentSize = {0,0};
                     if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-                        for (int i = 0; i < currentElement->children.length; ++i) {
-                            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
+                        for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
+                            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                             contentSize.width += childElement->dimensions.width;
                             contentSize.height = CLAY__MAX(contentSize.height, childElement->dimensions.height);
                         }
-                        contentSize.width += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
+                        contentSize.width += (float)(CLAY__MAX(currentElement->childrenOrTextContent.children.length - 1, 0) * layoutConfig->childGap);
                         float extraSpace = currentElement->dimensions.width - (float)layoutConfig->padding.x * 2 - contentSize.width;
                         switch (layoutConfig->childAlignment.x) {
                             case CLAY_ALIGN_X_LEFT: extraSpace = 0; break;
@@ -2738,12 +2759,12 @@ void Clay__CalculateFinalLayout() {
                         }
                         currentElementTreeNode->nextChildOffset.x += extraSpace;
                     } else {
-                        for (int i = 0; i < currentElement->children.length; ++i) {
-                            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
+                        for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
+                            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                             contentSize.width = CLAY__MAX(contentSize.width, childElement->dimensions.width);
                             contentSize.height += childElement->dimensions.height;
                         }
-                        contentSize.height += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
+                        contentSize.height += (float)(CLAY__MAX(currentElement->childrenOrTextContent.children.length - 1, 0) * layoutConfig->childGap);
                         float extraSpace = currentElement->dimensions.height - (float)layoutConfig->padding.y * 2 - contentSize.height;
                         switch (layoutConfig->childAlignment.y) {
                             case CLAY_ALIGN_Y_TOP: extraSpace = 0; break;
@@ -2754,7 +2775,7 @@ void Clay__CalculateFinalLayout() {
                     }
 
                     if (scrollContainerData) {
-                        scrollContainerData->contentSize = CLAY__INIT(Clay_Dimensions) { contentSize.width + layoutConfig->padding.x * 2, contentSize.height + layoutConfig->padding.y * 2 };
+                        scrollContainerData->contentSize = CLAY__INIT(Clay_Dimensions) { contentSize.width + (float)layoutConfig->padding.x * 2, contentSize.height + (float)layoutConfig->padding.y * 2 };
                     }
                 }
             }
@@ -2764,13 +2785,13 @@ void Clay__CalculateFinalLayout() {
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
                     closeScrollElement = true;
                     Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
-                    for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
+                    for (int32_t i = 0; i < Clay__scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
                         if (mapping->layoutElement == currentElement) {
                             if (scrollConfig->horizontal) { scrollOffset.x = mapping->scrollPosition.x; }
                             if (scrollConfig->vertical) { scrollOffset.y = mapping->scrollPosition.y; }
                             if (Clay__externalScrollHandlingEnabled) {
-                                scrollOffset = CLAY__INIT(Clay_Vector2) {};
+                                scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
                             }
                             break;
                         }
@@ -2784,7 +2805,7 @@ void Clay__CalculateFinalLayout() {
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                     if (!Clay__ElementIsOffscreen(&currentElementBoundingBox)) {
                         Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER).borderElementConfig;
-                        Clay_RenderCommand renderCommand = CLAY__INIT(Clay_RenderCommand) {
+                        Clay_RenderCommand renderCommand = {
                                 .boundingBox = currentElementBoundingBox,
                                 .config = { .borderElementConfig = borderConfig },
                                 .id = Clay__RehashWithNumber(currentElement->id, 4),
@@ -2795,8 +2816,8 @@ void Clay__CalculateFinalLayout() {
                             Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {.color = borderConfig->betweenChildren.color});
                             Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x, (float)layoutConfig->padding.y };
                             if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-                                for (int i = 0; i < currentElement->children.length; ++i) {
-                                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
+                                for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
+                                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                                     if (i > 0) {
                                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                                             .boundingBox = { currentElementBoundingBox.x + borderOffset.x + scrollOffset.x, currentElementBoundingBox.y + scrollOffset.y, (float)borderConfig->betweenChildren.width, currentElement->dimensions.height },
@@ -2808,8 +2829,8 @@ void Clay__CalculateFinalLayout() {
                                     borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap / 2);
                                 }
                             } else {
-                                for (int i = 0; i < currentElement->children.length; ++i) {
-                                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
+                                for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
+                                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                                     if (i > 0) {
                                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                                                 .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y, currentElement->dimensions.width, (float)borderConfig->betweenChildren.width },
@@ -2838,9 +2859,9 @@ void Clay__CalculateFinalLayout() {
 
             // Add children to the DFS buffer
             if (!Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
-                dfsBuffer.length += currentElement->children.length;
-                for (int i = 0; i < currentElement->children.length; ++i) {
-                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->children.elements[i]);
+                dfsBuffer.length += currentElement->childrenOrTextContent.children.length;
+                for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
+                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                     // Alignment along non layout axis
                     if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                         currentElementTreeNode->nextChildOffset.y = currentElement->layoutConfig->padding.y;
@@ -2860,7 +2881,7 @@ void Clay__CalculateFinalLayout() {
                         }
                     }
 
-                    Clay_Vector2 childPosition = CLAY__INIT(Clay_Vector2) {
+                    Clay_Vector2 childPosition = {
                         currentElementTreeNode->position.x + currentElementTreeNode->nextChildOffset.x + scrollOffset.x,
                         currentElementTreeNode->position.y + currentElementTreeNode->nextChildOffset.y + scrollOffset.y,
                     };
@@ -2869,8 +2890,8 @@ void Clay__CalculateFinalLayout() {
                     uint32_t newNodeIndex = dfsBuffer.length - 1 - i;
                     dfsBuffer.internalArray[newNodeIndex] = CLAY__INIT(Clay__LayoutElementTreeNode) {
                         .layoutElement = childElement,
-                        .position = CLAY__INIT(Clay_Vector2) { childPosition.x, childPosition.y },
-                        .nextChildOffset = CLAY__INIT(Clay_Vector2) { .x = (float)childElement->layoutConfig->padding.x, .y = (float)childElement->layoutConfig->padding.y },
+                        .position = { childPosition.x, childPosition.y },
+                        .nextChildOffset = { .x = (float)childElement->layoutConfig->padding.x, .y = (float)childElement->layoutConfig->padding.y },
                     };
                     Clay__treeNodeVisited.internalArray[newNodeIndex] = false;
 
@@ -2924,66 +2945,65 @@ Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConf
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay__booleanWarnings.maxElementsExceeded ? &CLAY__BORDER_ELEMENT_CONFIG_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay__borderElementConfigs, config); }
 
 #pragma region DebugTools
-Clay_Color CLAY__DEBUGVIEW_COLOR_1 = CLAY__INIT(Clay_Color) {58, 56, 52, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_2 = CLAY__INIT(Clay_Color) {62, 60, 58, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_3 = CLAY__INIT(Clay_Color) {141, 133, 135, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_4 = CLAY__INIT(Clay_Color) {238, 226, 231, 255};
-Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = CLAY__INIT(Clay_Color) {102, 80, 78, 255};
-const int CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
-const int CLAY__DEBUGVIEW_OUTER_PADDING = 10;
-const int CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
-Clay_TextElementConfig Clay__DebugView_TextNameConfig = CLAY__INIT(Clay_TextElementConfig) {.textColor = {238, 226, 231, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
-Clay_LayoutConfig Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__INIT(Clay_LayoutConfig) {};
+Clay_Color CLAY__DEBUGVIEW_COLOR_1 = {58, 56, 52, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_2 = {62, 60, 58, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_3 = {141, 133, 135, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_4 = {238, 226, 231, 255};
+Clay_Color CLAY__DEBUGVIEW_COLOR_SELECTED_ROW = {102, 80, 78, 255};
+const int32_t CLAY__DEBUGVIEW_ROW_HEIGHT = 30;
+const int32_t CLAY__DEBUGVIEW_OUTER_PADDING = 10;
+const int32_t CLAY__DEBUGVIEW_INDENT_WIDTH = 16;
+Clay_TextElementConfig Clay__DebugView_TextNameConfig = {.textColor = {238, 226, 231, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
+Clay_LayoutConfig Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__DEFAULT_STRUCT;
 
-typedef struct
-{
+CLAY__TYPEDEF(Clay__DebugElementConfigTypeLabelConfig, struct {
     Clay_String label;
     Clay_Color color;
-} Clay__DebugElementConfigTypeLabelConfig;
+});
 
 Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Clay__ElementConfigType type) {
     switch (type) {
-        case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Rectangle"), CLAY__INIT(Clay_Color) {243,134,48,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), CLAY__INIT(Clay_Color) {105,210,231,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), CLAY__INIT(Clay_Color) {121,189,154,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), CLAY__INIT(Clay_Color) {250,105,0,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Scroll"), CLAY__INIT(Clay_Color) {242,196,90,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), CLAY__INIT(Clay_Color) {108,91,123, 255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), CLAY__INIT(Clay_Color) {11,72,107,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Rectangle"), {243,134,48,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Scroll"), {242,196,90,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), {108,91,123, 255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), {11,72,107,255} };
+        default: break;
     }
-    return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Error"), CLAY__INIT(Clay_Color) {0,0,0,255} };
+    return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Error"), {0,0,0,255} };
 }
 
-typedef struct
-{
-    uint32_t rowCount;
-    uint32_t selectedElementRowIndex;
-} Clay__RenderDebugLayoutData;
+CLAY__TYPEDEF(Clay__RenderDebugLayoutData, struct {
+    int32_t rowCount;
+    int32_t selectedElementRowIndex;
+});
 
 // Returns row count
 Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialRootsLength, int32_t highlightedRowIndex) {
     Clay__int32_tArray dfsBuffer = Clay__reusableElementIndexBuffer;
     Clay__DebugView_ScrollViewItemLayoutConfig = CLAY__INIT(Clay_LayoutConfig) { .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT) }, .childGap = 6, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }};
-    Clay__RenderDebugLayoutData layoutData = {};
+    Clay__RenderDebugLayoutData layoutData = CLAY__DEFAULT_STRUCT;
 
     uint32_t highlightedElementId = 0;
 
-    for (int rootIndex = 0; rootIndex < initialRootsLength; ++rootIndex) {
+    for (int32_t rootIndex = 0; rootIndex < initialRootsLength; ++rootIndex) {
         dfsBuffer.length = 0;
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, rootIndex);
         Clay__int32_tArray_Add(&dfsBuffer, (int32_t)root->layoutElementIndex);
         Clay__treeNodeVisited.internalArray[0] = false;
         if (rootIndex > 0) {
-            CLAY(CLAY_IDI("Clay__DebugView_EmptyRowOuter", rootIndex), CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW({})}, .padding = {CLAY__DEBUGVIEW_INDENT_WIDTH / 2} })) {
-                CLAY(CLAY_IDI("Clay__DebugView_EmptyRow", rootIndex), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW({}), .height = CLAY_SIZING_FIXED((float)CLAY__DEBUGVIEW_ROW_HEIGHT) }}), CLAY_BORDER({ .top = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 } })) {}
+            CLAY(CLAY_IDI("Clay__DebugView_EmptyRowOuter", rootIndex), CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)}, .padding = {CLAY__DEBUGVIEW_INDENT_WIDTH / 2, 0} })) {
+                CLAY(CLAY_IDI("Clay__DebugView_EmptyRow", rootIndex), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), .height = CLAY_SIZING_FIXED((float)CLAY__DEBUGVIEW_ROW_HEIGHT) }}), CLAY_BORDER({ .top = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 } })) {}
             }
             layoutData.rowCount++;
         }
         while (dfsBuffer.length > 0) {
-            uint32_t currentElementIndex = Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
+            int32_t currentElementIndex = Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&Clay__layoutElements, (int)currentElementIndex);
             if (Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
-                if (!Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) && currentElement->children.length > 0) {
+                if (!Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) && currentElement->childrenOrTextContent.children.length > 0) {
                     Clay__CloseElement();
                     Clay__CloseElement();
                     Clay__CloseElement();
@@ -3007,7 +3027,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             }
             CLAY(CLAY_IDI("Clay__DebugView_ElementOuter", currentElement->id), Clay__AttachLayoutConfig(&Clay__DebugView_ScrollViewItemLayoutConfig)) {
                 // Collapse icon / button
-                if (!(Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->children.length == 0)) {
+                if (!(Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->childrenOrTextContent.children.length == 0)) {
                     CLAY(CLAY_IDI("Clay__DebugView_CollapseElement", currentElement->id),
                         CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(16), CLAY_SIZING_FIXED(16)}, .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} }),
                         CLAY_BORDER_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_3, 4)
@@ -3036,7 +3056,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 if (idString.length > 0) {
                     CLAY_TEXT(idString, offscreen ? CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }) : &Clay__DebugView_TextNameConfig);
                 }
-                for (int elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
+                for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, elementConfigIndex);
                     Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(elementConfig->type);
                     Clay_Color backgroundColor = config.color;
@@ -3050,10 +3070,10 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             // Render the text contents below the element as a non-interactive row
             if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
                 layoutData.rowCount++;
-                Clay__TextElementData *textElementData = currentElement->textElementData;
+                Clay__TextElementData *textElementData = currentElement->childrenOrTextContent.textElementData;
                 Clay_TextElementConfig *rawTextConfig = offscreen ? CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }) : &Clay__DebugView_TextNameConfig;
-                CLAY(CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE({})) {
-                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16)} })) {}
+                CLAY(CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE(CLAY__DEFAULT_STRUCT)) {
+                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16), CLAY__DEFAULT_STRUCT} })) {}
                     CLAY_TEXT(CLAY_STRING("\""), rawTextConfig);
                     CLAY_TEXT(textElementData->text.length > 40 ? (CLAY__INIT(Clay_String) { .length = 40, .chars = textElementData->text.chars }) : textElementData->text, rawTextConfig);
                     if (textElementData->text.length > 40) {
@@ -3061,14 +3081,14 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                     }
                     CLAY_TEXT(CLAY_STRING("\""), rawTextConfig);
                 }
-            } else if (currentElement->children.length > 0) {
+            } else if (currentElement->childrenOrTextContent.children.length > 0) {
                 Clay__OpenElement();
-                CLAY_LAYOUT({ .padding = { 8 } });
+                CLAY_LAYOUT({ .padding = { 8 , 0} });
                 Clay__ElementPostConfiguration();
                 Clay__OpenElement();
                 CLAY_BORDER({ .left = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }});
                 Clay__ElementPostConfiguration();
-                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED( CLAY__DEBUGVIEW_INDENT_WIDTH)}, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT } })) {}
+                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED( CLAY__DEBUGVIEW_INDENT_WIDTH), CLAY__DEFAULT_STRUCT}, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT } })) {}
                 Clay__OpenElement();
                 CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM });
                 Clay__ElementPostConfiguration();
@@ -3076,8 +3096,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
 
             layoutData.rowCount++;
             if (!(Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || (currentElementData && currentElementData->debugData->collapsed))) {
-                for (int i = currentElement->children.length - 1; i >= 0; --i) {
-                    Clay__int32_tArray_Add(&dfsBuffer, currentElement->children.elements[i]);
+                for (int32_t i = currentElement->childrenOrTextContent.children.length - 1; i >= 0; --i) {
+                    Clay__int32_tArray_Add(&dfsBuffer, currentElement->childrenOrTextContent.children.elements[i]);
                     Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = false; // TODO needs to be ranged checked
                 }
             }
@@ -3086,7 +3106,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
 
     if (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         Clay_ElementId collapseButtonId = Clay__HashString(CLAY_STRING("Clay__DebugView_CollapseElement"), 0, 0);
-        for (int i = (int)Clay__pointerOverIds.length - 1; i >= 0; i--) {
+        for (int32_t i = (int)Clay__pointerOverIds.length - 1; i >= 0; i--) {
             Clay_ElementId *elementId = Clay__ElementIdArray_Get(&Clay__pointerOverIds, i);
             if (elementId->baseId == collapseButtonId.baseId) {
                 Clay_LayoutElementHashMapItem *highlightedItem = Clay__GetHashMapItem(elementId->offset);
@@ -3097,8 +3117,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
     }
 
     if (highlightedElementId) {
-        CLAY(CLAY_ID("Clay__DebugView_ElementHighlight"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_GROW({})} }), CLAY_FLOATING({ .zIndex = 65535, .parentId = highlightedElementId })) {
-            CLAY(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_GROW({})} }), CLAY_RECTANGLE({.color = Clay__debugViewHighlightColor })) {}
+        CLAY(CLAY_ID("Clay__DebugView_ElementHighlight"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_FLOATING({ .zIndex = 65535, .parentId = highlightedElementId })) {
+            CLAY(CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_RECTANGLE({.color = Clay__debugViewHighlightColor })) {}
         }
     }
     return layoutData;
@@ -3133,11 +3153,11 @@ void Clay__RenderDebugViewElementConfigHeader(Clay_String elementId, Clay__Eleme
     Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(type);
     Clay_Color backgroundColor = config.color;
     backgroundColor.a = 90;
-    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } })) {
+    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = { .x = CLAY__DEBUGVIEW_OUTER_PADDING }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } })) {
         CLAY(CLAY_LAYOUT({ .padding = { 8, 2 } }), CLAY_RECTANGLE({ .color = backgroundColor, .cornerRadius = CLAY_CORNER_RADIUS(4) }), CLAY_BORDER_OUTSIDE_RADIUS(1, config.color, 4)) {
             CLAY_TEXT(config.label, CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
         }
-        CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({}) } })) {}
+        CLAY(CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT) } })) {}
         CLAY_TEXT(elementId, CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE }));
     }
 }
@@ -3153,7 +3173,7 @@ void Clay__RenderDebugViewColor(Clay_Color color, Clay_TextElementConfig *textCo
         CLAY_TEXT(CLAY_STRING(", a: "), textConfig);
         CLAY_TEXT(Clay__IntToString(color.a), textConfig);
         CLAY_TEXT(CLAY_STRING(" }"), textConfig);
-        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(10) } })) {}
+        CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(10), CLAY__DEFAULT_STRUCT } })) {}
         CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }), CLAY_BORDER_OUTSIDE_RADIUS(1, CLAY__DEBUGVIEW_COLOR_4, 4)) {
             CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }), CLAY_RECTANGLE({ .color = color, .cornerRadius = CLAY_CORNER_RADIUS(4) })) {}
         }
@@ -3174,7 +3194,8 @@ void Clay__RenderDebugViewCornerRadius(Clay_CornerRadius cornerRadius, Clay_Text
     }
 }
 
-void Clay__RenderDebugViewBorder(int index, Clay_Border border, Clay_TextElementConfig *textConfig) {
+void Clay__RenderDebugViewBorder(int32_t index, Clay_Border border, Clay_TextElementConfig *textConfig) {
+    (void) index;
     CLAY(CLAY_LAYOUT({ .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
         CLAY_TEXT(CLAY_STRING("{ width: "), textConfig);
         CLAY_TEXT(Clay__IntToString(border.width), textConfig);
@@ -3185,15 +3206,16 @@ void Clay__RenderDebugViewBorder(int index, Clay_Border border, Clay_TextElement
 }
 
 void HandleDebugViewCloseButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData) {
+    (void) elementId; (void) pointerInfo; (void) userData;
     if (pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         Clay__debugModeEnabled = false;
     }
 }
 
-void Clay__RenderDebugView() {
+void Clay__RenderDebugView(void) {
     Clay_ElementId closeButtonId = Clay__HashString(CLAY_STRING("Clay__DebugViewTopHeaderCloseButtonOuter"), 0, 0);
     if (Clay__pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        for (int i = 0; i < Clay__pointerOverIds.length; ++i) {
+        for (int32_t i = 0; i < Clay__pointerOverIds.length; ++i) {
             Clay_ElementId *elementId = Clay__ElementIdArray_Get(&Clay__pointerOverIds, i);
             if (elementId->id == closeButtonId.id) {
                 Clay__debugModeEnabled = false;
@@ -3208,7 +3230,7 @@ void Clay__RenderDebugView() {
     Clay_TextElementConfig *infoTitleConfig = CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE });
     Clay_ElementId scrollId = Clay__HashString(CLAY_STRING("Clay__DebugViewOuterScrollPane"), 0, 0);
     float scrollYOffset = 0;
-    for (int i = 0; i < Clay__scrollContainerDatas.length; ++i) {
+    for (int32_t i = 0; i < Clay__scrollContainerDatas.length; ++i) {
         Clay__ScrollContainerDataInternal *scrollContainerData = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
         if (scrollContainerData->elementId == scrollId.id) {
             if (!Clay__externalScrollHandlingEnabled) {
@@ -3223,15 +3245,15 @@ void Clay__RenderDebugView() {
     if (Clay__pointerInfo.position.x < Clay__layoutDimensions.width - (float)Clay__debugViewWidth) {
         highlightedRow = -1;
     }
-    Clay__RenderDebugLayoutData layoutData = {};
+    Clay__RenderDebugLayoutData layoutData = CLAY__DEFAULT_STRUCT;
     CLAY(CLAY_ID("Clay__DebugView"),
         CLAY_FLOATING({ .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }}),
         CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(Clay__layoutDimensions.height) }, .layoutDirection = CLAY_TOP_TO_BOTTOM }),
         CLAY_BORDER({ .bottom = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }})
     ) {
-        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
+        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
             CLAY_TEXT(CLAY_STRING("Clay Debug Tools"), infoTextConfig);
-            CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({}) } })) {}
+            CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY__DEFAULT_STRUCT } })) {}
             // Close button
             CLAY(CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){217,91,67,255}), 4),
                 CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} }),
@@ -3241,19 +3263,19 @@ void Clay__RenderDebugView() {
                 CLAY_TEXT(CLAY_STRING("x"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
             }
         }
-        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
-        CLAY(Clay__AttachId(scrollId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_GROW({})} }), CLAY_SCROLL({ .horizontal = true, .vertical = true })) {
-            CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_GROW({})}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1 })) {
+        CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
+        CLAY(Clay__AttachId(scrollId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_SCROLL({ .horizontal = true, .vertical = true })) {
+            CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1 })) {
                 Clay_ElementId panelContentsId = Clay__HashString(CLAY_STRING("Clay__DebugViewPaneOuter"), 0, 0);
                 // Element list
-                CLAY(Clay__AttachId(panelContentsId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_GROW({})} }), CLAY_FLOATING({ .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH })) {
-                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_GROW({})}, .padding = {.x = CLAY__DEBUGVIEW_OUTER_PADDING }, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
+                CLAY(Clay__AttachId(panelContentsId), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)} }), CLAY_FLOATING({ .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH })) {
+                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT)}, .padding = {.x = CLAY__DEBUGVIEW_OUTER_PADDING }, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
                         layoutData = Clay__RenderDebugLayoutElementsList((int32_t)initialRootsLength, highlightedRow);
                     }
                 }
                 float contentWidth = Clay__GetHashMapItem(panelContentsId.id)->layoutElement->dimensions.width;
-                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(contentWidth)}, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {}
-                for (uint32_t i = 0; i < layoutData.rowCount; i++) {
+                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(contentWidth), CLAY__DEFAULT_STRUCT}, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {}
+                for (int32_t i = 0; i < layoutData.rowCount; i++) {
                     Clay_Color rowColor = (i & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1;
                     if (i == layoutData.selectedElementRowIndex) {
                         rowColor = CLAY__DEBUGVIEW_COLOR_SELECTED_ROW;
@@ -3263,22 +3285,22 @@ void Clay__RenderDebugView() {
                         rowColor.g *= 1.25f;
                         rowColor.b *= 1.25f;
                     }
-                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = rowColor })) {}
+                    CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_RECTANGLE({ .color = rowColor })) {}
                 }
             }
         }
-        CLAY(CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW({}), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
+        CLAY(CLAY_LAYOUT({ .sizing = {.width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_3 })) {}
         if (Clay__debugSelectedElementId != 0) {
             Clay_LayoutElementHashMapItem *selectedItem = Clay__GetHashMapItem(Clay__debugSelectedElementId);
             CLAY(
                 CLAY_SCROLL({ .vertical = true }),
-                CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_FIXED(300)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }),
+                CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(300)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }),
                 CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 }),
                 CLAY_BORDER({ .betweenChildren = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }})
             ) {
-                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
+                CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
                     CLAY_TEXT(CLAY_STRING("Layout Config"), infoTextConfig);
-                    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({}) } })) {}
+                    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY__DEFAULT_STRUCT } })) {}
                     if (selectedItem->elementId.stringId.length != 0) {
                         CLAY_TEXT(selectedItem->elementId.stringId, infoTitleConfig);
                         if (selectedItem->elementId.offset != 0) {
@@ -3292,7 +3314,7 @@ void Clay__RenderDebugView() {
                 CLAY(CLAY_LAYOUT({ .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
                     // .boundingBox
                     CLAY_TEXT(CLAY_STRING("Bounding Box"), infoTitleConfig);
-                    CLAY(CLAY_LAYOUT({})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
                         CLAY_TEXT(Clay__IntToString(selectedItem->boundingBox.x), infoTextConfig);
                         CLAY_TEXT(CLAY_STRING(", y: "), infoTextConfig);
@@ -3309,11 +3331,11 @@ void Clay__RenderDebugView() {
                     CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : CLAY_STRING("LEFT_TO_RIGHT"), infoTextConfig);
                     // .sizing
                     CLAY_TEXT(CLAY_STRING("Sizing"), infoTitleConfig);
-                    CLAY(CLAY_LAYOUT({})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("width: "), infoTextConfig);
                         Clay__RenderDebugLayoutSizing(layoutConfig->sizing.width, infoTextConfig);
                     }
-                    CLAY(CLAY_LAYOUT({})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("height: "), infoTextConfig);
                         Clay__RenderDebugLayoutSizing(layoutConfig->sizing.height, infoTextConfig);
                     }
@@ -3331,7 +3353,7 @@ void Clay__RenderDebugView() {
                     CLAY_TEXT(Clay__IntToString(layoutConfig->childGap), infoTextConfig);
                     // .childAlignment
                     CLAY_TEXT(CLAY_STRING("Child Alignment"), infoTitleConfig);
-                    CLAY(CLAY_LAYOUT({})) {
+                    CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                         CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
                         Clay_String alignX = CLAY_STRING("LEFT");
                         if (layoutConfig->childAlignment.x == CLAY_ALIGN_X_CENTER) {
@@ -3351,7 +3373,7 @@ void Clay__RenderDebugView() {
                         CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
                     }
                 }
-                for (int elementConfigIndex = 0; elementConfigIndex < selectedItem->layoutElement->elementConfigs.length; ++elementConfigIndex) {
+                for (int32_t elementConfigIndex = 0; elementConfigIndex < selectedItem->layoutElement->elementConfigs.length; ++elementConfigIndex) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&selectedItem->layoutElement->elementConfigs, elementConfigIndex);
                     Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, elementConfig->type);
                     switch (elementConfig->type) {
@@ -3411,7 +3433,7 @@ void Clay__RenderDebugView() {
                                 }
                                 // Image Preview
                                 CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
-                                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({ .max = imageConfig->sourceDimensions.width }) }}), Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = imageConfig }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {}
+                                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW({ .max = imageConfig->sourceDimensions.width }), CLAY__DEFAULT_STRUCT }}), Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = imageConfig }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {}
                             }
                             break;
                         }
@@ -3432,7 +3454,7 @@ void Clay__RenderDebugView() {
                             CLAY(CLAY_LAYOUT({ .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 8}, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
                                 // .offset
                                 CLAY_TEXT(CLAY_STRING("Offset"), infoTitleConfig);
-                                CLAY(CLAY_LAYOUT({})) {
+                                CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                                     CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(floatingConfig->offset.x), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING(", y: "), infoTextConfig);
@@ -3441,7 +3463,7 @@ void Clay__RenderDebugView() {
                                 }
                                 // .expand
                                 CLAY_TEXT(CLAY_STRING("Expand"), infoTitleConfig);
-                                CLAY(CLAY_LAYOUT({})) {
+                                CLAY(CLAY_LAYOUT(CLAY__DEFAULT_STRUCT)) {
                                     CLAY_TEXT(CLAY_STRING("{ width: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(floatingConfig->expand.width), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING(", height: "), infoTextConfig);
@@ -3482,23 +3504,22 @@ void Clay__RenderDebugView() {
                             }
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: {
-                            break;
-                        }
+                        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM:
+                        default: break;
                     }
                 }
             }
         } else {
-            CLAY(CLAY_ID("Clay__DebugViewWarningsScrollPane"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW({}), CLAY_SIZING_FIXED(300)}, .childGap = 6, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_SCROLL({ .horizontal = true, .vertical = true }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
+            CLAY(CLAY_ID("Clay__DebugViewWarningsScrollPane"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), CLAY_SIZING_FIXED(300)}, .childGap = 6, .layoutDirection = CLAY_TOP_TO_BOTTOM }), CLAY_SCROLL({ .horizontal = true, .vertical = true }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
                 Clay_TextElementConfig *warningConfig = CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE });
-                CLAY(CLAY_ID("Clay__DebugViewWarningItemHeader"), CLAY_LAYOUT({ .sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childGap = 8, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
+                CLAY(CLAY_ID("Clay__DebugViewWarningItemHeader"), CLAY_LAYOUT({ .sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childGap = 8, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
                     CLAY_TEXT(CLAY_STRING("Warnings"), warningConfig);
                 }
-                CLAY(CLAY_ID("Clay__DebugViewWarningsTopBorder"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW({}), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {}
-                int previousWarningsLength = (int)Clay_warnings.length;
-                for (int i = 0; i < previousWarningsLength; i++) {
+                CLAY(CLAY_ID("Clay__DebugViewWarningsTopBorder"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(CLAY__DEFAULT_STRUCT), .height = CLAY_SIZING_FIXED(1)} }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {}
+                int32_t previousWarningsLength = (int)Clay_warnings.length;
+                for (int32_t i = 0; i < previousWarningsLength; i++) {
                     Clay__Warning warning = Clay_warnings.internalArray[i];
-                    CLAY(CLAY_IDI("Clay__DebugViewWarningItem", i), CLAY_LAYOUT({ .sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING}, .childGap = 8, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
+                    CLAY(CLAY_IDI("Clay__DebugViewWarningItem", i), CLAY_LAYOUT({ .sizing = {.height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childGap = 8, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
                         CLAY_TEXT(warning.baseMessage, warningConfig);
                         if (warning.dynamicMessage.length > 0) {
                             CLAY_TEXT(warning.dynamicMessage, warningConfig);
@@ -3515,7 +3536,7 @@ void Clay__RenderDebugView() {
 
 CLAY_WASM_EXPORT("Clay_MinMemorySize")
 uint32_t Clay_MinMemorySize(void) {
-    Clay_Arena fakeArena = CLAY__INIT(Clay_Arena) { .capacity = SIZE_MAX };
+    Clay_Arena fakeArena = { .capacity = SIZE_MAX };
     Clay__InitializePersistentMemory(&fakeArena);
     Clay__InitializeEphemeralMemory(&fakeArena);
     return fakeArena.nextAllocation;
@@ -3523,7 +3544,7 @@ uint32_t Clay_MinMemorySize(void) {
 
 CLAY_WASM_EXPORT("Clay_CreateArenaWithCapacityAndMemory")
 Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset) {
-    Clay_Arena arena = CLAY__INIT(Clay_Arena) {
+    Clay_Arena arena = {
         .capacity = capacity,
         .memory = (char *)offset
     };
@@ -3552,7 +3573,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
     Clay__pointerInfo.position = position;
     Clay__pointerOverIds.length = 0;
     Clay__int32_tArray dfsBuffer = Clay__layoutElementChildrenBuffer;
-    for (int rootIndex = Clay__layoutElementTreeRoots.length - 1; rootIndex >= 0; --rootIndex) {
+    for (int32_t rootIndex = Clay__layoutElementTreeRoots.length - 1; rootIndex >= 0; --rootIndex) {
         dfsBuffer.length = 0;
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&Clay__layoutElementTreeRoots, rootIndex);
         Clay__int32_tArray_Add(&dfsBuffer, (int32_t)root->layoutElementIndex);
@@ -3581,8 +3602,8 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                     dfsBuffer.length--;
                     continue;
                 }
-                for (int i = currentElement->children.length - 1; i >= 0; --i) {
-                    Clay__int32_tArray_Add(&dfsBuffer, currentElement->children.elements[i]);
+                for (int32_t i = currentElement->childrenOrTextContent.children.length - 1; i >= 0; --i) {
+                    Clay__int32_tArray_Add(&dfsBuffer, currentElement->childrenOrTextContent.children.elements[i]);
                     Clay__treeNodeVisited.internalArray[dfsBuffer.length - 1] = false; // TODO needs to be ranged checked
                 }
             } else {
@@ -3617,15 +3638,17 @@ void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_Er
     Clay__internalArena = arena;
     Clay__InitializePersistentMemory(&Clay__internalArena);
     Clay__InitializeEphemeralMemory(&Clay__internalArena);
-    for (int i = 0; i < Clay__layoutElementsHashMap.capacity; ++i) {
+    for (int32_t i = 0; i < Clay__layoutElementsHashMap.capacity; ++i) {
         Clay__layoutElementsHashMap.internalArray[i] = -1;
     }
-    for (int i = 0; i < Clay__measureTextHashMap.capacity; ++i) {
+    for (int32_t i = 0; i < Clay__measureTextHashMap.capacity; ++i) {
         Clay__measureTextHashMap.internalArray[i] = 0;
     }
     Clay__measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
     Clay__layoutDimensions = layoutDimensions;
-    Clay__errorHandler = errorHandler;
+    if (errorHandler.errorHandlerFunction) {
+        Clay__errorHandler = errorHandler;
+    }
 }
 
 CLAY_WASM_EXPORT("Clay_UpdateScrollContainers")
@@ -3634,7 +3657,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
     // Don't apply scroll events to ancestors of the inner element
     int32_t highestPriorityElementIndex = -1;
     Clay__ScrollContainerDataInternal *highestPriorityScrollData = CLAY__NULL;
-    for (int i = 0; i < Clay__scrollContainerDatas.length; i++) {
+    for (int32_t i = 0; i < Clay__scrollContainerDatas.length; i++) {
         Clay__ScrollContainerDataInternal *scrollData = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
         if (!scrollData->openThisFrame) {
             Clay__ScrollContainerDataInternalArray_RemoveSwapback(&Clay__scrollContainerDatas, i);
@@ -3681,7 +3704,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
         }
         scrollData->scrollPosition.y = CLAY__MIN(CLAY__MAX(scrollData->scrollPosition.y, -(CLAY__MAX(scrollData->contentSize.height - scrollData->layoutElement->dimensions.height, 0))), 0);
 
-        for (int j = 0; j < Clay__pointerOverIds.length; ++j) { // TODO n & m are small here but this being n*m gives me the creeps
+        for (int32_t j = 0; j < Clay__pointerOverIds.length; ++j) { // TODO n & m are small here but this being n*m gives me the creeps
             if (scrollData->layoutElement->id == Clay__ElementIdArray_Get(&Clay__pointerOverIds, j)->id) {
                 highestPriorityElementIndex = j;
                 highestPriorityScrollData = scrollData;
@@ -3703,7 +3726,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
         }
         // Handle click / touch scroll
         if (isPointerActive) {
-            highestPriorityScrollData->scrollMomentum = CLAY__INIT(Clay_Vector2){0};
+            highestPriorityScrollData->scrollMomentum = CLAY__INIT(Clay_Vector2)CLAY__DEFAULT_STRUCT;
             if (!highestPriorityScrollData->pointerScrollActive) {
                 highestPriorityScrollData->pointerOrigin = Clay__pointerInfo.position;
                 highestPriorityScrollData->scrollOrigin = highestPriorityScrollData->scrollPosition;
@@ -3747,7 +3770,7 @@ void Clay_BeginLayout(void) {
     Clay__generation++;
     Clay__dynamicElementIndex = 0;
     // Set up the root container that covers the entire window
-    Clay_Dimensions rootDimensions = CLAY__INIT(Clay_Dimensions) {Clay__layoutDimensions.width, Clay__layoutDimensions.height};
+    Clay_Dimensions rootDimensions = {Clay__layoutDimensions.width, Clay__layoutDimensions.height};
     if (Clay__debugModeEnabled) {
         rootDimensions.width -= (float)Clay__debugViewWidth;
     }
@@ -3762,7 +3785,7 @@ void Clay_BeginLayout(void) {
     Clay__LayoutElementTreeRootArray_Add(&Clay__layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) { .layoutElementIndex = 0 });
 }
 
-Clay_TextElementConfig Clay__DebugView_ErrorTextConfig = CLAY__INIT(Clay_TextElementConfig) {.textColor = {255, 0, 0, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
+Clay_TextElementConfig Clay__DebugView_ErrorTextConfig = {.textColor = {255, 0, 0, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
 
 CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout(void) {
@@ -3773,7 +3796,7 @@ Clay_RenderCommandArray Clay_EndLayout(void) {
         Clay__warningsEnabled = true;
     }
     if (Clay__booleanWarnings.maxElementsExceeded) {
-        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand ) { .boundingBox = { Clay__layoutDimensions.width / 2 - 59 * 4, Clay__layoutDimensions.height / 2 },  .config = { .textElementConfig = &Clay__DebugView_ErrorTextConfig }, .text = CLAY_STRING("Clay Error: Layout elements exceeded Clay__maxElementCount"), .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT });
+        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand ) { .boundingBox = { Clay__layoutDimensions.width / 2 - 59 * 4, Clay__layoutDimensions.height / 2, 0, 0 },  .config = { .textElementConfig = &Clay__DebugView_ErrorTextConfig }, .text = CLAY_STRING("Clay Error: Layout elements exceeded Clay__maxElementCount"), .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT });
     } else {
         Clay__CalculateFinalLayout();
     }
@@ -3799,7 +3822,7 @@ bool Clay_Hovered(void) {
     if (openLayoutElement->id == 0) {
         Clay__GenerateIdForAnonymousElement(openLayoutElement);
     }
-    for (int i = 0; i < Clay__pointerOverIds.length; ++i) {
+    for (int32_t i = 0; i < Clay__pointerOverIds.length; ++i) {
         if (Clay__ElementIdArray_Get(&Clay__pointerOverIds, i)->id == openLayoutElement->id) {
             return true;
         }
@@ -3822,7 +3845,7 @@ void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_Pointer
 
 CLAY_WASM_EXPORT("Clay_PointerOver")
 bool Clay_PointerOver(Clay_ElementId elementId) { // TODO return priority for separating multiple results
-    for (int i = 0; i < Clay__pointerOverIds.length; ++i) {
+    for (int32_t i = 0; i < Clay__pointerOverIds.length; ++i) {
         if (Clay__ElementIdArray_Get(&Clay__pointerOverIds, i)->id == elementId.id) {
             return true;
         }
@@ -3832,24 +3855,29 @@ bool Clay_PointerOver(Clay_ElementId elementId) { // TODO return priority for se
 
 CLAY_WASM_EXPORT("Clay_GetScrollContainerData")
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
-    for (int i = 0; i < Clay__scrollContainerDatas.length; ++i) {
+    for (int32_t i = 0; i < Clay__scrollContainerDatas.length; ++i) {
         Clay__ScrollContainerDataInternal *scrollContainerData = Clay__ScrollContainerDataInternalArray_Get(&Clay__scrollContainerDatas, i);
         if (scrollContainerData->elementId == id.id) {
             return CLAY__INIT(Clay_ScrollContainerData) {
                 .scrollPosition = &scrollContainerData->scrollPosition,
-                .scrollContainerDimensions = CLAY__INIT(Clay_Dimensions) { scrollContainerData->boundingBox.width, scrollContainerData->boundingBox.height },
+                .scrollContainerDimensions = { scrollContainerData->boundingBox.width, scrollContainerData->boundingBox.height },
                 .contentDimensions = scrollContainerData->contentSize,
                 .config = *Clay__FindElementConfigWithType(scrollContainerData->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig,
                 .found = true
             };
         }
     }
-    return CLAY__INIT(Clay_ScrollContainerData) {};
+    return CLAY__INIT(Clay_ScrollContainerData) CLAY__DEFAULT_STRUCT;
 }
 
 CLAY_WASM_EXPORT("Clay_SetDebugModeEnabled")
 void Clay_SetDebugModeEnabled(bool enabled) {
     Clay__debugModeEnabled = enabled;
+}
+
+CLAY_WASM_EXPORT("Clay_IsDebugModeEnabled")
+bool Clay_IsDebugModeEnabled(void) {
+    return Clay__debugModeEnabled;
 }
 
 CLAY_WASM_EXPORT("Clay_SetCullingEnabled")
@@ -3863,16 +3891,16 @@ void Clay_SetExternalScrollHandlingEnabled(bool enabled) {
 }
 
 CLAY_WASM_EXPORT("Clay_SetMaxElementCount")
-void Clay_SetMaxElementCount(uint32_t maxElementCount) {
+void Clay_SetMaxElementCount(int32_t maxElementCount) {
     Clay__maxElementCount = maxElementCount;
 }
 
 CLAY_WASM_EXPORT("Clay_SetMaxMeasureTextCacheWordCount")
-void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount) {
+void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount) {
     Clay__maxMeasureTextCacheWordCount = maxMeasureTextCacheWordCount;
 }
 
-#endif //CLAY_IMPLEMENTATION
+#endif // CLAY_IMPLEMENTATION
 
 /*
 LICENSE

@@ -1,4 +1,4 @@
-$TYPE$ $NAME$_RemoveSwapback($NAME$ *array, int index) {
+$TYPE$ $NAME$_RemoveSwapback($NAME$ *array, int32_t index) {
 	if (Clay__Array_RangeCheck(index, array->length)) {
 		array->length--;
 		$TYPE$ removed = array->internalArray[index];

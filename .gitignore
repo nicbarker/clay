@@ -1,6 +1,5 @@
 cmake-build-*/
 .DS_Store
 .idea/
-build/
 node_modules/
 *.dSYM
