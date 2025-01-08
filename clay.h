@@ -518,7 +518,9 @@ Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array,
 void Clay_SetDebugModeEnabled(bool enabled);
 bool Clay_IsDebugModeEnabled(void);
 void Clay_SetCullingEnabled(bool enabled);
+int32_t Clay_GetMaxElementCount(void);
 void Clay_SetMaxElementCount(int32_t maxElementCount);
+int32_t Clay_GetMaxMeasureTextCacheWordCount(void);
 void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 
 // Internal API functions required by macros
@@ -3576,7 +3578,7 @@ bool Clay__Array_AddCapacityCheck(int32_t length, int32_t capacity)
 // PUBLIC API FROM HERE ---------------------------------------
 
 CLAY_WASM_EXPORT("Clay_MinMemorySize")
-uint32_t Clay_MinMemorySize() {
+uint32_t Clay_MinMemorySize(void) {
     Clay_Context fakeContext = {
         .maxElementCount = 8192,
         .maxMeasureTextCacheWordCount = 16384,
@@ -3716,7 +3718,7 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
 }
 
 CLAY_WASM_EXPORT("Clay_GetCurrentContext")
-Clay_Context* Clay_GetCurrentContext() {
+Clay_Context* Clay_GetCurrentContext(void) {
     return Clay__currentContext;
 }
 
@@ -3840,7 +3842,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
 }
 
 CLAY_WASM_EXPORT("Clay_BeginLayout")
-void Clay_BeginLayout() {
+void Clay_BeginLayout(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__InitializeEphemeralMemory(context);
     context->generation++;
@@ -3890,7 +3892,7 @@ Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index) 
     return Clay__HashString(idString, index, 0);
 }
 
-bool Clay_Hovered() {
+bool Clay_Hovered(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->booleanWarnings.maxElementsExceeded) {
         return false;
@@ -3958,7 +3960,7 @@ void Clay_SetDebugModeEnabled(bool enabled) {
 }
 
 CLAY_WASM_EXPORT("Clay_IsDebugModeEnabled")
-bool Clay_IsDebugModeEnabled() {
+bool Clay_IsDebugModeEnabled(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     return context->debugModeEnabled;
 }
