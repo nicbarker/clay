@@ -2110,6 +2110,7 @@ void Clay__CompressChildrenAlongAxis(bool xAxis, float totalSizeToDistribute, Cl
             if (childSize == largestSize) {
                 Clay__int32_tArray_Add(&largestContainers, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
             } else if (childSize > largestSize) {
+                targetSize = largestSize;
                 largestSize = childSize;
                 largestContainers.length = 0;
                 Clay__int32_tArray_Add(&largestContainers, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
