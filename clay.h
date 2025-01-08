@@ -550,14 +550,6 @@ extern uint32_t Clay__debugViewWidth;
 #ifdef CLAY_IMPLEMENTATION
 #undef CLAY_IMPLEMENTATION
 
-thread_local Clay_Context *Clay__currentContext;
-thread_local int32_t Clay__nextInitMaxElementCount = 8192;
-thread_local int32_t Clay__nextInitMaxMeasureTextCacheWordCount = 8192;
-
-void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
-    (void) errorText;
-}
-
 #ifndef CLAY__NULL
 #define CLAY__NULL 0
 #endif
@@ -565,6 +557,13 @@ void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
 #ifndef CLAY__MAXFLOAT
 #define CLAY__MAXFLOAT 3.40282346638528859812e+38F
 #endif
+
+thread_local Clay_Context *Clay__currentContext;
+thread_local int32_t Clay__nextInitMaxElementCount = 8192;
+thread_local int32_t Clay__nextInitMaxMeasureTextCacheWordCount = 8192;
+void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
+    (void) errorText;
+}
 
 Clay_String CLAY__SPACECHAR = { .length = 1, .chars = " " };
 Clay_String CLAY__STRING_DEFAULT = { .length = 0, .chars = NULL };
