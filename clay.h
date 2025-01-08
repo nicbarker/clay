@@ -21,6 +21,14 @@
 #ifndef CLAY_HEADER
 #define CLAY_HEADER
 
+#if !( \
+    (defined(__cplusplus) && __cplusplus >= 202002L) || \
+    (defined(__STDC__) && __STDC__ == 1 && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
+    defined(_MSC_VER) \
+)
+#error "Clay requires C99, C++20, or MSVC"
+#endif
+
 #ifdef CLAY_WASM
 #define CLAY_WASM_EXPORT(name) __attribute__((export_name(name)))
 #else
@@ -2071,72 +2079,48 @@ void Clay__InitializePersistentMemory(Clay_Context* context) {
 }
 
 
-CLAY__TYPEDEF(Clay__SizeDistributionType, enum {
-    CLAY__SIZE_DISTRIBUTION_TYPE_SCROLL_CONTAINER,
-    CLAY__SIZE_DISTRIBUTION_TYPE_RESIZEABLE_CONTAINER,
-    CLAY__SIZE_DISTRIBUTION_TYPE_GROW_CONTAINER,
-});
-
-float Clay__DistributeSizeAmongChildren(bool xAxis, float sizeToDistribute, Clay__int32_tArray resizableContainerBuffer, Clay__SizeDistributionType distributionType) {
+void Clay__CompressChildrenAlongAxis(bool xAxis, float totalSizeToDistribute, Clay__int32_tArray resizableContainerBuffer) {
     Clay_Context* context = Clay_GetCurrentContext();
-    Clay__int32_tArray remainingElements = context->openClipElementStack;
-    remainingElements.length = 0;
+    Clay__int32_tArray largestContainers = context->openClipElementStack;
+    largestContainers.length = 0;
 
-    for (int32_t i = 0; i < resizableContainerBuffer.length; ++i) {
-        Clay__int32_tArray_Add(&remainingElements, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
-    }
+    while (totalSizeToDistribute > 0) {
+        float largestSize = 0;
+        float targetSize = 0;
+        for (int32_t i = 0; i < resizableContainerBuffer.length; ++i) {
+            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
+            float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
+            if (childSize == largestSize) {
+                Clay__int32_tArray_Add(&largestContainers, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
+            } else if (childSize > largestSize) {
+                targetSize = largestSize;
+                largestSize = childSize;
+                largestContainers.length = 0;
+                Clay__int32_tArray_Add(&largestContainers, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
+            }
+            else if (childSize > targetSize) {
+                targetSize = childSize;
+            }
+        }
 
-    while (sizeToDistribute != 0 && remainingElements.length > 0) {
-        float dividedSize = sizeToDistribute / (float)remainingElements.length;
-        for (int32_t childOffset = 0; childOffset < remainingElements.length; childOffset++) {
-            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&remainingElements, childOffset));
-            Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
+        targetSize = CLAY__MAX(targetSize, (largestSize * largestContainers.length) - totalSizeToDistribute) / largestContainers.length;
+        for (int32_t childOffset = 0; childOffset < largestContainers.length; childOffset++) {
+            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&largestContainers, childOffset));
             float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
             float childMinSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
-            bool canDistribute = true;
-
-            if ((sizeToDistribute < 0 && *childSize == childSizing.size.minMax.min) || (sizeToDistribute > 0 && *childSize == childSizing.size.minMax.max)) {
-                canDistribute = false;
-            }
-            // Currently, we don't support squishing aspect ratio images on their Y axis as it would break ratio
-            else if (!xAxis && Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {
-                canDistribute = false;
-            }
-            else {
-                switch (distributionType) {
-                    case CLAY__SIZE_DISTRIBUTION_TYPE_RESIZEABLE_CONTAINER: break;
-                    case CLAY__SIZE_DISTRIBUTION_TYPE_GROW_CONTAINER: if (childSizing.type != CLAY__SIZING_TYPE_GROW) canDistribute = false; break;
-                    case CLAY__SIZE_DISTRIBUTION_TYPE_SCROLL_CONTAINER: {
-                        if (Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
-                            Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(childElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
-                            if ((xAxis && !scrollConfig->horizontal) || (!xAxis && !scrollConfig->vertical)) {
-                                Clay__int32_tArray_RemoveSwapback(&remainingElements, childOffset);
-                                childOffset--;
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!canDistribute) {
-                Clay__int32_tArray_RemoveSwapback(&remainingElements, childOffset);
-                childOffset--;
-                continue;
-            }
-
             float oldChildSize = *childSize;
-            *childSize = CLAY__MAX(CLAY__MAX(CLAY__MIN(childSizing.size.minMax.max, *childSize + dividedSize), childSizing.size.minMax.min), childMinSize);
-            float diff = *childSize - oldChildSize;
-            if (diff > -0.01 && diff < 0.01) {
-                Clay__int32_tArray_RemoveSwapback(&remainingElements, childOffset);
+            *childSize = CLAY__MAX(childMinSize, targetSize);
+            totalSizeToDistribute -= (oldChildSize - *childSize);
+            if (*childSize == childMinSize) {
+                Clay__int32_tArray_RemoveSwapback(&largestContainers, childOffset);
                 childOffset--;
-                continue;
             }
-            sizeToDistribute -= diff;
+        }
+
+        if (largestContainers.length == 0) {
+            break;
         }
     }
-    return (sizeToDistribute > -0.01 && sizeToDistribute < 0.01) ? 0 : sizeToDistribute;
 }
 
 void Clay__SizeContainersAlongAxis(bool xAxis) {
@@ -2230,7 +2214,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
 
             if (sizingAlongAxis) {
                 float sizeToDistribute = parentSize - parentPadding * 2 - innerContentSize;
-                // If the content is too large, compress the children as much as possible
+                // The content is too large, compress the children as much as possible
                 if (sizeToDistribute < 0) {
                     // If the parent can scroll in the axis direction in this direction, don't compress children, just leave them alone
                     if (Clay__ElementHasConfig(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
@@ -2240,12 +2224,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                         }
                     }
                     // Scrolling containers preferentially compress before others
-                    sizeToDistribute = Clay__DistributeSizeAmongChildren(xAxis, sizeToDistribute, resizableContainerBuffer, CLAY__SIZE_DISTRIBUTION_TYPE_SCROLL_CONTAINER);
-
-                    // If there is still height to make up, remove it from all containers that haven't hit their minimum size
-                    if (sizeToDistribute < 0) {
-                        Clay__DistributeSizeAmongChildren(xAxis, sizeToDistribute, resizableContainerBuffer, CLAY__SIZE_DISTRIBUTION_TYPE_RESIZEABLE_CONTAINER);
-                    }
+                    Clay__CompressChildrenAlongAxis(xAxis, -sizeToDistribute, resizableContainerBuffer);
                 // The content is too small, allow SIZING_GROW containers to expand
                 } else if (sizeToDistribute > 0 && growContainerCount > 0) {
                     float targetSize = (sizeToDistribute + growContainerContentSize) / (float)growContainerCount;
