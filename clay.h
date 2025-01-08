@@ -186,9 +186,6 @@ typedef struct Clay_Context Clay_Context;
 
 CLAY__TYPEDEF(Clay_Arena, struct {
     uintptr_t nextAllocation;
-    Clay_Context* context;
-    int32_t maxElementCount;
-    int32_t maxMeasureTextCacheWordCount;
     size_t capacity;
     char *memory;
 });
@@ -533,7 +530,7 @@ Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConf
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
-uint32_t Clay__GetParentElementId(void);
+uint32_t Clay__GetParentElementId();
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -558,9 +555,7 @@ extern uint32_t Clay__debugViewWidth;
 #define CLAY__MAXFLOAT 3.40282346638528859812e+38F
 #endif
 
-thread_local Clay_Context *Clay__currentContext;
-thread_local int32_t Clay__nextInitMaxElementCount = 8192;
-thread_local int32_t Clay__nextInitMaxMeasureTextCacheWordCount = 8192;
+Clay_Context *Clay__currentContext;
 void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
     (void) errorText;
 }
@@ -1358,21 +1353,23 @@ Clay__CharArray Clay__CharArray_Allocate_Arena(int32_t capacity, Clay_Arena *are
 // __GENERATED__ template
 
 struct Clay_Context {
-    bool warningsEnabled = true;
-    Clay_ErrorHandler errorHandler = { .errorHandlerFunction = Clay__ErrorHandlerFunctionDefault };
+    int32_t maxElementCount;
+    int32_t maxMeasureTextCacheWordCount;
+    bool warningsEnabled;
+    Clay_ErrorHandler errorHandler;
     Clay_BooleanWarnings booleanWarnings;
-    Clay__WarningArray warnings = CLAY__DEFAULT_STRUCT;
+    Clay__WarningArray warnings;
 
-    Clay_PointerData pointerInfo = { .position = {-1, -1} };
-    Clay_Dimensions layoutDimensions = CLAY__DEFAULT_STRUCT;
-    Clay_ElementId dynamicElementIndexBaseHash = { .id = 128476991, .stringId = { .length = 8, .chars = "Auto ID" } };
-    uint32_t dynamicElementIndex = 0;
-    bool debugModeEnabled = false;
-    bool disableCulling = false;
-    bool externalScrollHandlingEnabled = false;
-    uint32_t debugSelectedElementId = 0;
-    uint32_t generation = 0;
-    uint64_t arenaResetOffset = 0;
+    Clay_PointerData pointerInfo;
+    Clay_Dimensions layoutDimensions;
+    Clay_ElementId dynamicElementIndexBaseHash;
+    uint32_t dynamicElementIndex;
+    bool debugModeEnabled;
+    bool disableCulling;
+    bool externalScrollHandlingEnabled;
+    uint32_t debugSelectedElementId;
+    uint32_t generation;
+    uint64_t arenaResetOffset;
     Clay_Arena internalArena;
     // Layout Elements / Render Commands
     Clay_LayoutElementArray layoutElements;
@@ -1414,7 +1411,14 @@ struct Clay_Context {
     Clay__CharArray dynamicStringData;
     Clay__DebugElementDataArray debugElementData;
 };
-CLAY__TYPEDEF(Clay_Context, struct Clay_Context);
+
+struct Clay__AlignClay_Context {
+    char c;
+    Clay_Context x;
+};
+typedef struct {
+    Clay_Context wrapped;
+} Clay__Clay_ContextWrapper;
 
 Clay_Context* Clay__Context_Allocate_Arena(Clay_Arena *arena) {
     uint32_t alignment = CLAY__ALIGNMENT(Clay_Context);
@@ -1427,8 +1431,7 @@ Clay_Context* Clay__Context_Allocate_Arena(Clay_Arena *arena) {
         return NULL;
     }
     arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
-    arena->context = (Clay_Context*)((uintptr_t)arena->memory + arenaOffsetAligned);
-    return arena->context;
+    return (Clay_Context*)((uintptr_t)arena->memory + arenaOffsetAligned);
 }
 
 Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String string) {
@@ -1452,7 +1455,8 @@ Clay_LayoutElement* Clay__GetOpenLayoutElement() {
     return Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1));
 }
 
-uint32_t Clay__GetParentElementId(Clay_Context *context) {
+uint32_t Clay__GetParentElementId() {
+    Clay_Context* context = Clay_GetCurrentContext();
     return Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&context->openLayoutElementStack, context->openLayoutElementStack.length - 2))->id;
 }
 
@@ -1592,7 +1596,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
     }
     #endif
     uint32_t id = Clay__HashTextWithConfig(text, config);
-    uint32_t hashBucket = id % (context->internalArena.maxMeasureTextCacheWordCount / 32);
+    uint32_t hashBucket = id % (context->maxMeasureTextCacheWordCount / 32);
     int32_t elementIndexPrevious = 0;
     int32_t elementIndex = context->measureTextHashMap.internalArray[hashBucket];
     while (elementIndex != 0) {
@@ -2009,11 +2013,11 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     Clay__int32_tArray_RemoveSwapback(&context->openLayoutElementStack, (int)context->openLayoutElementStack.length - 1);
 }
 
-void Clay__InitializeEphemeralMemory(Clay_Arena *arena) {
-    Clay_Context* context = arena->context;
-    int32_t maxElementCount = arena->maxElementCount;
+void Clay__InitializeEphemeralMemory(Clay_Context* context) {
+    int32_t maxElementCount = context->maxElementCount;
     // Ephemeral Memory - reset every frame
-    context->internalArena.nextAllocation = context->arenaResetOffset;
+    Clay_Arena *arena = &context->internalArena;
+    arena->nextAllocation = context->arenaResetOffset;
 
     context->layoutElementChildrenBuffer = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->layoutElements = Clay_LayoutElementArray_Allocate_Arena(maxElementCount, arena);
@@ -2047,11 +2051,11 @@ void Clay__InitializeEphemeralMemory(Clay_Arena *arena) {
     context->dynamicStringData = Clay__CharArray_Allocate_Arena(maxElementCount, arena);
 }
 
-void Clay__InitializePersistentMemory(Clay_Arena *arena) {
+void Clay__InitializePersistentMemory(Clay_Context* context) {
     // Persistent memory - initialized once and not reset
-    Clay_Context* context = arena->context;
-    int32_t maxElementCount = arena->maxElementCount;
-    int32_t maxMeasureTextCacheWordCount = arena->maxMeasureTextCacheWordCount;
+    int32_t maxElementCount = context->maxElementCount;
+    int32_t maxMeasureTextCacheWordCount = context->maxMeasureTextCacheWordCount;
+    Clay_Arena *arena = &context->internalArena;
     
     context->scrollContainerDatas = Clay__ScrollContainerDataInternalArray_Allocate_Arena(10, arena);
     context->layoutElementsHashMapInternal = Clay__LayoutElementHashMapItemArray_Allocate_Arena(maxElementCount, arena);
@@ -3528,10 +3532,10 @@ Clay__WarningArray Clay__WarningArray_Allocate_Arena(int32_t capacity, Clay_Aren
         arena->nextAllocation = arenaOffsetAligned + totalSizeBytes;
     }
     else {
-        arena->context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+        Clay__currentContext->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
             .errorType = CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED,
             .errorText = CLAY_STRING("Clay attempted to allocate memory in its arena, but ran out of capacity. Try increasing the capacity of the arena passed to Clay_Initialize()"),
-            .userData = arena->context->errorHandler.userData });
+            .userData = Clay__currentContext->errorHandler.userData });
     }
     return array;
 }
@@ -3556,10 +3560,10 @@ void* Clay__Array_Allocate_Arena(int32_t capacity, uint32_t itemSize, uint32_t a
         return (void*)((uintptr_t)arena->memory + (uintptr_t)arenaOffsetAligned);
     }
     else {
-        arena->context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+        Clay__currentContext->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
                 .errorType = CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED,
                 .errorText = CLAY_STRING("Clay attempted to allocate memory in its arena, but ran out of capacity. Try increasing the capacity of the arena passed to Clay_Initialize()"),
-                .userData = arena->context->errorHandler.userData });
+                .userData = Clay__currentContext->errorHandler.userData });
     }
     return CLAY__NULL;
 }
@@ -3594,17 +3598,24 @@ bool Clay__Array_AddCapacityCheck(int32_t length, int32_t capacity)
 
 CLAY_WASM_EXPORT("Clay_MinMemorySize")
 uint32_t Clay_MinMemorySize() {
-    Clay_Context fakeContext = {};
-    Clay_Arena fakeArena = {
-        .maxElementCount = Clay__nextInitMaxElementCount,
-        .maxMeasureTextCacheWordCount = Clay__nextInitMaxMeasureTextCacheWordCount,
-        .capacity = SIZE_MAX,
-        .memory = (char*)&fakeContext,
+    Clay_Context fakeContext = {
+        .maxElementCount = 8192,
+        .maxMeasureTextCacheWordCount = 16384,
+        .internalArena = {
+            .capacity = SIZE_MAX,
+            .memory = (char*)&fakeContext,
+        }
     };
-    Clay__Context_Allocate_Arena(&fakeArena);
-    Clay__InitializePersistentMemory(&fakeArena);
-    Clay__InitializeEphemeralMemory(&fakeArena);
-    return fakeArena.nextAllocation;
+    Clay_Context* currentContext = Clay_GetCurrentContext();
+    if (currentContext) {
+        fakeContext.maxElementCount = currentContext->maxElementCount;
+        fakeContext.maxMeasureTextCacheWordCount = currentContext->maxElementCount;
+    }
+    // Reserve space in the arena for the context, important for calculating min memory size correctly
+    Clay__Context_Allocate_Arena(&fakeContext.internalArena);
+    Clay__InitializePersistentMemory(&fakeContext);
+    Clay__InitializeEphemeralMemory(&fakeContext);
+    return fakeContext.internalArena.nextAllocation;
 }
 
 CLAY_WASM_EXPORT("Clay_CreateArenaWithCapacityAndMemory")
@@ -3701,17 +3712,16 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
 
 CLAY_WASM_EXPORT("Clay_Initialize")
 Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler) {
-    arena.maxElementCount = Clay__nextInitMaxElementCount;
-    arena.maxMeasureTextCacheWordCount = Clay__nextInitMaxMeasureTextCacheWordCount;
     Clay_Context* context = Clay__Context_Allocate_Arena(&arena);
-    if (context == NULL)
-    {
-        return NULL;
-    }
+    if (context == NULL) return NULL;
+    // DEFAULTS
+    context->maxElementCount = 8192;
+    context->maxMeasureTextCacheWordCount = context->maxElementCount * 2;
+    context->errorHandler = CLAY__INIT(Clay_ErrorHandler) { Clay__ErrorHandlerFunctionDefault };
     Clay_SetCurrentContext(context);
     context->internalArena = arena;
-    Clay__InitializePersistentMemory(&context->internalArena);
-    Clay__InitializeEphemeralMemory(&context->internalArena);
+    Clay__InitializePersistentMemory(context);
+    Clay__InitializeEphemeralMemory(context);
     for (int32_t i = 0; i < context->layoutElementsHashMap.capacity; ++i) {
         context->layoutElementsHashMap.internalArray[i] = -1;
     }
@@ -3721,7 +3731,7 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
     context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
     context->layoutDimensions = layoutDimensions;
     if (errorHandler.errorHandlerFunction) {
-        arena.context->errorHandler = errorHandler;
+        context->errorHandler = errorHandler;
     }
     return context;
 }
@@ -3853,7 +3863,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
 CLAY_WASM_EXPORT("Clay_BeginLayout")
 void Clay_BeginLayout() {
     Clay_Context* context = Clay_GetCurrentContext();
-    Clay__InitializeEphemeralMemory(&context->internalArena);
+    Clay__InitializeEphemeralMemory(context);
     context->generation++;
     context->dynamicElementIndex = 0;
     // Set up the root container that covers the entire window
@@ -3988,12 +3998,12 @@ void Clay_SetExternalScrollHandlingEnabled(bool enabled) {
 
 CLAY_WASM_EXPORT("Clay_SetMaxElementCount")
 void Clay_SetMaxElementCount(int32_t maxElementCount) {
-    Clay__nextInitMaxElementCount = maxElementCount;
+    Clay__currentContext->maxElementCount = maxElementCount;
 }
 
 CLAY_WASM_EXPORT("Clay_SetMaxMeasureTextCacheWordCount")
 void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount) {
-    Clay__nextInitMaxMeasureTextCacheWordCount = maxMeasureTextCacheWordCount;
+    Clay__currentContext->maxMeasureTextCacheWordCount = maxMeasureTextCacheWordCount;
 }
 
 #endif // CLAY_IMPLEMENTATION
