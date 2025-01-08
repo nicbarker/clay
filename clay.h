@@ -182,6 +182,9 @@ typedef struct Clay_Context Clay_Context;
 
 typedef struct {
     uintptr_t nextAllocation;
+    Clay_Context* context;
+    int32_t maxElementCount;
+    int32_t maxMeasureTextCacheWordCount;
     size_t capacity;
     char *memory;
 } Clay_Arena;
