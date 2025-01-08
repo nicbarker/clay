@@ -182,9 +182,6 @@ typedef struct Clay_Context Clay_Context;
 
 typedef struct {
     uintptr_t nextAllocation;
-    Clay_Context* context;
-    int32_t maxElementCount;
-    int32_t maxMeasureTextCacheWordCount;
     size_t capacity;
     char *memory;
 } Clay_Arena;
@@ -561,7 +558,7 @@ Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConf
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
-uint32_t Clay__GetParentElementId(void);
+uint32_t Clay__GetParentElementId();
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
