@@ -3975,9 +3975,22 @@ void Clay_SetExternalScrollHandlingEnabled(bool enabled) {
     context->externalScrollHandlingEnabled = enabled;
 }
 
+CLAY_WASM_EXPORT("Clay_GetMaxElementCount")
+int32_t Clay_GetMaxElementCount(void) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    return context->maxElementCount;
+}
+
 CLAY_WASM_EXPORT("Clay_SetMaxElementCount")
 void Clay_SetMaxElementCount(int32_t maxElementCount) {
-    Clay__currentContext->maxElementCount = maxElementCount;
+    Clay_Context* context = Clay_GetCurrentContext();
+    context->maxElementCount = maxElementCount;
+}
+
+CLAY_WASM_EXPORT("Clay_GetMaxMeasureTextCacheWordCount")
+int32_t Clay_GetMaxMeasureTextCacheWordCount(void) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    return context->maxMeasureTextCacheWordCount;
 }
 
 CLAY_WASM_EXPORT("Clay_SetMaxMeasureTextCacheWordCount")

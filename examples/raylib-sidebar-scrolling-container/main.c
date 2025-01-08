@@ -208,10 +208,10 @@ void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
     if (errorData.errorType == CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED) {
         reinitializeClay = true;
-//        Clay_SetMaxElementCount(Clay_SetMaxElementCount() * 2);
+        Clay_SetMaxElementCount(Clay_GetMaxElementCount() * 2);
     } else if (errorData.errorType == CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED) {
         reinitializeClay = true;
-//        Clay_SetMaxMeasureTextCacheWordCount(Clay__maxMeasureTextCacheWordCount * 2);
+        Clay_SetMaxMeasureTextCacheWordCount(Clay_GetMaxMeasureTextCacheWordCount() * 2);
     }
 }
 
