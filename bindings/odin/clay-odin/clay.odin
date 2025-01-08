@@ -269,6 +269,18 @@ TypedConfig :: struct {
     id:     ElementId,
 }
 
+PointerDataInteractionState :: enum EnumBackingType {
+    PRESSED_THIS_FRAME,
+    PRESSED,
+    RELEASED_THIS_FRAME,
+    RELEASED,
+}
+
+PointerData :: struct {
+    position: Vector2,
+    state:    PointerDataInteractionState,
+}
+
 ErrorType :: enum {
     TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
     ARENA_CAPACITY_EXCEEDED,
@@ -282,12 +294,12 @@ ErrorType :: enum {
 ErrorData :: struct {
     errorType: ErrorType,
     errorText: String,
-    userData: rawptr
+    userData:  rawptr,
 }
 
 ErrorHandler :: struct {
-    handler: proc "c" (errorData: ErrorData),
-    userData: rawptr
+    handler:  proc "c" (errorData: ErrorData),
+    userData: rawptr,
 }
 
 @(link_prefix = "Clay_", default_calling_convention = "c")
@@ -300,24 +312,31 @@ foreign Clay {
     SetLayoutDimensions :: proc(dimensions: Dimensions) ---
     BeginLayout :: proc() ---
     EndLayout :: proc() -> ClayArray(RenderCommand) ---
-    PointerOver :: proc(id: ElementId) -> bool ---
     GetElementId :: proc(id: String) -> ElementId ---
+    GetElementIdWithIndex :: proc(id: String, index: u32) -> ElementId ---
+    Hovered :: proc() -> bool ---
+    OnHover :: proc(onHoverFunction: proc "c" (elementId: ElementId, pointerInfo: PointerData, userData: rawptr), userData: rawptr) ---
+    PointerOver :: proc(id: ElementId) -> bool ---
     GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
     SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions) ---
+    SetQueryScrollOffsetFunction :: proc(queryScrollOffsetFunction: proc "c" (elementId: u32) -> Vector2) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
     SetDebugModeEnabled :: proc(enabled: bool) ---
+    IsDebugModeEnabled :: proc() -> bool ---
+    SetCullingEnabled :: proc(enabled: bool) ---
+    SetMaxElementCount :: proc(maxElementCount: i32) ---
+    SetMaxMeasureTextCacheWordCount :: proc(maxMeasureTextCacheWordCount: i32) ---
 }
 
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
 foreign Clay {
     _OpenElement :: proc() ---
     _CloseElement :: proc() ---
+    _StoreLayoutConfig :: proc(config: LayoutConfig) -> ^LayoutConfig ---
     _ElementPostConfiguration :: proc() ---
-    _OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
     _AttachId :: proc(id: ElementId) ---
     _AttachLayoutConfig :: proc(layoutConfig: ^LayoutConfig) ---
     _AttachElementConfig :: proc(config: rawptr, type: ElementConfigType) ---
-    _StoreLayoutConfig :: proc(config: LayoutConfig) -> ^LayoutConfig ---
     _StoreRectangleElementConfig :: proc(config: RectangleElementConfig) -> ^RectangleElementConfig ---
     _StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
     _StoreImageElementConfig :: proc(config: ImageElementConfig) -> ^ImageElementConfig ---
@@ -326,7 +345,8 @@ foreign Clay {
     _StoreScrollElementConfig :: proc(config: ScrollElementConfig) -> ^ScrollElementConfig ---
     _StoreBorderElementConfig :: proc(config: BorderElementConfig) -> ^BorderElementConfig ---
     _HashString :: proc(toHash: String, index: u32, seed: u32) -> ElementId ---
-    _GetOpenLayoutElementId :: proc() -> u32 ---
+    _OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
+    _GetParentElementId :: proc() -> u32 ---
 }
 
 @(require_results, deferred_none = _CloseElement)
@@ -347,7 +367,7 @@ UI :: proc(configs: ..TypedConfig) -> bool {
 }
 
 Layout :: proc(config: LayoutConfig) -> TypedConfig {
-    return {type = ElementConfigType.Layout, config = _StoreLayoutConfig(config) }
+    return {type = ElementConfigType.Layout, config = _StoreLayoutConfig(config)}
 }
 
 Rectangle :: proc(config: RectangleElementConfig) -> TypedConfig {
@@ -383,23 +403,35 @@ Border :: proc(config: BorderElementConfig) -> TypedConfig {
 }
 
 BorderOutside :: proc(outsideBorders: BorderData) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig((BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders}) }
+    return {
+        type = ElementConfigType.Border,
+        config = _StoreBorderElementConfig((BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders}),
+    }
 }
 
 BorderOutsideRadius :: proc(outsideBorders: BorderData, radius: f32) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig(
-        (BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders, cornerRadius = {radius, radius, radius, radius}},
-    ) }
+    return {
+        type = ElementConfigType.Border,
+        config = _StoreBorderElementConfig(
+            (BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders, cornerRadius = {radius, radius, radius, radius}},
+        ),
+    }
 }
 
 BorderAll :: proc(allBorders: BorderData) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig((BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders}) }
+    return {
+        type = ElementConfigType.Border,
+        config = _StoreBorderElementConfig((BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders}),
+    }
 }
 
 BorderAllRadius :: proc(allBorders: BorderData, radius: f32) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig(
-        (BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, cornerRadius = {radius, radius, radius, radius}},
-    ) }
+    return {
+        type = ElementConfigType.Border,
+        config = _StoreBorderElementConfig(
+            (BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, cornerRadius = {radius, radius, radius, radius}},
+        ),
+    }
 }
 
 CornerRadiusAll :: proc(radius: f32) -> CornerRadius {
@@ -427,5 +459,5 @@ MakeString :: proc(label: string) -> String {
 }
 
 ID :: proc(label: string, index: u32 = 0) -> TypedConfig {
-    return { type = ElementConfigType.Id, id = _HashString(MakeString(label), index, 0) }
+    return {type = ElementConfigType.Id, id = _HashString(MakeString(label), index, 0)}
 }
