@@ -538,7 +538,7 @@ Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConf
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
-uint32_t Clay__GetParentElementId();
+uint32_t Clay__GetParentElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -1458,12 +1458,12 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
     Clay_Vector2 (*Clay__QueryScrollOffset)(uint32_t elementId);
 #endif
 
-Clay_LayoutElement* Clay__GetOpenLayoutElement() {
+Clay_LayoutElement* Clay__GetOpenLayoutElement(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     return Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1));
 }
 
-uint32_t Clay__GetParentElementId() {
+uint32_t Clay__GetParentElementId(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     return Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&context->openLayoutElementStack, context->openLayoutElementStack.length - 2))->id;
 }
@@ -1788,7 +1788,7 @@ void Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) 
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
 }
 
-void Clay__ElementPostConfiguration() {
+void Clay__ElementPostConfiguration(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->booleanWarnings.maxElementsExceeded) {
         return;
@@ -1879,7 +1879,7 @@ void Clay__ElementPostConfiguration() {
     context->elementConfigBuffer.length -= openLayoutElement->elementConfigs.length;
 }
 
-void Clay__CloseElement() {
+void Clay__CloseElement(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->booleanWarnings.maxElementsExceeded) {
         return;
@@ -1974,7 +1974,7 @@ void Clay__CloseElement() {
     }
 }
 
-void Clay__OpenElement() {
+void Clay__OpenElement(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->layoutElements.length == context->layoutElements.capacity - 1 || context->booleanWarnings.maxElementsExceeded) {
         context->booleanWarnings.maxElementsExceeded = true;
