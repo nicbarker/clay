@@ -100,7 +100,7 @@ Clay_RenderCommandArray CreateLayout() {
             CLAY_RECTANGLE({ .color = COLOR_LIGHT })
         ) {
             CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
-                CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .height = 60, .width = 60 })) {}
+                CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
                 CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
             }
 
@@ -1059,11 +1059,11 @@ CLAY(CLAY_IMAGE({ .image = { .format = IMAGE_FORMAT_RGBA, .internalData = &image
 // Load an image somewhere in your code
 Image profilePicture = LoadImage("profilePicture.png");
 // Declare a reusable image config
-Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture, .height = 60, .width = 60 };
+Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture, .sourceDimensions = {60, 60} };
 // Declare an image element using a reusable config
 CLAY(CLAY_IMAGE(imageConfig)) {}
 // Declare an image element using an inline config
-CLAY(CLAY_IMAGE({ .imageData = &profilePicture, .height = 60, .width = 60 })) {}
+CLAY(CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
 // Rendering example
 Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
 ```
