@@ -75,7 +75,8 @@ main :: () {
     flags := Raylib.ConfigFlags.WINDOW_RESIZABLE | .MSAA_4X_HINT | .VSYNC_HINT;
     raylib_initialize(1024, 768, "Introducing Clay Demo", flags);
 
-    clay_required_memory := Clay.MinMemorySize();
+    // For some reason, on linux, this is 8 bytes off ???
+    clay_required_memory := Clay.MinMemorySize() + 8;
     memory := alloc(clay_required_memory);
     clay_memory := Clay.CreateArenaWithCapacityAndMemory(clay_required_memory, memory);
     Clay.Initialize(

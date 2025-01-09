@@ -26,6 +26,8 @@ Another option used in these bindings : https://github.com/nick-celestin-zizic/c
 
 But I'm not a big fan of that since it's possible to forget the scope braces or to put the children before the element.
 
+TODO This part is wrong... delete it and write the code that works
+
 Another option to consider is to pass a code block to a macro that puts it between the start and the end.
 
 UI :: (id: ElementId, layout: LayoutConfig, configs: ..ElementConfig, $code: Code) {
@@ -73,7 +75,7 @@ With the downside that it's not obvious why the for is there before reading the 
 
 Vector2 :: Math.Vector2;
 
-ElementConfigType :: enum s32 {
+ElementConfigType :: enum u8 {
     NONE               :: 0;
     RECTANGLE          :: 1;
     BORDER_CONTAINER   :: 2;
@@ -94,8 +96,8 @@ ElementConfigType :: enum s32 {
     // Jai bindings specific types, please don't assume any value in those
     // a it might change if the enums above overlap with it
     // TODO Check if these values need to be powers of two
-    ID :: 256;
-    LAYOUT :: 257;
+    ID :: 250;
+    LAYOUT :: 251;
 }
 
 // This is passed to UI so that we can omit layout
@@ -287,6 +289,8 @@ InternalElementConfigArray :: struct {
 
 #if OS == .WINDOWS {
     #load "windows.jai";
+} else #if OS == .LINUX {
+    #load "linux.jai";
 } else {
     assert(false);
 }

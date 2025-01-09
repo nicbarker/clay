@@ -18,12 +18,14 @@ DECLARATIONS_TO_OMIT :: string.[
 ];
 
 #if AT_COMPILE_TIME {
-    #run,stallable {
-        Compiler.set_build_options_dc(.{do_output=false});
-        options := Compiler.get_build_options();
-        args := options.compile_time_command_line;
-        if !generate_bindings(args, options.minimum_os_version) {
-            Compiler.compiler_set_workspace_status(.FAILED);
+    #if !#exists(JAILS_DIAGNOSTICS_BUILD) {
+        #run,stallable {
+            Compiler.set_build_options_dc(.{do_output=false});
+            options := Compiler.get_build_options();
+            args := options.compile_time_command_line;
+            if !generate_bindings(args, options.minimum_os_version) {
+                Compiler.compiler_set_workspace_status(.FAILED);
+            }
         }
     }
 } else {
@@ -50,6 +52,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
 
         success := true;
         #if OS == .WINDOWS {
+            // TODO try to use BuildCpp module again
             File.make_directory_if_it_does_not_exist("windows", true);
 
             command := ifx compile_debug {
@@ -67,9 +70,15 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
             command = Process.break_command_into_strings("llvm-ar -rcs windows/clay.lib clay.o");
             result = Process.run_command(..command, capture_and_return_output=true, print_captured_output=true);
             if result.exit_code != 0 then return false;
+        } else #if OS == .LINUX {
+            File.make_directory_if_it_does_not_exist("linux", true);
+
+            could_build := BuildCpp.build_cpp_static_lib("linux/clay", "source/clay.c",
+                debug = compile_debug,
+            );
+            assert(could_build);
         } else {
             // TODO MacOS
-            // TODO Linux
             assert(false);
         }
 
@@ -80,11 +89,16 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Compiler.Buil
     output_filename: string;
     options: Generator.Generate_Bindings_Options;
     {
+        write_string("Generating bindings...\n");
+
         using options;
 
         #if OS == .WINDOWS {
             array_add(*libpaths, "windows");
             output_filename = "windows.jai";
+        } else #if OS == .LINUX {
+            array_add(*libpaths, "linux");
+            output_filename = "linux.jai";
         } else {
             assert(false);
         }
@@ -113,7 +127,15 @@ clay_visitor :: (decl: *Generator.Declaration, parent_decl: *Generator.Declarati
             return .STOP;
         }
 
+        // We don't want the align and wrapper strucs
+        if String.begins_with(decl.name, "Clay__Align") || String.ends_with(decl.name, "Wrapper") {
+            decl.decl_flags |= .OMIT_FROM_OUTPUT;
+            return .STOP;
+        }
+
         if String.begins_with(decl.name, "Clay__") {
+            // The way bindings generator strip prefixes mean that something like `Clay__Foo` will be turned to `Foo`
+            // but what we want is `_Foo`
             decl.output_name = String.slice(decl.name, 5, decl.name.count - 5);
         }
     }
@@ -131,10 +153,10 @@ FileUtils :: #import "File_Utilities";
 BuildCpp :: #import "BuildCpp";
 Process :: #import "Process";
 String :: #import "String";
-WindowsResources :: #import "Windows_Resources";
 
 #if OS == .WINDOWS {
     Windows :: #import "Windows";
+    WindowsResources :: #import "Windows_Resources";
     getenv :: Windows.getenv;
 } else {
     Posix :: #import "POSIX";
