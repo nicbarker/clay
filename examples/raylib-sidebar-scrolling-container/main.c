@@ -10,8 +10,8 @@ const uint32_t FONT_ID_BODY_16 = 1;
 Texture2D profilePicture;
 #define RAYLIB_VECTOR2_TO_CLAY_VECTOR2(vector) (Clay_Vector2) { .x = vector.x, .y = vector.y }
 
-Clay_String profileText = CLAY_STRING("Profile Page one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen");
-Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = 1, .fontSize = 16, .textColor = {0,0,0,255} };
+Clay_String profileText = {.length = 101, .chars = "Profile Page one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen" };
+Clay_TextElementConfig headerTextConfig = { .fontId = 1, .fontSize = 16, .textColor = {0,0,0,255} };
 
 void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
@@ -28,9 +28,9 @@ void RenderHeaderButton(Clay_String text) {
     }
 }
 
-Clay_LayoutConfig dropdownTextItemLayout = (Clay_LayoutConfig) { .padding = {8, 4} };
-Clay_RectangleElementConfig dropdownRectangleConfig = (Clay_RectangleElementConfig) { .color = {180, 180, 180, 255} };
-Clay_TextElementConfig dropdownTextElementConfig = (Clay_TextElementConfig) { .fontSize = 24, .textColor = {255,255,255,255} };
+Clay_LayoutConfig dropdownTextItemLayout = { .padding = {8, 4} };
+Clay_RectangleElementConfig dropdownRectangleConfig = { .color = {180, 180, 180, 255} };
+Clay_TextElementConfig dropdownTextElementConfig = { .fontSize = 24, .textColor = {255,255,255,255} };
 
 void RenderDropdownTextItem(int index) {
     CLAY(CLAY_IDI("ScrollContainerItem", index), CLAY_LAYOUT(dropdownTextItemLayout), CLAY_RECTANGLE(dropdownRectangleConfig)) {
@@ -142,7 +142,7 @@ typedef struct
     bool mouseDown;
 } ScrollbarData;
 
-ScrollbarData scrollbarData = (ScrollbarData) {};
+ScrollbarData scrollbarData = {};
 
 bool debugEnabled = false;
 
