@@ -566,6 +566,9 @@ extern uint32_t Clay__debugViewWidth;
 #endif
 
 Clay_Context *Clay__currentContext;
+int32_t Clay__defaultMaxElementCount = 8192;
+int32_t Clay__defaultMaxMeasureTextWordCacheCount = 16384;
+
 void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
     (void) errorText;
 }
@@ -3580,8 +3583,8 @@ bool Clay__Array_AddCapacityCheck(int32_t length, int32_t capacity)
 CLAY_WASM_EXPORT("Clay_MinMemorySize")
 uint32_t Clay_MinMemorySize(void) {
     Clay_Context fakeContext = {
-        .maxElementCount = 8192,
-        .maxMeasureTextCacheWordCount = 16384,
+        .maxElementCount = Clay__defaultMaxElementCount,
+        .maxMeasureTextCacheWordCount = Clay__defaultMaxMeasureTextWordCacheCount,
         .internalArena = {
             .capacity = SIZE_MAX,
             .memory = (char*)&fakeContext,
@@ -3696,7 +3699,7 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
     Clay_Context* context = Clay__Context_Allocate_Arena(&arena);
     if (context == NULL) return NULL;
     // DEFAULTS
-    context->maxElementCount = 8192;
+    context->maxElementCount = Clay__defaultMaxElementCount;
     context->maxMeasureTextCacheWordCount = context->maxElementCount * 2;
     context->errorHandler = CLAY__INIT(Clay_ErrorHandler) { Clay__ErrorHandlerFunctionDefault };
     Clay_SetCurrentContext(context);
@@ -3986,7 +3989,11 @@ int32_t Clay_GetMaxElementCount(void) {
 CLAY_WASM_EXPORT("Clay_SetMaxElementCount")
 void Clay_SetMaxElementCount(int32_t maxElementCount) {
     Clay_Context* context = Clay_GetCurrentContext();
-    context->maxElementCount = maxElementCount;
+    if (context) {
+        context->maxElementCount = maxElementCount;
+    } else {
+        Clay__defaultMaxElementCount = maxElementCount; // TODO: Fix this
+    }
 }
 
 CLAY_WASM_EXPORT("Clay_GetMaxMeasureTextCacheWordCount")
@@ -3997,7 +4004,12 @@ int32_t Clay_GetMaxMeasureTextCacheWordCount(void) {
 
 CLAY_WASM_EXPORT("Clay_SetMaxMeasureTextCacheWordCount")
 void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount) {
-    Clay__currentContext->maxMeasureTextCacheWordCount = maxMeasureTextCacheWordCount;
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (context) {
+        Clay__currentContext->maxMeasureTextCacheWordCount = maxMeasureTextCacheWordCount;
+    } else {
+        Clay__defaultMaxMeasureTextWordCacheCount = maxMeasureTextCacheWordCount; // TODO: Fix this
+    }
 }
 
 #endif // CLAY_IMPLEMENTATION
