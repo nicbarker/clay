@@ -60,7 +60,7 @@
 
 #define CLAY_BORDER(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__CONFIG_WRAPPER(Clay_BorderElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_OUTSIDE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
+#define CLAY_BORDER_OUTSIDE(...) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ }
 
 #define CLAY_BORDER_OUTSIDE_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = CLAY_CORNER_RADIUS(radius) })}, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
@@ -126,7 +126,7 @@ static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 */
 #define CLAY(...) \
 	for (\
-		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), __VA_ARGS__, Clay__ElementPostConfiguration(), 0); \
+		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(CLAY__INIT(Clay_ElementDeclaration) __VA_ARGS__)), Clay__ElementPostConfiguration(), 0); \
 		CLAY__ELEMENT_DEFINITION_LATCH < 1; \
 		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
 	)
@@ -489,6 +489,17 @@ typedef struct {
     Clay_PointerDataInteractionState state;
 } Clay_PointerData;
 
+typedef struct {
+    Clay_ElementId id;
+    Clay_LayoutConfig layoutConfig;
+    Clay_RectangleElementConfig rectangle;
+    Clay_ImageElementConfig image;
+    Clay_FloatingElementConfig floating;
+    Clay_CustomElementConfig custom;
+    Clay_ScrollElementConfig scroll;
+    Clay_BorderElementConfig border;
+} Clay_ElementDeclaration;
+
 typedef CLAY_PACKED_ENUM {
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
     CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED,
@@ -542,7 +553,7 @@ void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 void Clay_ResetMeasureTextCache(void);
 
 // Internal API functions required by macros
-void Clay__OpenElement(void);
+void Clay__OpenElement(Clay_ElementDeclaration config);
 void Clay__CloseElement(void);
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
 void Clay__ElementPostConfiguration(void);
@@ -1436,7 +1447,16 @@ void Clay__CloseElement(void) {
     }
 }
 
-void Clay__OpenElement(void) {
+bool Clay__MemCmp(char *a, char *b, int length) {
+    for (int i = 0; i < length; i++) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void Clay__OpenElement(Clay_ElementDeclaration declaration) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->layoutElements.length == context->layoutElements.capacity - 1 || context->booleanWarnings.maxElementsExceeded) {
         context->booleanWarnings.maxElementsExceeded = true;
@@ -1450,6 +1470,28 @@ void Clay__OpenElement(void) {
     } else {
         Clay__int32_tArray_Set(&context->layoutElementClipElementIds, context->layoutElements.length - 1, 0);
     }
+    Clay__GetOpenLayoutElement()->layoutConfig = Clay__StoreLayoutConfig(declaration.layoutConfig);
+    if (declaration.id.id != 0) {
+        Clay__AttachId(declaration.id);
+    }
+    if (!Clay__MemCmp((char *)(&declaration.rectangle), (char *)(&CLAY__RECTANGLE_ELEMENT_CONFIG_DEFAULT), sizeof(Clay_RectangleElementConfig))) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__StoreRectangleElementConfig(declaration.rectangle) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE);
+    }
+    if (!Clay__MemCmp((char *)(&declaration.image), (char *)(&CLAY__IMAGE_ELEMENT_CONFIG_DEFAULT), sizeof(Clay_ImageElementConfig))) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(declaration.image) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE);
+    }
+    if (!Clay__MemCmp((char *)(&declaration.floating), (char *)(&CLAY__FLOATING_ELEMENT_CONFIG_DEFAULT), sizeof(Clay_FloatingElementConfig))) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(declaration.floating) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER);
+    }
+    if (!Clay__MemCmp((char *)(&declaration.custom), (char *)(&CLAY__CUSTOM_ELEMENT_CONFIG_DEFAULT), sizeof(Clay_CustomElementConfig))) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(declaration.custom) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM);
+    }
+    if (!Clay__MemCmp((char *)(&declaration.scroll), (char *)(&CLAY__SCROLL_ELEMENT_CONFIG_DEFAULT), sizeof(Clay_ScrollElementConfig))) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(declaration.scroll) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER);
+    }
+    if (!Clay__MemCmp((char *)(&declaration.border), (char *)(&CLAY__BORDER_ELEMENT_CONFIG_DEFAULT), sizeof(Clay_BorderElementConfig))) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration.border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER);
+    }
 }
 
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig) {
@@ -1461,7 +1503,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     Clay_LayoutElement *parentElement = Clay__GetOpenLayoutElement();
     parentElement->childrenOrTextContent.children.length++;
 
-    Clay__OpenElement();
+    Clay__OpenElement((Clay_ElementDeclaration){ });
     Clay_LayoutElement * openLayoutElement = Clay__GetOpenLayoutElement();
     Clay__int32_tArray_Add(&context->layoutElementChildrenBuffer, context->layoutElements.length - 1);
     Clay__MeasureTextCacheItem *textMeasured = Clay__MeasureTextCached(&text, textConfig);
@@ -3355,7 +3397,7 @@ Clay_RenderCommandArray Clay_EndLayout(void) {
     Clay__CloseElement();
     if (context->debugModeEnabled) {
         context->warningsEnabled = false;
-        Clay__RenderDebugView();
+//        Clay__RenderDebugView();
         context->warningsEnabled = true;
     }
     if (context->booleanWarnings.maxElementsExceeded) {
