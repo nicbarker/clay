@@ -61,17 +61,17 @@ UpdateCamera :: (camera: *Camera, mode: CameraMode) -> void { return UpdateCamer
 SetTraceLogLevel :: (logLevel: TraceLogLevel) -> void { return SetTraceLogLevel(cast(s32) logLevel); }
 TraceLog :: (logLevel: TraceLogLevel, text: string, __args: ..Any) { TraceLog(cast(s32) logLevel, text, __args); }
 
-SetShaderValue :: (shader: Shader, locIndex: s32, value: *void, uniformType: ShaderUniformDataType) -> void { 
-    return SetShaderValue(shader, locIndex, value, cast(s32) uniformType); 
+SetShaderValue :: (shader: Shader, locIndex: s32, value: *void, uniformType: ShaderUniformDataType) -> void {
+    return SetShaderValue(shader, locIndex, value, cast(s32) uniformType);
 }
-SetShaderValueV :: (shader: Shader, locIndex: s32, value: *void, uniformType: ShaderUniformDataType, count: s32) -> void { 
-    return SetShaderValue(shader, locIndex, value, cast(s32) uniformType, count); 
+SetShaderValueV :: (shader: Shader, locIndex: s32, value: *void, uniformType: ShaderUniformDataType, count: s32) -> void {
+    return SetShaderValue(shader, locIndex, value, cast(s32) uniformType, count);
 }
 
-IsGamepadButtonPressed  :: (gamepad: s32, button: GamepadButton) -> bool { return IsGamepadButtonPressed(gamepad, cast(s32) button); }
-IsGamepadButtonDown     :: (gamepad: s32, button: GamepadButton) -> bool { return IsGamepadButtonDown(gamepad, cast(s32) button); }
+IsGamepadButtonPressed :: (gamepad: s32, button: GamepadButton) -> bool { return IsGamepadButtonPressed(gamepad, cast(s32) button); }
+IsGamepadButtonDown :: (gamepad: s32, button: GamepadButton) -> bool { return IsGamepadButtonDown(gamepad, cast(s32) button); }
 IsGamepadButtonReleased :: (gamepad: s32, button: GamepadButton) -> bool { return IsGamepadButtonReleased(gamepad, cast(s32) button); }
-IsGamepadButtonUp       :: (gamepad: s32, button: GamepadButton) -> bool { return IsGamepadButtonUp(gamepad, cast(s32) button); }
+IsGamepadButtonUp :: (gamepad: s32, button: GamepadButton) -> bool { return IsGamepadButtonUp(gamepad, cast(s32) button); }
 
 GetGamepadAxisMovement :: (gamepad: s32, axis: GamepadAxis) -> float { return GetGamepadAxisMovement(gamepad, cast(s32) axis); }
 
@@ -82,8 +82,8 @@ BeginBlendMode :: (mode: BlendMode) -> void { return BeginBlendMode(cast(s32) mo
 
 ImageFormat :: (image: *Image, newFormat: PixelFormat) -> void { return ImageFormat(image, cast(s32) newFormat); }
 
-LoadImageRaw :: (fileName: *u8, width: s32, height: s32, format: PixelFormat, headerSize: s32) -> Image { 
-    return LoadImageRaw(fileName, width, height, cast(s32) format, headerSize); 
+LoadImageRaw :: (fileName: *u8, width: s32, height: s32, format: PixelFormat, headerSize: s32) -> Image {
+    return LoadImageRaw(fileName, width, height, cast(s32) format, headerSize);
 }
 
 LoadFontData :: (fileData: *u8, dataSize: s32, fontSize: s32, codepoints: *s32, codepointCount: s32, type: FontType) -> *GlyphInfo {
@@ -123,8 +123,23 @@ TraceLogCallback :: #type (logLevel: TraceLogLevel, text: *u8, args: .. Any) #c_
     winmm :: #system_library,link_always "winmm";
 
     raylib :: #library,no_dll "windows/raylib";
-    
+
     #load "windows.jai";
+} else #if OS == .LINUX {
+    math :: #system_library,link_always "m";
+    raylib :: #library,no_dll "linux/raylib";
+
+    #load "linux.jai";
+} else #if OS == .MACOS {
+    #system_library,link_always "Cocoa";
+    #system_library,link_always "OpenGL";
+    #system_library,link_always "CoreGraphics";
+    #system_library,link_always "AppKit";
+    #system_library,link_always "IOKit";
+
+    raylib :: #library,no_dll "macos/raylib";
+
+    #load "macos.jai";
 } else {
     assert(false);
 }

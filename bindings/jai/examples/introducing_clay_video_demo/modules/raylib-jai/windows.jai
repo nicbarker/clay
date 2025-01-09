@@ -1,7 +1,7 @@
 //
 // This file was auto-generated using the following command:
 //
-// jai ./generate.jai - -compile
+// jai generate.jai - -compile
 //
 
 
@@ -23,8 +23,6 @@ DEG2RAD :: PI/180.0;
 RAD2DEG :: 180.0/PI;
 
 GetMouseRay :: GetScreenToWorldRay;
-
-EPSILON :: 0.000001;
 
 RLGL_VERSION :: "5.0";
 
@@ -134,6 +132,8 @@ RL_DEFAULT_SHADER_ATTRIB_LOCATION_TANGENT :: 4;
 RL_DEFAULT_SHADER_ATTRIB_LOCATION_TEXCOORD2 :: 5;
 
 RL_DEFAULT_SHADER_ATTRIB_LOCATION_INDICES :: 6;
+
+EPSILON :: 0.000001;
 
 // Color, 4 components, R8G8B8A8 (32bit)
 Color :: struct {
@@ -1868,6 +1868,316 @@ DetachAudioStreamProcessor :: (stream: AudioStream, processor: AudioCallback) ->
 AttachAudioMixedProcessor :: (processor: AudioCallback) -> void #foreign raylib;
 DetachAudioMixedProcessor :: (processor: AudioCallback) -> void #foreign raylib;
 
+// Dynamic vertex buffers (position + texcoords + colors + indices arrays)
+VertexBuffer :: struct {
+    elementCount: s32; // Number of elements in the buffer (QUADS)
+
+    vertices:     *float; // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+    texcoords:    *float; // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+    normals:      *float; // Vertex normal (XYZ - 3 components per vertex) (shader-location = 2)
+    colors:       *u8; // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+
+    indices:      *u32; // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
+
+    vaoId:        u32; // OpenGL Vertex Array Object id
+    vboId:        [5] u32; // OpenGL Vertex Buffer Objects id (5 types of vertex data)
+}
+
+// Draw call type
+// NOTE: Only texture changes register a new draw, other state-change-related elements are not
+// used at this moment (vaoId, shaderId, matrices), raylib just forces a batch draw call if any
+// of those state-change happens (this is done in core module)
+DrawCall :: struct {
+    mode:            s32; // Drawing mode: LINES, TRIANGLES, QUADS
+    vertexCount:     s32; // Number of vertex of the draw
+    vertexAlignment: s32; // Number of vertex required for index alignment (LINES, TRIANGLES)
+
+    textureId:       u32; // Texture id to be used on the draw -> Use to create new draw call if changes
+}
+
+// rlRenderBatch type
+RenderBatch :: struct {
+    bufferCount:   s32; // Number of vertex buffers (multi-buffering support)
+    currentBuffer: s32; // Current buffer tracking in case of multi-buffering
+    vertexBuffer:  *VertexBuffer; // Dynamic buffer(s) for vertex data
+
+    draws:         *DrawCall; // Draw calls array, depends on textureId
+    drawCounter:   s32; // Draw calls counter
+    currentDepth:  float; // Current depth value for next draw
+}
+
+// OpenGL version
+GlVersion :: enum s32 {
+    _11   :: 1;
+    _21   :: 2;
+    _33   :: 3;
+    _43   :: 4;
+    ES_20 :: 5;
+    ES_30 :: 6;
+
+    RL_OPENGL_11    :: _11;
+    RL_OPENGL_21    :: _21;
+    RL_OPENGL_33    :: _33;
+    RL_OPENGL_43    :: _43;
+    RL_OPENGL_ES_20 :: ES_20;
+    RL_OPENGL_ES_30 :: ES_30;
+}
+
+// Framebuffer attachment type
+// NOTE: By default up to 8 color channels defined, but it can be more
+FramebufferAttachType :: enum s32 {
+    COLOR_CHANNEL0 :: 0;
+    COLOR_CHANNEL1 :: 1;
+    COLOR_CHANNEL2 :: 2;
+    COLOR_CHANNEL3 :: 3;
+    COLOR_CHANNEL4 :: 4;
+    COLOR_CHANNEL5 :: 5;
+    COLOR_CHANNEL6 :: 6;
+    COLOR_CHANNEL7 :: 7;
+    DEPTH          :: 100;
+    STENCIL        :: 200;
+
+    RL_ATTACHMENT_COLOR_CHANNEL0 :: COLOR_CHANNEL0;
+    RL_ATTACHMENT_COLOR_CHANNEL1 :: COLOR_CHANNEL1;
+    RL_ATTACHMENT_COLOR_CHANNEL2 :: COLOR_CHANNEL2;
+    RL_ATTACHMENT_COLOR_CHANNEL3 :: COLOR_CHANNEL3;
+    RL_ATTACHMENT_COLOR_CHANNEL4 :: COLOR_CHANNEL4;
+    RL_ATTACHMENT_COLOR_CHANNEL5 :: COLOR_CHANNEL5;
+    RL_ATTACHMENT_COLOR_CHANNEL6 :: COLOR_CHANNEL6;
+    RL_ATTACHMENT_COLOR_CHANNEL7 :: COLOR_CHANNEL7;
+    RL_ATTACHMENT_DEPTH          :: DEPTH;
+    RL_ATTACHMENT_STENCIL        :: STENCIL;
+}
+
+// Framebuffer texture attachment type
+FramebufferAttachTextureType :: enum s32 {
+    CUBEMAP_POSITIVE_X :: 0;
+    CUBEMAP_NEGATIVE_X :: 1;
+    CUBEMAP_POSITIVE_Y :: 2;
+    CUBEMAP_NEGATIVE_Y :: 3;
+    CUBEMAP_POSITIVE_Z :: 4;
+    CUBEMAP_NEGATIVE_Z :: 5;
+    TEXTURE2D          :: 100;
+    RENDERBUFFER       :: 200;
+
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_X :: CUBEMAP_POSITIVE_X;
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X :: CUBEMAP_NEGATIVE_X;
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y :: CUBEMAP_POSITIVE_Y;
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y :: CUBEMAP_NEGATIVE_Y;
+    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z :: CUBEMAP_POSITIVE_Z;
+    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z :: CUBEMAP_NEGATIVE_Z;
+    RL_ATTACHMENT_TEXTURE2D          :: TEXTURE2D;
+    RL_ATTACHMENT_RENDERBUFFER       :: RENDERBUFFER;
+}
+
+// Face culling mode
+CullMode :: enum s32 {
+    FRONT :: 0;
+    BACK  :: 1;
+
+    RL_CULL_FACE_FRONT :: FRONT;
+    RL_CULL_FACE_BACK  :: BACK;
+}
+
+MatrixMode :: (mode: s32) -> void #foreign raylib "rlMatrixMode";
+PushMatrix :: () -> void #foreign raylib "rlPushMatrix";
+PopMatrix :: () -> void #foreign raylib "rlPopMatrix";
+LoadIdentity :: () -> void #foreign raylib "rlLoadIdentity";
+Translatef :: (x: float, y: float, z: float) -> void #foreign raylib "rlTranslatef";
+Rotatef :: (angle: float, x: float, y: float, z: float) -> void #foreign raylib "rlRotatef";
+Scalef :: (x: float, y: float, z: float) -> void #foreign raylib "rlScalef";
+MultMatrixf :: (matf: *float) -> void #foreign raylib "rlMultMatrixf";
+Frustum :: (left: float64, right: float64, bottom: float64, top: float64, znear: float64, zfar: float64) -> void #foreign raylib "rlFrustum";
+Ortho :: (left: float64, right: float64, bottom: float64, top: float64, znear: float64, zfar: float64) -> void #foreign raylib "rlOrtho";
+Viewport :: (x: s32, y: s32, width: s32, height: s32) -> void #foreign raylib "rlViewport";
+SetClipPlanes :: (nearPlane: float64, farPlane: float64) -> void #foreign raylib "rlSetClipPlanes";
+GetCullDistanceNear :: () -> float64 #foreign raylib "rlGetCullDistanceNear";
+GetCullDistanceFar :: () -> float64 #foreign raylib "rlGetCullDistanceFar";
+
+//------------------------------------------------------------------------------------
+// Functions Declaration - Vertex level operations
+//------------------------------------------------------------------------------------
+Begin :: (mode: s32) -> void #foreign raylib "rlBegin";
+End :: () -> void #foreign raylib "rlEnd";
+Vertex2i :: (x: s32, y: s32) -> void #foreign raylib "rlVertex2i";
+Vertex2f :: (x: float, y: float) -> void #foreign raylib "rlVertex2f";
+Vertex3f :: (x: float, y: float, z: float) -> void #foreign raylib "rlVertex3f";
+TexCoord2f :: (x: float, y: float) -> void #foreign raylib "rlTexCoord2f";
+Normal3f :: (x: float, y: float, z: float) -> void #foreign raylib "rlNormal3f";
+Color4ub :: (r: u8, g: u8, b: u8, a: u8) -> void #foreign raylib "rlColor4ub";
+Color3f :: (x: float, y: float, z: float) -> void #foreign raylib "rlColor3f";
+Color4f :: (x: float, y: float, z: float, w: float) -> void #foreign raylib "rlColor4f";
+
+// Vertex buffers state
+EnableVertexArray :: (vaoId: u32) -> bool #foreign raylib "rlEnableVertexArray";
+DisableVertexArray :: () -> void #foreign raylib "rlDisableVertexArray";
+EnableVertexBuffer :: (id: u32) -> void #foreign raylib "rlEnableVertexBuffer";
+DisableVertexBuffer :: () -> void #foreign raylib "rlDisableVertexBuffer";
+EnableVertexBufferElement :: (id: u32) -> void #foreign raylib "rlEnableVertexBufferElement";
+DisableVertexBufferElement :: () -> void #foreign raylib "rlDisableVertexBufferElement";
+EnableVertexAttribute :: (index: u32) -> void #foreign raylib "rlEnableVertexAttribute";
+DisableVertexAttribute :: (index: u32) -> void #foreign raylib "rlDisableVertexAttribute";
+
+// Textures state
+ActiveTextureSlot :: (slot: s32) -> void #foreign raylib "rlActiveTextureSlot";
+EnableTexture :: (id: u32) -> void #foreign raylib "rlEnableTexture";
+DisableTexture :: () -> void #foreign raylib "rlDisableTexture";
+EnableTextureCubemap :: (id: u32) -> void #foreign raylib "rlEnableTextureCubemap";
+DisableTextureCubemap :: () -> void #foreign raylib "rlDisableTextureCubemap";
+TextureParameters :: (id: u32, param: s32, value: s32) -> void #foreign raylib "rlTextureParameters";
+CubemapParameters :: (id: u32, param: s32, value: s32) -> void #foreign raylib "rlCubemapParameters";
+
+// Shader state
+EnableShader :: (id: u32) -> void #foreign raylib "rlEnableShader";
+DisableShader :: () -> void #foreign raylib "rlDisableShader";
+
+// Framebuffer state
+EnableFramebuffer :: (id: u32) -> void #foreign raylib "rlEnableFramebuffer";
+DisableFramebuffer :: () -> void #foreign raylib "rlDisableFramebuffer";
+GetActiveFramebuffer :: () -> u32 #foreign raylib "rlGetActiveFramebuffer";
+ActiveDrawBuffers :: (count: s32) -> void #foreign raylib "rlActiveDrawBuffers";
+BlitFramebuffer :: (srcX: s32, srcY: s32, srcWidth: s32, srcHeight: s32, dstX: s32, dstY: s32, dstWidth: s32, dstHeight: s32, bufferMask: s32) -> void #foreign raylib "rlBlitFramebuffer";
+BindFramebuffer :: (target: u32, framebuffer: u32) -> void #foreign raylib "rlBindFramebuffer";
+
+// General render state
+EnableColorBlend :: () -> void #foreign raylib "rlEnableColorBlend";
+DisableColorBlend :: () -> void #foreign raylib "rlDisableColorBlend";
+EnableDepthTest :: () -> void #foreign raylib "rlEnableDepthTest";
+DisableDepthTest :: () -> void #foreign raylib "rlDisableDepthTest";
+EnableDepthMask :: () -> void #foreign raylib "rlEnableDepthMask";
+DisableDepthMask :: () -> void #foreign raylib "rlDisableDepthMask";
+EnableBackfaceCulling :: () -> void #foreign raylib "rlEnableBackfaceCulling";
+DisableBackfaceCulling :: () -> void #foreign raylib "rlDisableBackfaceCulling";
+ColorMask :: (r: bool, g: bool, b: bool, a: bool) -> void #foreign raylib "rlColorMask";
+SetCullFace :: (mode: s32) -> void #foreign raylib "rlSetCullFace";
+EnableScissorTest :: () -> void #foreign raylib "rlEnableScissorTest";
+DisableScissorTest :: () -> void #foreign raylib "rlDisableScissorTest";
+Scissor :: (x: s32, y: s32, width: s32, height: s32) -> void #foreign raylib "rlScissor";
+EnableWireMode :: () -> void #foreign raylib "rlEnableWireMode";
+EnablePointMode :: () -> void #foreign raylib "rlEnablePointMode";
+DisableWireMode :: () -> void #foreign raylib "rlDisableWireMode";
+SetLineWidth :: (width: float) -> void #foreign raylib "rlSetLineWidth";
+GetLineWidth :: () -> float #foreign raylib "rlGetLineWidth";
+EnableSmoothLines :: () -> void #foreign raylib "rlEnableSmoothLines";
+DisableSmoothLines :: () -> void #foreign raylib "rlDisableSmoothLines";
+EnableStereoRender :: () -> void #foreign raylib "rlEnableStereoRender";
+DisableStereoRender :: () -> void #foreign raylib "rlDisableStereoRender";
+IsStereoRenderEnabled :: () -> bool #foreign raylib "rlIsStereoRenderEnabled";
+
+ClearColor :: (r: u8, g: u8, b: u8, a: u8) -> void #foreign raylib "rlClearColor";
+ClearScreenBuffers :: () -> void #foreign raylib "rlClearScreenBuffers";
+CheckErrors :: () -> void #foreign raylib "rlCheckErrors";
+SetBlendMode :: (mode: s32) -> void #foreign raylib "rlSetBlendMode";
+SetBlendFactors :: (glSrcFactor: s32, glDstFactor: s32, glEquation: s32) -> void #foreign raylib "rlSetBlendFactors";
+SetBlendFactorsSeparate :: (glSrcRGB: s32, glDstRGB: s32, glSrcAlpha: s32, glDstAlpha: s32, glEqRGB: s32, glEqAlpha: s32) -> void #foreign raylib "rlSetBlendFactorsSeparate";
+
+//------------------------------------------------------------------------------------
+// Functions Declaration - rlgl functionality
+//------------------------------------------------------------------------------------
+// rlgl initialization functions
+glInit :: (width: s32, height: s32) -> void #foreign raylib "rlglInit";
+glClose :: () -> void #foreign raylib "rlglClose";
+LoadExtensions :: (loader: *void) -> void #foreign raylib "rlLoadExtensions";
+GetVersion :: () -> s32 #foreign raylib "rlGetVersion";
+SetFramebufferWidth :: (width: s32) -> void #foreign raylib "rlSetFramebufferWidth";
+GetFramebufferWidth :: () -> s32 #foreign raylib "rlGetFramebufferWidth";
+SetFramebufferHeight :: (height: s32) -> void #foreign raylib "rlSetFramebufferHeight";
+GetFramebufferHeight :: () -> s32 #foreign raylib "rlGetFramebufferHeight";
+
+GetTextureIdDefault :: () -> u32 #foreign raylib "rlGetTextureIdDefault";
+GetShaderIdDefault :: () -> u32 #foreign raylib "rlGetShaderIdDefault";
+GetShaderLocsDefault :: () -> *s32 #foreign raylib "rlGetShaderLocsDefault";
+
+// Render batch management
+// NOTE: rlgl provides a default render batch to behave like OpenGL 1.1 immediate mode
+// but this render batch API is exposed in case of custom batches are required
+LoadRenderBatch :: (numBuffers: s32, bufferElements: s32) -> RenderBatch #foreign raylib "rlLoadRenderBatch";
+UnloadRenderBatch :: (batch: RenderBatch) -> void #foreign raylib "rlUnloadRenderBatch";
+DrawRenderBatch :: (batch: *RenderBatch) -> void #foreign raylib "rlDrawRenderBatch";
+SetRenderBatchActive :: (batch: *RenderBatch) -> void #foreign raylib "rlSetRenderBatchActive";
+DrawRenderBatchActive :: () -> void #foreign raylib "rlDrawRenderBatchActive";
+CheckRenderBatchLimit :: (vCount: s32) -> bool #foreign raylib "rlCheckRenderBatchLimit";
+
+SetTexture :: (id: u32) -> void #foreign raylib "rlSetTexture";
+
+// Vertex buffers management
+LoadVertexArray :: () -> u32 #foreign raylib "rlLoadVertexArray";
+LoadVertexBuffer :: (buffer: *void, size: s32, dynamic: bool) -> u32 #foreign raylib "rlLoadVertexBuffer";
+LoadVertexBufferElement :: (buffer: *void, size: s32, dynamic: bool) -> u32 #foreign raylib "rlLoadVertexBufferElement";
+UpdateVertexBuffer :: (bufferId: u32, data: *void, dataSize: s32, offset: s32) -> void #foreign raylib "rlUpdateVertexBuffer";
+UpdateVertexBufferElements :: (id: u32, data: *void, dataSize: s32, offset: s32) -> void #foreign raylib "rlUpdateVertexBufferElements";
+UnloadVertexArray :: (vaoId: u32) -> void #foreign raylib "rlUnloadVertexArray";
+UnloadVertexBuffer :: (vboId: u32) -> void #foreign raylib "rlUnloadVertexBuffer";
+SetVertexAttribute :: (index: u32, compSize: s32, type: s32, normalized: bool, stride: s32, offset: s32) -> void #foreign raylib "rlSetVertexAttribute";
+SetVertexAttributeDivisor :: (index: u32, divisor: s32) -> void #foreign raylib "rlSetVertexAttributeDivisor";
+SetVertexAttributeDefault :: (locIndex: s32, value: *void, attribType: s32, count: s32) -> void #foreign raylib "rlSetVertexAttributeDefault";
+DrawVertexArray :: (offset: s32, count: s32) -> void #foreign raylib "rlDrawVertexArray";
+DrawVertexArrayElements :: (offset: s32, count: s32, buffer: *void) -> void #foreign raylib "rlDrawVertexArrayElements";
+DrawVertexArrayInstanced :: (offset: s32, count: s32, instances: s32) -> void #foreign raylib "rlDrawVertexArrayInstanced";
+DrawVertexArrayElementsInstanced :: (offset: s32, count: s32, buffer: *void, instances: s32) -> void #foreign raylib "rlDrawVertexArrayElementsInstanced";
+
+// Textures management
+LoadTexture :: (data: *void, width: s32, height: s32, format: s32, mipmapCount: s32) -> u32 #foreign raylib "rlLoadTexture";
+LoadTextureDepth :: (width: s32, height: s32, useRenderBuffer: bool) -> u32 #foreign raylib "rlLoadTextureDepth";
+LoadTextureCubemap :: (data: *void, size: s32, format: s32, mipmapCount: s32) -> u32 #foreign raylib "rlLoadTextureCubemap";
+UpdateTexture :: (id: u32, offsetX: s32, offsetY: s32, width: s32, height: s32, format: s32, data: *void) -> void #foreign raylib "rlUpdateTexture";
+GetGlTextureFormats :: (format: s32, glInternalFormat: *u32, glFormat: *u32, glType: *u32) -> void #foreign raylib "rlGetGlTextureFormats";
+GetPixelFormatName :: (format: u32) -> *u8 #foreign raylib "rlGetPixelFormatName";
+UnloadTexture :: (id: u32) -> void #foreign raylib "rlUnloadTexture";
+GenTextureMipmaps :: (id: u32, width: s32, height: s32, format: s32, mipmaps: *s32) -> void #foreign raylib "rlGenTextureMipmaps";
+ReadTexturePixels :: (id: u32, width: s32, height: s32, format: s32) -> *void #foreign raylib "rlReadTexturePixels";
+ReadScreenPixels :: (width: s32, height: s32) -> *u8 #foreign raylib "rlReadScreenPixels";
+
+// Framebuffer management (fbo)
+LoadFramebuffer :: () -> u32 #foreign raylib "rlLoadFramebuffer";
+FramebufferAttach :: (fboId: u32, texId: u32, attachType: s32, texType: s32, mipLevel: s32) -> void #foreign raylib "rlFramebufferAttach";
+FramebufferComplete :: (id: u32) -> bool #foreign raylib "rlFramebufferComplete";
+UnloadFramebuffer :: (id: u32) -> void #foreign raylib "rlUnloadFramebuffer";
+
+// Shaders management
+LoadShaderCode :: (vsCode: *u8, fsCode: *u8) -> u32 #foreign raylib "rlLoadShaderCode";
+CompileShader :: (shaderCode: *u8, type: s32) -> u32 #foreign raylib "rlCompileShader";
+LoadShaderProgram :: (vShaderId: u32, fShaderId: u32) -> u32 #foreign raylib "rlLoadShaderProgram";
+UnloadShaderProgram :: (id: u32) -> void #foreign raylib "rlUnloadShaderProgram";
+GetLocationUniform :: (shaderId: u32, uniformName: *u8) -> s32 #foreign raylib "rlGetLocationUniform";
+GetLocationAttrib :: (shaderId: u32, attribName: *u8) -> s32 #foreign raylib "rlGetLocationAttrib";
+SetUniform :: (locIndex: s32, value: *void, uniformType: s32, count: s32) -> void #foreign raylib "rlSetUniform";
+SetUniformMatrix :: (locIndex: s32, mat: Matrix) -> void #foreign raylib "rlSetUniformMatrix";
+SetUniformMatrices :: (locIndex: s32, mat: *Matrix, count: s32) -> void #foreign raylib "rlSetUniformMatrices";
+SetUniformSampler :: (locIndex: s32, textureId: u32) -> void #foreign raylib "rlSetUniformSampler";
+SetShader :: (id: u32, locs: *s32) -> void #foreign raylib "rlSetShader";
+
+// Compute shader management
+LoadComputeShaderProgram :: (shaderId: u32) -> u32 #foreign raylib "rlLoadComputeShaderProgram";
+ComputeShaderDispatch :: (groupX: u32, groupY: u32, groupZ: u32) -> void #foreign raylib "rlComputeShaderDispatch";
+
+// Shader buffer storage object management (ssbo)
+LoadShaderBuffer :: (size: u32, data: *void, usageHint: s32) -> u32 #foreign raylib "rlLoadShaderBuffer";
+UnloadShaderBuffer :: (ssboId: u32) -> void #foreign raylib "rlUnloadShaderBuffer";
+UpdateShaderBuffer :: (id: u32, data: *void, dataSize: u32, offset: u32) -> void #foreign raylib "rlUpdateShaderBuffer";
+BindShaderBuffer :: (id: u32, index: u32) -> void #foreign raylib "rlBindShaderBuffer";
+ReadShaderBuffer :: (id: u32, dest: *void, count: u32, offset: u32) -> void #foreign raylib "rlReadShaderBuffer";
+CopyShaderBuffer :: (destId: u32, srcId: u32, destOffset: u32, srcOffset: u32, count: u32) -> void #foreign raylib "rlCopyShaderBuffer";
+GetShaderBufferSize :: (id: u32) -> u32 #foreign raylib "rlGetShaderBufferSize";
+
+// Buffer management
+BindImageTexture :: (id: u32, index: u32, format: s32, readonly: bool) -> void #foreign raylib "rlBindImageTexture";
+
+// Matrix state management
+GetMatrixModelview :: () -> Matrix #foreign raylib "rlGetMatrixModelview";
+GetMatrixProjection :: () -> Matrix #foreign raylib "rlGetMatrixProjection";
+GetMatrixTransform :: () -> Matrix #foreign raylib "rlGetMatrixTransform";
+GetMatrixProjectionStereo :: (eye: s32) -> Matrix #foreign raylib "rlGetMatrixProjectionStereo";
+GetMatrixViewOffsetStereo :: (eye: s32) -> Matrix #foreign raylib "rlGetMatrixViewOffsetStereo";
+SetMatrixProjection :: (proj: Matrix) -> void #foreign raylib "rlSetMatrixProjection";
+SetMatrixModelview :: (view: Matrix) -> void #foreign raylib "rlSetMatrixModelview";
+SetMatrixProjectionStereo :: (right: Matrix, left: Matrix) -> void #foreign raylib "rlSetMatrixProjectionStereo";
+SetMatrixViewOffsetStereo :: (right: Matrix, left: Matrix) -> void #foreign raylib "rlSetMatrixViewOffsetStereo";
+
+// Quick and dirty cube/quad buffers load->draw->unload
+LoadDrawCube :: () -> void #foreign raylib "rlLoadDrawCube";
+LoadDrawQuad :: () -> void #foreign raylib "rlLoadDrawQuad";
+
 // NOTE: Helper types to be used instead of array return types for *ToFloat functions
 float3 :: struct {
     v: [3] float;
@@ -2329,316 +2639,6 @@ QuaternionEquals :: (p: Quaternion, q: Quaternion) -> s32 #foreign raylib;
 // Decompose a transformation matrix into its rotational, translational and scaling components
 MatrixDecompose :: (mat: Matrix, translation: *Vector3, rotation: *Quaternion, scale: *Vector3) -> void #foreign raylib;
 
-// Dynamic vertex buffers (position + texcoords + colors + indices arrays)
-VertexBuffer :: struct {
-    elementCount: s32; // Number of elements in the buffer (QUADS)
-
-    vertices:     *float; // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-    texcoords:    *float; // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-    normals:      *float; // Vertex normal (XYZ - 3 components per vertex) (shader-location = 2)
-    colors:       *u8; // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-
-    indices:      *u32; // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-
-    vaoId:        u32; // OpenGL Vertex Array Object id
-    vboId:        [5] u32; // OpenGL Vertex Buffer Objects id (5 types of vertex data)
-}
-
-// Draw call type
-// NOTE: Only texture changes register a new draw, other state-change-related elements are not
-// used at this moment (vaoId, shaderId, matrices), raylib just forces a batch draw call if any
-// of those state-change happens (this is done in core module)
-DrawCall :: struct {
-    mode:            s32; // Drawing mode: LINES, TRIANGLES, QUADS
-    vertexCount:     s32; // Number of vertex of the draw
-    vertexAlignment: s32; // Number of vertex required for index alignment (LINES, TRIANGLES)
-
-    textureId:       u32; // Texture id to be used on the draw -> Use to create new draw call if changes
-}
-
-// rlRenderBatch type
-RenderBatch :: struct {
-    bufferCount:   s32; // Number of vertex buffers (multi-buffering support)
-    currentBuffer: s32; // Current buffer tracking in case of multi-buffering
-    vertexBuffer:  *VertexBuffer; // Dynamic buffer(s) for vertex data
-
-    draws:         *DrawCall; // Draw calls array, depends on textureId
-    drawCounter:   s32; // Draw calls counter
-    currentDepth:  float; // Current depth value for next draw
-}
-
-// OpenGL version
-GlVersion :: enum s32 {
-    _11   :: 1;
-    _21   :: 2;
-    _33   :: 3;
-    _43   :: 4;
-    ES_20 :: 5;
-    ES_30 :: 6;
-
-    RL_OPENGL_11    :: _11;
-    RL_OPENGL_21    :: _21;
-    RL_OPENGL_33    :: _33;
-    RL_OPENGL_43    :: _43;
-    RL_OPENGL_ES_20 :: ES_20;
-    RL_OPENGL_ES_30 :: ES_30;
-}
-
-// Framebuffer attachment type
-// NOTE: By default up to 8 color channels defined, but it can be more
-FramebufferAttachType :: enum s32 {
-    COLOR_CHANNEL0 :: 0;
-    COLOR_CHANNEL1 :: 1;
-    COLOR_CHANNEL2 :: 2;
-    COLOR_CHANNEL3 :: 3;
-    COLOR_CHANNEL4 :: 4;
-    COLOR_CHANNEL5 :: 5;
-    COLOR_CHANNEL6 :: 6;
-    COLOR_CHANNEL7 :: 7;
-    DEPTH          :: 100;
-    STENCIL        :: 200;
-
-    RL_ATTACHMENT_COLOR_CHANNEL0 :: COLOR_CHANNEL0;
-    RL_ATTACHMENT_COLOR_CHANNEL1 :: COLOR_CHANNEL1;
-    RL_ATTACHMENT_COLOR_CHANNEL2 :: COLOR_CHANNEL2;
-    RL_ATTACHMENT_COLOR_CHANNEL3 :: COLOR_CHANNEL3;
-    RL_ATTACHMENT_COLOR_CHANNEL4 :: COLOR_CHANNEL4;
-    RL_ATTACHMENT_COLOR_CHANNEL5 :: COLOR_CHANNEL5;
-    RL_ATTACHMENT_COLOR_CHANNEL6 :: COLOR_CHANNEL6;
-    RL_ATTACHMENT_COLOR_CHANNEL7 :: COLOR_CHANNEL7;
-    RL_ATTACHMENT_DEPTH          :: DEPTH;
-    RL_ATTACHMENT_STENCIL        :: STENCIL;
-}
-
-// Framebuffer texture attachment type
-FramebufferAttachTextureType :: enum s32 {
-    CUBEMAP_POSITIVE_X :: 0;
-    CUBEMAP_NEGATIVE_X :: 1;
-    CUBEMAP_POSITIVE_Y :: 2;
-    CUBEMAP_NEGATIVE_Y :: 3;
-    CUBEMAP_POSITIVE_Z :: 4;
-    CUBEMAP_NEGATIVE_Z :: 5;
-    TEXTURE2D          :: 100;
-    RENDERBUFFER       :: 200;
-
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_X :: CUBEMAP_POSITIVE_X;
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_X :: CUBEMAP_NEGATIVE_X;
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Y :: CUBEMAP_POSITIVE_Y;
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Y :: CUBEMAP_NEGATIVE_Y;
-    RL_ATTACHMENT_CUBEMAP_POSITIVE_Z :: CUBEMAP_POSITIVE_Z;
-    RL_ATTACHMENT_CUBEMAP_NEGATIVE_Z :: CUBEMAP_NEGATIVE_Z;
-    RL_ATTACHMENT_TEXTURE2D          :: TEXTURE2D;
-    RL_ATTACHMENT_RENDERBUFFER       :: RENDERBUFFER;
-}
-
-// Face culling mode
-CullMode :: enum s32 {
-    FRONT :: 0;
-    BACK  :: 1;
-
-    RL_CULL_FACE_FRONT :: FRONT;
-    RL_CULL_FACE_BACK  :: BACK;
-}
-
-MatrixMode :: (mode: s32) -> void #foreign raylib "rlMatrixMode";
-PushMatrix :: () -> void #foreign raylib "rlPushMatrix";
-PopMatrix :: () -> void #foreign raylib "rlPopMatrix";
-LoadIdentity :: () -> void #foreign raylib "rlLoadIdentity";
-Translatef :: (x: float, y: float, z: float) -> void #foreign raylib "rlTranslatef";
-Rotatef :: (angle: float, x: float, y: float, z: float) -> void #foreign raylib "rlRotatef";
-Scalef :: (x: float, y: float, z: float) -> void #foreign raylib "rlScalef";
-MultMatrixf :: (matf: *float) -> void #foreign raylib "rlMultMatrixf";
-Frustum :: (left: float64, right: float64, bottom: float64, top: float64, znear: float64, zfar: float64) -> void #foreign raylib "rlFrustum";
-Ortho :: (left: float64, right: float64, bottom: float64, top: float64, znear: float64, zfar: float64) -> void #foreign raylib "rlOrtho";
-Viewport :: (x: s32, y: s32, width: s32, height: s32) -> void #foreign raylib "rlViewport";
-SetClipPlanes :: (nearPlane: float64, farPlane: float64) -> void #foreign raylib "rlSetClipPlanes";
-GetCullDistanceNear :: () -> float64 #foreign raylib "rlGetCullDistanceNear";
-GetCullDistanceFar :: () -> float64 #foreign raylib "rlGetCullDistanceFar";
-
-//------------------------------------------------------------------------------------
-// Functions Declaration - Vertex level operations
-//------------------------------------------------------------------------------------
-Begin :: (mode: s32) -> void #foreign raylib "rlBegin";
-End :: () -> void #foreign raylib "rlEnd";
-Vertex2i :: (x: s32, y: s32) -> void #foreign raylib "rlVertex2i";
-Vertex2f :: (x: float, y: float) -> void #foreign raylib "rlVertex2f";
-Vertex3f :: (x: float, y: float, z: float) -> void #foreign raylib "rlVertex3f";
-TexCoord2f :: (x: float, y: float) -> void #foreign raylib "rlTexCoord2f";
-Normal3f :: (x: float, y: float, z: float) -> void #foreign raylib "rlNormal3f";
-Color4ub :: (r: u8, g: u8, b: u8, a: u8) -> void #foreign raylib "rlColor4ub";
-Color3f :: (x: float, y: float, z: float) -> void #foreign raylib "rlColor3f";
-Color4f :: (x: float, y: float, z: float, w: float) -> void #foreign raylib "rlColor4f";
-
-// Vertex buffers state
-EnableVertexArray :: (vaoId: u32) -> bool #foreign raylib "rlEnableVertexArray";
-DisableVertexArray :: () -> void #foreign raylib "rlDisableVertexArray";
-EnableVertexBuffer :: (id: u32) -> void #foreign raylib "rlEnableVertexBuffer";
-DisableVertexBuffer :: () -> void #foreign raylib "rlDisableVertexBuffer";
-EnableVertexBufferElement :: (id: u32) -> void #foreign raylib "rlEnableVertexBufferElement";
-DisableVertexBufferElement :: () -> void #foreign raylib "rlDisableVertexBufferElement";
-EnableVertexAttribute :: (index: u32) -> void #foreign raylib "rlEnableVertexAttribute";
-DisableVertexAttribute :: (index: u32) -> void #foreign raylib "rlDisableVertexAttribute";
-
-// Textures state
-ActiveTextureSlot :: (slot: s32) -> void #foreign raylib "rlActiveTextureSlot";
-EnableTexture :: (id: u32) -> void #foreign raylib "rlEnableTexture";
-DisableTexture :: () -> void #foreign raylib "rlDisableTexture";
-EnableTextureCubemap :: (id: u32) -> void #foreign raylib "rlEnableTextureCubemap";
-DisableTextureCubemap :: () -> void #foreign raylib "rlDisableTextureCubemap";
-TextureParameters :: (id: u32, param: s32, value: s32) -> void #foreign raylib "rlTextureParameters";
-CubemapParameters :: (id: u32, param: s32, value: s32) -> void #foreign raylib "rlCubemapParameters";
-
-// Shader state
-EnableShader :: (id: u32) -> void #foreign raylib "rlEnableShader";
-DisableShader :: () -> void #foreign raylib "rlDisableShader";
-
-// Framebuffer state
-EnableFramebuffer :: (id: u32) -> void #foreign raylib "rlEnableFramebuffer";
-DisableFramebuffer :: () -> void #foreign raylib "rlDisableFramebuffer";
-GetActiveFramebuffer :: () -> u32 #foreign raylib "rlGetActiveFramebuffer";
-ActiveDrawBuffers :: (count: s32) -> void #foreign raylib "rlActiveDrawBuffers";
-BlitFramebuffer :: (srcX: s32, srcY: s32, srcWidth: s32, srcHeight: s32, dstX: s32, dstY: s32, dstWidth: s32, dstHeight: s32, bufferMask: s32) -> void #foreign raylib "rlBlitFramebuffer";
-BindFramebuffer :: (target: u32, framebuffer: u32) -> void #foreign raylib "rlBindFramebuffer";
-
-// General render state
-EnableColorBlend :: () -> void #foreign raylib "rlEnableColorBlend";
-DisableColorBlend :: () -> void #foreign raylib "rlDisableColorBlend";
-EnableDepthTest :: () -> void #foreign raylib "rlEnableDepthTest";
-DisableDepthTest :: () -> void #foreign raylib "rlDisableDepthTest";
-EnableDepthMask :: () -> void #foreign raylib "rlEnableDepthMask";
-DisableDepthMask :: () -> void #foreign raylib "rlDisableDepthMask";
-EnableBackfaceCulling :: () -> void #foreign raylib "rlEnableBackfaceCulling";
-DisableBackfaceCulling :: () -> void #foreign raylib "rlDisableBackfaceCulling";
-ColorMask :: (r: bool, g: bool, b: bool, a: bool) -> void #foreign raylib "rlColorMask";
-SetCullFace :: (mode: s32) -> void #foreign raylib "rlSetCullFace";
-EnableScissorTest :: () -> void #foreign raylib "rlEnableScissorTest";
-DisableScissorTest :: () -> void #foreign raylib "rlDisableScissorTest";
-Scissor :: (x: s32, y: s32, width: s32, height: s32) -> void #foreign raylib "rlScissor";
-EnableWireMode :: () -> void #foreign raylib "rlEnableWireMode";
-EnablePointMode :: () -> void #foreign raylib "rlEnablePointMode";
-DisableWireMode :: () -> void #foreign raylib "rlDisableWireMode";
-SetLineWidth :: (width: float) -> void #foreign raylib "rlSetLineWidth";
-GetLineWidth :: () -> float #foreign raylib "rlGetLineWidth";
-EnableSmoothLines :: () -> void #foreign raylib "rlEnableSmoothLines";
-DisableSmoothLines :: () -> void #foreign raylib "rlDisableSmoothLines";
-EnableStereoRender :: () -> void #foreign raylib "rlEnableStereoRender";
-DisableStereoRender :: () -> void #foreign raylib "rlDisableStereoRender";
-IsStereoRenderEnabled :: () -> bool #foreign raylib "rlIsStereoRenderEnabled";
-
-ClearColor :: (r: u8, g: u8, b: u8, a: u8) -> void #foreign raylib "rlClearColor";
-ClearScreenBuffers :: () -> void #foreign raylib "rlClearScreenBuffers";
-CheckErrors :: () -> void #foreign raylib "rlCheckErrors";
-SetBlendMode :: (mode: s32) -> void #foreign raylib "rlSetBlendMode";
-SetBlendFactors :: (glSrcFactor: s32, glDstFactor: s32, glEquation: s32) -> void #foreign raylib "rlSetBlendFactors";
-SetBlendFactorsSeparate :: (glSrcRGB: s32, glDstRGB: s32, glSrcAlpha: s32, glDstAlpha: s32, glEqRGB: s32, glEqAlpha: s32) -> void #foreign raylib "rlSetBlendFactorsSeparate";
-
-//------------------------------------------------------------------------------------
-// Functions Declaration - rlgl functionality
-//------------------------------------------------------------------------------------
-// rlgl initialization functions
-glInit :: (width: s32, height: s32) -> void #foreign raylib "rlglInit";
-glClose :: () -> void #foreign raylib "rlglClose";
-LoadExtensions :: (loader: *void) -> void #foreign raylib "rlLoadExtensions";
-GetVersion :: () -> s32 #foreign raylib "rlGetVersion";
-SetFramebufferWidth :: (width: s32) -> void #foreign raylib "rlSetFramebufferWidth";
-GetFramebufferWidth :: () -> s32 #foreign raylib "rlGetFramebufferWidth";
-SetFramebufferHeight :: (height: s32) -> void #foreign raylib "rlSetFramebufferHeight";
-GetFramebufferHeight :: () -> s32 #foreign raylib "rlGetFramebufferHeight";
-
-GetTextureIdDefault :: () -> u32 #foreign raylib "rlGetTextureIdDefault";
-GetShaderIdDefault :: () -> u32 #foreign raylib "rlGetShaderIdDefault";
-GetShaderLocsDefault :: () -> *s32 #foreign raylib "rlGetShaderLocsDefault";
-
-// Render batch management
-// NOTE: rlgl provides a default render batch to behave like OpenGL 1.1 immediate mode
-// but this render batch API is exposed in case of custom batches are required
-LoadRenderBatch :: (numBuffers: s32, bufferElements: s32) -> RenderBatch #foreign raylib "rlLoadRenderBatch";
-UnloadRenderBatch :: (batch: RenderBatch) -> void #foreign raylib "rlUnloadRenderBatch";
-DrawRenderBatch :: (batch: *RenderBatch) -> void #foreign raylib "rlDrawRenderBatch";
-SetRenderBatchActive :: (batch: *RenderBatch) -> void #foreign raylib "rlSetRenderBatchActive";
-DrawRenderBatchActive :: () -> void #foreign raylib "rlDrawRenderBatchActive";
-CheckRenderBatchLimit :: (vCount: s32) -> bool #foreign raylib "rlCheckRenderBatchLimit";
-
-SetTexture :: (id: u32) -> void #foreign raylib "rlSetTexture";
-
-// Vertex buffers management
-LoadVertexArray :: () -> u32 #foreign raylib "rlLoadVertexArray";
-LoadVertexBuffer :: (buffer: *void, size: s32, dynamic: bool) -> u32 #foreign raylib "rlLoadVertexBuffer";
-LoadVertexBufferElement :: (buffer: *void, size: s32, dynamic: bool) -> u32 #foreign raylib "rlLoadVertexBufferElement";
-UpdateVertexBuffer :: (bufferId: u32, data: *void, dataSize: s32, offset: s32) -> void #foreign raylib "rlUpdateVertexBuffer";
-UpdateVertexBufferElements :: (id: u32, data: *void, dataSize: s32, offset: s32) -> void #foreign raylib "rlUpdateVertexBufferElements";
-UnloadVertexArray :: (vaoId: u32) -> void #foreign raylib "rlUnloadVertexArray";
-UnloadVertexBuffer :: (vboId: u32) -> void #foreign raylib "rlUnloadVertexBuffer";
-SetVertexAttribute :: (index: u32, compSize: s32, type: s32, normalized: bool, stride: s32, offset: s32) -> void #foreign raylib "rlSetVertexAttribute";
-SetVertexAttributeDivisor :: (index: u32, divisor: s32) -> void #foreign raylib "rlSetVertexAttributeDivisor";
-SetVertexAttributeDefault :: (locIndex: s32, value: *void, attribType: s32, count: s32) -> void #foreign raylib "rlSetVertexAttributeDefault";
-DrawVertexArray :: (offset: s32, count: s32) -> void #foreign raylib "rlDrawVertexArray";
-DrawVertexArrayElements :: (offset: s32, count: s32, buffer: *void) -> void #foreign raylib "rlDrawVertexArrayElements";
-DrawVertexArrayInstanced :: (offset: s32, count: s32, instances: s32) -> void #foreign raylib "rlDrawVertexArrayInstanced";
-DrawVertexArrayElementsInstanced :: (offset: s32, count: s32, buffer: *void, instances: s32) -> void #foreign raylib "rlDrawVertexArrayElementsInstanced";
-
-// Textures management
-LoadTexture :: (data: *void, width: s32, height: s32, format: s32, mipmapCount: s32) -> u32 #foreign raylib "rlLoadTexture";
-LoadTextureDepth :: (width: s32, height: s32, useRenderBuffer: bool) -> u32 #foreign raylib "rlLoadTextureDepth";
-LoadTextureCubemap :: (data: *void, size: s32, format: s32, mipmapCount: s32) -> u32 #foreign raylib "rlLoadTextureCubemap";
-UpdateTexture :: (id: u32, offsetX: s32, offsetY: s32, width: s32, height: s32, format: s32, data: *void) -> void #foreign raylib "rlUpdateTexture";
-GetGlTextureFormats :: (format: s32, glInternalFormat: *u32, glFormat: *u32, glType: *u32) -> void #foreign raylib "rlGetGlTextureFormats";
-GetPixelFormatName :: (format: u32) -> *u8 #foreign raylib "rlGetPixelFormatName";
-UnloadTexture :: (id: u32) -> void #foreign raylib "rlUnloadTexture";
-GenTextureMipmaps :: (id: u32, width: s32, height: s32, format: s32, mipmaps: *s32) -> void #foreign raylib "rlGenTextureMipmaps";
-ReadTexturePixels :: (id: u32, width: s32, height: s32, format: s32) -> *void #foreign raylib "rlReadTexturePixels";
-ReadScreenPixels :: (width: s32, height: s32) -> *u8 #foreign raylib "rlReadScreenPixels";
-
-// Framebuffer management (fbo)
-LoadFramebuffer :: () -> u32 #foreign raylib "rlLoadFramebuffer";
-FramebufferAttach :: (fboId: u32, texId: u32, attachType: s32, texType: s32, mipLevel: s32) -> void #foreign raylib "rlFramebufferAttach";
-FramebufferComplete :: (id: u32) -> bool #foreign raylib "rlFramebufferComplete";
-UnloadFramebuffer :: (id: u32) -> void #foreign raylib "rlUnloadFramebuffer";
-
-// Shaders management
-LoadShaderCode :: (vsCode: *u8, fsCode: *u8) -> u32 #foreign raylib "rlLoadShaderCode";
-CompileShader :: (shaderCode: *u8, type: s32) -> u32 #foreign raylib "rlCompileShader";
-LoadShaderProgram :: (vShaderId: u32, fShaderId: u32) -> u32 #foreign raylib "rlLoadShaderProgram";
-UnloadShaderProgram :: (id: u32) -> void #foreign raylib "rlUnloadShaderProgram";
-GetLocationUniform :: (shaderId: u32, uniformName: *u8) -> s32 #foreign raylib "rlGetLocationUniform";
-GetLocationAttrib :: (shaderId: u32, attribName: *u8) -> s32 #foreign raylib "rlGetLocationAttrib";
-SetUniform :: (locIndex: s32, value: *void, uniformType: s32, count: s32) -> void #foreign raylib "rlSetUniform";
-SetUniformMatrix :: (locIndex: s32, mat: Matrix) -> void #foreign raylib "rlSetUniformMatrix";
-SetUniformMatrices :: (locIndex: s32, mat: *Matrix, count: s32) -> void #foreign raylib "rlSetUniformMatrices";
-SetUniformSampler :: (locIndex: s32, textureId: u32) -> void #foreign raylib "rlSetUniformSampler";
-SetShader :: (id: u32, locs: *s32) -> void #foreign raylib "rlSetShader";
-
-// Compute shader management
-LoadComputeShaderProgram :: (shaderId: u32) -> u32 #foreign raylib "rlLoadComputeShaderProgram";
-ComputeShaderDispatch :: (groupX: u32, groupY: u32, groupZ: u32) -> void #foreign raylib "rlComputeShaderDispatch";
-
-// Shader buffer storage object management (ssbo)
-LoadShaderBuffer :: (size: u32, data: *void, usageHint: s32) -> u32 #foreign raylib "rlLoadShaderBuffer";
-UnloadShaderBuffer :: (ssboId: u32) -> void #foreign raylib "rlUnloadShaderBuffer";
-UpdateShaderBuffer :: (id: u32, data: *void, dataSize: u32, offset: u32) -> void #foreign raylib "rlUpdateShaderBuffer";
-BindShaderBuffer :: (id: u32, index: u32) -> void #foreign raylib "rlBindShaderBuffer";
-ReadShaderBuffer :: (id: u32, dest: *void, count: u32, offset: u32) -> void #foreign raylib "rlReadShaderBuffer";
-CopyShaderBuffer :: (destId: u32, srcId: u32, destOffset: u32, srcOffset: u32, count: u32) -> void #foreign raylib "rlCopyShaderBuffer";
-GetShaderBufferSize :: (id: u32) -> u32 #foreign raylib "rlGetShaderBufferSize";
-
-// Buffer management
-BindImageTexture :: (id: u32, index: u32, format: s32, readonly: bool) -> void #foreign raylib "rlBindImageTexture";
-
-// Matrix state management
-GetMatrixModelview :: () -> Matrix #foreign raylib "rlGetMatrixModelview";
-GetMatrixProjection :: () -> Matrix #foreign raylib "rlGetMatrixProjection";
-GetMatrixTransform :: () -> Matrix #foreign raylib "rlGetMatrixTransform";
-GetMatrixProjectionStereo :: (eye: s32) -> Matrix #foreign raylib "rlGetMatrixProjectionStereo";
-GetMatrixViewOffsetStereo :: (eye: s32) -> Matrix #foreign raylib "rlGetMatrixViewOffsetStereo";
-SetMatrixProjection :: (proj: Matrix) -> void #foreign raylib "rlSetMatrixProjection";
-SetMatrixModelview :: (view: Matrix) -> void #foreign raylib "rlSetMatrixModelview";
-SetMatrixProjectionStereo :: (right: Matrix, left: Matrix) -> void #foreign raylib "rlSetMatrixProjectionStereo";
-SetMatrixViewOffsetStereo :: (right: Matrix, left: Matrix) -> void #foreign raylib "rlSetMatrixViewOffsetStereo";
-
-// Quick and dirty cube/quad buffers load->draw->unload
-LoadDrawCube :: () -> void #foreign raylib "rlLoadDrawCube";
-LoadDrawQuad :: () -> void #foreign raylib "rlLoadDrawQuad";
-
 #scope_file
 
 #import "Basic"; // For assert, push_context
@@ -3065,20 +3065,6 @@ LoadDrawQuad :: () -> void #foreign raylib "rlLoadDrawQuad";
     }
 
     {
-        instance: float3;
-        assert(((cast(*void)(*instance.v)) - cast(*void)(*instance)) == 0, "float3.v has unexpected offset % instead of 0", ((cast(*void)(*instance.v)) - cast(*void)(*instance)));
-        assert(size_of(type_of(float3.v)) == 12, "float3.v has unexpected size % instead of 12", size_of(type_of(float3.v)));
-        assert(size_of(float3) == 12, "float3 has size % instead of 12", size_of(float3));
-    }
-
-    {
-        instance: float16;
-        assert(((cast(*void)(*instance.v)) - cast(*void)(*instance)) == 0, "float16.v has unexpected offset % instead of 0", ((cast(*void)(*instance.v)) - cast(*void)(*instance)));
-        assert(size_of(type_of(float16.v)) == 64, "float16.v has unexpected size % instead of 64", size_of(type_of(float16.v)));
-        assert(size_of(float16) == 64, "float16 has size % instead of 64", size_of(float16));
-    }
-
-    {
         instance: VertexBuffer;
         assert(((cast(*void)(*instance.elementCount)) - cast(*void)(*instance)) == 0, "VertexBuffer.elementCount has unexpected offset % instead of 0", ((cast(*void)(*instance.elementCount)) - cast(*void)(*instance)));
         assert(size_of(type_of(VertexBuffer.elementCount)) == 4, "VertexBuffer.elementCount has unexpected size % instead of 4", size_of(type_of(VertexBuffer.elementCount)));
@@ -3127,6 +3113,20 @@ LoadDrawQuad :: () -> void #foreign raylib "rlLoadDrawQuad";
         assert(((cast(*void)(*instance.currentDepth)) - cast(*void)(*instance)) == 28, "RenderBatch.currentDepth has unexpected offset % instead of 28", ((cast(*void)(*instance.currentDepth)) - cast(*void)(*instance)));
         assert(size_of(type_of(RenderBatch.currentDepth)) == 4, "RenderBatch.currentDepth has unexpected size % instead of 4", size_of(type_of(RenderBatch.currentDepth)));
         assert(size_of(RenderBatch) == 32, "RenderBatch has size % instead of 32", size_of(RenderBatch));
+    }
+
+    {
+        instance: float3;
+        assert(((cast(*void)(*instance.v)) - cast(*void)(*instance)) == 0, "float3.v has unexpected offset % instead of 0", ((cast(*void)(*instance.v)) - cast(*void)(*instance)));
+        assert(size_of(type_of(float3.v)) == 12, "float3.v has unexpected size % instead of 12", size_of(type_of(float3.v)));
+        assert(size_of(float3) == 12, "float3 has size % instead of 12", size_of(float3));
+    }
+
+    {
+        instance: float16;
+        assert(((cast(*void)(*instance.v)) - cast(*void)(*instance)) == 0, "float16.v has unexpected offset % instead of 0", ((cast(*void)(*instance.v)) - cast(*void)(*instance)));
+        assert(size_of(type_of(float16.v)) == 64, "float16.v has unexpected size % instead of 64", size_of(type_of(float16.v)));
+        assert(size_of(float16) == 64, "float16 has size % instead of 64", size_of(float16));
     }
 }
 
