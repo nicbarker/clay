@@ -93,7 +93,7 @@
 // Note: If an error led you here, it's because CLAY_STRING can only be used with string literals, i.e. CLAY_STRING("SomeString") and not CLAY_STRING(yourString)
 #define CLAY_STRING(string) (CLAY__INIT(Clay_String) { .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) })
 
-#define CLAY_STRING_CONST(string) { .length = CLAY__STRING_LENGTH(string), .chars = (string) }
+#define CLAY_STRING_CONST(string) { .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) }
 
 static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
