@@ -442,6 +442,36 @@ The debug tooling by default will render as a panel to the right side of the scr
 
 _The official Clay website with debug tooling visible_
 
+### Running more than one Clay instance
+
+Clay allows you to run more than one instance in a program. To do this, [Clay_Initialize](#clay_initialize) returns a [Clay_Context*](#clay_context) reference. You can activate a specific instance using [Clay_SetCurrentContext](#clay_setcurrentcontext). If [Clay_SetCurrentContext](#clay_setcurrentcontext) is not called, then Clay will default to using the context from the most recently called [Clay_Initialize](#clay_initialize).
+
+**⚠ Important: Do not render instances across different threads simultaneously, as Clay does not currently support proper multi-threading.**
+
+```c++
+// Define separate arenas for the instances.
+Clay_Arena arena1, arena2;
+// ... allocate arenas
+
+// Initialize both instances, storing the context for each one.
+Clay_Context* instance1 = Clay_Initialize(arena1, layoutDimensions, errorHandler);
+Clay_Context* instance2 = Clay_Initialize(arena2, layoutDimensions, errorHandler);
+
+// In the program's render function, activate each instance before executing clay commands and macros.
+Clay_SetCurrentContext(instance1);
+Clay_BeginLayout();
+// ... declare layout for instance1
+Clay_RenderCommandArray renderCommands1 = Clay_EndLayout();
+render(renderCommands1);
+
+// Switch to the second instance
+Clay_SetCurrentContext(instance2);
+Clay_BeginLayout();
+// ... declare layout for instance2
+Clay_RenderCommandArray renderCommands2 = Clay_EndLayout();
+render(renderCommands2);
+```
+
 # API
 
 ### Naming Conventions
@@ -486,7 +516,7 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 
 `void Clay_SetMaxElementCount(uint32_t maxElementCount)`
 
-Updates the internal maximum element count, allowing clay to allocate larger UI hierarchies.
+Sets the internal maximum element count that will be used in subsequent [Clay_Initialize()](#clay_initialize) and [Clay_MinMemorySize()](#clay_minmemorysize) calls, allowing clay to allocate larger UI hierarchies.
 
 **Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
 
@@ -494,17 +524,29 @@ Updates the internal maximum element count, allowing clay to allocate larger UI 
 
 `void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount)`
 
-Updates the internal text measurement cache size, allowing clay to allocate more text. The value represents how many seperate words can be stored in the text measurement cache.
+Sets the internal text measurement cache size that will be used in subsequent [Clay_Initialize()](#clay_initialize) and [Clay_MinMemorySize()](#clay_minmemorysize) calls, allowing clay to allocate more text. The value represents how many separate words can be stored in the text measurement cache.
 
 **Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
 
 ### Clay_Initialize
 
-`void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler)`
+`Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler)`
 
-Initializes the internal memory mapping, sets the internal dimensions for layout, and binds an error handler for clay to use when something goes wrong.
+Initializes the internal memory mapping, sets the internal dimensions for layout, and binds an error handler for clay to use when something goes wrong. Returns a [Clay_Context*](#clay_context) that can optionally be given to [Clay_SetCurrentContext](#clay_setcurrentcontext) to allow running multiple instances of clay in the same program, and sets it as the current context. See [Running more than one Clay instance](#running-more-than-one-clay-instance).
 
-Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler)
+Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler), [Clay_SetCurrentContext](#clay_setcurrentcontext)
+
+### Clay_SetCurrentContext
+
+`void Clay_SetCurrentContext(Clay_Context* context)`
+
+Sets the context that subsequent clay commands will operate on. You can get this reference from [Clay_Initialize](#clay_initialize) or [Clay_GetCurrentContext](#clay_getcurrentcontext). See [Running more than one Clay instance](#running-more-than-one-clay-instance).
+
+### Clay_GetCurrentContext
+
+`Clay_Context* Clay_GetCurrentContext()`
+
+Returns the context that clay commands are currently operating on, or null if no context has been set. See [Running more than one Clay instance](#running-more-than-one-clay-instance).
 
 ### Clay_SetLayoutDimensions
 
