@@ -83,6 +83,7 @@ Arena frameArena = {};
 
 Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32_t* documentIndex) {
     Clay_SetCurrentContext(context);
+    Clay_SetDebugModeEnabled(true);
     // Run once per frame
     Clay_SetLayoutDimensions((Clay_Dimensions) {
             .width = GetScreenWidth(),
