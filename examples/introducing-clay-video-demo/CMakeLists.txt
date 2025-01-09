@@ -25,8 +25,12 @@ target_include_directories(clay_examples_introducing_clay_video_demo PUBLIC .)
 
 target_link_libraries(clay_examples_introducing_clay_video_demo PUBLIC raylib)
 
-set(CMAKE_C_FLAGS_DEBUG "-Wall -Werror -Wno-error=missing-braces -DCLAY_DEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3")
+if(MSVC)
+  set(CMAKE_C_FLAGS_DEBUG "/D CLAY_DEBUG")
+else()
+  set(CMAKE_C_FLAGS_DEBUG "-Wall -Werror -Wno-error=missing-braces -DCLAY_DEBUG")
+  set(CMAKE_C_FLAGS_RELEASE "-O3")
+endif()
 
 add_custom_command(
         TARGET clay_examples_introducing_clay_video_demo POST_BUILD
