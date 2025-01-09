@@ -3699,14 +3699,18 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
 
 CLAY_WASM_EXPORT("Clay_Initialize")
 Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler) {
-    Clay_Context* context = Clay__Context_Allocate_Arena(&arena);
+    Clay_Context *context = Clay__Context_Allocate_Arena(&arena);
     if (context == NULL) return NULL;
     // DEFAULTS
-    context->maxElementCount = Clay__defaultMaxElementCount;
-    context->maxMeasureTextCacheWordCount = context->maxElementCount * 2;
-    context->errorHandler = CLAY__INIT(Clay_ErrorHandler) { Clay__ErrorHandlerFunctionDefault };
+    Clay_Context *oldContext = Clay_GetCurrentContext();
+    *context = CLAY__INIT(Clay_Context) {
+        .maxElementCount = oldContext ? oldContext->maxElementCount : Clay__defaultMaxElementCount,
+        .maxMeasureTextCacheWordCount = oldContext ? oldContext->maxMeasureTextCacheWordCount : Clay__defaultMaxElementCount * 2,
+        .errorHandler = errorHandler.errorHandlerFunction ? errorHandler : CLAY__INIT(Clay_ErrorHandler) { Clay__ErrorHandlerFunctionDefault },
+        .internalArena = arena,
+        .layoutDimensions = layoutDimensions,
+    };
     Clay_SetCurrentContext(context);
-    context->internalArena = arena;
     Clay__InitializePersistentMemory(context);
     Clay__InitializeEphemeralMemory(context);
     for (int32_t i = 0; i < context->layoutElementsHashMap.capacity; ++i) {
@@ -3717,9 +3721,6 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
     }
     context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
     context->layoutDimensions = layoutDimensions;
-    if (errorHandler.errorHandlerFunction) {
-        context->errorHandler = errorHandler;
-    }
     return context;
 }
 
