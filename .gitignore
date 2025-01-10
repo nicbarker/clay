@@ -1,6 +1,8 @@
 cmake-build-debug/
 cmake-build-release/
+build/
 .DS_Store
 .idea/
 node_modules/
 *.dSYM
+.vs/
