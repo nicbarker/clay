@@ -3707,8 +3707,8 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
         .maxElementCount = oldContext ? oldContext->maxElementCount : Clay__defaultMaxElementCount,
         .maxMeasureTextCacheWordCount = oldContext ? oldContext->maxMeasureTextCacheWordCount : Clay__defaultMaxElementCount * 2,
         .errorHandler = errorHandler.errorHandlerFunction ? errorHandler : CLAY__INIT(Clay_ErrorHandler) { Clay__ErrorHandlerFunctionDefault },
-        .internalArena = arena,
         .layoutDimensions = layoutDimensions,
+        .internalArena = arena,
     };
     Clay_SetCurrentContext(context);
     Clay__InitializePersistentMemory(context);
