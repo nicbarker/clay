@@ -1412,11 +1412,11 @@ struct Clay_Context {
     Clay__LayoutElementTreeRootArray layoutElementTreeRoots;
     Clay__LayoutElementHashMapItemArray layoutElementsHashMapInternal;
     Clay__int32_tArray layoutElementsHashMap;
-        Clay__MeasureTextCacheItemArray measureTextHashMapInternal;
-        Clay__int32_tArray measureTextHashMapInternalFreeList;
-        Clay__int32_tArray measureTextHashMap;
-        Clay__MeasuredWordArray measuredWords;
-        Clay__int32_tArray measuredWordsFreeList;
+    Clay__MeasureTextCacheItemArray measureTextHashMapInternal;
+    Clay__int32_tArray measureTextHashMapInternalFreeList;
+    Clay__int32_tArray measureTextHashMap;
+    Clay__MeasuredWordArray measuredWords;
+    Clay__int32_tArray measuredWordsFreeList;
     Clay__int32_tArray openClipElementStack;
     Clay__ElementIdArray pointerOverIds;
     Clay__ScrollContainerDataInternalArray scrollContainerDatas;
