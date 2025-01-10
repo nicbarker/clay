@@ -2088,13 +2088,13 @@ void Clay__CompressChildrenAlongAxis(bool xAxis, float totalSizeToDistribute, Cl
     Clay__int32_tArray largestContainers = context->openClipElementStack;
     largestContainers.length = 0;
 
-    while (totalSizeToDistribute > 0) {
+    while (totalSizeToDistribute > 0.1) {
         float largestSize = 0;
         float targetSize = 0;
         for (int32_t i = 0; i < resizableContainerBuffer.length; ++i) {
             Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
             float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
-            if (childSize == largestSize) {
+            if ((childSize - largestSize) < 0.1 && (childSize - largestSize) > -0.1) {
                 Clay__int32_tArray_Add(&largestContainers, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
             } else if (childSize > largestSize) {
                 targetSize = largestSize;
