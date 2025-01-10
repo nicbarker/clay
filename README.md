@@ -481,8 +481,7 @@ Clay is usable out of the box as a `.h` include in both C99 and C++20 with desig
 There are also supported bindings for other languages, including:
 
 - [Odin Bindings](https://github.com/nicbarker/clay/tree/main/bindings/odin)
-
-Unfortunately clay does **not** support Microsoft C11 or C17 via MSVC at this time.
+- [Rust Bindings](https://github.com/clay-ui-rs/clay)
 
 ### Debug Tools
 
