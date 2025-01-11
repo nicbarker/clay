@@ -1326,7 +1326,7 @@ CLAY__TYPEDEF(Clay__LayoutElementTreeRoot, struct {
 
 Clay__LayoutElementTreeRoot CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT = CLAY__DEFAULT_STRUCT;
 
-// __GENERATED__ template array_define,array_allocate,array_add,array_get TYPE=Clay__LayoutElementTreeRoot NAME=Clay__LayoutElementTreeRootArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT
+// __GENERATED__ template array_define,array_allocate,array_add,array_get,array_set TYPE=Clay__LayoutElementTreeRoot NAME=Clay__LayoutElementTreeRootArray DEFAULT_VALUE=&CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT
 #pragma region generated
 CLAY__TYPEDEF(Clay__LayoutElementTreeRootArray, struct
 {
@@ -1346,6 +1346,12 @@ Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Add(Clay__LayoutEl
 }
 Clay__LayoutElementTreeRoot *Clay__LayoutElementTreeRootArray_Get(Clay__LayoutElementTreeRootArray *array, int32_t index) {
     return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &CLAY__LAYOUT_ELEMENT_TREE_ROOT_DEFAULT;
+}
+void Clay__LayoutElementTreeRootArray_Set(Clay__LayoutElementTreeRootArray *array, int32_t index, Clay__LayoutElementTreeRoot value) {
+	if (Clay__Array_RangeCheck(index, array->capacity)) {
+		array->internalArray[index] = value;
+		array->length = index < array->length ? array->length : index + 1;
+	}
 }
 #pragma endregion
 // __GENERATED__ template
@@ -2456,6 +2462,20 @@ void Clay__CalculateFinalLayout() {
 
     // Calculate sizing along the Y axis
     Clay__SizeContainersAlongAxis(false);
+
+    // Sort tree roots by z-index
+    int32_t sortMax = context->layoutElementTreeRoots.length - 1;
+    while (sortMax > 0) { // todo dumb bubble sort
+        for (int32_t i = 0; i < sortMax; ++i) {
+            Clay__LayoutElementTreeRoot current = *Clay__LayoutElementTreeRootArray_Get(&context->layoutElementTreeRoots, i);
+            Clay__LayoutElementTreeRoot *next = Clay__LayoutElementTreeRootArray_Get(&context->layoutElementTreeRoots, i + 1);
+            if (next->zIndex < current.zIndex) {
+                Clay__LayoutElementTreeRootArray_Set(&context->layoutElementTreeRoots, i, *next);
+                Clay__LayoutElementTreeRootArray_Set(&context->layoutElementTreeRoots, i + 1, current);
+            }
+        }
+        sortMax--;
+    }
 
     // Calculate final positions and generate render commands
     context->renderCommands.length = 0;
