@@ -399,7 +399,7 @@ CLAY__TYPEDEF(Clay_Border, struct {
     Clay_Color color;
 });
 
-CLAY__TYPEDEF(Clay_BorderElementConfig, struct {
+struct Clay_BorderElementConfig {
     Clay_Border left;
     Clay_Border right;
     Clay_Border top;
@@ -409,7 +409,8 @@ CLAY__TYPEDEF(Clay_BorderElementConfig, struct {
     #ifdef CLAY_EXTEND_CONFIG_BORDER
     CLAY_EXTEND_CONFIG_BORDER
     #endif
-});
+};
+CLAY__TYPEDEF(Clay_BorderElementConfig, struct Clay_BorderElementConfig);
 
 CLAY__TYPEDEF(Clay_ElementConfigUnion, union {
     Clay_RectangleElementConfig *rectangleElementConfig;
