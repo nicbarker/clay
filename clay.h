@@ -2629,7 +2629,7 @@ void Clay__CalculateFinalLayout() {
                 for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
                     sortedConfigIndexes[elementConfigIndex] = elementConfigIndex;
                 }
-                int32_t sortMax = currentElement->elementConfigs.length - 1;
+                sortMax = currentElement->elementConfigs.length - 1;
                 while (sortMax > 0) { // todo dumb bubble sort
                     for (int32_t i = 0; i < sortMax; ++i) {
                         int32_t current = sortedConfigIndexes[i];
@@ -3239,13 +3239,13 @@ void Clay__RenderDebugView() {
     }
     Clay__RenderDebugLayoutData layoutData = CLAY__DEFAULT_STRUCT;
     CLAY(CLAY_ID("Clay__DebugView"),
-        CLAY_FLOATING({ .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .zIndex = 65000, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }}),
+        CLAY_FLOATING({ .zIndex = 65000, .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }}),
         CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(context->layoutDimensions.height) }, .layoutDirection = CLAY_TOP_TO_BOTTOM }),
         CLAY_BORDER({ .bottom = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }})
     ) {
         CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }), CLAY_RECTANGLE({ .color = CLAY__DEBUGVIEW_COLOR_2 })) {
             CLAY_TEXT(CLAY_STRING("Clay Debug Tools"), infoTextConfig);
-            CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0), {0} } })) {}
+            CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0) } })) {}
             // Close button
             CLAY(CLAY_BORDER_OUTSIDE_RADIUS(1, (CLAY__INIT(Clay_Color){217,91,67,255}), 4),
                 CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} }),
@@ -3292,7 +3292,7 @@ void Clay__RenderDebugView() {
             ) {
                 CLAY(CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT + 8)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, 0}, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} })) {
                     CLAY_TEXT(CLAY_STRING("Layout Config"), infoTextConfig);
-                    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0), {0} } })) {}
+                    CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0) } })) {}
                     if (selectedItem->elementId.stringId.length != 0) {
                         CLAY_TEXT(selectedItem->elementId.stringId, infoTitleConfig);
                         if (selectedItem->elementId.offset != 0) {
@@ -3425,7 +3425,7 @@ void Clay__RenderDebugView() {
                                 }
                                 // Image Preview
                                 CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
-                                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0, imageConfig->sourceDimensions.width), {0} }}), Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = imageConfig }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {}
+                                CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0, imageConfig->sourceDimensions.width) }}), Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = imageConfig }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {}
                             }
                             break;
                         }
