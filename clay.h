@@ -1390,7 +1390,7 @@ struct Clay_Context {
     bool externalScrollHandlingEnabled;
     uint32_t debugSelectedElementId;
     uint32_t generation;
-    uint64_t arenaResetOffset;
+    uintptr_t arenaResetOffset;
     Clay_Arena internalArena;
     // Layout Elements / Render Commands
     Clay_LayoutElementArray layoutElements;
