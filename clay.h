@@ -3615,7 +3615,7 @@ uint32_t Clay_MinMemorySize(void) {
         .maxMeasureTextCacheWordCount = Clay__defaultMaxMeasureTextWordCacheCount,
         .internalArena = {
             .capacity = SIZE_MAX,
-            .memory = (char*)&fakeContext,
+            .memory = NULL,
         }
     };
     Clay_Context* currentContext = Clay_GetCurrentContext();
