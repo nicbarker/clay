@@ -315,7 +315,7 @@ struct Clay_RectangleElementConfig {
 CLAY__TYPEDEF(Clay_RectangleElementConfig, struct Clay_RectangleElementConfig);
 
 // Text
-CLAY__TYPEDEF(Clay_TextElementConfigWrapMode, enum {
+CLAY__TYPEDEF(Clay_TextElementConfigWrapMode, CLAY_PACKED_ENUM {
     CLAY_TEXT_WRAP_WORDS,
     CLAY_TEXT_WRAP_NEWLINES,
     CLAY_TEXT_WRAP_NONE,
@@ -362,7 +362,7 @@ CLAY__TYPEDEF(Clay_FloatingAttachPoints, struct {
     Clay_FloatingAttachPointType parent;
 });
 
-CLAY__TYPEDEF(Clay_PointerCaptureMode, enum {
+CLAY__TYPEDEF(Clay_PointerCaptureMode, CLAY_PACKED_ENUM {
     CLAY_POINTER_CAPTURE_MODE_CAPTURE,
 //    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
@@ -463,7 +463,7 @@ CLAY__TYPEDEF(Clay_RenderCommandArray, struct {
     Clay_RenderCommand *internalArray;
 });
 
-CLAY__TYPEDEF(Clay_PointerDataInteractionState, enum {
+CLAY__TYPEDEF(Clay_PointerDataInteractionState, CLAY_PACKED_ENUM {
     CLAY_POINTER_DATA_PRESSED_THIS_FRAME,
     CLAY_POINTER_DATA_PRESSED,
     CLAY_POINTER_DATA_RELEASED_THIS_FRAME,
@@ -475,7 +475,7 @@ CLAY__TYPEDEF(Clay_PointerData, struct {
     Clay_PointerDataInteractionState state;
 });
 
-CLAY__TYPEDEF(Clay_ErrorType, enum {
+CLAY__TYPEDEF(Clay_ErrorType, CLAY_PACKED_ENUM {
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
     CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED,
     CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED,
