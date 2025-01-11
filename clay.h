@@ -406,6 +406,9 @@ CLAY__TYPEDEF(Clay_BorderElementConfig, struct {
     Clay_Border bottom;
     Clay_Border betweenChildren;
     Clay_CornerRadius cornerRadius;
+    #ifdef CLAY_EXTEND_CONFIG_BORDER
+    CLAY_EXTEND_CONFIG_BORDER
+    #endif
 });
 
 CLAY__TYPEDEF(Clay_ElementConfigUnion, union {
