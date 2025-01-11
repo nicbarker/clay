@@ -2102,6 +2102,9 @@ void Clay__CompressChildrenAlongAxis(bool xAxis, float totalSizeToDistribute, Cl
         float targetSize = 0;
         for (int32_t i = 0; i < resizableContainerBuffer.length; ++i) {
             Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
+            if (!xAxis && Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {
+                continue;
+            }
             float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
             if ((childSize - largestSize) < 0.1 && (childSize - largestSize) > -0.1) {
                 Clay__int32_tArray_Add(&largestContainers, Clay__int32_tArray_Get(&resizableContainerBuffer, i));
@@ -2471,9 +2474,9 @@ void Clay__CalculateFinalLayout() {
     while (sortMax > 0) { // todo dumb bubble sort
         for (int32_t i = 0; i < sortMax; ++i) {
             Clay__LayoutElementTreeRoot current = *Clay__LayoutElementTreeRootArray_Get(&context->layoutElementTreeRoots, i);
-            Clay__LayoutElementTreeRoot *next = Clay__LayoutElementTreeRootArray_Get(&context->layoutElementTreeRoots, i + 1);
-            if (next->zIndex < current.zIndex) {
-                Clay__LayoutElementTreeRootArray_Set(&context->layoutElementTreeRoots, i, *next);
+            Clay__LayoutElementTreeRoot next = *Clay__LayoutElementTreeRootArray_Get(&context->layoutElementTreeRoots, i + 1);
+            if (next.zIndex < current.zIndex) {
+                Clay__LayoutElementTreeRootArray_Set(&context->layoutElementTreeRoots, i, next);
                 Clay__LayoutElementTreeRootArray_Set(&context->layoutElementTreeRoots, i + 1, current);
             }
         }
@@ -3222,16 +3225,19 @@ void Clay__RenderDebugView() {
     Clay_TextElementConfig *infoTitleConfig = CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE });
     Clay_ElementId scrollId = Clay__HashString(CLAY_STRING("Clay__DebugViewOuterScrollPane"), 0, 0);
     float scrollYOffset = 0;
+    bool pointerInDebugView = context->pointerInfo.position.y < context->layoutDimensions.height - 300;
     for (int32_t i = 0; i < context->scrollContainerDatas.length; ++i) {
         Clay__ScrollContainerDataInternal *scrollContainerData = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
         if (scrollContainerData->elementId == scrollId.id) {
             if (!context->externalScrollHandlingEnabled) {
                 scrollYOffset = scrollContainerData->scrollPosition.y;
+            } else {
+                pointerInDebugView = context->pointerInfo.position.y + scrollContainerData->scrollPosition.y < context->layoutDimensions.height - 300;
             }
             break;
         }
     }
-    int32_t highlightedRow = context->pointerInfo.position.y < context->layoutDimensions.height - 300
+    int32_t highlightedRow = pointerInDebugView
             ? (int32_t)((context->pointerInfo.position.y - scrollYOffset) / (float)CLAY__DEBUGVIEW_ROW_HEIGHT) - 1
             : -1;
     if (context->pointerInfo.position.x < context->layoutDimensions.width - (float)Clay__debugViewWidth) {
