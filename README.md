@@ -81,7 +81,7 @@ const Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
 
 // Layout config is just a struct that can be declared statically, or inline
 Clay_LayoutConfig sidebarItemLayout = (Clay_LayoutConfig) {
-    .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_FIXED(50) },
+    .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) },
 };
 
 // Re-useable components are just normal functions
@@ -94,13 +94,13 @@ Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
 
     // An example of laying out a UI with a fixed width sidebar and flexible width main content
-    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE({ .color = {250,250,255,255} })) {
+    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE({ .color = {250,250,255,255} })) {
         CLAY(CLAY_ID("SideBar"),
-            CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16 }),
+            CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16 }),
             CLAY_RECTANGLE({ .color = COLOR_LIGHT })
         ) {
-            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
-                CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .height = 60, .width = 60 })) {}
+            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+                CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
                 CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
             }
 
@@ -110,7 +110,7 @@ Clay_RenderCommandArray CreateLayout() {
             }
         }
 
-        CLAY(CLAY_ID("MainContent"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW() }}), CLAY_RECTANGLE({ .color = COLOR_LIGHT })) {}
+        CLAY(CLAY_ID("MainContent"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }}), CLAY_RECTANGLE({ .color = COLOR_LIGHT })) {}
     }
     // ...
 });
@@ -151,6 +151,62 @@ In summary, the general order of steps is:
 
 For help starting out or to discuss clay, considering joining [the discord server.](https://discord.gg/b4FTWkxdvT)
 
+## Summary
+
+- [High Level Documentation](#high-level-documentation)
+  - [Building UI Hierarchies](#building-ui-hierarchies)
+  - [Configuring Layout and Styling UI Elements](#configuring-layout-and-styling-ui-elements)
+  - [Element IDs](#element-ids)
+  - [Mouse, Touch and Pointer Interactions](#mouse-touch-and-pointer-interactions)
+  - [Scrolling Elements](#scrolling-elements)
+  - [Floating Elements](#floating-elements-absolute-positioning)
+  - [Custom Elements](#laying-out-your-own-custom-elements)
+  - [Retained Mode Rendering](#retained-mode-rendering)
+  - [Visibility Culling](#visibility-culling)
+  - [Preprocessor Directives](#preprocessor-directives)
+  - [Bindings](#bindings-for-non-c)
+  - [Debug Tools](#debug-tools)
+- [API](#api)
+  - [Naming Conventions](#naming-conventions)
+  - [Public Functions](#public-functions)
+    - [Lifecycle](#lifecycle-for-public-functions)
+    - [Clay_MinMemorySize](#clay_minmemorysize)
+    - [Clay_CreateArenaWithCapacityAndMemory](#clay_createarenawithcapacityandmemory)
+    - [Clay_SetMeasureTextFunction](#clay_setmeasuretextfunction)
+    - [Clay_SetMaxElementCount](clay_setmaxelementcount)
+    - [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmaxmeasuretextcachewordcount)
+    - [Clay_Initialize](#clay_initialize)
+    - [Clay_SetLayoutDimensions](#clay_setlayoutdimensions)
+    - [Clay_SetPointerState](#clay_setpointerstate)
+    - [Clay_UpdateScrollContainers](#clay_updatescrollcontainers)
+    - [Clay_BeginLayout](#clay_beginlayout)
+    - [Clay_EndLayout](#clay_endlayout)
+    - [Clay_Hovered](#clay_hovered)
+    - [Clay_OnHover](#clay_onhover)
+    - [Clay_PointerOver](#clay_pointerover)
+    - [Clay_GetScrollContainerData](#clay_getscrollcontainerdata)
+    - [Clay_GetElementId](#clay_getelementid)
+  - [Element Macros](#element-macros)
+    - [CLAY](#clay-1)
+    - [CLAY_ID](#clay_id)
+    - [CLAY_IDI](#clay_idi)
+    - [CLAY_LAYOUT](#clay_layout)
+    - [CLAY_RECTANGLE](#clay_rectangle)
+    - [CLAY_TEXT](#clay_text)
+    - [CLAY_IMAGE](#clay_image)
+    - [CLAY_SCROLL](#clay_scroll)
+    - [CLAY_BORDER](#clay_border)
+    - [CLAY_FLOATING](#clay_floating)
+    - [CLAY_CUSTOM_ELEMENT](#clay_custom_element)
+  - [Data Structures & Defs](data-structures--definitions)
+    - [Clay_String](#clay_string)
+    - [Clay_ElementId](#clay_elementid)
+    - [Clay_RenderCommandArray](#clay_rendercommandarray)
+    - [Clay_RenderCommand](#clay_rendercommand)
+    - [Clay_ScrollContainerData](#clay_scrollcontainerdata)
+    - [Clay_ErrorHandler](#clay_errorhandler)
+    - [Clay_ErrorData](#clay_errordata)
+
 ## High Level Documentation
 
 ### Building UI Hierarchies
@@ -187,7 +243,7 @@ CLAY(CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
     }
     // Only render this element if we're on a mobile screen
     if (isMobileScreen) {
-        CLAY() {
+        CLAY(0) {
             // etc
         }
     }
@@ -362,7 +418,7 @@ typedef struct t_CustomElementData {
 Model myModel = Load3DModel(filePath);
 CustomElement modelElement = (CustomElement) { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel }
 // ...
-CLAY() {
+CLAY(0) {
     // This config is type safe and contains the CustomElementData struct
     CLAY(CLAY_CUSTOM_ELEMENT({ .customData = { .type = CUSTOM_ELEMENT_TYPE_MODEL, .model = myModel } })) {}
 }
@@ -425,8 +481,7 @@ Clay is usable out of the box as a `.h` include in both C99 and C++20 with desig
 There are also supported bindings for other languages, including:
 
 - [Odin Bindings](https://github.com/nicbarker/clay/tree/main/bindings/odin)
-
-Unfortunately clay does **not** support Microsoft C11 or C17 via MSVC at this time.
+- [Rust Bindings](https://github.com/clay-ui-rs/clay)
 
 ### Debug Tools
 
@@ -441,6 +496,36 @@ The debug tooling by default will render as a panel to the right side of the scr
 <img width="1506" alt="Screenshot 2024-09-12 at 12 54 03 PM" src="https://github.com/user-attachments/assets/2d122658-3305-4e27-88d6-44f08c0cb4e6">
 
 _The official Clay website with debug tooling visible_
+
+### Running more than one Clay instance
+
+Clay allows you to run more than one instance in a program. To do this, [Clay_Initialize](#clay_initialize) returns a [Clay_Context*](#clay_context) reference. You can activate a specific instance using [Clay_SetCurrentContext](#clay_setcurrentcontext). If [Clay_SetCurrentContext](#clay_setcurrentcontext) is not called, then Clay will default to using the context from the most recently called [Clay_Initialize](#clay_initialize).
+
+**⚠ Important: Do not render instances across different threads simultaneously, as Clay does not currently support proper multi-threading.**
+
+```c++
+// Define separate arenas for the instances.
+Clay_Arena arena1, arena2;
+// ... allocate arenas
+
+// Initialize both instances, storing the context for each one.
+Clay_Context* instance1 = Clay_Initialize(arena1, layoutDimensions, errorHandler);
+Clay_Context* instance2 = Clay_Initialize(arena2, layoutDimensions, errorHandler);
+
+// In the program's render function, activate each instance before executing clay commands and macros.
+Clay_SetCurrentContext(instance1);
+Clay_BeginLayout();
+// ... declare layout for instance1
+Clay_RenderCommandArray renderCommands1 = Clay_EndLayout();
+render(renderCommands1);
+
+// Switch to the second instance
+Clay_SetCurrentContext(instance2);
+Clay_BeginLayout();
+// ... declare layout for instance2
+Clay_RenderCommandArray renderCommands2 = Clay_EndLayout();
+render(renderCommands2);
+```
 
 # API
 
@@ -460,17 +545,23 @@ _The official Clay website with debug tooling visible_
 **Each Frame**
 `Clay_SetLayoutDimensions` -> `Clay_SetPointerState` -> `Clay_UpdateScrollContainers` -> `Clay_BeginLayout` -> `CLAY() etc...` -> `Clay_EndLayout`
 
+---
+
 ### Clay_MinMemorySize
 
 `uint32_t Clay_MinMemorySize()`
 
 Returns the minimum amount of memory **in bytes** that clay needs to accomodate the current [CLAY_MAX_ELEMENT_COUNT](#preprocessor-directives).
 
+---
+
 ### Clay_CreateArenaWithCapacityAndMemory
 
 `Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset)`
 
 Creates a `Clay_Arena` struct with the given capacity and base memory pointer, which can be passed to [Clay_Initialize](#clay_initialize).
+
+---
 
 ### Clay_SetMeasureTextFunction
 
@@ -482,29 +573,49 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 
 **Note 2: It is essential that this function is as fast as possible.** For text heavy use-cases this function is called many times, and despite the fact that clay caches text measurements internally, it can easily become the dominant overall layout cost if the provided function is slow. **This is on the hot path!**
 
+---
+
 ### Clay_SetMaxElementCount
 
 `void Clay_SetMaxElementCount(uint32_t maxElementCount)`
 
-Updates the internal maximum element count, allowing clay to allocate larger UI hierarchies.
+Sets the internal maximum element count that will be used in subsequent [Clay_Initialize()](#clay_initialize) and [Clay_MinMemorySize()](#clay_minmemorysize) calls, allowing clay to allocate larger UI hierarchies.
 
 **Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
+
+---
 
 ### Clay_SetMaxMeasureTextCacheWordCount
 
 `void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount)`
 
-Updates the internal text measurement cache size, allowing clay to allocate more text. The value represents how many seperate words can be stored in the text measurement cache.
+Sets the internal text measurement cache size that will be used in subsequent [Clay_Initialize()](#clay_initialize) and [Clay_MinMemorySize()](#clay_minmemorysize) calls, allowing clay to allocate more text. The value represents how many separate words can be stored in the text measurement cache.
 
 **Note: You will need to reinitialize clay, after calling [Clay_MinMemorySize()](#clay_minmemorysize) to calculate updated memory requirements.**
 
+---
+
 ### Clay_Initialize
 
-`void Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler)`
+`Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler)`
 
-Initializes the internal memory mapping, sets the internal dimensions for layout, and binds an error handler for clay to use when something goes wrong.
+Initializes the internal memory mapping, sets the internal dimensions for layout, and binds an error handler for clay to use when something goes wrong. Returns a [Clay_Context*](#clay_context) that can optionally be given to [Clay_SetCurrentContext](#clay_setcurrentcontext) to allow running multiple instances of clay in the same program, and sets it as the current context. See [Running more than one Clay instance](#running-more-than-one-clay-instance).
 
-Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler)
+Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler), [Clay_SetCurrentContext](#clay_setcurrentcontext)
+
+### Clay_SetCurrentContext
+
+`void Clay_SetCurrentContext(Clay_Context* context)`
+
+Sets the context that subsequent clay commands will operate on. You can get this reference from [Clay_Initialize](#clay_initialize) or [Clay_GetCurrentContext](#clay_getcurrentcontext). See [Running more than one Clay instance](#running-more-than-one-clay-instance).
+
+### Clay_GetCurrentContext
+
+`Clay_Context* Clay_GetCurrentContext()`
+
+Returns the context that clay commands are currently operating on, or null if no context has been set. See [Running more than one Clay instance](#running-more-than-one-clay-instance).
+
+---
 
 ### Clay_SetLayoutDimensions
 
@@ -512,11 +623,15 @@ Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHand
 
 Sets the internal layout dimensions. Cheap enough to be called every frame with your screen dimensions to automatically respond to window resizing, etc.
 
+---
+
 ### Clay_SetPointerState
 
 `void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown)`
 
 Sets the internal pointer position and state (i.e. current mouse / touch position) and recalculates overlap info, which is used for mouseover / click calculation (via [Clay_PointerOver](#clay_pointerover) and updating scroll containers with [Clay_UpdateScrollContainers](#clay_updatescrollcontainers). **isPointerDown should represent the current state this frame, e.g. it should be `true` for the entire duration the left mouse button is held down.** Clay has internal handling for detecting click / touch start & end.
+
+---
 
 ### Clay_UpdateScrollContainers
 
@@ -528,11 +643,15 @@ Touch / drag scrolling only occurs if the `enableDragScrolling` parameter is `tr
 
 `deltaTime` is the time **in seconds** since the last frame (e.g. 0.016 is **16 milliseconds**), and is used to normalize & smooth scrolling across different refresh rates.
 
+---
+
 ### Clay_BeginLayout
 
 `void Clay_BeginLayout()`
 
 Prepares clay to calculate a new layout. Called each frame / layout **before** any of the [Element Macros](#element-macros).
+
+---
 
 ### Clay_EndLayout
 
@@ -540,11 +659,15 @@ Prepares clay to calculate a new layout. Called each frame / layout **before** a
 
 Ends declaration of element macros and calculates the results of the current layout. Renders a [Clay_RenderCommandArray](#clay_rendercommandarray) containing the results of the layout calculation.
 
+---
+
 ### Clay_Hovered
 
 `bool Clay_Hovered()`
 
 Called **during** layout declaration, and returns `true` if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the currently open element. Note: this is based on the element's position from the **last** frame.
+
+---
 
 ### Clay_OnHover
 
@@ -570,6 +693,8 @@ CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, 
 }
 ```
 
+---
+
 ### Clay_PointerOver
 
 `bool Clay_PointerOver(Clay_ElementId id)`
@@ -581,6 +706,8 @@ Returns `true` if the pointer position previously set with `Clay_SetPointerState
 `Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id)`
 
 Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll container matching the provided ID. This function allows imperative manipulation of scroll position, allowing you to build things such as scroll bars, buttons that "jump" to somewhere in a scroll container, etc.
+
+---
 
 ### Clay_GetElementId
 
@@ -602,6 +729,7 @@ Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for
 **Notes**
 
 **CLAY** opens a generic empty container, that is configurable and supports nested children.
+**CLAY** requires at least 1 parameter, so if you want to create an element without any configuration, use `CLAY(0)`.
 
 **Examples**
 ```C
@@ -621,6 +749,8 @@ CLAY(CLAY_ID("Outer"), CLAY_LAYOUT({ .padding = {16, 16} })) {
     }
 }
 ```
+
+---
 
 ### CLAY_ID
 
@@ -644,7 +774,7 @@ To regenerate the same ID outside of layout declaration when using utility funct
 // Tag a button with the Id "Button"
 CLAY(
     CLAY_ID("Button"),
-    CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16) })
+    CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16) })
 ) {
     // ...children
 }
@@ -656,11 +786,15 @@ if (buttonIsHovered && leftMouseButtonPressed) {
 }
 ```
 
+---
+
 ### CLAY_IDI()
 
 `Clay_ElementId CLAY_IDI(char *label, int index)`
 
 An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+
+---
 
 ### CLAY_LAYOUT
 
@@ -691,8 +825,8 @@ Clay_LayoutConfig {
         .y = CLAY_ALIGN_Y_TOP (default) | CLAY_ALIGN_Y_CENTER | CLAY_ALIGN_Y_BOTTOM;
     };
     Clay_Sizing sizing { // Recommended to use the provided macros here - see #sizing for more in depth explanation
-        .width = CLAY_SIZING_FIT(float min, float max) (default) | CLAY_SIZING_GROW(float min, float max) | CLAY_SIZING_FIXED(width) | CLAY_SIZING_PERCENT(float percent)
-        .height = CLAY_SIZING_FIT(float min, float max) (default) | CLAY_SIZING_GROW(float min, float max) | CLAY_SIZING_FIXED(height) | CLAY_SIZING_PERCENT(float percent)
+        .width = CLAY_SIZING_FIT(float min, float max) (default) | CLAY_SIZING_GROW(float min, float max) | CLAY_SIZING_FIXED(float width) | CLAY_SIZING_PERCENT(float percent)
+        .height = CLAY_SIZING_FIT(float min, float max) (default) | CLAY_SIZING_GROW(float min, float max) | CLAY_SIZING_FIXED(float height) | CLAY_SIZING_PERCENT(float percent)
     }; // See CLAY_SIZING_GROW() etc for more details
 };
 ```
@@ -768,10 +902,12 @@ Controls how final width and height of element are calculated. The same configur
 **Example Usage**
 
 ```C
-CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW() }, .padding = {16, 16}, .childGap = 16) }) {
+CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16) }) {
     // Children will be laid out vertically with 16px of padding around and between
 }
 ``` 
+
+---
 
 ### CLAY_RECTANGLE
 **Usage**
@@ -853,6 +989,8 @@ CLAY(
     // child elements
 }
 ```
+
+---
 
 ### CLAY_TEXT
 **Usage**
@@ -975,6 +1113,8 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 
 `Clay_RenderCommand.textContent` will be populated with a `Clay_String` _slice_ of the original string passed in (i.e. wrapping doesn't reallocate, it just returns a `Clay_String` pointing to the start of the new line with a `length`)
 
+---
+
 ### CLAY_IMAGE
 **Usage**
 
@@ -1059,11 +1199,11 @@ CLAY(CLAY_IMAGE({ .image = { .format = IMAGE_FORMAT_RGBA, .internalData = &image
 // Load an image somewhere in your code
 Image profilePicture = LoadImage("profilePicture.png");
 // Declare a reusable image config
-Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture, .height = 60, .width = 60 };
+Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture, .sourceDimensions = {60, 60} };
 // Declare an image element using a reusable config
 CLAY(CLAY_IMAGE(imageConfig)) {}
 // Declare an image element using an inline config
-CLAY(CLAY_IMAGE({ .imageData = &profilePicture, .height = 60, .width = 60 })) {}
+CLAY(CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
 // Rendering example
 Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
 ```
@@ -1071,6 +1211,8 @@ Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageDat
 **Rendering**
 
 Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->elementConfig.imageElementConfig->imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `rectangleElementConfig->color` with the image.
+
+---
 
 ### CLAY_SCROLL
 **Usage**
@@ -1130,6 +1272,8 @@ CLAY(CLAY_SCROLL(.vertical = true)) {
     CLAY(CLAY_ID("ScrollInner"), CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(5000) } })) {}
 }
 ```
+
+---
 
 ### CLAY_BORDER
 **Usage**
@@ -1247,6 +1391,8 @@ CLAY(
 
 Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_BORDER` representing the container will be created.
 Rendering of borders and rounded corners is left up to the user. See the provided [Raylib Renderer](https://github.com/nicbarker/clay/tree/main/renderers/raylib) for examples of how to draw borders using line and curve primitives.
+
+---
 
 ### CLAY_FLOATING
 **Usage**
@@ -1459,6 +1605,8 @@ When using `.parentId`, the floating container can be declared anywhere after `B
 
 `CLAY_FLOATING` elements will not generate any render commands.
 
+---
+
 ### CLAY_CUSTOM_ELEMENT
 **Usage**
 
@@ -1585,6 +1733,8 @@ The number of characters in the string, _not including an optional null terminat
 
 A pointer to the contents of the string. This data is not guaranteed to be null terminated, so if you are passing it to code that expects standard null terminated C strings, you will need to copy the data and append a null terminator.
 
+---
+
 ### Clay_ElementId
 
 ```C
@@ -1622,6 +1772,7 @@ If this id was generated using [CLAY_IDI](#clay_idi), `.baseId` is the hash of t
 
 Stores the original string that was passed in when [CLAY_ID](#clay_id) or [CLAY_IDI](#clay_idi) were called.
 
+---
 
 ### Clay_RenderCommandArray
 
@@ -1654,6 +1805,8 @@ Represents the total number of `Clay_RenderCommand` elements stored consecutivel
 **`.internalArray`** - `Clay_RenderCommand`
 
 An array of [Clay_RenderCommand](#clay_rendercommand)s representing the calculated layout. If there was at least one render command, this array will contain elements from `.internalArray[0]` to `.internalArray[.length - 1]`.
+
+---
 
 ### Clay_RenderCommand
 
@@ -1721,6 +1874,8 @@ Only used if `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. A `Clay_String` co
 
 The id that was originally used with the element macro that created this render command. See [CLAY_ID](#clay_id) for details.
 
+---
+
 ### Clay_ScrollContainerData
 
 ```C
@@ -1769,6 +1924,8 @@ Dimensions representing the inner width and height of the content _inside_ the s
 **`.config`** - `Clay_ScrollElementConfig`
 
 The [Clay_ScrollElementConfig](#clay_scroll) for the matching scroll container element.
+
+---
 
 ### Clay_PointerData
 

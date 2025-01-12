@@ -1,6 +1,7 @@
 #include "../../clay.h"
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <stdio.h>
 
 typedef struct
 {
