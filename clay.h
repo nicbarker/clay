@@ -2804,7 +2804,8 @@ void Clay__CalculateFinalLayout() {
                         Clay__AddRenderCommand(renderCommand);
                         if (borderConfig->betweenChildren.width > 0 && borderConfig->betweenChildren.color.a > 0) {
                             Clay_RectangleElementConfig *rectangleConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) {.color = borderConfig->betweenChildren.color});
-                            Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x, (float)layoutConfig->padding.y };
+                            float halfGap = layoutConfig->childGap / 2;
+                            Clay_Vector2 borderOffset = { (float)layoutConfig->padding.x - halfGap, (float)layoutConfig->padding.y - halfGap };
                             if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                                 for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
                                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
@@ -2816,7 +2817,7 @@ void Clay__CalculateFinalLayout() {
                                             .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
                                     }
-                                    borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap / 2);
+                                    borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap);
                                 }
                             } else {
                                 for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
@@ -2829,7 +2830,7 @@ void Clay__CalculateFinalLayout() {
                                                 .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
                                     }
-                                    borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap / 2);
+                                    borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap);
                                 }
                             }
                         }
