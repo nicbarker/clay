@@ -269,7 +269,7 @@ TypedConfig :: struct {
     id:     ElementId,
 }
 
-ErrorType :: enum {
+ErrorType :: enum EnumBackingType {
     TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
     ARENA_CAPACITY_EXCEEDED,
     ELEMENTS_CAPACITY_EXCEEDED,
