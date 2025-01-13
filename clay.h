@@ -525,6 +525,7 @@ int32_t Clay_GetMaxElementCount(void);
 void Clay_SetMaxElementCount(int32_t maxElementCount);
 int32_t Clay_GetMaxMeasureTextCacheWordCount(void);
 void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
+void Clay_ResetMeasureTextCache(void);
 
 // Internal API functions required by macros
 void Clay__OpenElement(void);
@@ -4049,6 +4050,21 @@ void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount) 
     } else {
         Clay__defaultMaxMeasureTextWordCacheCount = maxMeasureTextCacheWordCount; // TODO: Fix this
     }
+}
+
+CLAY_WASM_EXPORT("Clay_ResetMeasureTextCache")
+void Clay_ResetMeasureTextCache(void) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    context->measureTextHashMapInternal.length = 0;
+    context->measureTextHashMapInternalFreeList.length = 0;
+    context->measureTextHashMap.length = 0;
+    context->measuredWords.length = 0;
+    context->measuredWordsFreeList.length = 0;
+    
+    for (int32_t i = 0; i < context->measureTextHashMap.capacity; ++i) {
+        context->measureTextHashMap.internalArray[i] = 0;
+    }
+    context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
 }
 
 #endif // CLAY_IMPLEMENTATION

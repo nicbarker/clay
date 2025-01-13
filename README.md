@@ -173,9 +173,12 @@ For help starting out or to discuss clay, considering joining [the discord serve
     - [Clay_MinMemorySize](#clay_minmemorysize)
     - [Clay_CreateArenaWithCapacityAndMemory](#clay_createarenawithcapacityandmemory)
     - [Clay_SetMeasureTextFunction](#clay_setmeasuretextfunction)
+    - [Clay_ResetMeasureTextCache](#clau_resetmeasuretextcache)
     - [Clay_SetMaxElementCount](clay_setmaxelementcount)
     - [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmaxmeasuretextcachewordcount)
     - [Clay_Initialize](#clay_initialize)
+    - [Clay_GetCurrentContext](#clay_getcurrentcontext)
+    - [Clay_SetCurrentContext](#clay_setcurrentcontext)
     - [Clay_SetLayoutDimensions](#clay_setlayoutdimensions)
     - [Clay_SetPointerState](#clay_setpointerstate)
     - [Clay_UpdateScrollContainers](#clay_updatescrollcontainers)
@@ -575,6 +578,14 @@ Takes a pointer to a function that can be used to measure the `width, height` di
 
 ---
 
+### Clay_ResetMeasureTextCache
+
+`void Clay_ResetMeasureTextCache(void)`
+
+Clay caches measurements from the provided MeasureTextFunction, and this will be sufficient for the majority of use-cases. However, if the measurements can depend on external factors that clay does not know about, like DPI changes, then the cached values may be incorrect. When one of these external factors changes, Clay_ResetMeasureTextCache can be called to force clay to recalculate all string measurements in the next frame.
+
+---
+
 ### Clay_SetMaxElementCount
 
 `void Clay_SetMaxElementCount(uint32_t maxElementCount)`
@@ -603,11 +614,15 @@ Initializes the internal memory mapping, sets the internal dimensions for layout
 
 Reference: [Clay_Arena](#clay_createarenawithcapacityandmemory), [Clay_ErrorHandler](#clay_errorhandler), [Clay_SetCurrentContext](#clay_setcurrentcontext)
 
+---
+
 ### Clay_SetCurrentContext
 
 `void Clay_SetCurrentContext(Clay_Context* context)`
 
 Sets the context that subsequent clay commands will operate on. You can get this reference from [Clay_Initialize](#clay_initialize) or [Clay_GetCurrentContext](#clay_getcurrentcontext). See [Running more than one Clay instance](#running-more-than-one-clay-instance).
+
+---
 
 ### Clay_GetCurrentContext
 
