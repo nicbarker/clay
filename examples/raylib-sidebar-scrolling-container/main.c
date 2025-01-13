@@ -21,14 +21,14 @@ void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerData po
 
 // Examples of re-usable "Components"
 void RenderHeaderButton(Clay_String text) {
-    CLAY(CLAY_LAYOUT({ .padding = {16, 8} }),
+    CLAY(CLAY_LAYOUT({ .padding = {16, 16, 8, 8} }),
         CLAY_RECTANGLE({ .color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE }),
         Clay_OnHover(HandleHeaderButtonInteraction, 1)) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG(headerTextConfig));
     }
 }
 
-Clay_LayoutConfig dropdownTextItemLayout = { .padding = {8, 4} };
+Clay_LayoutConfig dropdownTextItemLayout = { .padding = {8, 8, 4, 4} };
 Clay_RectangleElementConfig dropdownRectangleConfig = { .color = {180, 180, 180, 255} };
 Clay_TextElementConfig dropdownTextElementConfig = { .fontSize = 24, .textColor = {255,255,255,255} };
 
@@ -40,9 +40,9 @@ void RenderDropdownTextItem(int index) {
 
 Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
-    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .padding = { 16, 16 }, .childGap = 16 }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {
-        CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE({ .color = {150, 150, 255, 255} })) {
-            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = { 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE({ .color = {130, 130, 255, 255} })) {
+    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .padding = { 16, 16, 16, 16 }, .childGap = 16 }), CLAY_RECTANGLE({ .color = {200, 200, 200, 255} })) {
+        CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = {16, 16, 16, 16 }, .childGap = 16 }), CLAY_RECTANGLE({ .color = {150, 150, 255, 255} })) {
+            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = { 8, 8, 8, 8 }, .childGap = 8, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE({ .color = {130, 130, 255, 255} })) {
                 CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) } }), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
                 CLAY_TEXT(profileText, CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {0, 0, 0, 255} }));
             }
@@ -53,19 +53,19 @@ Clay_RenderCommandArray CreateLayout() {
         }
 
         CLAY(CLAY_ID("RightPanel"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .childGap = 16 })) {
-            CLAY(CLAY_ID("HeaderBar"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT }, .padding = {8, 8}, .childGap = 8 }), CLAY_RECTANGLE({ .color =  {180, 180, 180, 255} })) {
+            CLAY(CLAY_ID("HeaderBar"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT }, .padding = {8, 8, 8, 8 }, .childGap = 8 }), CLAY_RECTANGLE({ .color =  {180, 180, 180, 255} })) {
                 RenderHeaderButton(CLAY_STRING("Header Item 1"));
                 RenderHeaderButton(CLAY_STRING("Header Item 2"));
                 RenderHeaderButton(CLAY_STRING("Header Item 3"));
             }
             CLAY(CLAY_ID("MainContent"),
                 CLAY_SCROLL({ .vertical = true }),
-                CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {16, 16}, .childGap = 16, .sizing = { CLAY_SIZING_GROW(0) } }),
+                CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {16, 16, 16, 16}, .childGap = 16, .sizing = { CLAY_SIZING_GROW(0) } }),
                 CLAY_RECTANGLE({ .color = {200, 200, 255, 255} }))
             {
                  CLAY(CLAY_ID("FloatingContainer"),
-                     CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) }, .padding = { 16, 16 }}),
-                     CLAY_FLOATING({ .zIndex = 1, .attachment = { CLAY_ATTACH_POINT_CENTER_TOP, CLAY_ATTACH_POINT_CENTER_TOP }, .offset = {0, -16} }),
+                     CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) }, .padding = { 16, 16, 16, 16 }}),
+                     CLAY_FLOATING({ .zIndex = 1, .attachment = { CLAY_ATTACH_POINT_CENTER_TOP, CLAY_ATTACH_POINT_CENTER_TOP }, .offset = {0, 0} }),
                      CLAY_BORDER_OUTSIDE({ .color = {80, 80, 80, 255}, .width = 2 }),
                      CLAY_RECTANGLE({ .color = {140,80, 200, 200 }})
                  ) {
@@ -75,7 +75,7 @@ Clay_RenderCommandArray CreateLayout() {
                  CLAY_TEXT(CLAY_STRING("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt."),
                      CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {0,0,0,255} }));
 
-                 CLAY(CLAY_ID("Photos2"), CLAY_LAYOUT({ .childGap = 16, .padding = { 16, 16 }}), CLAY_RECTANGLE({ .color = {180, 180, 220, 255} })) {
+                 CLAY(CLAY_ID("Photos2"), CLAY_LAYOUT({ .childGap = 16, .padding = { 16, 16, 16, 16 }}), CLAY_RECTANGLE({ .color = {180, 180, 220, 255} })) {
                      CLAY(CLAY_ID("Picture4"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {120, 120} })) {}
                      CLAY(CLAY_ID("Picture5"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {120, 120} })) {}
                      CLAY(CLAY_ID("Picture6"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {120, 120} })) {}
@@ -87,9 +87,9 @@ Clay_RenderCommandArray CreateLayout() {
                  CLAY_TEXT(CLAY_STRING("Suspendisse in est ante in nibh. Amet venenatis urna cursus eget nunc scelerisque viverra. Elementum sagittis vitae et leo duis ut diam quam nulla. Enim nulla aliquet porttitor lacus. Pellentesque habitant morbi tristique senectus et. Facilisi nullam vehicula ipsum a arcu cursus vitae.\nSem fringilla ut morbi tincidunt. Euismod quis viverra nibh cras pulvinar mattis nunc sed. Velit sed ullamcorper morbi tincidunt ornare massa. Varius quam quisque id diam vel quam. Nulla pellentesque dignissim enim sit amet venenatis. Enim lobortis scelerisque fermentum dui faucibus in. Pretium viverra suspendisse potenti nullam ac tortor vitae. Lectus vestibulum mattis ullamcorper velit sed. Eget mauris pharetra et ultrices neque ornare aenean euismod elementum. Habitant morbi tristique senectus et. Integer vitae justo eget magna fermentum iaculis eu. Semper quis lectus nulla at volutpat diam. Enim praesent elementum facilisis leo. Massa vitae tortor condimentum lacinia quis vel."),
                      CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {0,0,0,255} }));
 
-                 CLAY(CLAY_ID("Photos"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }, .childGap = 16, .padding = {16, 16} }), CLAY_RECTANGLE({ .color = {180, 180, 220, 255} })) {
+                 CLAY(CLAY_ID("Photos"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER }, .childGap = 16, .padding = {16, 16, 16, 16} }), CLAY_RECTANGLE({ .color = {180, 180, 220, 255} })) {
                      CLAY(CLAY_ID("Picture2"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {120, 120} })) {}
-                     CLAY(CLAY_ID("Picture1"), CLAY_LAYOUT({ .childAlignment = { .x = CLAY_ALIGN_X_CENTER }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8} }), CLAY_RECTANGLE({ .color = {170, 170, 220, 255} })) {
+                     CLAY(CLAY_ID("Picture1"), CLAY_LAYOUT({ .childAlignment = { .x = CLAY_ALIGN_X_CENTER }, .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {8, 8, 8, 8} }), CLAY_RECTANGLE({ .color = {170, 170, 220, 255} })) {
                          CLAY(CLAY_ID("ProfilePicture2"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
                          CLAY_TEXT(CLAY_STRING("Image caption below"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {0,0,0,255} }));
                      }
@@ -104,7 +104,7 @@ Clay_RenderCommandArray CreateLayout() {
         CLAY(CLAY_ID("Blob4Floating2"), CLAY_FLOATING({ .zIndex = 1, .parentId = Clay_GetElementId(CLAY_STRING("SidebarBlob4")).id })) {
             CLAY(CLAY_ID("ScrollContainer"), CLAY_LAYOUT({ .sizing = { .height = CLAY_SIZING_FIXED(200) }, .childGap = 2 }), CLAY_SCROLL({ .vertical = true })) {
                 CLAY(CLAY_ID("FloatingContainer2"), CLAY_LAYOUT({ }), CLAY_FLOATING({ .zIndex = 1 })) {
-                    CLAY(CLAY_ID("FloatingContainerInner"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) }, .padding = {16, 16} }), CLAY_RECTANGLE({ .color = {140,80, 200, 200} })) {
+                    CLAY(CLAY_ID("FloatingContainerInner"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) }, .padding = {16, 16, 16, 16} }), CLAY_RECTANGLE({ .color = {140,80, 200, 200} })) {
                         CLAY_TEXT(CLAY_STRING("I'm an inline floating container."), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255,255,255,255} }));
                     }
                 }
