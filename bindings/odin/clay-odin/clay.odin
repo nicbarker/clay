@@ -223,8 +223,10 @@ Sizing :: struct {
 }
 
 Padding :: struct {
-    x: u16,
-    y: u16,
+    left: u16,
+    right: u16,
+    top: u16,
+    bottom: u16,
 }
 
 LayoutDirection :: enum EnumBackingType {
@@ -348,6 +350,10 @@ UI :: proc(configs: ..TypedConfig) -> bool {
 
 Layout :: proc(config: LayoutConfig) -> TypedConfig {
     return {type = ElementConfigType.Layout, config = _StoreLayoutConfig(config) }
+}
+
+PaddingAll :: proc (padding: u16) -> Padding {
+    return { padding, padding, padding, padding }
 }
 
 Rectangle :: proc(config: RectangleElementConfig) -> TypedConfig {
