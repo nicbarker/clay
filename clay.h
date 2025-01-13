@@ -1213,6 +1213,7 @@ Clay__MeasuredWord *Clay__MeasuredWordArray_Add(Clay__MeasuredWordArray *array, 
 CLAY__TYPEDEF(Clay__MeasureTextCacheItem, struct {
     Clay_Dimensions unwrappedDimensions;
     int32_t measuredWordsStartIndex;
+    bool containsNewlines;
     // Hash map data
     uint32_t id;
     int32_t nextIndex;
@@ -1678,6 +1679,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
 
     int32_t start = 0;
     int32_t end = 0;
+    float lineWidth = 0;
     float measuredWidth = 0;
     float measuredHeight = 0;
     float spaceWidth = Clay__MeasureText(&CLAY__SPACECHAR, config).width;
@@ -1699,18 +1701,22 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
             int32_t length = end - start;
             Clay_String word = { .length = length, .chars = &text->chars[start] };
             Clay_Dimensions dimensions = Clay__MeasureText(&word, config);
+            measuredHeight = CLAY__MAX(measuredHeight, dimensions.height);
             if (current == ' ') {
                 dimensions.width += spaceWidth;
                 previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = length + 1, .width = dimensions.width, .next = -1 }, previousWord);
+                lineWidth += dimensions.width;
             }
             if (current == '\n') {
-                if (length > 1) {
+                if (length > 0) {
                     previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = length, .width = dimensions.width, .next = -1 }, previousWord);
                 }
                 previousWord = Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = end + 1, .length = 0, .width = 0, .next = -1 }, previousWord);
+                lineWidth += dimensions.width;
+                measuredWidth = CLAY__MAX(lineWidth, measuredWidth);
+                measured->containsNewlines = true;
+                lineWidth = 0;
             }
-            measuredWidth += dimensions.width;
-            measuredHeight = dimensions.height;
             start = end + 1;
         }
         end++;
@@ -1719,9 +1725,11 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         Clay_String lastWord = { .length = end - start, .chars = &text->chars[start] };
         Clay_Dimensions dimensions = Clay__MeasureText(&lastWord, config);
         Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = end - start, .width = dimensions.width, .next = -1 }, previousWord);
-        measuredWidth += dimensions.width;
-        measuredHeight = dimensions.height;
+        lineWidth += dimensions.width;
+        measuredHeight = CLAY__MAX(measuredHeight, dimensions.height);
     }
+    measuredWidth = CLAY__MAX(lineWidth, measuredWidth);
+
     measured->measuredWordsStartIndex = tempWord.next;
     measured->unwrappedDimensions.width = measuredWidth;
     measured->unwrappedDimensions.height = measuredHeight;
@@ -2367,7 +2375,7 @@ void Clay__CalculateFinalLayout() {
         float lineHeight = textConfig->lineHeight > 0 ? (float)textConfig->lineHeight : textElementData->preferredDimensions.height;
         int32_t lineLengthChars = 0;
         int32_t lineStartOffset = 0;
-        if (textElementData->preferredDimensions.width <= containerElement->dimensions.width) {
+        if (!measureTextCacheItem->containsNewlines && textElementData->preferredDimensions.width <= containerElement->dimensions.width) {
             Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { containerElement->dimensions,  textElementData->text });
             textElementData->wrappedLines.length++;
             continue;
