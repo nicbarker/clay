@@ -4,7 +4,6 @@
 
 const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
-Clay_Padding outerPadding16 = { 16, 16, 16, 16 };
 
 void RenderHeaderButton(Clay_String text) {
     CLAY(
@@ -23,7 +22,7 @@ void RenderHeaderButton(Clay_String text) {
 }
 
 void RenderDropdownMenuItem(Clay_String text) {
-    CLAY(CLAY_LAYOUT({ .padding = outerPadding16})) {
+    CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(16)})) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
@@ -129,7 +128,7 @@ int main(void) {
             CLAY_LAYOUT({
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 .sizing = layoutExpand,
-                .padding = outerPadding16,
+                .padding = CLAY_PADDING_ALL(16),
                 .childGap = 16
             })
         ) {
@@ -217,7 +216,7 @@ int main(void) {
                     CLAY_RECTANGLE(contentBackgroundConfig),
                     CLAY_LAYOUT({
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                        .padding = outerPadding16,
+                        .padding = CLAY_PADDING_ALL(16),
                         .childGap = 8,
                         .sizing = {
                             .width = CLAY_SIZING_FIXED(250),
@@ -229,7 +228,7 @@ int main(void) {
                         Document document = documents.documents[i];
                         Clay_LayoutConfig sidebarButtonLayout = {
                             .sizing = { .width = CLAY_SIZING_GROW(0) },
-                            .padding = outerPadding16
+                            .padding = CLAY_PADDING_ALL(16)
                         };
 
                         if (i == selectedDocumentIndex) {
@@ -274,7 +273,7 @@ int main(void) {
                     CLAY_LAYOUT({
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         .childGap = 16,
-                        .padding = outerPadding16,
+                        .padding = CLAY_PADDING_ALL(16),
                         .sizing = layoutExpand
                     })
                 ) {
