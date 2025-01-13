@@ -24,12 +24,11 @@ target_compile_options(clay_examples_raylib_sidebar_scrolling_container PUBLIC)
 target_include_directories(clay_examples_raylib_sidebar_scrolling_container PUBLIC .)
 
 target_link_libraries(clay_examples_raylib_sidebar_scrolling_container PUBLIC raylib)
-
 if(MSVC)
   set(CMAKE_C_FLAGS_DEBUG "/D CLAY_DEBUG")
 else()
-  set(CMAKE_C_FLAGS_DEBUG "-Wall -Werror -Wno-error=missing-braces -DCLAY_DEBUG")
-  set(CMAKE_C_FLAGS_RELEASE "-O3")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Werror -DCLAY_DEBUG -fsanitize=address")
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 endif()
 
 add_custom_command(

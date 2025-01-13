@@ -4,10 +4,11 @@
 
 const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
+Clay_Padding outerPadding16 = { 16, 16, 16, 16 };
 
 void RenderHeaderButton(Clay_String text) {
     CLAY(
-        CLAY_LAYOUT({ .padding = { 16, 8 }}),
+        CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
         CLAY_RECTANGLE({
             .color = { 140, 140, 140, 255 },
             .cornerRadius = 5
@@ -22,7 +23,7 @@ void RenderHeaderButton(Clay_String text) {
 }
 
 void RenderDropdownMenuItem(Clay_String text) {
-    CLAY(CLAY_LAYOUT({ .padding = { 16, 16 }})) {
+    CLAY(CLAY_LAYOUT({ .padding = outerPadding16})) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
@@ -121,7 +122,7 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
         CLAY_LAYOUT({
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = layoutExpand,
-            .padding = { 16, 16 },
+            .padding = outerPadding16,
             .childGap = 16
         })
     ) {
@@ -134,7 +135,7 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
                 CLAY_RECTANGLE(contentBackgroundConfig),
                 CLAY_LAYOUT({
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    .padding = { 16, 16 },
+                    .padding = outerPadding16,
                     .childGap = 8,
                     .sizing = {
                         .width = CLAY_SIZING_FIXED(250),
@@ -146,7 +147,7 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
                     Document document = documents.documents[i];
                     Clay_LayoutConfig sidebarButtonLayout = {
                         .sizing = { .width = CLAY_SIZING_GROW() },
-                        .padding = { 16, 16 }
+                        .padding = outerPadding16
                     };
 
                     if (i == *documentIndex) {
@@ -194,7 +195,7 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
                 CLAY_LAYOUT({
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     .childGap = 16,
-                    .padding = { 16, 16 },
+                    .padding = outerPadding16,
                     .sizing = layoutExpand
                 })
             ) {
