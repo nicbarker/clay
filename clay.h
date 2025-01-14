@@ -2589,7 +2589,7 @@ void Clay__CalculateFinalLayout() {
                 });
             }
         }
-        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = { .x = (float)(rootElement->layoutConfig->padding.left + rootElement->layoutConfig->padding.right), .y = (float)(rootElement->layoutConfig->padding.top + rootElement->layoutConfig->padding.bottom) } });
+        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = { .x = (float)rootElement->layoutConfig->padding.left, .y = (float)rootElement->layoutConfig->padding.top } });
 
         context->treeNodeVisited.internalArray[0] = false;
         while (dfsBuffer.length > 0) {
