@@ -2117,9 +2117,9 @@ void Clay__InitializePersistentMemory(Clay_Context* context) {
 void Clay__CompressChildrenAlongAxis(bool xAxis, float totalSizeToDistribute, Clay__int32_tArray resizableContainerBuffer) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__int32_tArray largestContainers = context->openClipElementStack;
-    largestContainers.length = 0;
 
     while (totalSizeToDistribute > 0.1) {
+        largestContainers.length = 0;
         float largestSize = 0;
         float targetSize = 0;
         for (int32_t i = 0; i < resizableContainerBuffer.length; ++i) {
@@ -2141,22 +2141,28 @@ void Clay__CompressChildrenAlongAxis(bool xAxis, float totalSizeToDistribute, Cl
             }
         }
 
+        if (largestContainers.length == 0) {
+            return;
+        }
+
         targetSize = CLAY__MAX(targetSize, (largestSize * largestContainers.length) - totalSizeToDistribute) / largestContainers.length;
+
         for (int32_t childOffset = 0; childOffset < largestContainers.length; childOffset++) {
-            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&largestContainers, childOffset));
+            int32_t childIndex = Clay__int32_tArray_Get(&largestContainers, childOffset);
+            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, childIndex);
             float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
             float childMinSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
             float oldChildSize = *childSize;
             *childSize = CLAY__MAX(childMinSize, targetSize);
             totalSizeToDistribute -= (oldChildSize - *childSize);
             if (*childSize == childMinSize) {
-                Clay__int32_tArray_RemoveSwapback(&largestContainers, childOffset);
-                childOffset--;
+                for (int32_t i = 0; i < resizableContainerBuffer.length; i++) {
+                    if (Clay__int32_tArray_Get(&resizableContainerBuffer, i) == childIndex) {
+                        Clay__int32_tArray_RemoveSwapback(&resizableContainerBuffer, i);
+                        break;
+                    }
+                }
             }
-        }
-
-        if (largestContainers.length == 0) {
-            break;
         }
     }
 }
