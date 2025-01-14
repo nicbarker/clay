@@ -443,6 +443,13 @@ CLAY__TYPEDEF(Clay_ScrollContainerData, struct {
     bool found;
 });
 
+CLAY__TYPEDEF(Clay_ElementData, struct
+{
+    Clay_BoundingBox boundingBox;
+    // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
+    bool found;
+});
+
 CLAY__TYPEDEF(Clay_RenderCommandType, CLAY_PACKED_ENUM {
     CLAY_RENDER_COMMAND_TYPE_NONE,
     CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
@@ -515,6 +522,7 @@ void Clay_BeginLayout(void);
 Clay_RenderCommandArray Clay_EndLayout(void);
 Clay_ElementId Clay_GetElementId(Clay_String idString);
 Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index);
+Clay_ElementData Clay_GetElementData (Clay_ElementId id);
 bool Clay_Hovered(void);
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
 bool Clay_PointerOver(Clay_ElementId elementId);
@@ -4003,6 +4011,19 @@ Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
         }
     }
     return CLAY__INIT(Clay_ScrollContainerData) CLAY__DEFAULT_STRUCT;
+}
+
+CLAY_WASM_EXPORT("Clay_GetElementData")
+Clay_ElementData Clay_GetElementData(Clay_ElementId id){
+    Clay_LayoutElementHashMapItem * item = Clay__GetHashMapItem(id.id);
+    if(item == &CLAY__LAYOUT_ELEMENT_HASH_MAP_ITEM_DEFAULT) {
+        return CLAY__INIT(Clay_ElementData) CLAY__DEFAULT_STRUCT;
+    }
+
+    return CLAY__INIT(Clay_ElementData){
+        .boundingBox = item->boundingBox,
+        .found = true
+    };
 }
 
 CLAY_WASM_EXPORT("Clay_SetDebugModeEnabled")
