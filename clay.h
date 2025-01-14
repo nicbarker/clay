@@ -2141,7 +2141,10 @@ void Clay__CompressChildrenAlongAxis(bool xAxis, float totalSizeToDistribute, Cl
             }
         }
 
-        targetSize = CLAY__MAX(targetSize, (largestSize * largestContainers.length) - totalSizeToDistribute) / largestContainers.length;
+        if (largestContainers.length > 0) {
+            targetSize = CLAY__MAX(targetSize, (largestSize * largestContainers.length) - totalSizeToDistribute) / largestContainers.length;
+        }
+
         for (int32_t childOffset = 0; childOffset < largestContainers.length; childOffset++) {
             Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&largestContainers, childOffset));
             float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
