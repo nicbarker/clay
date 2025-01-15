@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="preload" href="/clay/fonts/Calistoga-Regular.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="preload" href="/clay/fonts/Quicksand-Semibold.ttf" as="font" type="font/ttf" crossorigin>
+    <base href="@URL@" />
+    <link rel="preload" href="fonts/Calistoga-Regular.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="fonts/Quicksand-Semibold.ttf" as="font" type="font/ttf" crossorigin>
     <title>Clay - UI Layout Library</title>
     <style>
         html, body {
@@ -22,14 +23,14 @@
           font-family: 'Calistoga';
           font-style: normal;
           font-weight: 400;
-          src: url('/clay/fonts/Calistoga-Regular.ttf') format('truetype');
+          src: url('fonts/Calistoga-Regular.ttf') format('truetype');
         }
 
         @font-face {
           font-family: 'Quicksand';
           font-style: normal;
           font-weight: 400;
-          src: url('/clay/fonts/Quicksand-Semibold.ttf') format('truetype');
+          src: url('fonts/Quicksand-Semibold.ttf') format('truetype');
         }
 
         body > canvas {
@@ -334,7 +335,7 @@
             },
         };
         const { instance } = await WebAssembly.instantiateStreaming(
-            fetch("/clay/index.wasm"), importObject
+            fetch("index.wasm"), importObject
         );
         memoryDataView = new DataView(new Uint8Array(instance.exports.memory.buffer).buffer);
         scratchSpaceAddress = instance.exports.__heap_base.value;

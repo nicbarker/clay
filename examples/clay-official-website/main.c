@@ -37,6 +37,10 @@ const Clay_Color COLOR_BLOB_BORDER_5 = (Clay_Color) {240, 189, 100, 255};
 
 #define RAYLIB_VECTOR2_TO_CLAY_VECTOR2(vector) (Clay_Vector2) { .x = (vector).x, .y = (vector).y }
 
+#ifndef BASE
+#  define BASE_DIR ""
+#endif
+
 Clay_TextElementConfig headerTextConfig = (Clay_TextElementConfig) { .fontId = 2, .fontSize = 24, .textColor = {61, 26, 5, 255} };
 Clay_TextElementConfig blobTextConfig = (Clay_TextElementConfig) { .fontId = 2, .fontSize = 30, .textColor = {244, 235, 230, 255} };
 
@@ -56,11 +60,11 @@ void LandingPageDesktop() {
                 CLAY_TEXT(CLAY_STRING("Clay is laying out this webpage right now!"), CLAY_TEXT_CONFIG({ .fontSize = 36, .fontId = FONT_ID_TITLE_36, .textColor = COLOR_ORANGE }));
             }
             CLAY(CLAY_ID("HeroImageOuter"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_PERCENT(0.45f) }, .childAlignment = { CLAY_ALIGN_X_CENTER }, .childGap = 16 })) {
-                LandingPageBlob(1, 32, COLOR_BLOB_BORDER_5, CLAY_STRING("High performance"), CLAY_STRING("/clay/images/check_5.png"));
-                LandingPageBlob(2, 32, COLOR_BLOB_BORDER_4, CLAY_STRING("Flexbox-style responsive layout"), CLAY_STRING("/clay/images/check_4.png"));
-                LandingPageBlob(3, 32, COLOR_BLOB_BORDER_3, CLAY_STRING("Declarative syntax"), CLAY_STRING("/clay/images/check_3.png"));
-                LandingPageBlob(4, 32, COLOR_BLOB_BORDER_2, CLAY_STRING("Single .h file for C/C++"), CLAY_STRING("/clay/images/check_2.png"));
-                LandingPageBlob(5, 32, COLOR_BLOB_BORDER_1, CLAY_STRING("Compile to 15kb .wasm"), CLAY_STRING("/clay/images/check_1.png"));
+                LandingPageBlob(1, 32, COLOR_BLOB_BORDER_5, CLAY_STRING("High performance"), CLAY_STRING(BASE_DIR "images/check_5.png"));
+                LandingPageBlob(2, 32, COLOR_BLOB_BORDER_4, CLAY_STRING("Flexbox-style responsive layout"), CLAY_STRING(BASE_DIR "images/check_4.png"));
+                LandingPageBlob(3, 32, COLOR_BLOB_BORDER_3, CLAY_STRING("Declarative syntax"), CLAY_STRING(BASE_DIR "images/check_3.png"));
+                LandingPageBlob(4, 32, COLOR_BLOB_BORDER_2, CLAY_STRING("Single .h file for C/C++"), CLAY_STRING(BASE_DIR "images/check_2.png"));
+                LandingPageBlob(5, 32, COLOR_BLOB_BORDER_1, CLAY_STRING("Compile to 15kb .wasm"), CLAY_STRING(BASE_DIR "images/check_1.png"));
             }
         }
     }
@@ -74,11 +78,11 @@ void LandingPageMobile() {
             CLAY_TEXT(CLAY_STRING("Clay is laying out this webpage right now!"), CLAY_TEXT_CONFIG({ .fontSize = 32, .fontId = FONT_ID_TITLE_36, .textColor = COLOR_ORANGE }));
         }
         CLAY(CLAY_ID("HeroImageOuter"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { CLAY_ALIGN_X_CENTER }, .childGap = 16 })) {
-            LandingPageBlob(1, 28, COLOR_BLOB_BORDER_5, CLAY_STRING("High performance"), CLAY_STRING("/clay/images/check_5.png"));
-            LandingPageBlob(2, 28, COLOR_BLOB_BORDER_4, CLAY_STRING("Flexbox-style responsive layout"), CLAY_STRING("/clay/images/check_4.png"));
-            LandingPageBlob(3, 28, COLOR_BLOB_BORDER_3, CLAY_STRING("Declarative syntax"), CLAY_STRING("/clay/images/check_3.png"));
-            LandingPageBlob(4, 28, COLOR_BLOB_BORDER_2, CLAY_STRING("Single .h file for C/C++"), CLAY_STRING("/clay/images/check_2.png"));
-            LandingPageBlob(5, 28, COLOR_BLOB_BORDER_1, CLAY_STRING("Compile to 15kb .wasm"), CLAY_STRING("/clay/images/check_1.png"));
+            LandingPageBlob(1, 28, COLOR_BLOB_BORDER_5, CLAY_STRING("High performance"), CLAY_STRING(BASE_DIR "images/check_5.png"));
+            LandingPageBlob(2, 28, COLOR_BLOB_BORDER_4, CLAY_STRING("Flexbox-style responsive layout"), CLAY_STRING(BASE_DIR "images/check_4.png"));
+            LandingPageBlob(3, 28, COLOR_BLOB_BORDER_3, CLAY_STRING("Declarative syntax"), CLAY_STRING(BASE_DIR "images/check_3.png"));
+            LandingPageBlob(4, 28, COLOR_BLOB_BORDER_2, CLAY_STRING("Single .h file for C/C++"), CLAY_STRING(BASE_DIR "images/check_2.png"));
+            LandingPageBlob(5, 28, COLOR_BLOB_BORDER_1, CLAY_STRING("Compile to 15kb .wasm"), CLAY_STRING(BASE_DIR "images/check_1.png"));
         }
     }
 }
@@ -132,7 +136,7 @@ void DeclarativeSyntaxPageDesktop() {
                 CLAY_TEXT(CLAY_STRING("Create your own library of re-usable components from UI primitives like text, images and rectangles."), CLAY_TEXT_CONFIG({ .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED }));
             }
             CLAY(CLAY_ID("SyntaxPageRightImage"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_PERCENT(0.50) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER} })) {
-                CLAY(CLAY_ID("SyntaxPageRightImageInner"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(.max = 568) } }), CLAY_IMAGE({ .sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING("/clay/images/declarative.png") })) {}
+                CLAY(CLAY_ID("SyntaxPageRightImageInner"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(.max = 568) } }), CLAY_IMAGE({ .sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING(BASE_DIR "images/declarative.png") })) {}
             }
         }
     }
@@ -148,7 +152,7 @@ void DeclarativeSyntaxPageMobile() {
             CLAY_TEXT(CLAY_STRING("Create your own library of re-usable components from UI primitives like text, images and rectangles."), CLAY_TEXT_CONFIG({ .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED }));
         }
         CLAY(CLAY_ID("SyntaxPageRightImage"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER} })) {
-            CLAY(CLAY_ID("SyntaxPageRightImageInner"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(.max = 568) } }), CLAY_IMAGE({ .sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING("/clay/images/declarative.png") } )) {}
+            CLAY(CLAY_ID("SyntaxPageRightImageInner"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(.max = 568) } }), CLAY_IMAGE({ .sourceDimensions = {1136, 1194}, .sourceURL = CLAY_STRING(BASE_DIR "images/declarative.png") } )) {}
         }
     }
 }
@@ -293,7 +297,7 @@ void DebuggerPageDesktop() {
             CLAY_TEXT(CLAY_STRING("Press the \"d\" key to try it out now!"), CLAY_TEXT_CONFIG({ .fontSize = 32, .fontId = FONT_ID_TITLE_36, .textColor = COLOR_ORANGE }));
         }
         CLAY(CLAY_ID("DebuggerRightImageOuter"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_PERCENT(0.50) }, .childAlignment = {CLAY_ALIGN_X_CENTER} })) {
-            CLAY(CLAY_ID("DebuggerPageRightImageInner"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(.max = 558) } }), CLAY_IMAGE({ .sourceDimensions = {1620, 1474}, .sourceURL = CLAY_STRING("/clay/images/debugger.png") })) {}
+            CLAY(CLAY_ID("DebuggerPageRightImageInner"), CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(.max = 558) } }), CLAY_IMAGE({ .sourceDimensions = {1620, 1474}, .sourceURL = CLAY_STRING(BASE_DIR "images/debugger.png") })) {}
         }
     }
 }

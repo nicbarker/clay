@@ -7,7 +7,7 @@ add_subdirectory("examples/cpp-project-example")
 add_subdirectory("examples/raylib-multi-context")
 add_subdirectory("examples/raylib-sidebar-scrolling-container")
 #  add_subdirectory("examples/cairo-pdf-rendering") Some issue with github actions populating cairo, disable for now
-if(NOT MSVC)
+if(${CMAKE_C_COMPILER} MATCHES "clang")
   add_subdirectory("examples/clay-official-website")
 endif()
 add_subdirectory("examples/introducing-clay-video-demo")
