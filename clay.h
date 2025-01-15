@@ -596,6 +596,7 @@ CLAY__TYPEDEF(Clay_BooleanWarnings, struct {
     bool maxElementsExceeded;
     bool maxRenderCommandsExceeded;
     bool maxTextMeasureCacheExceeded;
+    bool textMeasurementFunctionNotSet;
 });
 
 CLAY__TYPEDEF(Clay__Warning, struct {
@@ -1624,11 +1625,14 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
     Clay_Context* context = Clay_GetCurrentContext();
     #ifndef CLAY_WASM
     if (!Clay__MeasureText) {
-        context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
-            .errorType = CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
-            .errorText = CLAY_STRING("Clay's internal MeasureText function is null. You may have forgotten to call Clay_SetMeasureTextFunction(), or passed a NULL function pointer by mistake."),
-            .userData = context->errorHandler.userData });
-        return NULL;
+        if (!context->booleanWarnings.textMeasurementFunctionNotSet) {
+            context->booleanWarnings.textMeasurementFunctionNotSet = true;
+            context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+                    .errorType = CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
+                    .errorText = CLAY_STRING("Clay's internal MeasureText function is null. You may have forgotten to call Clay_SetMeasureTextFunction(), or passed a NULL function pointer by mistake."),
+                    .userData = context->errorHandler.userData });
+        }
+        return &CLAY__MEASURE_TEXT_CACHE_ITEM_DEFAULT;
     }
     #endif
     uint32_t id = Clay__HashTextWithConfig(text, config);
@@ -3918,9 +3922,7 @@ void Clay_BeginLayout(void) {
     if (context->debugModeEnabled) {
         rootDimensions.width -= (float)Clay__debugViewWidth;
     }
-    context->booleanWarnings.maxElementsExceeded = false;
-    context->booleanWarnings.maxTextMeasureCacheExceeded = false;
-    context->booleanWarnings.maxRenderCommandsExceeded = false;
+    context->booleanWarnings = CLAY__INIT(Clay_BooleanWarnings) CLAY__DEFAULT_STRUCT;
     Clay__OpenElement();
     CLAY_ID("Clay__RootContainer");
     CLAY_LAYOUT({ .sizing = {CLAY_SIZING_FIXED((rootDimensions.width)), CLAY_SIZING_FIXED(rootDimensions.height)} });
