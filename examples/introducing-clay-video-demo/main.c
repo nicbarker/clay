@@ -141,7 +141,7 @@ int main(void) {
                         .height = CLAY_SIZING_FIXED(60),
                         .width = CLAY_SIZING_GROW(0)
                     },
-                    .padding = { 16 },
+                    .padding = { 16, 16, 0, 0 },
                     .childGap = 16,
                     .childAlignment = {
                         .y = CLAY_ALIGN_Y_CENTER
@@ -151,7 +151,7 @@ int main(void) {
                 // Header buttons go here
                 CLAY(
                     CLAY_ID("FileButton"),
-                    CLAY_LAYOUT({ .padding = { 16, 8 }}),
+                    CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
                     CLAY_RECTANGLE({
                         .color = { 140, 140, 140, 255 },
                         .cornerRadius = 5
@@ -177,7 +177,7 @@ int main(void) {
                                 },
                             }),
                             CLAY_LAYOUT({
-                                .padding = {0, 8 }
+                                .padding = {0, 0, 8, 8 }
                             })
                         ) {
                             CLAY(
