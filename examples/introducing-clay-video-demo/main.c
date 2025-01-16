@@ -1,6 +1,7 @@
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
-#include "../../renderers/raylib/clay_renderer_raylib.c"
+#define CLAY_RAYLIB_IMPLEMENTATION // This is different to the video, the raylib renderer is now in a header file
+#include "../../renderers/raylib/clay_renderer_raylib.h"
 
 const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
