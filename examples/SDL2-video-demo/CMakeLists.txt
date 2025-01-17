@@ -23,6 +23,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(SDL2_ttf)
 
+FetchContent_Declare(
+    SDL2_image
+    GIT_REPOSITORY "https://github.com/libsdl-org/SDL_image.git"
+    GIT_TAG "release-2.8.4"
+    GIT_PROGRESS TRUE
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(SDL2_image)
+
 add_executable(SDL2_video_demo main.c)
 
 target_compile_options(SDL2_video_demo PUBLIC)
@@ -32,6 +41,7 @@ target_link_libraries(SDL2_video_demo PUBLIC
     SDL2::SDL2main
     SDL2::SDL2-static
     SDL2_ttf::SDL2_ttf-static
+    SDL2_image::SDL2_image-static
 )
 
 if(MSVC)
