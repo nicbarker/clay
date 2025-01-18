@@ -1,7 +1,10 @@
 #include "../../clay.h"
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <SDL_image.h>
 #include <stdio.h>
+
+#define CLAY_COLOR_TO_SDL_COLOR_ARGS(color) color.r, color.g, color.b, color.a
 
 typedef struct
 {
@@ -91,6 +94,51 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
             }
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
                 SDL_RenderSetClipRect(renderer, NULL);
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
+                SDL_Surface *image = (SDL_Surface *)renderCommand->config.imageElementConfig->imageData;
+
+                SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, image);
+
+                SDL_Rect destination = (SDL_Rect){
+                    .x = boundingBox.x,
+                    .y = boundingBox.y,
+                    .w = boundingBox.width,
+                    .h = boundingBox.height,
+                };
+
+                SDL_RenderCopy(renderer, texture, NULL, &destination);
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_BORDER: {
+                Clay_BorderElementConfig *config = renderCommand->config.borderElementConfig;
+
+                if (config->left.width > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->left.color));
+                    SDL_RenderFillRectF(renderer, &(SDL_FRect){ boundingBox.x, boundingBox.y + config->cornerRadius.topLeft, config->left.width, boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft });
+                }
+
+                if (config->right.width > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
+                    SDL_RenderFillRectF(renderer, &(SDL_FRect){ boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight });
+                }
+
+                if (config->right.width > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
+                    SDL_RenderFillRectF(renderer, &(SDL_FRect){ boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight });
+                }
+
+                if (config->top.width > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
+                    SDL_RenderFillRectF(renderer, &(SDL_FRect){ boundingBox.x + config->cornerRadius.topLeft, boundingBox.y, boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight, config->top.width });
+                }
+
+                if (config->bottom.width > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->bottom.color));
+                    SDL_RenderFillRectF(renderer, &(SDL_FRect){ boundingBox.x + config->cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->bottom.width, boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight, config->bottom.width });
+                }
+
                 break;
             }
             default: {

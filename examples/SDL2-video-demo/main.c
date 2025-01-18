@@ -13,6 +13,8 @@
 const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
 
+SDL_Surface *sample_image;
+
 void RenderHeaderButton(Clay_String text) {
     CLAY(
         CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
@@ -112,8 +114,17 @@ static Clay_RenderCommandArray CreateLayout() {
         ) {
             // Header buttons go here
             CLAY(
+                CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
+                CLAY_BORDER_ALL({ 2, COLOR_WHITE })
+            ) {
+                CLAY(
+                    CLAY_LAYOUT({ .padding = { 8, 8, 8, 8 }}),
+                    CLAY_IMAGE({ sample_image, { 23, 42 } })
+                ) {}
+            }
+            CLAY(
                 CLAY_ID("FileButton"),
-                CLAY_LAYOUT({ .padding = { 16, 8 }}),
+                CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
                 CLAY_RECTANGLE({
                     .color = { 140, 140, 140, 255 },
                     .cornerRadius = 5
@@ -278,6 +289,10 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: could not initialize TTF: %s\n", TTF_GetError());
         return 1;
     }
+    if (IMG_Init(IMG_INIT_PNG) < 0) {
+        fprintf(stderr, "Error: could not initialize IMG: %s\n", IMG_GetError());
+        return 1;
+    }
 
     TTF_Font *font = TTF_OpenFont("resources/Roboto-Regular.ttf", 16);
     if (!font) {
@@ -288,6 +303,8 @@ int main(int argc, char *argv[]) {
         .fontId = FONT_ID_BODY_16,
         .font = font,
     };
+
+    sample_image = IMG_Load("resources/sample.png");
 
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
@@ -352,6 +369,7 @@ int main(int argc, char *argv[]) {
 quit:
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    IMG_Quit();
     TTF_Quit();
     SDL_Quit();
     return 0;
