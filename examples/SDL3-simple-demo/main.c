@@ -26,7 +26,7 @@ static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextEl
     TTF_Font *font = gFonts[config->fontId];
     int width, height;
 
-    if (!TTF_GetStringSize(font, text->chars, text->length, &width, &height)) {
+    if (!TTF_GetStringSize(font, text.chars, text.length, &width, &height)) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to measure text: %s", SDL_GetError());
     }
 
