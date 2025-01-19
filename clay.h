@@ -191,6 +191,13 @@ CLAY__TYPEDEF(Clay__StringArray, struct {
     Clay_String *internalArray;
 });
 
+CLAY__TYPEDEF(Clay_StringSlice, struct {
+    int32_t length;
+    const char *chars;
+    // The source string / char* that this slice was derived from
+    const char *baseChars;
+});
+
 typedef struct Clay_Context Clay_Context;
 
 CLAY__TYPEDEF(Clay_Arena, struct {
@@ -527,7 +534,7 @@ bool Clay_Hovered(void);
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
 bool Clay_PointerOver(Clay_ElementId elementId);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
-void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData);
+void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData);
 void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, uintptr_t userData), uintptr_t userData);
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
@@ -1482,10 +1489,10 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__CharArray *buffer, Clay_String s
 }
 
 #ifdef CLAY_WASM
-    __attribute__((import_module("clay"), import_name("measureTextFunction"))) Clay_Dimensions Clay__MeasureText(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData);
+    __attribute__((import_module("clay"), import_name("measureTextFunction"))) Clay_Dimensions Clay__MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData);
     __attribute__((import_module("clay"), import_name("queryScrollOffsetFunction"))) Clay_Vector2 Clay__QueryScrollOffset(uint32_t elementId, uintptr_t userData);
 #else
-    Clay_Dimensions (*Clay__MeasureText)(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData);
+    Clay_Dimensions (*Clay__MeasureText)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData);
     Clay_Vector2 (*Clay__QueryScrollOffset)(uint32_t elementId, uintptr_t userData);
 #endif
 
@@ -1701,7 +1708,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
     float lineWidth = 0;
     float measuredWidth = 0;
     float measuredHeight = 0;
-    float spaceWidth = Clay__MeasureText(&CLAY__SPACECHAR, config, context->mesureTextUserData).width;
+    float spaceWidth = Clay__MeasureText(CLAY__INIT(Clay_StringSlice) { .length = 1, .chars = CLAY__SPACECHAR.chars, .baseChars = CLAY__SPACECHAR.chars }, config, context->mesureTextUserData).width;
     Clay__MeasuredWord tempWord = { .next = -1 };
     Clay__MeasuredWord *previousWord = &tempWord;
     while (end < text->length) {
@@ -1718,8 +1725,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         char current = text->chars[end];
         if (current == ' ' || current == '\n') {
             int32_t length = end - start;
-            Clay_String word = { .length = length, .chars = &text->chars[start] };
-            Clay_Dimensions dimensions = Clay__MeasureText(&word, config, context->mesureTextUserData);
+            Clay_Dimensions dimensions = Clay__MeasureText(CLAY__INIT(Clay_StringSlice) { .length = length, .chars = &text->chars[start], .baseChars = text->chars }, config, context->mesureTextUserData);
             measuredHeight = CLAY__MAX(measuredHeight, dimensions.height);
             if (current == ' ') {
                 dimensions.width += spaceWidth;
@@ -1741,8 +1747,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         end++;
     }
     if (end - start > 0) {
-        Clay_String lastWord = { .length = end - start, .chars = &text->chars[start] };
-        Clay_Dimensions dimensions = Clay__MeasureText(&lastWord, config, context->mesureTextUserData);
+        Clay_Dimensions dimensions = Clay__MeasureText(CLAY__INIT(Clay_StringSlice) { .length = end - start, .chars = &text->chars[start], .baseChars = text->chars }, config, context->mesureTextUserData);
         Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .startOffset = start, .length = end - start, .width = dimensions.width, .next = -1 }, previousWord);
         lineWidth += dimensions.width;
         measuredHeight = CLAY__MAX(measuredHeight, dimensions.height);
@@ -3680,7 +3685,7 @@ Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset
 }
 
 #ifndef CLAY_WASM
-void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData) {
+void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__MeasureText = measureTextFunction;
     context->mesureTextUserData = userData;
