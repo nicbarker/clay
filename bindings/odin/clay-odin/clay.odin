@@ -22,6 +22,12 @@ String :: struct {
     chars:  [^]c.char,
 }
 
+StringSlice :: struct {
+    length: c.int32_t,
+    chars:  [^]c.char,
+    baseChars:  [^]c.char,
+}
+
 Vector2 :: [2]c.float
 
 Dimensions :: struct {
@@ -305,7 +311,7 @@ foreign Clay {
     PointerOver :: proc(id: ElementId) -> bool ---
     GetElementId :: proc(id: String) -> ElementId ---
     GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
-    SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions) ---
+    SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: StringSlice, config: ^TextElementConfig, userData: uintptr) -> Dimensions, userData: uintptr) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
     SetDebugModeEnabled :: proc(enabled: bool) ---
 }
