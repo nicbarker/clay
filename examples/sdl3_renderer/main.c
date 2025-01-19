@@ -105,6 +105,10 @@ static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArr
     }
 }
 
+void HandleClayErrors(Clay_ErrorData errorData) {
+    printf("%s", errorData.errorText.chars);
+}
+
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 {
     (void) argc;
@@ -137,7 +141,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     /* Initialize Clay */
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = (Clay_Arena) {
-        .label = CLAY_STRING("Clay Memory Arena"),
         .memory = SDL_malloc(totalMemorySize),
         .capacity = totalMemorySize
     };
@@ -145,7 +148,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     int width, height;
     SDL_GetWindowSize(state->window, &width, &height);
     Clay_SetMeasureTextFunction(SDL_MeasureText);
-    Clay_Initialize(clayMemory, (Clay_Dimensions) { (float) width, (float) height });
+    Clay_Initialize(clayMemory, (Clay_Dimensions) { (float) width, (float) height }, (Clay_ErrorHandler) { HandleClayErrors });
 
     *appstate = state;
     return SDL_APP_CONTINUE;
