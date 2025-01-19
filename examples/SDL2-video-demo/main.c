@@ -299,7 +299,10 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: could not load font: %s\n", TTF_GetError());
         return 1;
     }
-    SDL2_fonts[FONT_ID_BODY_16] = (SDL2_Font) {
+
+    SDL2_Font fonts[1] = {};
+
+    fonts[FONT_ID_BODY_16] = (SDL2_Font) {
         .fontId = FONT_ID_BODY_16,
         .font = font,
     };
@@ -315,12 +318,13 @@ int main(int argc, char *argv[]) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
 
-    Clay_SetMeasureTextFunction(SDL2_MeasureText);
-
     int windowWidth = 0;
     int windowHeight = 0;
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)windowWidth, (float)windowHeight }, (Clay_ErrorHandler) { HandleClayErrors });
+
+    Clay_SetMeasureTextFunction(SDL2_MeasureText, (uintptr_t)&fonts);
+
     Uint64 NOW = SDL_GetPerformanceCounter();
     Uint64 LAST = 0;
     double deltaTime = 0;
@@ -361,7 +365,7 @@ int main(int argc, char *argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        Clay_SDL2_Render(renderer, renderCommands);
+        Clay_SDL2_Render(renderer, renderCommands, fonts);
 
         SDL_RenderPresent(renderer);
     }
