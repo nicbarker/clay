@@ -89,7 +89,7 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
 
 uint32_t measureCalls = 0;
 
-static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData) {
+static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData) {
     measureCalls++;
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
@@ -101,14 +101,14 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextEle
     Font fontToUse = Raylib_fonts[config->fontId].font;
     float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 
-    for (int i = 0; i < text->length; ++i)
+    for (int i = 0; i < text.length; ++i)
     {
-        if (text->chars[i] == '\n') {
+        if (text.chars[i] == '\n') {
             maxTextWidth = fmax(maxTextWidth, lineTextWidth);
             lineTextWidth = 0;
             continue;
         }
-        int index = text->chars[i] - 32;
+        int index = text.chars[i] - 32;
         if (fontToUse.glyphs[index].advanceX != 0) lineTextWidth += fontToUse.glyphs[index].advanceX;
         else lineTextWidth += (fontToUse.recs[index].width + fontToUse.glyphs[index].offsetX);
     }

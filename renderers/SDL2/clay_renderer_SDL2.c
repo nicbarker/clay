@@ -13,13 +13,13 @@ typedef struct
 } SDL2_Font;
 
 
-static Clay_Dimensions SDL2_MeasureText(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData)
+static Clay_Dimensions SDL2_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData)
 {
     SDL2_Font *fonts = (SDL2_Font*)userData;
 
     TTF_Font *font = fonts[config->fontId].font;
-    char *chars = (char *)calloc(text->length + 1, 1);
-    memcpy(chars, text->chars, text->length);
+    char *chars = (char *)calloc(text.length + 1, 1);
+    memcpy(chars, text.chars, text.length);
     int width = 0;
     int height = 0;
     if (TTF_SizeUTF8(font, chars, &width, &height) < 0) {
