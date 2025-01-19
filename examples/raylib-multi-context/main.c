@@ -247,7 +247,7 @@ int main(void) {
             .height = GetScreenHeight() / 2
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
 
-    Clay_SetMeasureTextFunction(Raylib_MeasureText);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, 0);
     Raylib_fonts[FONT_ID_BODY_16] = (Raylib_Font) {
         .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
         .fontId = FONT_ID_BODY_16

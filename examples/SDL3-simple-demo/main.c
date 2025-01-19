@@ -21,8 +21,10 @@ typedef struct app_state {
     SDL_Renderer *renderer;
 } AppState;
 
-static inline Clay_Dimensions SDL_MeasureText(Clay_String *text, Clay_TextElementConfig *config)
+static inline Clay_Dimensions SDL_MeasureText(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData)
 {
+
+
     TTF_Font *font = gFonts[config->fontId];
     int width, height;
 
@@ -114,8 +116,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     int width, height;
     SDL_GetWindowSize(state->window, &width, &height);
-    Clay_SetMeasureTextFunction(SDL_MeasureText);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float) width, (float) height }, (Clay_ErrorHandler) { HandleClayErrors });
+    Clay_SetMeasureTextFunction(SDL_MeasureText, 0);
 
     *appstate = state;
     return SDL_APP_CONTINUE;

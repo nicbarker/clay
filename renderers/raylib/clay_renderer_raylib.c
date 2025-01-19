@@ -89,7 +89,7 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
 
 uint32_t measureCalls = 0;
 
-static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextElementConfig *config) {
+static inline Clay_Dimensions Raylib_MeasureText(Clay_String *text, Clay_TextElementConfig *config, uintptr_t userData) {
     measureCalls++;
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
