@@ -218,8 +218,8 @@ void HandleClayErrors(Clay_ErrorData errorData) {
 int main(void) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-    Clay_SetMeasureTextFunction(Raylib_MeasureText, 0);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, 0);
     Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
     profilePicture = LoadTextureFromImage(LoadImage("resources/profile-picture.png"));
     Raylib_fonts[FONT_ID_BODY_24] = (Raylib_Font) {

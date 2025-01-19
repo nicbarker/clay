@@ -83,7 +83,7 @@ static inline char *Clay_Cairo__NullTerminate(Clay_String *str) {
 }
 
 // Measure text using cairo's *toy* text API.
-static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_TextElementConfig *config) {
+static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_TextElementConfig *config, uintptr_t userData) {
 	// Edge case: Clay computes the width of a whitespace character
 	// once.  Cairo does not factor in whitespaces when computing text
 	// extents, this edge-case serves as a short-circuit to introduce

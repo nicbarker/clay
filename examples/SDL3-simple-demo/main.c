@@ -116,8 +116,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     int width, height;
     SDL_GetWindowSize(state->window, &width, &height);
-    Clay_SetMeasureTextFunction(SDL_MeasureText, 0);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float) width, (float) height }, (Clay_ErrorHandler) { HandleClayErrors });
+    Clay_SetMeasureTextFunction(SDL_MeasureText, 0);
 
     *appstate = state;
     return SDL_APP_CONTINUE;
