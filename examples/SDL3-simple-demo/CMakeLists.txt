@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.27)
 
 # Project setup
-project(clay_sdl3_renderer C)
+project(clay_examples_sdl3_simple_demo C)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -Wall -Werror")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 

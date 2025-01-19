@@ -6,6 +6,8 @@
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
 
+#include "../../renderers/SDL3/clay_renderer_SDL3.c"
+
 static const Uint32 FONT_ID = 0;
 
 static const Clay_Color COLOR_ORANGE    = (Clay_Color) {225, 138, 50, 255};
@@ -16,10 +18,6 @@ typedef struct app_state {
     SDL_Window *window;
     SDL_Renderer *renderer;
 } AppState;
-
-/* This needs to be global because the "MeasureText" callback doesn't have a
- * user data parameter */
-static TTF_Font *gFonts[1];
 
 static inline Clay_Dimensions SDL_MeasureText(Clay_String *text, Clay_TextElementConfig *config)
 {
@@ -70,39 +68,6 @@ static Clay_RenderCommandArray Clay_CreateLayout()
         Label(CLAY_STRING("Button 3"));
     }
     return Clay_EndLayout();
-}
-
-static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArray *rcommands)
-{
-    for (size_t i = 0; i < rcommands->length; i++) {
-        Clay_RenderCommand *rcmd = Clay_RenderCommandArray_Get(rcommands, i);
-        Clay_BoundingBox bounding_box = rcmd->boundingBox;
-        SDL_FRect rect = { bounding_box.x, bounding_box.y, bounding_box.width, bounding_box.height };
-
-        switch (rcmd->commandType) {
-            case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                Clay_RectangleElementConfig *config = rcmd->config.rectangleElementConfig;
-                Clay_Color color = config->color;
-                SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-                SDL_RenderFillRect(renderer, &rect);
-            } break;
-            case CLAY_RENDER_COMMAND_TYPE_TEXT: {
-                Clay_TextElementConfig *config = rcmd->config.textElementConfig;
-                Clay_String *text = &rcmd->text;
-                SDL_Color color = { config->textColor.r, config->textColor.g, config->textColor.b, config->textColor.a };
-
-                TTF_Font *font = gFonts[config->fontId];
-                SDL_Surface *surface = TTF_RenderText_Blended(font, text->chars, text->length, color);
-                SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-                SDL_RenderTexture(renderer, texture, NULL, &rect);
-
-                SDL_DestroySurface(surface);
-                SDL_DestroyTexture(texture);
-            } break;
-            default:
-                SDL_Log("Unknown render command type: %d", rcmd->commandType);
-        }
-    }
 }
 
 void HandleClayErrors(Clay_ErrorData errorData) {

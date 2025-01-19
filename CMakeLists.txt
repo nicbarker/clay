@@ -13,7 +13,7 @@ add_subdirectory("examples/raylib-sidebar-scrolling-container")
 #  add_subdirectory("examples/cairo-pdf-rendering") Some issue with github actions populating cairo, disable for now
 if(NOT MSVC)
   add_subdirectory("examples/clay-official-website")
-  add_subdirectory("examples/sdl3_renderer")
+  add_subdirectory("examples/SDL3-simple-demo")
 endif()
 add_subdirectory("examples/introducing-clay-video-demo")
 add_subdirectory("examples/SDL2-video-demo")
