@@ -6,6 +6,8 @@
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
 
+#include <stdio.h>
+
 #include "../../renderers/SDL3/clay_renderer_SDL3.c"
 
 static const Uint32 FONT_ID = 0;
