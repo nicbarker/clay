@@ -314,7 +314,7 @@
 
         const importObject = {
             clay: {
-                measureTextFunction: (addressOfDimensions, textToMeasure, addressOfConfig) => {
+                measureTextFunction: (addressOfDimensions, textToMeasure, addressOfConfig, userData) => {
                     let stringLength = memoryDataView.getUint32(textToMeasure, true);
                     let pointerToString = memoryDataView.getUint32(textToMeasure + 4, true);
                     let textConfig = readStructAtAddress(addressOfConfig, textConfigDefinition);

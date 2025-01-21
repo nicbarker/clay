@@ -42,7 +42,7 @@ void Layout() {
 		CLAY_RECTANGLE({ .color = BACKGROUND })) {
 		CLAY(CLAY_ID("PageMargins"),
 			 CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-					 .padding = { 70., 50. }, // Some nice looking page margins
+					 .padding = { 70, 70, 50, 50 }, // Some nice looking page margins
 					 .layoutDirection = CLAY_TOP_TO_BOTTOM,
 					 .childGap = 10})) {
 
@@ -62,7 +62,7 @@ void Layout() {
 							.color = ACCENT,
 							.cornerRadius = CLAY_CORNER_RADIUS(12),
 						})) {
-					CLAY(CLAY_LAYOUT({.padding = { 20., 20. }, .childGap = 4, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
+					CLAY(CLAY_LAYOUT({.padding = CLAY_PADDING_ALL(20), .childGap = 4, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
 						CLAY_TEXT(CLAY_STRING("- High performance"),
 								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontFamily = CLAY_STRING("Quicksand SemiBold") }));
 						CLAY_TEXT(CLAY_STRING("- Declarative syntax"),
@@ -77,7 +77,7 @@ void Layout() {
 				}
 				CLAY(CLAY_LAYOUT({
 							.sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
-							.padding = { 10, 10 },
+							.padding = CLAY_PADDING_ALL(10),
 							.layoutDirection = CLAY_TOP_TO_BOTTOM,
 							.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
 							.childGap = 4
@@ -85,7 +85,7 @@ void Layout() {
 					// Profile picture
 					CLAY(CLAY_LAYOUT({
 								.sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
-								.padding = { 30, 0 },
+								.padding = { 30, 30, 0, 0 },
 								.layoutDirection = CLAY_TOP_TO_BOTTOM,
 								.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER }}), CLAY_BORDER_OUTSIDE_RADIUS(2, PRIMARY, 10)) {
 						CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }), CLAY_IMAGE({ .sourceDimensions = { 32, 32 }, .path = CLAY_STRING("resources/check.png") }));
@@ -97,7 +97,7 @@ void Layout() {
 
 			CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) }, .childGap = 10, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
 				CLAY_TEXT(CLAY_STRING("Cairo"), CLAY_TEXT_CONFIG({ .fontFamily = CLAY_STRING("Calistoga"), .fontSize = 24, .textColor = PRIMARY }));
-				CLAY(CLAY_LAYOUT({ .padding = { 10, 10 } }), CLAY_RECTANGLE({ .color = ACCENT, .cornerRadius = CLAY_CORNER_RADIUS(10) })) {
+				CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(10) }), CLAY_RECTANGLE({ .color = ACCENT, .cornerRadius = CLAY_CORNER_RADIUS(10) })) {
 					CLAY_TEXT(CLAY_STRING("Officiis quia quia qui inventore ratione voluptas et. Quidem sunt unde similique. Qui est et exercitationem cumque harum illum. Numquam placeat aliquid quo voluptatem. "
 										  "Deleniti saepe nihil exercitationem nemo illo. Consequatur beatae repellat provident similique. Provident qui exercitationem deserunt sapiente. Quam qui dolor corporis odit. "
 										  "Assumenda corrupti sunt culpa pariatur. Vero sit ut minima. In est consequatur minus et cum sint illum aperiam. Qui ipsa quas nisi omnis aut quia nobis. "

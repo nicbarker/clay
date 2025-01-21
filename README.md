@@ -94,12 +94,12 @@ Clay_RenderCommandArray CreateLayout() {
     Clay_BeginLayout();
 
     // An example of laying out a UI with a fixed width sidebar and flexible width main content
-    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = {16, 16}, .childGap = 16 }), CLAY_RECTANGLE({ .color = {250,250,255,255} })) {
+    CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(16), .childGap = 16 }), CLAY_RECTANGLE({ .color = {250,250,255,255} })) {
         CLAY(CLAY_ID("SideBar"),
-            CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16 }),
+            CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16 }),
             CLAY_RECTANGLE({ .color = COLOR_LIGHT })
         ) {
-            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+            CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16, .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
                 CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
                 CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
             }
@@ -218,7 +218,7 @@ Clay UIs are built using the C macro `CLAY()`. This macro creates a new empty el
 Child elements are added by opening a block: `{}` after calling the `CLAY()` macro (exactly like you would with an `if` statement or `for` loop), and declaring child components inside the braces.
 ```C
 // Parent element with 8px of padding
-CLAY(CLAY_LAYOUT({ .padding = 8 })) {
+CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8) })) {
     // Child element 1
     CLAY_TEXT(CLAY_STRING("Hello World"), CLAY_TEXT_CONFIG({ .fontSize = 16 }));
     // Child element 2 with red background
@@ -233,7 +233,7 @@ However, unlike HTML and other declarative DSLs, these macros are just C. As a r
 // Re-usable "components" are just functions that declare more UI
 void ButtonComponent(Clay_String buttonText) {
     // Red box button with 8px of padding
-    CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+    CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8)}), CLAY_RECTANGLE({ .color = COLOR_RED })) {
         CLAY_TEXT(buttonText, textConfig);
     }
 }
@@ -259,11 +259,11 @@ CLAY(CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
 ### Configuring Layout and Styling UI Elements
 The layout of clay elements is configured with the `CLAY_LAYOUT()` macro. 
 ```C
-CLAY(CLAY_LAYOUT({ .padding = {.x = 8, .y = 8}, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
+CLAY(CLAY_LAYOUT({ .padding = { 8, 8, 8, 8 }, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
     // Children are 8px inset into parent, and laid out top to bottom
 }
 ```
-This macro isn't magic - all it's doing is wrapping the standard designated initializer syntax and adding the result to an internal array. e.g. `(Clay_LayoutConfig) { .padding = { .x = 8, .y = 8 } ...`.
+This macro isn't magic - all it's doing is wrapping the standard designated initializer syntax and adding the result to an internal array. e.g. `(Clay_LayoutConfig) { .padding = { .left = 8, .right = 8 } ...`.
 
 See the [Clay_LayoutConfig](#clay_layout) API for the full list of options.
 
@@ -333,7 +333,7 @@ void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerI
 ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/clay" };
 
 // HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
-CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, &linkButton)) {
+CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8)}), Clay_OnHover(HandleButtonInteraction, &linkButton)) {
     CLAY_TEXT(CLAY_STRING("Button"), &headerTextConfig);
 }
 ```
@@ -703,7 +703,7 @@ void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerD
 ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/clay" };
 
 // HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
-CLAY(CLAY_LAYOUT({ .padding = { 8, 8 }}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
+CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8)}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
     CLAY_TEXT(CLAY_STRING("Button"), &headerTextConfig);
 }
 ```
@@ -749,7 +749,7 @@ Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for
 **Examples**
 ```C
 // Define an element with 16px of x and y padding
-CLAY(CLAY_ID("Outer"), CLAY_LAYOUT({ .padding = {16, 16} })) {
+CLAY(CLAY_ID("Outer"), CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(16) })) {
     // A nested child element
     CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16 })) {
         // Children laid out top to bottom with a 16 px gap between them
@@ -789,7 +789,7 @@ To regenerate the same ID outside of layout declaration when using utility funct
 // Tag a button with the Id "Button"
 CLAY(
     CLAY_ID("Button"),
-    CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16) })
+    CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16) })
 ) {
     // ...children
 }
@@ -832,7 +832,7 @@ An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_ele
 Clay_LayoutConfig {
     Clay_LayoutDirection layoutDirection = CLAY_LEFT_TO_RIGHT (default) | CLAY_TOP_TO_BOTTOM;
     Clay_Padding padding {
-        float x; float y; 
+        u16 left; u16 right; u16 top; u16 bottom; 
     };
     uint16_t childGap;
     Clay_ChildAlignment childAlignment {
@@ -863,11 +863,11 @@ _Did you know that "left to right" and "top to bottom" both have 13 letters?_
 
 **`.padding`** - `Clay_Padding`
 
-`CLAY_LAYOUT({ .padding = { .x = 16, .y = 16 } })`
+`CLAY_LAYOUT({ .padding = { .left = 16, .right = 16, .top = 8, .bottom = 8 } })`
 
-Controls horizontal and vertical white-space "padding" around the **outside** of child elements.
+Controls white-space "padding" around the **outside** of child elements.
 
-<img width="486" alt="Screenshot 2024-08-22 at 10 50 49 AM" src="https://github.com/user-attachments/assets/9311cf10-b8aa-40fe-922a-5dee3663f1a0">
+<img width="486" alt="Screenshot 2024-08-22 at 10 50 49 AM" src="https://github.com/user-attachments/assets/b454fa36-92d5-4b1d-bf8b-e4c25428e9de">
 
 ---
 
@@ -917,7 +917,7 @@ Controls how final width and height of element are calculated. The same configur
 **Example Usage**
 
 ```C
-CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = {16, 16}, .childGap = 16) }) {
+CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16, .childGap = 16) }) {
     // Children will be laid out vertically with 16px of padding around and between
 }
 ``` 
@@ -1586,17 +1586,17 @@ Controls whether pointer events like hover and click should pass through to cont
 ```C
 // Horizontal container with three option buttons
 CLAY(CLAY_ID("OptionsList"), CLAY_LAYOUT(.childGap = 16)) {
-    CLAY_RECTANGLE(CLAY_IDI("Option", 1), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 1), CLAY_LAYOUT(.padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 1), CLAY_STRING("Option 1"), CLAY_TEXT_CONFIG());
     }
-    CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 2), CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
         // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
         CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING({ .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP } })) {
             CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
         }
     }
-    CLAY_RECTANGLE(CLAY_IDI("Option", 3), CLAY_LAYOUT(.padding = {16, 16}), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 3), CLAY_LAYOUT(.padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 3), CLAY_STRING("Option 3"), CLAY_TEXT_CONFIG());
     }
 }

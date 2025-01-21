@@ -3,6 +3,10 @@ project(clay)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+if(APPLE)
+  enable_language(OBJC)
+endif()
+
 add_subdirectory("examples/cpp-project-example")
 add_subdirectory("examples/raylib-multi-context")
 add_subdirectory("examples/raylib-sidebar-scrolling-container")
@@ -12,6 +16,7 @@ if(NOT MSVC)
   add_subdirectory("examples/introducing-clay-video-demo")
   add_subdirectory("examples/SDL2-video-demo")
   add_subdirectory("examples/minimal-imgui")
+  add_subdirectory("examples/SDL3-simple-demo")
 endif()
 add_subdirectory("examples/introducing-clay-video-demo")
 add_subdirectory("examples/SDL2-video-demo")

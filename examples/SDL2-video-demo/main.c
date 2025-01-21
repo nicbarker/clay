@@ -10,13 +10,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-
 const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
 
+SDL_Surface *sample_image;
+
 void RenderHeaderButton(Clay_String text) {
     CLAY(
-        CLAY_LAYOUT({ .padding = { 16, 8 }}),
+        CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
         CLAY_RECTANGLE({
             .color = { 140, 140, 140, 255 },
             .cornerRadius = 5
@@ -31,7 +32,7 @@ void RenderHeaderButton(Clay_String text) {
 }
 
 void RenderDropdownMenuItem(Clay_String text) {
-    CLAY(CLAY_LAYOUT({ .padding = { 16, 16 }})) {
+    CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(16)})) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
@@ -91,7 +92,7 @@ static Clay_RenderCommandArray CreateLayout() {
         CLAY_LAYOUT({
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = layoutExpand,
-            .padding = { 16, 16 },
+            .padding = CLAY_PADDING_ALL(16),
             .childGap = 16
         })
     ) {
@@ -113,8 +114,17 @@ static Clay_RenderCommandArray CreateLayout() {
         ) {
             // Header buttons go here
             CLAY(
+                CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
+                CLAY_BORDER_ALL({ 2, COLOR_WHITE })
+            ) {
+                CLAY(
+                    CLAY_LAYOUT({ .padding = { 8, 8, 8, 8 }}),
+                    CLAY_IMAGE({ sample_image, { 23, 42 } })
+                ) {}
+            }
+            CLAY(
                 CLAY_ID("FileButton"),
-                CLAY_LAYOUT({ .padding = { 16, 8 }}),
+                CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
                 CLAY_RECTANGLE({
                     .color = { 140, 140, 140, 255 },
                     .cornerRadius = 5
@@ -179,7 +189,7 @@ static Clay_RenderCommandArray CreateLayout() {
                 CLAY_RECTANGLE(contentBackgroundConfig),
                 CLAY_LAYOUT({
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    .padding = { 16, 16 },
+                    .padding = CLAY_PADDING_ALL(16),
                     .childGap = 8,
                     .sizing = {
                         .width = CLAY_SIZING_FIXED(250),
@@ -191,7 +201,7 @@ static Clay_RenderCommandArray CreateLayout() {
                     Document document = documents.documents[i];
                     Clay_LayoutConfig sidebarButtonLayout = {
                         .sizing = { .width = CLAY_SIZING_GROW(0) },
-                        .padding = { 16, 16 }
+                        .padding = CLAY_PADDING_ALL(16)
                     };
 
                     if (i == selectedDocumentIndex) {
@@ -236,7 +246,7 @@ static Clay_RenderCommandArray CreateLayout() {
                 CLAY_LAYOUT({
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     .childGap = 16,
-                    .padding = { 16, 16 },
+                    .padding = CLAY_PADDING_ALL(16),
                     .sizing = layoutExpand
                 })
             ) {
@@ -279,16 +289,25 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: could not initialize TTF: %s\n", TTF_GetError());
         return 1;
     }
+    if (IMG_Init(IMG_INIT_PNG) < 0) {
+        fprintf(stderr, "Error: could not initialize IMG: %s\n", IMG_GetError());
+        return 1;
+    }
 
     TTF_Font *font = TTF_OpenFont("resources/Roboto-Regular.ttf", 16);
     if (!font) {
         fprintf(stderr, "Error: could not load font: %s\n", TTF_GetError());
         return 1;
     }
-    SDL2_fonts[FONT_ID_BODY_16] = (SDL2_Font) {
+
+    SDL2_Font fonts[1] = {};
+
+    fonts[FONT_ID_BODY_16] = (SDL2_Font) {
         .fontId = FONT_ID_BODY_16,
         .font = font,
     };
+
+    sample_image = IMG_Load("resources/sample.png");
 
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
@@ -299,12 +318,13 @@ int main(int argc, char *argv[]) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
 
-    Clay_SetMeasureTextFunction(SDL2_MeasureText);
-
     int windowWidth = 0;
     int windowHeight = 0;
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)windowWidth, (float)windowHeight }, (Clay_ErrorHandler) { HandleClayErrors });
+
+    Clay_SetMeasureTextFunction(SDL2_MeasureText, (uintptr_t)&fonts);
+
     Uint64 NOW = SDL_GetPerformanceCounter();
     Uint64 LAST = 0;
     double deltaTime = 0;
@@ -345,7 +365,7 @@ int main(int argc, char *argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        Clay_SDL2_Render(renderer, renderCommands);
+        Clay_SDL2_Render(renderer, renderCommands, fonts);
 
         SDL_RenderPresent(renderer);
     }
@@ -353,6 +373,7 @@ int main(int argc, char *argv[]) {
 quit:
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    IMG_Quit();
     TTF_Quit();
     SDL_Quit();
     return 0;

@@ -22,6 +22,12 @@ String :: struct {
     chars:  [^]c.char,
 }
 
+StringSlice :: struct {
+    length: c.int32_t,
+    chars:  [^]c.char,
+    baseChars:  [^]c.char,
+}
+
 Vector2 :: [2]c.float
 
 Dimensions :: struct {
@@ -223,8 +229,10 @@ Sizing :: struct {
 }
 
 Padding :: struct {
-    x: u16,
-    y: u16,
+    left: u16,
+    right: u16,
+    top: u16,
+    bottom: u16,
 }
 
 LayoutDirection :: enum EnumBackingType {
@@ -303,7 +311,7 @@ foreign Clay {
     PointerOver :: proc(id: ElementId) -> bool ---
     GetElementId :: proc(id: String) -> ElementId ---
     GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
-    SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions) ---
+    SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: StringSlice, config: ^TextElementConfig, userData: uintptr) -> Dimensions, userData: uintptr) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
     SetDebugModeEnabled :: proc(enabled: bool) ---
 }
@@ -348,6 +356,10 @@ UI :: proc(configs: ..TypedConfig) -> bool {
 
 Layout :: proc(config: LayoutConfig) -> TypedConfig {
     return {type = ElementConfigType.Layout, config = _StoreLayoutConfig(config) }
+}
+
+PaddingAll :: proc (padding: u16) -> Padding {
+    return { padding, padding, padding, padding }
 }
 
 Rectangle :: proc(config: RectangleElementConfig) -> TypedConfig {

@@ -7,7 +7,7 @@ Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
 
 void RenderHeaderButton(Clay_String text) {
     CLAY(
-        CLAY_LAYOUT({ .padding = { 16, 8 }}),
+        CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
         CLAY_RECTANGLE({
             .color = { 140, 140, 140, 255 },
             .cornerRadius = 5
@@ -22,7 +22,7 @@ void RenderHeaderButton(Clay_String text) {
 }
 
 void RenderDropdownMenuItem(Clay_String text) {
-    CLAY(CLAY_LAYOUT({ .padding = { 16, 16 }})) {
+    CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(16)})) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
@@ -84,7 +84,7 @@ int main(void) {
        .width = GetScreenWidth(),
        .height = GetScreenHeight()
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
-    Clay_SetMeasureTextFunction(Raylib_MeasureText);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, 0);
     Raylib_fonts[FONT_ID_BODY_16] = (Raylib_Font) {
         .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
         .fontId = FONT_ID_BODY_16
@@ -117,7 +117,7 @@ int main(void) {
 
         Clay_RectangleElementConfig contentBackgroundConfig = {
             .color = { 90, 90, 90, 255 },
-            .cornerRadius = 8
+            .cornerRadius = CLAY_CORNER_RADIUS(8)
         };
 
         Clay_BeginLayout();
@@ -128,7 +128,7 @@ int main(void) {
             CLAY_LAYOUT({
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 .sizing = layoutExpand,
-                .padding = { 16, 16 },
+                .padding = CLAY_PADDING_ALL(16),
                 .childGap = 16
             })
         ) {
@@ -141,7 +141,7 @@ int main(void) {
                         .height = CLAY_SIZING_FIXED(60),
                         .width = CLAY_SIZING_GROW(0)
                     },
-                    .padding = { 16 },
+                    .padding = { 16, 16, 0, 0 },
                     .childGap = 16,
                     .childAlignment = {
                         .y = CLAY_ALIGN_Y_CENTER
@@ -151,10 +151,10 @@ int main(void) {
                 // Header buttons go here
                 CLAY(
                     CLAY_ID("FileButton"),
-                    CLAY_LAYOUT({ .padding = { 16, 8 }}),
+                    CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
                     CLAY_RECTANGLE({
                         .color = { 140, 140, 140, 255 },
-                        .cornerRadius = 5
+                        .cornerRadius = CLAY_CORNER_RADIUS(5)
                     })
                 ) {
                     CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
@@ -177,7 +177,7 @@ int main(void) {
                                 },
                             }),
                             CLAY_LAYOUT({
-                                .padding = {0, 8 }
+                                .padding = {0, 0, 8, 8 }
                             })
                         ) {
                             CLAY(
@@ -189,7 +189,7 @@ int main(void) {
                                 }),
                                 CLAY_RECTANGLE({
                                     .color = { 40, 40, 40, 255 },
-                                    .cornerRadius = 8
+                                    .cornerRadius = CLAY_CORNER_RADIUS(8)
                                 })
                             ) {
                                 // Render dropdown items here
@@ -216,7 +216,7 @@ int main(void) {
                     CLAY_RECTANGLE(contentBackgroundConfig),
                     CLAY_LAYOUT({
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                        .padding = { 16, 16 },
+                        .padding = CLAY_PADDING_ALL(16),
                         .childGap = 8,
                         .sizing = {
                             .width = CLAY_SIZING_FIXED(250),
@@ -228,7 +228,7 @@ int main(void) {
                         Document document = documents.documents[i];
                         Clay_LayoutConfig sidebarButtonLayout = {
                             .sizing = { .width = CLAY_SIZING_GROW(0) },
-                            .padding = { 16, 16 }
+                            .padding = CLAY_PADDING_ALL(16)
                         };
 
                         if (i == selectedDocumentIndex) {
@@ -236,7 +236,7 @@ int main(void) {
                                 CLAY_LAYOUT(sidebarButtonLayout),
                                 CLAY_RECTANGLE({
                                     .color = { 120, 120, 120, 255 },
-                                    .cornerRadius = 8,
+                                    .cornerRadius = CLAY_CORNER_RADIUS(8),
                                 })
                             ) {
                                 CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
@@ -252,7 +252,7 @@ int main(void) {
                                 Clay_Hovered()
                                     ? CLAY_RECTANGLE({
                                         .color = { 120, 120, 120, 120 },
-                                        .cornerRadius = 8
+                                        .cornerRadius = CLAY_CORNER_RADIUS(8)
                                     })
                                     : 0
                             ) {
@@ -273,7 +273,7 @@ int main(void) {
                     CLAY_LAYOUT({
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         .childGap = 16,
-                        .padding = { 16, 16 },
+                        .padding = CLAY_PADDING_ALL(16),
                         .sizing = layoutExpand
                     })
                 ) {
