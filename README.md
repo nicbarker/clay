@@ -28,17 +28,31 @@ _An example GUI application built with clay_
 #include "clay.h"
 ```
 
-2. Ask clay for how much static memory it needs using [Clay_MinMemorySize()](#clay_minmemorysize), create an Arena for it to use with [Clay_CreateArenaWithCapacityAndMemory(size, void *memory)](#clay_createarenawithcapacityandmemory), and initialize it with [Clay_Initialize(arena, dimensions)](#clay_initialize).
+2. Ask clay for how much static memory it needs using [Clay_MinMemorySize()](#clay_minmemorysize), create an Arena for it to use with [Clay_CreateArenaWithCapacityAndMemory(size, void *memory)](#clay_createarenawithcapacityandmemory).
 
 ```C
 // Note: malloc is only used here as an example, any allocator that provides
 // a pointer to addressable memory of at least totalMemorySize will work
 uint64_t totalMemorySize = Clay_MinMemorySize();
 Clay_Arena arena = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-Clay_Initialize(arena, (Clay_Dimensions) { screenWidth, screenHeight });
 ``` 
 
-3. Provide a `MeasureText(text, config)` function pointer with [Clay_SetMeasureTextFunction(function)](#clay_setmeasuretextfunction) so that clay can measure and wrap text.
+3. Create an [ErrorHandler](#clay_errorhandler) for Clay to call when an internal error occurs, and initialize Clay with the Arena and handler by calling [Clay_Initialize(arena, dimensions, errorHandler)](#clay_initialize).
+
+```C
+void HandleClayErrors(Clay_ErrorData errorData) {
+    // See the Clay_ErrorData struct for more information
+    printf("%s", errorData.errorText.chars);
+    switch(errorData.errorType) {
+        // etc
+    }
+}
+
+// In your startup function
+Clay_Initialize(arena, (Clay_Dimensions) { screenWidth, screenHeight }, (Clay_ErrorHandler) { HandleClayErrors });
+```
+
+4. Provide a `MeasureText(text, config)` function pointer with [Clay_SetMeasureTextFunction(function)](#clay_setmeasuretextfunction) so that clay can measure and wrap text.
 
 ```C
 // Example measure text function
