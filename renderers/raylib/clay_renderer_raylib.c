@@ -87,10 +87,8 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
     return ray;
 }
 
-uint32_t measureCalls = 0;
 
 static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData) {
-    measureCalls++;
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
 
@@ -99,6 +97,9 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
 
     float textHeight = config->fontSize;
     Font fontToUse = Raylib_fonts[config->fontId].font;
+    // Font failed to load, likely the fonts are in the wrong place relative to the execution dir
+    if (!fontToUse.glyphs) return textSize;
+
     float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 
     for (int i = 0; i < text.length; ++i)
@@ -129,7 +130,6 @@ void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned i
 
 void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
 {
-    measureCalls = 0;
     for (int j = 0; j < renderCommands.length; j++)
     {
         Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
