@@ -117,7 +117,7 @@ int main(void) {
 
         Clay_RectangleElementConfig contentBackgroundConfig = {
             .color = { 90, 90, 90, 255 },
-            .cornerRadius = 8
+            .cornerRadius = CLAY_CORNER_RADIUS(8)
         };
 
         Clay_BeginLayout();
@@ -154,7 +154,7 @@ int main(void) {
                     CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
                     CLAY_RECTANGLE({
                         .color = { 140, 140, 140, 255 },
-                        .cornerRadius = 5
+                        .cornerRadius = CLAY_CORNER_RADIUS(5)
                     })
                 ) {
                     CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
@@ -189,7 +189,7 @@ int main(void) {
                                 }),
                                 CLAY_RECTANGLE({
                                     .color = { 40, 40, 40, 255 },
-                                    .cornerRadius = 8
+                                    .cornerRadius = CLAY_CORNER_RADIUS(8)
                                 })
                             ) {
                                 // Render dropdown items here
@@ -236,7 +236,7 @@ int main(void) {
                                 CLAY_LAYOUT(sidebarButtonLayout),
                                 CLAY_RECTANGLE({
                                     .color = { 120, 120, 120, 255 },
-                                    .cornerRadius = 8,
+                                    .cornerRadius = CLAY_CORNER_RADIUS(8),
                                 })
                             ) {
                                 CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
@@ -252,7 +252,7 @@ int main(void) {
                                 Clay_Hovered()
                                     ? CLAY_RECTANGLE({
                                         .color = { 120, 120, 120, 120 },
-                                        .cornerRadius = 8
+                                        .cornerRadius = CLAY_CORNER_RADIUS(8)
                                     })
                                     : 0
                             ) {
