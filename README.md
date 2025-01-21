@@ -811,6 +811,53 @@ An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_ele
 
 ---
 
+### CLAY_ID_LOCAL()
+
+**Usage**
+
+`CLAY(CLAY_ID_LOCAL(char* idString)) {}`
+
+**Lifecycle**
+
+`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_ID_LOCAL()` -> `)` -> `Clay_EndLayout()`
+
+**Notes**
+
+**CLAY_ID_LOCAL()** is used to generate and attach a [Clay_ElementId](#clay_elementid) to a layout element during declaration.
+
+Unlike [CLAY_ID](#clay_id) which needs to be globally unique, a local ID is based on the ID of it's parent and only needs to be unique among its siblings.
+
+As a result, local id is suitable for use in reusable components and loops.
+
+**Examples**
+
+```C
+void RenderHeaderButton(ButtonData button) {
+    CLAY(
+        CLAY_ID_LOCAL("HeaderButton"),
+        CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16) })
+    ) {
+        // ...children
+    }
+}
+
+for (int i = 0; i < headerButtons.length; i++) {
+    RenderHeaderButton(headerButtons.items[i]);
+}
+```
+
+---
+
+---
+
+### CLAY_IDI_LOCAL()
+
+`Clay_ElementId CLAY_IDI_LOCAL(char *label, int index)`
+
+An offset version of [CLAY_ID_LOCAL](#clay_local_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+
+---
+
 ### CLAY_LAYOUT
 
 **Usage**
