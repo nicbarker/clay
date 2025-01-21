@@ -2257,12 +2257,6 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                     *childSize = (parentSize - totalPaddingAndChildGaps) * childSizing.size.percent;
                     if (sizingAlongAxis) {
                         innerContentSize += *childSize;
-                        if (childOffset > 0) {
-                            innerContentSize += parentChildGap; // For children after index 0, the childAxisOffset is the gap from the previous child
-                            totalPaddingAndChildGaps += parentChildGap;
-                        }
-                    } else {
-                        innerContentSize = CLAY__MAX(*childSize, innerContentSize);
                     }
                 }
             }
@@ -2483,9 +2477,6 @@ void Clay__CalculateFinalLayout() {
 
         // DFS node has been visited, this is on the way back up to the root
         Clay_LayoutConfig *layoutConfig = currentElement->layoutConfig;
-        if (layoutConfig->sizing.height.type == CLAY__SIZING_TYPE_PERCENT) {
-            continue;
-        }
         if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
             // Resize any parent containers that have grown in height along their non layout axis
             for (int32_t j = 0; j < currentElement->childrenOrTextContent.children.length; ++j) {
