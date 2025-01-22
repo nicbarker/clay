@@ -2,7 +2,6 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <math.h> //needed to perform the rounded corners rendering
 
 /* This needs to be global because the "MeasureText" callback doesn't have a
  * user data parameter */
@@ -18,8 +17,8 @@ static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, 
 
     int indexCount = 0, vertexCount = 0;
 
-    const float minRadius = fminf(rect.w, rect.h) / 2.0f;
-    const float clampedRadius = fminf(cornerRadius, minRadius);
+    const float minRadius = SDL_min(rect.w, rect.h) / 2.0f;
+    const float clampedRadius = SDL_min(cornerRadius, minRadius);
 
     int totalVertices = 4 + (4 * (NUM_CIRCLE_SEGMENTS * 2)) + 2*4;
     int totalIndices = 6 + (4 * (NUM_CIRCLE_SEGMENTS * 3)) + 6*4;
@@ -41,9 +40,8 @@ static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, 
     indices[indexCount++] = 3;
 
     //define rounded corners as triangle fans
-    const float step = M_PI_2 / NUM_CIRCLE_SEGMENTS;
-    for (int i = 0; i < NUM_CIRCLE_SEGMENTS; i++)
-    {
+    const float step = (SDL_PI_F/2) / NUM_CIRCLE_SEGMENTS;
+    for (int i = 0; i < NUM_CIRCLE_SEGMENTS; i++) {
         const float angle1 = (float)i * step;
         const float angle2 = ((float)i + 1.0f) * step;
 
@@ -58,8 +56,8 @@ static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, 
                 default: SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Invalid corner index"); return;
             }
 
-            vertices[vertexCount++] = (SDL_Vertex){ {cx + cosf(angle1) * clampedRadius * signX, cy + sinf(angle1) * clampedRadius * signY}, color, {0, 0} };
-            vertices[vertexCount++] = (SDL_Vertex){ {cx + cosf(angle2) * clampedRadius * signX, cy + sinf(angle2) * clampedRadius * signY}, color, {0, 0} };
+            vertices[vertexCount++] = (SDL_Vertex){ {cx + SDL_cosf(angle1) * clampedRadius * signX, cy + SDL_sinf(angle1) * clampedRadius * signY}, color, {0, 0} };
+            vertices[vertexCount++] = (SDL_Vertex){ {cx + SDL_cosf(angle2) * clampedRadius * signX, cy + SDL_sinf(angle2) * clampedRadius * signY}, color, {0, 0} };
 
             indices[indexCount++] = j;  // Connect to corresponding central rectangle vertex
             indices[indexCount++] = vertexCount - 2;
