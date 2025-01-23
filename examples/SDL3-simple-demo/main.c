@@ -33,9 +33,13 @@ static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextEl
     return (Clay_Dimensions) { (float) width, (float) height };
 }
 
-static void Label(Clay_String text)
+static void Label(const Clay_String text)
 {
-    CLAY(CLAY_LAYOUT({ .padding = {16, 8} }), CLAY_RECTANGLE({ .color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE })) {
+    CLAY(CLAY_LAYOUT({ .padding = {8, 8} }),
+        CLAY_RECTANGLE({
+            .color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE,
+            .cornerRadius = (Clay_CornerRadius){ 8, 8, 8, 8 },
+        })) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
            .textColor = { 255, 255, 255, 255 },
            .fontId = FONT_ID,
