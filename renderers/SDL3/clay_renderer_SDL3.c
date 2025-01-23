@@ -6,13 +6,12 @@
 /* This needs to be global because the "MeasureText" callback doesn't have a
  * user data parameter */
 static TTF_Font *gFonts[1];
+/* Global for convenience. Even in 4K this is enough for smooth curves (low radius or rect size coupled with
+ * no AA or low resolution might make it appear as jagged curves) */
+static int NUM_CIRCLE_SEGMENTS = 16;
 
-//all rendering is performed  by a single SDL call, avoiding multiple RenderRect + plumbing choice for circles.
-static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, const float cornerRadius, const Clay_Color _color) {
-    /* Even in 4K this is enough for smooth curves (low radius or rect size coupled with
-     * no AA or low resolution might make it appear as jagged curves) */
-    const int NUM_CIRCLE_SEGMENTS = 16;
-
+//all rendering is performed by a single SDL call, avoiding multiple RenderRect + plumbing choice for circles.
+static void SDL_RenderFillRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, const float cornerRadius, const Clay_Color _color) {
     const SDL_FColor color = { _color.r/255, _color.g/255, _color.b/255, _color.a/255 };
 
     int indexCount = 0, vertexCount = 0;
@@ -20,8 +19,10 @@ static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, 
     const float minRadius = SDL_min(rect.w, rect.h) / 2.0f;
     const float clampedRadius = SDL_min(cornerRadius, minRadius);
 
-    int totalVertices = 4 + (4 * (NUM_CIRCLE_SEGMENTS * 2)) + 2*4;
-    int totalIndices = 6 + (4 * (NUM_CIRCLE_SEGMENTS * 3)) + 6*4;
+    const int numCircleSegments = SDL_max(NUM_CIRCLE_SEGMENTS, (int) clampedRadius * 0.5f);
+
+    int totalVertices = 4 + (4 * (numCircleSegments * 2)) + 2*4;
+    int totalIndices = 6 + (4 * (numCircleSegments * 3)) + 6*4;
 
     SDL_Vertex vertices[totalVertices];
     int indices[totalIndices];
@@ -40,8 +41,8 @@ static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, 
     indices[indexCount++] = 3;
 
     //define rounded corners as triangle fans
-    const float step = (SDL_PI_F/2) / NUM_CIRCLE_SEGMENTS;
-    for (int i = 0; i < NUM_CIRCLE_SEGMENTS; i++) {
+    const float step = (SDL_PI_F/2) / numCircleSegments;
+    for (int i = 0; i < numCircleSegments; i++) {
         const float angle1 = (float)i * step;
         const float angle2 = ((float)i + 1.0f) * step;
 
@@ -53,7 +54,7 @@ static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, 
                 case 1: cx = rect.x + rect.w - clampedRadius; cy = rect.y + clampedRadius; signX = 1; signY = -1; break; // Top-right
                 case 2: cx = rect.x + rect.w - clampedRadius; cy = rect.y + rect.h - clampedRadius; signX = 1; signY = 1; break; // Bottom-right
                 case 3: cx = rect.x + clampedRadius; cy = rect.y + rect.h - clampedRadius; signX = -1; signY = 1; break; // Bottom-left
-                default: SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Invalid corner index"); return;
+                default: return;
             }
 
             vertices[vertexCount++] = (SDL_Vertex){ {cx + SDL_cosf(angle1) * clampedRadius * signX, cy + SDL_sinf(angle1) * clampedRadius * signY}, color, {0, 0} };
@@ -111,6 +112,26 @@ static void SDL_RenderRoundedRect(SDL_Renderer *renderer, const SDL_FRect rect, 
     SDL_RenderGeometry(renderer, NULL, vertices, vertexCount, indices, indexCount);
 }
 
+static void SDL_RenderArc(SDL_Renderer *renderer, const SDL_FPoint center, const float radius, const float startAngle, const float endAngle, const float thickness, const Clay_Color color) {
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+
+    const float radStart = startAngle * (SDL_PI_F / 180.0f);
+    const float radEnd = endAngle * (SDL_PI_F / 180.0f);
+
+    const int numCircleSegments = SDL_max(NUM_CIRCLE_SEGMENTS, (int)(radius * 0.5f));
+
+    const float angleStep = (radEnd - radStart) / numCircleSegments;
+    const float halfThickness = thickness * 0.5f;
+    for (float t = -halfThickness; t < halfThickness-0.5f; t += 0.5f) {
+        SDL_FPoint points[numCircleSegments + 1];
+
+        for (int i = 0; i <= numCircleSegments; i++) {
+            const float angle = radStart + i * angleStep;
+            points[i] = (SDL_FPoint){ center.x + SDL_cosf(angle) * (radius + t), center.y + SDL_sinf(angle) * (radius + t) };
+        }
+        SDL_RenderLines(renderer, points, numCircleSegments + 1);
+    }
+}
 
 static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArray *rcommands)
 {
@@ -126,9 +147,7 @@ static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArr
 
                 SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
                 if (config->cornerRadius.topLeft > 0) {
-                    //const float radius = (config->cornerRadius.topLeft * 2) / (float)((bounding_box.width > bounding_box.height) ? bounding_box.height : bounding_box.width);
-                    //SDL_RenderRoundedRect(renderer, rect, radius, color);
-                    SDL_RenderRoundedRect(renderer, rect, config->cornerRadius.topLeft, color);
+                    SDL_RenderFillRoundedRect(renderer, rect, config->cornerRadius.topLeft, color);
                 } else {
                     SDL_RenderFillRect(renderer, &rect);
                 }
@@ -145,6 +164,64 @@ static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArr
 
                 SDL_DestroySurface(surface);
                 SDL_DestroyTexture(texture);
+            } break;
+            case CLAY_RENDER_COMMAND_TYPE_BORDER: {
+                const Clay_BorderElementConfig *config = rcmd->config.borderElementConfig;
+
+                const float minRadius = SDL_min(rect.w, rect.h) / 2.0f;
+                const Clay_CornerRadius clampedRadii = {
+                    .topLeft = SDL_min(config->cornerRadius.topLeft, minRadius),
+                    .topRight = SDL_min(config->cornerRadius.topRight, minRadius),
+                    .bottomLeft = SDL_min(config->cornerRadius.bottomLeft, minRadius),
+                    .bottomRight = SDL_min(config->cornerRadius.bottomRight, minRadius)
+                };
+                //edges
+                if (config->left.width > 0) {
+                    const float starting_y = rect.y + (float)clampedRadii.topLeft;
+                    const float length = rect.h - (float)clampedRadii.topLeft - (float)clampedRadii.bottomLeft;
+                    SDL_FRect line = { rect.x, starting_y, config->left.width, length };
+                    SDL_SetRenderDrawColor(renderer, config->left.color.r, config->left.color.g, config->left.color.b, config->left.color.a);
+                    SDL_RenderFillRect(renderer, &line);
+                }
+                if (config->right.width > 0) {
+                    const float starting_x = rect.x + rect.w - (float)config->right.width;
+                    const float starting_y = rect.y + (float)clampedRadii.topRight;
+                    const float length = rect.h - (float)clampedRadii.topRight - (float)clampedRadii.bottomRight;
+                    SDL_FRect line = { starting_x, starting_y, config->right.width, length };
+                    SDL_RenderFillRect(renderer, &line);
+                }
+                if (config->top.width > 0) {
+                    const float starting_x = rect.x + (float)clampedRadii.topLeft;
+                    const float length = rect.w - (float)clampedRadii.topLeft - (float)clampedRadii.topRight;
+                    SDL_FRect line = { starting_x, rect.y, length, config->top.width };
+                    SDL_RenderFillRect(renderer, &line);
+                }
+                if (config->bottom.width > 0) {
+                    const float starting_x = rect.x + (float)clampedRadii.bottomLeft;
+                    const float starting_y = rect.y + rect.h - (float)config->bottom.width;
+                    const float length = rect.w - (float)clampedRadii.bottomLeft - (float)clampedRadii.bottomRight;
+                    SDL_FRect line = { starting_x, starting_y, length, config->bottom.width };
+                    SDL_SetRenderDrawColor(renderer, config->bottom.color.r, config->bottom.color.g, config->bottom.color.b, config->bottom.color.a);
+                    SDL_RenderFillRect(renderer, &line);
+                }
+                //corners
+                if (config->cornerRadius.topLeft > 0) {
+                    SDL_RenderArc(renderer, (SDL_FPoint){rect.x + clampedRadii.topLeft, rect.y + clampedRadii.topLeft},
+                        clampedRadii.topLeft, 180.0f, 270.0f, config->top.width, config->top.color);
+                }
+                if (config->cornerRadius.topRight > 0) {
+                    SDL_RenderArc(renderer, (SDL_FPoint){rect.x + rect.w - clampedRadii.topRight - config->right.width, rect.y + clampedRadii.topRight},
+                        clampedRadii.topRight, 270.0f, 360.0f, config->top.width, config->top.color);
+                }
+                if (config->cornerRadius.bottomLeft > 0) {
+                    SDL_RenderArc(renderer, (SDL_FPoint){rect.x + clampedRadii.bottomLeft, rect.y + rect.h - clampedRadii.bottomLeft - config->bottom.width},
+                        clampedRadii.bottomLeft, 90.0f, 180.0f, config->bottom.width, config->bottom.color);
+                }
+                if (config->cornerRadius.bottomRight > 0) {
+                    SDL_RenderArc(renderer, (SDL_FPoint){rect.x + rect.w - clampedRadii.bottomRight - config->left.width, rect.y + rect.h - clampedRadii.bottomRight - config->bottom.width},
+                        clampedRadii.bottomRight, 0.0f, 90.0f, config->bottom.width, config->bottom.color);
+                }
+
             } break;
             default:
                 SDL_Log("Unknown render command type: %d", rcmd->commandType);
