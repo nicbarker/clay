@@ -1,5 +1,5 @@
-cmake-build-debug/
-cmake-build-release/
+cmake-build-*/
+build/
 .DS_Store
 .idea/
 node_modules/
