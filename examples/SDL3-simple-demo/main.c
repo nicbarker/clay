@@ -48,13 +48,13 @@ static void Label(const Clay_String text, const int cornerRadius)
    }
 }
 
-static void LabelBorder(const Clay_String text, const int cornerRadius)
+static void LabelBorder(const Clay_String text, const int cornerRadius, const int thickness)
 {
     CLAY(
         CLAY_LAYOUT({
-            .padding = {8, 8} }),
+            .padding = {16, 16, 8, 8 } }),
             CLAY_BORDER_OUTSIDE_RADIUS(
-                2,
+                thickness,
                 COLOR_BLUE,
                 cornerRadius)
     ){
@@ -92,11 +92,12 @@ static Clay_RenderCommandArray Clay_CreateLayout()
             .color = COLOR_LIGHT,
         })
     ) {
-        Label(CLAY_STRING("Rounded - Button 1"), 5);
+        Label(CLAY_STRING("Rounded - Button 1"), 10);
         Label(CLAY_STRING("Straight - Button 2") , 0);
         Label(CLAY_STRING("Rounded+ - Button 3") , 20);
-        LabelBorder(CLAY_STRING("Border - Button 4"), 0);
-        LabelBorder(CLAY_STRING("RoundedBorder - Button 5"), 10);
+        LabelBorder(CLAY_STRING("Border - Button 4"), 0, 5);
+        LabelBorder(CLAY_STRING("RoundedBorder - Button 5"), 10, 5);
+        LabelBorder(CLAY_STRING("RoundedBorder - Button 6"), 40, 15);
     }
     return Clay_EndLayout();
 }
