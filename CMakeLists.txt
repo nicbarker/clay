@@ -3,8 +3,8 @@ project(clay)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-option(CLAY_INCLUDE_ALL_EXAMPLES "Build all examples" OFF)
-option(CLAY_INCLUDE_DEMOS "Build video demo and website" ON)
+option(CLAY_INCLUDE_ALL_EXAMPLES "Build all examples" ON)
+option(CLAY_INCLUDE_DEMOS "Build video demo and website" OFF)
 option(CLAY_INCLUDE_CPP_EXAMPLE "Build C++ example" OFF)
 option(CLAY_INCLUDE_RAYLIB_EXAMPLES "Build raylib examples" OFF)
 option(CLAY_INCLUDE_SDL2_EXAMPLES "Build SDL 2 examples" OFF)
