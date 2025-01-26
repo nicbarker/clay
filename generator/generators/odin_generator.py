@@ -81,6 +81,9 @@ STRUCT_TYPE_OVERRIDES = {
     'Clay_SizingAxis': {
         'size': 'SizingConstraints',
     },
+    "Clay_RenderCommand": {
+        "zIndex": 'i32',
+    },
 }
 STRUCT_MEMBER_OVERRIDES = {
     'Clay_ErrorHandler': {
@@ -105,7 +108,14 @@ FUNCTION_TYPE_OVERRIDES = {
         'offset': '[^]u8',
     },
     'Clay_SetMeasureTextFunction': {
-        'measureTextFunction': 'proc "c" (text: ^String, config: ^TextElementConfig) -> Dimensions',
+        'measureTextFunction': 'proc "c" (text: ^StringSlice, config: ^TextElementConfig, userData: uintptr) -> Dimensions',
+        'userData': 'uintptr',
+    },
+    'Clay_RenderCommandArray_Get': {
+        'index': 'i32',
+    },
+    "Clay__AttachElementConfig": {
+        "config": 'rawptr',
     },
 }
 
@@ -161,7 +171,8 @@ class OdinGenerator(BaseGenerator):
         return None
 
     def generate_structs(self) -> None:
-        for struct, members in sorted(self.extracted_symbols.structs.items(), key=lambda x: x[0]):
+        for struct, struct_data in sorted(self.extracted_symbols.structs.items(), key=lambda x: x[0]):
+            members = struct_data['attrs']
             if not struct.startswith('Clay_'):
                 continue
             if struct in SYMBOL_COMPLETE_OVERRIDES:
@@ -188,8 +199,10 @@ class OdinGenerator(BaseGenerator):
                 self._write('struct', "")
                 continue
 
+            raw_union = ' #raw_union' if struct_data.get('is_union', False) else ''
+
             self._write('struct', f"// {struct}")
-            self._write('struct', f"{binding_name} :: struct {{")
+            self._write('struct', f"{binding_name} :: struct{raw_union} {{")
 
             for member, member_info in members.items():
                 if struct in STRUCT_TYPE_OVERRIDES and member in STRUCT_TYPE_OVERRIDES[struct]:
@@ -275,5 +288,6 @@ class OdinGenerator(BaseGenerator):
                 continue
 
             binding_params_str = ', '.join(binding_params)
-            self._write(write_to, f"    {binding_name} :: proc({binding_params_str}) -> {binding_return_type} --- // {function}")
+            return_str = f" -> {binding_return_type}" if binding_return_type != 'void' else ''
+            self._write(write_to, f"    {binding_name} :: proc({binding_params_str}){return_str} --- // {function}")
             
