@@ -184,7 +184,8 @@ ElementConfigUnion :: struct #raw_union {
 RenderCommand :: struct {
     boundingBox: BoundingBox,
     config:      ElementConfigUnion,
-    text:        String,
+    text:        StringSlice,
+    zIndex:      i32,
     id:          u32,
     commandType: RenderCommandType,
 }

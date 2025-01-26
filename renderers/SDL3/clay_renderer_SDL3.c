@@ -158,7 +158,7 @@ static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArr
             } break;
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 const Clay_TextElementConfig *config = rcmd->config.textElementConfig;
-                const Clay_String *text = &rcmd->text;
+                const Clay_StringSlice *text = &rcmd->text;
                 const SDL_Color color = { config->textColor.r, config->textColor.g, config->textColor.b, config->textColor.a };
 
                 TTF_Font *font = gFonts[config->fontId];

@@ -96,6 +96,11 @@
         {name: 'length', type: 'uint32_t' },
         {name: 'chars', type: 'uint32_t' },
     ]};
+    let stringSliceDefinition = { type: 'struct', members: [
+        {name: 'length', type: 'uint32_t' },
+        {name: 'chars', type: 'uint32_t' },
+        {name: 'baseChars', type: 'uint32_t' },
+    ]};
     let borderDefinition = { type: 'struct', members: [
         {name: 'width', type: 'uint32_t'},
         {name: 'color', ...colorDefinition},
@@ -155,7 +160,8 @@
                 { name: 'height', type: 'float' },
             ]},
             { name: 'config', type: 'uint32_t'},
-            { name: 'text', ...stringDefinition },
+            { name: 'text', ...stringSliceDefinition },
+            { name: 'zIndex', type: 'int32_t' },
             { name: 'id', type: 'uint32_t' },
             { name: 'commandType', type: 'uint32_t', },
         ]
