@@ -1,5 +1,4 @@
 Please note, the SDL3 renderer is not 100% feature complete. It is currently missing:
 
-- Borders
 - Images
 - Scroll / Scissor handling

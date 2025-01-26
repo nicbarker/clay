@@ -33,12 +33,12 @@ static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextEl
     return (Clay_Dimensions) { (float) width, (float) height };
 }
 
-static void Label(const Clay_String text)
+static void Label(const Clay_String text, const int cornerRadius)
 {
     CLAY(CLAY_LAYOUT({ .padding = {8, 8} }),
         CLAY_RECTANGLE({
             .color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE,
-            .cornerRadius = (Clay_CornerRadius){ 8, 8, 8, 8 },
+            .cornerRadius = cornerRadius,
         })) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
            .textColor = { 255, 255, 255, 255 },
@@ -46,6 +46,24 @@ static void Label(const Clay_String text)
            .fontSize = 24,
         }));
    }
+}
+
+static void LabelBorder(const Clay_String text, const int cornerRadius, const int thickness)
+{
+    CLAY(
+        CLAY_LAYOUT({
+            .padding = {16, 16, 8, 8 } }),
+            CLAY_BORDER_OUTSIDE_RADIUS(
+                thickness,
+                COLOR_BLUE,
+                cornerRadius)
+    ){
+        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
+           .textColor = { 255, 255, 255, 255 },
+           .fontId = FONT_ID,
+           .fontSize = 24,
+        }));
+    }
 }
 
 static Clay_RenderCommandArray Clay_CreateLayout()
@@ -65,13 +83,21 @@ static Clay_RenderCommandArray Clay_CreateLayout()
             .padding = { 10, 10 },
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }),
+        CLAY_BORDER({
+            .left = { 20, COLOR_BLUE },
+            .right = { 20, COLOR_BLUE },
+            .bottom = { 20, COLOR_BLUE }
+        }),
         CLAY_RECTANGLE({
             .color = COLOR_LIGHT,
         })
     ) {
-        Label(CLAY_STRING("Button 1"));
-        Label(CLAY_STRING("Button 2"));
-        Label(CLAY_STRING("Button 3"));
+        Label(CLAY_STRING("Rounded - Button 1"), 10);
+        Label(CLAY_STRING("Straight - Button 2") , 0);
+        Label(CLAY_STRING("Rounded+ - Button 3") , 20);
+        LabelBorder(CLAY_STRING("Border - Button 4"), 0, 5);
+        LabelBorder(CLAY_STRING("RoundedBorder - Button 5"), 10, 5);
+        LabelBorder(CLAY_STRING("RoundedBorder - Button 6"), 40, 15);
     }
     return Clay_EndLayout();
 }
