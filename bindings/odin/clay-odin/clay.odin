@@ -185,7 +185,7 @@ RenderCommand :: struct {
     boundingBox: BoundingBox,
     config:      ElementConfigUnion,
     text:        StringSlice,
-    zIndex:      u32,
+    zIndex:      i32,
     id:          u32,
     commandType: RenderCommandType,
 }
