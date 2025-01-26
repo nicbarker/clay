@@ -58,7 +58,7 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
             }
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 Clay_TextElementConfig *config = renderCommand->config.textElementConfig;
-                Clay_String text = renderCommand->text;
+                Clay_StringSlice text = renderCommand->text;
                 char *cloned = (char *)calloc(text.length + 1, 1);
                 memcpy(cloned, text.chars, text.length);
                 TTF_Font* font = fonts[config->fontId].font;

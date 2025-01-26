@@ -138,7 +138,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
         {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
-                Clay_String text = renderCommand->text;
+                Clay_StringSlice text = renderCommand->text;
                 char *cloned = (char *)malloc(text.length + 1);
                 memcpy(cloned, text.chars, text.length);
                 cloned[text.length] = '\0';
