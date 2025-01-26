@@ -61,6 +61,7 @@ TYPE_MAPPING = {
     'uint32_t': 'u32',
     'int32_t': 'c.int32_t',
     'uintptr_t': 'rawptr',
+    'intptr_t': 'rawptr',
     'void': 'void',
 }
 STRUCT_TYPE_OVERRIDES = {
