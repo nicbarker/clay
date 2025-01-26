@@ -788,7 +788,7 @@ if (buttonIsHovered && leftMouseButtonPressed) {
 
 ### CLAY_IDI()
 
-`Clay_ElementId CLAY_IDI(char *label, int index)`
+`Clay_ElementId CLAY_IDI(char *label, int32_t index)`
 
 An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
 
@@ -835,7 +835,7 @@ for (int i = 0; i < headerButtons.length; i++) {
 
 ### CLAY_IDI_LOCAL()
 
-`Clay_ElementId CLAY_IDI_LOCAL(char *label, int index)`
+`Clay_ElementId CLAY_IDI_LOCAL(char *label, int32_t index)`
 
 An offset version of [CLAY_ID_LOCAL](#clay_local_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
 
