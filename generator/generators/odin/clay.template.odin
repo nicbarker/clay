@@ -40,6 +40,12 @@ SizingConstraints :: struct #raw_union {
     sizePercent: c.float,
 }
 
+TypedConfig :: struct {
+    type:   ElementConfigType,
+    config: rawptr,
+    id:     ElementId,
+}
+
 {{structs}}
 
 @(link_prefix = "Clay_", default_calling_convention = "c")

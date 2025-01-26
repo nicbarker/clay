@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, NotRequired
 from pycparser import c_ast, parse_file, preprocess_file
 from pathlib import Path
 import os
@@ -16,7 +16,10 @@ class ExtractedStructAttribute(TypedDict):
     type: Optional[str]
     union: Optional[dict[str, Optional[str]]]
 
-ExtractedStruct = dict[str, ExtractedStructAttribute]
+class ExtractedStruct(TypedDict):
+    attrs: dict[str, ExtractedStructAttribute]
+    is_union: NotRequired[bool]
+
 ExtractedEnum = dict[str, Optional[str]]
 ExtractedFunctionParam = tuple[str, Optional[str]]
 
@@ -50,7 +53,7 @@ class Visitor(c_ast.NodeVisitor):
 
     def visit_FuncDecl(self, node: c_ast.FuncDecl):
         # node.show()
-        logger.debug(node)
+        # logger.debug(node)
         node_type = node.type
         is_pointer = False
         if isinstance(node.type, c_ast.PtrDecl):
@@ -80,7 +83,9 @@ class Visitor(c_ast.NodeVisitor):
                 struct[decl.name] = {
                     "type": get_type_names(decl),
                 }
-            self.structs[node.name] = struct
+            self.structs[node.name] = {
+                'attrs': struct,
+            }
         self.generic_visit(node)
 
     def visit_Typedef(self, node: c_ast.Typedef):
@@ -99,7 +104,11 @@ class Visitor(c_ast.NodeVisitor):
                     struct[decl.name] = {
                         "type": get_type_names(decl),
                     }
-            self.structs[node.name] = struct
+
+            self.structs[node.name] = {
+                'attrs': struct,
+                'is_union': isinstance(node.type.type, c_ast.Union),
+            }
         if hasattr(node.type, 'type') and isinstance(node.type.type, c_ast.Enum):
             enum = {}
             for enumerator in node.type.type.values.enumerators:
