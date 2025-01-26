@@ -157,7 +157,7 @@ class OdinGenerator(BaseGenerator):
             return_type_str = ' -> ' + self.format_type(type['return_type'])
         return f"proc \"c\" ({', '.join(parameter_strs)}){return_type_str}"
     
-    def resolve_binding_type(self, symbol: str, member: str | None, member_type: ExtractedSymbolType | None, type_overrides: dict[str, dict[str, str]]) -> ExtractedSymbolType | None:
+    def resolve_binding_type(self, symbol: str, member: str | None, member_type: ExtractedSymbolType | None, type_overrides: dict[str, dict[str, str]]) -> str | None:
         if isinstance(member_type, str):
             if member_type in SYMBOL_COMPLETE_OVERRIDES:
                 return SYMBOL_COMPLETE_OVERRIDES[member_type]
@@ -184,10 +184,10 @@ class OdinGenerator(BaseGenerator):
         resolved_return_type = self.resolve_binding_type(symbol, None, member_type['return_type'], type_overrides)
         if resolved_return_type is None:
             return None
-        return {
+        return self.format_type({
             "params": resolved_parameters,
             "return_type": resolved_return_type,
-        }
+        })
 
     def generate_structs(self) -> None:
         for struct, struct_data in sorted(self.extracted_symbols.structs.items(), key=lambda x: x[0]):
@@ -243,7 +243,6 @@ class OdinGenerator(BaseGenerator):
                 if member_binding_type is None:
                     self._write('struct', f"    // {binding_member_name} ({member_type}) - has no mapping")
                     continue
-                member_binding_type = self.format_type(member_binding_type)
                 self._write('struct', f"    {binding_member_name}: {member_binding_type}, // {member} ({member_type})")
             self._write('struct', "}")
             self._write('struct', '')
@@ -295,7 +294,6 @@ class OdinGenerator(BaseGenerator):
             if binding_return_type is None:
                 self._write(write_to, f"    // {function} ({return_type}) - has no mapping")
                 continue
-            binding_return_type = self.format_type(binding_return_type)
 
             skip = False
             binding_params = []
@@ -306,8 +304,6 @@ class OdinGenerator(BaseGenerator):
                 binding_param_type = self.resolve_binding_type(function, param_name, param_type, FUNCTION_TYPE_OVERRIDES)
                 if binding_param_type is None:
                     skip = True
-                else:
-                    binding_param_type = self.format_type(binding_param_type)
                 binding_params.append(f"{binding_param_name}: {binding_param_type}")
             if skip:
                 self._write(write_to, f"    // {function} - has no mapping")
