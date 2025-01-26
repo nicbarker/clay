@@ -103,8 +103,6 @@ class Visitor(c_ast.NodeVisitor):
     def visit_Typedef(self, node: c_ast.Typedef):
         # node.show()
         if hasattr(node.type, 'type') and hasattr(node.type.type, 'decls') and node.type.type.decls:
-            if node.name == "Clay_ErrorHandler":
-                logger.debug(node)
             struct = {}
             for decl in node.type.type.decls:
                 if hasattr(decl, 'type') and hasattr(decl.type, 'type') and isinstance(decl.type.type, c_ast.Union):
