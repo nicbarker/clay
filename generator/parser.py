@@ -132,7 +132,7 @@ class Visitor(c_ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def parse_headers(input_files: list[Path], output_dir: Path, tmp_dir: Path) -> ExtractedSymbols:
+def parse_headers(input_files: list[Path], tmp_dir: Path) -> ExtractedSymbols:
     cpp_args = ["-nostdinc", "-D__attribute__(x)=", "-E"]
 
     # Make a new clay.h that combines the provided input files, so that we can add bindings for customized structs

@@ -37,6 +37,7 @@ class BaseGenerator:
 
     def write_outputs(self, output_dir: Path) -> None:
         for file_name, content in self.output_content.items():
+            (output_dir / file_name).parent.mkdir(parents=True, exist_ok=True)
             with open(output_dir / file_name, 'w') as f:
                 f.write("\n".join(content))
 
