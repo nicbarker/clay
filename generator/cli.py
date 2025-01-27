@@ -57,7 +57,7 @@ def main() -> None:
     logger.info(f'Generator: {args.generator}')
 
     logger.info('Parsing headers')
-    extracted_symbols = parse_headers(input_files, output_dir, tmp_dir)
+    extracted_symbols = parse_headers(input_files, tmp_dir)
     with open(tmp_dir / 'extracted_symbols.json', 'w') as f:
         f.write(json.dumps({
             'structs': extracted_symbols.structs,
