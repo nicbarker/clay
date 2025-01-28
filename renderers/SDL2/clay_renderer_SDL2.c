@@ -117,42 +117,32 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
 
                 if (config->left.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->left.color));
-                    {
-                        SDL_FRect rect = { boundingBox.x, boundingBox.y + config->cornerRadius.topLeft, config->left.width, boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft };
-                        SDL_RenderFillRectF(renderer, &rect);
-                    }
+                    SDL_FRect rect = { boundingBox.x, boundingBox.y + config->cornerRadius.topLeft, config->left.width, boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft };
+                    SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->right.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    {
-                        SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
-                        SDL_RenderFillRectF(renderer, &rect);
-                    }
+                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
+                    SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->right.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    {
-                        SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
-                        SDL_RenderFillRectF(renderer, &rect);
-                    }
+                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
+                    SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->top.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    {
-                        SDL_FRect rect = { boundingBox.x + config->cornerRadius.topLeft, boundingBox.y, boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight, config->top.width };
-                        SDL_RenderFillRectF(renderer, &rect);
-                    }
+                    SDL_FRect rect = { boundingBox.x + config->cornerRadius.topLeft, boundingBox.y, boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight, config->top.width };
+                    SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->bottom.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->bottom.color));
-                    {
-                        SDL_FRect rect = { boundingBox.x + config->cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->bottom.width, boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight, config->bottom.width };
-                        SDL_RenderFillRectF(renderer, &rect);
-                    }
+                    SDL_FRect rect = { boundingBox.x + config->cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->bottom.width, boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight, config->bottom.width };
+                    SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 break;
