@@ -14,6 +14,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifdef __JETBRAINS_IDE__
+// Help jetbrains IDEs like CLion and Rider with intellisense & debugging
+#define CLAY_IMPLEMENTATION
+#endif
+
 // -----------------------------------------
 // HEADER DECLARATIONS ---------------------
 // -----------------------------------------
