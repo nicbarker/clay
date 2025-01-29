@@ -856,13 +856,15 @@ struct Clay_Context {
 
 Clay_Context* Clay__Context_Allocate_Arena(Clay_Arena *arena) {
     size_t totalSizeBytes = sizeof(Clay_Context);
-    uintptr_t nextAllocOffset = arena->nextAllocation + (64 - (arena->nextAllocation % 64));
+    uintptr_t memoryAddress = (uintptr_t)arena->memory;
+    // Make sure the memory address passed in for clay to use is cache line aligned
+    uintptr_t nextAllocOffset = (memoryAddress % 64);
     if (nextAllocOffset + totalSizeBytes > arena->capacity)
     {
         return NULL;
     }
     arena->nextAllocation = nextAllocOffset + totalSizeBytes;
-    return (Clay_Context*)((uintptr_t)arena->memory + nextAllocOffset);
+    return (Clay_Context*)(memoryAddress + nextAllocOffset);
 }
 
 Clay_String Clay__WriteStringToCharBuffer(Clay__charArray *buffer, Clay_String string) {
