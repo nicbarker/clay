@@ -54,7 +54,7 @@
 
 #define CLAY_FLOATING(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(CLAY__CONFIG_WRAPPER(Clay_FloatingElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)
 
-#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__INIT(Clay_CustomElementConfig, __VA_ARGS__)))}, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM)
+#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__CONFIG_WRAPPER(Clay_CustomElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM)
 
 #define CLAY_SCROLL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__CONFIG_WRAPPER(Clay_ScrollElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)
 
@@ -70,7 +70,7 @@
 
 #define CLAY_CORNER_RADIUS(radius) (CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius })
 
-#define CLAY_PADDING_ALL(padding) CLAY__INIT(Clay_Padding) { padding, padding, padding, padding }
+#define CLAY_PADDING_ALL(padding) CLAY__CONFIG_WRAPPER(Clay_Padding, { padding, padding, padding, padding })
 
 #define CLAY_SIZING_FIT(...) (CLAY__INIT(Clay_SizingAxis) { .size = { .minMax = { __VA_ARGS__ } }, .type = CLAY__SIZING_TYPE_FIT })
 
@@ -283,6 +283,8 @@ typedef struct {
     uint16_t top;
     uint16_t bottom;
 } Clay_Padding;
+
+CLAY__WRAPPER_STRUCT(Clay_Padding);
 
 typedef struct {
     Clay_Sizing sizing;
@@ -1786,7 +1788,7 @@ bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
            (boundingBox->y + boundingBox->height < 0);
 }
 
-void Clay__CalculateFinalLayout() {
+void Clay__CalculateFinalLayout(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     // Calculate sizing along the X axis
     Clay__SizeContainersAlongAxis(true);
@@ -2642,7 +2644,7 @@ void HandleDebugViewCloseButtonInteraction(Clay_ElementId elementId, Clay_Pointe
     }
 }
 
-void Clay__RenderDebugView() {
+void Clay__RenderDebugView(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay_ElementId closeButtonId = Clay__HashString(CLAY_STRING("Clay__DebugViewTopHeaderCloseButtonOuter"), 0, 0);
     if (context->pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
@@ -3337,7 +3339,7 @@ void Clay_BeginLayout(void) {
 Clay_TextElementConfig Clay__DebugView_ErrorTextConfig = {.textColor = {255, 0, 0, 255}, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE };
 
 CLAY_WASM_EXPORT("Clay_EndLayout")
-Clay_RenderCommandArray Clay_EndLayout() {
+Clay_RenderCommandArray Clay_EndLayout(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__CloseElement();
     if (context->debugModeEnabled) {
