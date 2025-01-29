@@ -1189,6 +1189,7 @@ Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Cl
         if (hashItem->elementId.id == elementId.id) { // Collision - resolve based on generation
             item.nextIndex = hashItem->nextIndex;
             if (hashItem->generation <= context->generation) { // First collision - assume this is the "same" element
+		hashItem->elementId = elementId; // Make sure to copy this across. If the stringId reference has changed, we should update the hash item to use the new one.
                 hashItem->generation = context->generation + 1;
                 hashItem->layoutElement = layoutElement;
                 hashItem->debugData->collision = false;
