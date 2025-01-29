@@ -111,12 +111,13 @@ TextWrapMode :: enum EnumBackingType {
 }
 
 TextElementConfig :: struct {
-    textColor:     Color,
-    fontId:        u16,
-    fontSize:      u16,
-    letterSpacing: u16,
-    lineHeight:    u16,
-    wrapMode:      TextWrapMode,
+    textColor:          Color,
+    fontId:             u16,
+    fontSize:           u16,
+    letterSpacing:      u16,
+    lineHeight:         u16,
+    wrapMode:           TextWrapMode,
+    hashStringContents: bool,
 }
 
 ImageElementConfig :: struct {
