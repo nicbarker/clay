@@ -3066,7 +3066,7 @@ uint32_t Clay_MinMemorySize(void) {
     Clay__Context_Allocate_Arena(&fakeContext.internalArena);
     Clay__InitializePersistentMemory(&fakeContext);
     Clay__InitializeEphemeralMemory(&fakeContext);
-    return fakeContext.internalArena.nextAllocation;
+    return fakeContext.internalArena.nextAllocation + 128;
 }
 
 CLAY_WASM_EXPORT("Clay_CreateArenaWithCapacityAndMemory")
