@@ -57,14 +57,12 @@ Clay C3 Macro System
 ## To Get Started:
 - Download c3c [here](https://c3-lang.org/getting-started/prebuilt-binaries/)
 - If you wish to compile the website-example, I've already provided a target to build in the [project.json](project.json)
-[Photo of project.json goes here]
-- - set your `cd` to this project dir
-- - The use the `c3c vendor-fetch raylib55` command to download a c3 compressed archive of raylib
+- - set your `cd` to [c3](./)
+- - use the `c3c vendor-fetch raylib55` command to download a c3 compressed archive of raylib
 - - - *once you have raylib55.c3l in the [lib](lib) folder you've got it right* 
-- - - (*note: for the current configuration you'll need to modify the default raylib module name in the raylib.c3i file in [build](build) from `raylib55::li` to `module raylib`*)
 - - then use the command `c3c run video-example` to compile and run the video example
-- - - (*note: to use the `c3c build <target>` command with video-example, you'll need to copy the resource folder into the [build](build) directory to run it
-- - - `run` executes the build result from the project directory, somehow. This means that `run` will look for the resource folder in [c3](../c3), while `build` will look for it in [build](build))
+- - - (*note: to use the `c3c build <target>` command with video-example, you'll need to copy the resource folder into the [build](build) directory to run it*
+- - - *`run` executes the build result from the project directory, somehow. This means that `run` will look for the resource folder in [c3](../c3), while `build` will look for it in [build](build)*)
 
 ## RESOURCES:
 ### - [C3](https://github.com/c3lang/c3c.git) (A C-a-like, that aims to bring modern language QA features and a revamped Macro system to C)
