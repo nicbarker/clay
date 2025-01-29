@@ -1,6 +1,6 @@
 # Clay-C3-Bindings
 C3 Bindings for [Clay](https://github.com/nicbarker/clay.git), a UI layout library written in C.
-This directory contains the clay.c3 bindings file as well as a recreation of the clay-raylibs binding and the video-example raylib project.
+This directory contains the clay.c3 bindings file as well as a recreation of the clay-raylib-renderer and the video-example raylib/clay project.
 
 Special thanks to:
 - [Christoffer L](https://github.com/lerno) C3's core developer (as I understand it)
@@ -35,7 +35,7 @@ CLAY(
 Clay C3 Macro System
 ```cpp
 /* FILTER BUTTON */
-clay::clay(
+@clay(
     clay::id("FilterButton"),
     clay::@bodyIf(clay::hovered(), clay::rectangle({
             .color = clay::hovered() ? FIRE_ORANGE : {80, 25, 200, 255},
@@ -61,9 +61,9 @@ clay::clay(
 - - set your `cd` to this project dir
 - - The use the `c3c vendor-fetch raylib55` command to download a c3 compressed archive of raylib
 - - - *once you have raylib55.c3l in the [lib](lib) folder you've got it right* 
-- - - (*note: for the current configuration you'll need to modify the default raylib module name in th raylib.c3i file in [build](build) directory from `raylib55::li` to `module raylib`*)
-- - then simple use the command `c3c run video-example` to compile and run that video example
-- - - (*note: to use the `c3c build <target>` command with video-example, you'll need to copy the resource folder into the [build](build) directory with the execute to run it
+- - - (*note: for the current configuration you'll need to modify the default raylib module name in the raylib.c3i file in [build](build) from `raylib55::li` to `module raylib`*)
+- - then use the command `c3c run video-example` to compile and run the video example
+- - - (*note: to use the `c3c build <target>` command with video-example, you'll need to copy the resource folder into the [build](build) directory to run it
 - - - `run` executes the build result from the project directory, somehow. This means that `run` will look for the resource folder in [c3](../c3), while `build` will look for it in [build](build))
 
 ## RESOURCES:
