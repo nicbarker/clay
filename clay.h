@@ -324,6 +324,7 @@ typedef struct {
     uint16_t letterSpacing;
     uint16_t lineHeight;
     Clay_TextElementConfigWrapMode wrapMode;
+    bool hashStringContents;
     #ifdef CLAY_EXTEND_CONFIG_TEXT
     CLAY_EXTEND_CONFIG_TEXT
     #endif
@@ -987,9 +988,18 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
     uint32_t hash = 0;
     uintptr_t pointerAsNumber = (uintptr_t)text->chars;
 
-    hash += pointerAsNumber;
-    hash += (hash << 10);
-    hash ^= (hash >> 6);
+    if (config->hashStringContents) {
+        uint32_t maxLengthToHash = CLAY__MIN(text->length, 256);
+        for (int i = 0; i < maxLengthToHash; i++) {
+            hash += text->chars[i];
+            hash += (hash << 10);
+            hash ^= (hash >> 6);
+        }
+    } else {
+        hash += pointerAsNumber;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
 
     hash += text->length;
     hash += (hash << 10);
