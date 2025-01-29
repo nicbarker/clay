@@ -13,7 +13,9 @@ int main(void) {
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, (char *)malloc(totalMemorySize));
     Clay_Initialize(clayMemory, Clay_Dimensions {1024,768}, Clay_ErrorHandler { HandleClayErrors });
     Clay_BeginLayout();
-    CLAY(CLAY_RECTANGLE({ .color = {255,255,255,0} }), CLAY_LAYOUT(layoutElement)) {}
+    CLAY(CLAY_RECTANGLE({ .color = {255,255,255,0} }), CLAY_LAYOUT(layoutElement)) {
+        CLAY_TEXT(CLAY_STRING(""), CLAY_TEXT_CONFIG({ .fontId = 0 }));
+    }
     Clay_EndLayout();
     return 0;
 }

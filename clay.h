@@ -44,21 +44,21 @@
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define CLAY_LAYOUT(...) Clay__AttachLayoutConfig(Clay__StoreLayoutConfig(CLAY__INIT(Clay_LayoutConfig) __VA_ARGS__))
+#define CLAY_LAYOUT(...) Clay__AttachLayoutConfig(Clay__StoreLayoutConfig(CLAY__CONFIG_WRAPPER(Clay_LayoutConfig, __VA_ARGS__)))
 
-#define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__INIT(Clay_RectangleElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE)
+#define CLAY_RECTANGLE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__StoreRectangleElementConfig(CLAY__CONFIG_WRAPPER(Clay_RectangleElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE)
 
-#define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__INIT(Clay_TextElementConfig) __VA_ARGS__)
+#define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__))
 
-#define CLAY_IMAGE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(CLAY__INIT(Clay_ImageElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)
+#define CLAY_IMAGE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(CLAY__CONFIG_WRAPPER(Clay_ImageElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)
 
-#define CLAY_FLOATING(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(CLAY__INIT(Clay_FloatingElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)
+#define CLAY_FLOATING(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(CLAY__CONFIG_WRAPPER(Clay_FloatingElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)
 
-#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__INIT(Clay_CustomElementConfig) __VA_ARGS__))}, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM)
+#define CLAY_CUSTOM_ELEMENT(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(CLAY__INIT(Clay_CustomElementConfig, __VA_ARGS__)))}, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM)
 
-#define CLAY_SCROLL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__INIT(Clay_ScrollElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)
+#define CLAY_SCROLL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(CLAY__CONFIG_WRAPPER(Clay_ScrollElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)
 
-#define CLAY_BORDER(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) __VA_ARGS__) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
+#define CLAY_BORDER(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__CONFIG_WRAPPER(Clay_BorderElementConfig, __VA_ARGS__)) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
 #define CLAY_BORDER_OUTSIDE(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ }) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
@@ -292,6 +292,8 @@ typedef struct {
     Clay_LayoutDirection layoutDirection;
 } Clay_LayoutConfig;
 
+CLAY__WRAPPER_STRUCT(Clay_LayoutConfig);
+
 extern Clay_LayoutConfig CLAY_LAYOUT_DEFAULT;
 
 // Rectangle
@@ -303,6 +305,8 @@ typedef struct {
     CLAY_EXTEND_CONFIG_RECTANGLE
     #endif
 } Clay_RectangleElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_RectangleElementConfig);
 
 // Text
 typedef enum {
@@ -322,6 +326,8 @@ typedef struct {
     CLAY_EXTEND_CONFIG_TEXT
     #endif
 } Clay_TextElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
 
 // Image
 typedef struct {
@@ -365,6 +371,8 @@ typedef struct {
     Clay_PointerCaptureMode pointerCaptureMode;
 } Clay_FloatingElementConfig;
 
+CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
+
 // Custom
 typedef struct {
     #ifndef CLAY_EXTEND_CONFIG_CUSTOM
@@ -374,11 +382,15 @@ typedef struct {
     #endif
 } Clay_CustomElementConfig;
 
+CLAY__WRAPPER_STRUCT(Clay_CustomElementConfig);
+
 // Scroll
 typedef struct {
     bool horizontal;
     bool vertical;
 } Clay_ScrollElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_ScrollElementConfig);
 
 // Border
 typedef struct {
@@ -397,6 +409,8 @@ typedef struct {
     CLAY_EXTEND_CONFIG_BORDER
     #endif
 } Clay_BorderElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);
 
 typedef union {
     Clay_RectangleElementConfig *rectangleElementConfig;
