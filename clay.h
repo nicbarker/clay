@@ -3773,7 +3773,7 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
     Clay_Context *oldContext = Clay_GetCurrentContext();
     *context = CLAY__INIT(Clay_Context) {
         .maxElementCount = oldContext ? oldContext->maxElementCount : Clay__defaultMaxElementCount,
-        .maxMeasureTextCacheWordCount = oldContext ? oldContext->maxMeasureTextCacheWordCount : Clay__defaultMaxElementCount * 2,
+        .maxMeasureTextCacheWordCount = oldContext ? oldContext->maxMeasureTextCacheWordCount : Clay__defaultMaxMeasureTextWordCacheCount,
         .errorHandler = errorHandler.errorHandlerFunction ? errorHandler : CLAY__INIT(Clay_ErrorHandler) { Clay__ErrorHandlerFunctionDefault },
         .layoutDimensions = layoutDimensions,
         .internalArena = arena,
@@ -4077,6 +4077,7 @@ void Clay_SetMaxElementCount(int32_t maxElementCount) {
         context->maxElementCount = maxElementCount;
     } else {
         Clay__defaultMaxElementCount = maxElementCount; // TODO: Fix this
+	Clay__defaultMaxMeasureTextWordCacheCount = maxElementCount * 2;
     }
 }
 
