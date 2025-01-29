@@ -10,7 +10,7 @@ void RenderHeaderButton(Clay_String text) {
         CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
         CLAY_RECTANGLE({
             .color = { 140, 140, 140, 255 },
-            .cornerRadius = 5
+            .cornerRadius = CLAY_CORNER_RADIUS(5)
         })
     ) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
@@ -79,7 +79,7 @@ typedef struct {
     intptr_t memory;
 } Arena;
 
-Arena frameArena = {};
+Arena frameArena = {0};
 
 Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32_t* documentIndex) {
     Clay_SetCurrentContext(context);
@@ -104,13 +104,13 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
     );
 
     Clay_Sizing layoutExpand = {
-        .width = CLAY_SIZING_GROW(),
-        .height = CLAY_SIZING_GROW()
+        .width = CLAY_SIZING_GROW(0),
+        .height = CLAY_SIZING_GROW(0)
     };
 
     Clay_RectangleElementConfig contentBackgroundConfig = {
         .color = { 90, 90, 90, 255 },
-        .cornerRadius = 8
+        .cornerRadius = CLAY_CORNER_RADIUS(8)
     };
 
     Clay_BeginLayout();
@@ -138,14 +138,14 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
                     .childGap = 8,
                     .sizing = {
                         .width = CLAY_SIZING_FIXED(250),
-                        .height = CLAY_SIZING_GROW()
+                        .height = CLAY_SIZING_GROW(0)
                     }
                 })
             ) {
                 for (int i = 0; i < documents.length; i++) {
                     Document document = documents.documents[i];
                     Clay_LayoutConfig sidebarButtonLayout = {
-                        .sizing = { .width = CLAY_SIZING_GROW() },
+                        .sizing = { .width = CLAY_SIZING_GROW(0) },
                         .padding = CLAY_PADDING_ALL(16)
                     };
 
@@ -154,7 +154,7 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
                             CLAY_LAYOUT(sidebarButtonLayout),
                             CLAY_RECTANGLE({
                                 .color = { 120, 120, 120, 255 },
-                                .cornerRadius = 8,
+                                .cornerRadius = CLAY_CORNER_RADIUS(8),
                             })
                         ) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
@@ -173,9 +173,9 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, float yOffset, int32
                             Clay_Hovered()
                                 ? CLAY_RECTANGLE({
                                     .color = { 120, 120, 120, 120 },
-                                    .cornerRadius = 8
+                                    .cornerRadius = CLAY_CORNER_RADIUS(8)
                                 })
-                                : 0
+                                : (void)0
                         ) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,

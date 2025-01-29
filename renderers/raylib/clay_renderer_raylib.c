@@ -35,7 +35,7 @@ typedef struct
     CustomLayoutElementType type;
     union {
         CustomLayoutElement_3DModel model;
-    };
+    } customData;
 } CustomLayoutElement;
 
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
@@ -216,7 +216,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
                         float scaleValue = CLAY__MIN(CLAY__MIN(1, 768 / rootBox.height) * CLAY__MAX(1, rootBox.width / 1024), 1.5f);
                         Ray positionRay = GetScreenToWorldPointWithZDistance((Vector2) { renderCommand->boundingBox.x + renderCommand->boundingBox.width / 2, renderCommand->boundingBox.y + (renderCommand->boundingBox.height / 2) + 20 }, Raylib_camera, (int)roundf(rootBox.width), (int)roundf(rootBox.height), 140);
                         BeginMode3D(Raylib_camera);
-                            DrawModel(customElement->model.model, positionRay.position, customElement->model.scale * scaleValue, WHITE);        // Draw 3d model with texture
+                            DrawModel(customElement->customData.model.model, positionRay.position, customElement->customData.model.scale * scaleValue, WHITE);        // Draw 3d model with texture
                         EndMode3D();
                         break;
                     }

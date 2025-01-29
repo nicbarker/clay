@@ -25,7 +25,7 @@ target_include_directories(clay_examples_raylib_multi_context PUBLIC .)
 
 target_link_libraries(clay_examples_raylib_multi_context PUBLIC raylib)
 
-set(CMAKE_C_FLAGS_DEBUG "-Wall -Werror -Wno-error=missing-braces -DCLAY_DEBUG")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_custom_command(
