@@ -64,7 +64,7 @@
 
 #define CLAY_BORDER_OUTSIDE_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .cornerRadius = CLAY_CORNER_RADIUS(radius) })}, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
-#define CLAY_BORDER_ALL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ } }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
+#define CLAY_BORDER_ALL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ } ) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
 #define CLAY_BORDER_ALL_RADIUS(width, color, radius) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = { width, color }, .right = { width, color }, .top = { width, color }, .bottom = { width, color }, .betweenChildren = { width, color }, .cornerRadius = CLAY_CORNER_RADIUS(radius)}) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
 
@@ -337,6 +337,8 @@ typedef struct {
     CLAY_EXTEND_CONFIG_IMAGE
     #endif
 } Clay_ImageElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_ImageElementConfig);
 
 // Floating
 typedef CLAY_PACKED_ENUM {
