@@ -21,6 +21,11 @@
 #include <arm_neon.h>
 #endif
 
+#ifdef __JETBRAINS_IDE__
+// Help jetbrains IDEs like CLion and Rider with intellisense & debugging
+#define CLAY_IMPLEMENTATION
+#endif
+
 // -----------------------------------------
 // HEADER DECLARATIONS ---------------------
 // -----------------------------------------
