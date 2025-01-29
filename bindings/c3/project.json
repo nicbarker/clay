@@ -2,6 +2,7 @@
   "langrev": "1",
   "authors":  [ "Jefferey Schlueter <jefferey.l.schlueter@gmail.com>" ],
   "version": "0.1.0",
+  "dependency-search-paths":  [ "lib" ],
   "targets": {
 
     // TODO: found out how to stop this from outputting a .lib and .pdb in addition to the .exe (they don't do anything)
@@ -10,7 +11,6 @@
       "c-sources": [ "c-lang/source/clay.c" ],
       "cflags": "-DCLAY_IMPLEMENTATION",        // makes the clay source actually define things
       "type": "executable",
-      "dependency-search-paths":  [ "lib" ],
       "dependencies":  [ "raylib55" ],
       "sources": [ "source/clay.c3", "source/clay-raylib-renderer.c3", "examples/video-example.c3" ],
       // "link-libc": false,        // TODO; leads to duplicate definitions (eg math_nolibc)
