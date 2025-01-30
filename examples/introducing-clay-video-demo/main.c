@@ -24,7 +24,7 @@ int main(void) {
     };
     SetTextureFilter(Raylib_fonts[FONT_ID_BODY_16].font.texture, TEXTURE_FILTER_BILINEAR);
 
-    ClayVideoDemo_Initialize();
+    ClayVideoDemo_Data data = ClayVideoDemo_Initialize();
 
     while (!WindowShouldClose()) {
         // Run once per frame
@@ -45,11 +45,7 @@ int main(void) {
             GetFrameTime()
         );
 
-        Clay_BeginLayout();
-
-        ClayVideoDemo_CreateLayout();
-
-        Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+        Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&data);
 
         BeginDrawing();
         ClearBackground(BLACK);

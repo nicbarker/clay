@@ -23,6 +23,7 @@ if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_DEMOS)
   if(NOT MSVC)
     add_subdirectory("examples/clay-official-website")
   endif()
+  add_subdirectory("examples/cairo-pdf-rendering")
   add_subdirectory("examples/introducing-clay-video-demo")
 endif ()
 

@@ -83,12 +83,12 @@ static inline char *Clay_Cairo__NullTerminate(Clay_String *str) {
 }
 
 // Measure text using cairo's *toy* text API.
-static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_TextElementConfig *config, uintptr_t userData) {
+static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_TextElementConfig *config, uintptr_t userData) {
 	// Edge case: Clay computes the width of a whitespace character
 	// once.  Cairo does not factor in whitespaces when computing text
 	// extents, this edge-case serves as a short-circuit to introduce
 	// (somewhat) sensible values into Clay.
-	if(str->length == 1 && str->chars[0] == ' ') {
+	if(str.length == 1 && str.chars[0] == ' ') {
 		cairo_text_extents_t te;
 		cairo_text_extents(Clay__Cairo, " ", &te);
 		return (Clay_Dimensions) {
@@ -102,7 +102,8 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_String *str, Clay_Text
 	}
 
 	// Ensure string is null-terminated for Cairo
-	char *text = Clay_Cairo__NullTerminate(str);
+    Clay_String toTerminate = (Clay_String){ str.length, str.chars };
+	char *text = Clay_Cairo__NullTerminate(&toTerminate);
 	char *font_family = Clay_Cairo__NullTerminate(&config->fontFamily);
 
 	// Save and reset the Cairo context to avoid unwanted transformations
@@ -195,6 +196,7 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 	cairo_t *cr = Clay__Cairo;
 	for(size_t i = 0; i < commands.length; i++) {
 		Clay_RenderCommand *command = Clay_RenderCommandArray_Get(&commands, i);
+        Clay_CornerRadius cornerRadius = command->textOrSharedConfig.sharedConfig->cornerRadius;
 
 		switch(command->commandType) {
 		case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
@@ -205,21 +207,21 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			cairo_set_source_rgba(cr, CLAY_TO_CAIRO(color));
 
 			cairo_new_sub_path(cr);
-			cairo_arc(cr, bb.x + config->cornerRadius.topLeft,
-					  bb.y + config->cornerRadius.topLeft,
-					  config->cornerRadius.topLeft,
+			cairo_arc(cr, bb.x + cornerRadius.topLeft,
+					  bb.y + cornerRadius.topLeft,
+					  cornerRadius.topLeft,
 					  M_PI, 3 * M_PI / 2); // 180° to 270°
-			cairo_arc(cr, bb.x + bb.width - config->cornerRadius.topRight,
-					  bb.y + config->cornerRadius.topRight,
-					  config->cornerRadius.topRight,
+			cairo_arc(cr, bb.x + bb.width - cornerRadius.topRight,
+					  bb.y + cornerRadius.topRight,
+					  cornerRadius.topRight,
 					  3 * M_PI / 2, 2 * M_PI); // 270° to 360°
-			cairo_arc(cr, bb.x + bb.width - config->cornerRadius.bottomRight,
-					  bb.y + bb.height - config->cornerRadius.bottomRight,
-					  config->cornerRadius.bottomRight,
+			cairo_arc(cr, bb.x + bb.width - cornerRadius.bottomRight,
+					  bb.y + bb.height - cornerRadius.bottomRight,
+					  cornerRadius.bottomRight,
 					  0, M_PI / 2); // 0° to 90°
-			cairo_arc(cr, bb.x + config->cornerRadius.bottomLeft,
-					  bb.y + bb.height - config->cornerRadius.bottomLeft,
-					  config->cornerRadius.bottomLeft,
+			cairo_arc(cr, bb.x + cornerRadius.bottomLeft,
+					  bb.y + bb.height - cornerRadius.bottomLeft,
+					  cornerRadius.bottomLeft,
 					  M_PI / 2, M_PI); // 90° to 180°
 			cairo_close_path(cr);
 
@@ -229,7 +231,8 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 		case CLAY_RENDER_COMMAND_TYPE_TEXT: {
 			// Cairo expects null terminated strings, we need to clone
 			// to temporarily introduce one.
-			char *text = Clay_Cairo__NullTerminate(&command->text);
+            Clay_String toTerminate = (Clay_String){ command->textOrSharedConfig.text.length, command->textOrSharedConfig.text.chars };
+			char *text = Clay_Cairo__NullTerminate(&toTerminate);
 			char *font_family = Clay_Cairo__NullTerminate(&command->config.textElementConfig->fontFamily);
 
 			Clay_BoundingBox bb = command->boundingBox;
@@ -252,10 +255,10 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			Clay_BorderElementConfig *config = command->config.borderElementConfig;
 			Clay_BoundingBox bb = command->boundingBox;
 
-			double top_left_radius = config->cornerRadius.topLeft / 2.0;
-			double top_right_radius = config->cornerRadius.topRight / 2.0;
-			double bottom_right_radius = config->cornerRadius.bottomRight / 2.0;
-			double bottom_left_radius = config->cornerRadius.bottomLeft / 2.0;
+			double top_left_radius = cornerRadius.topLeft / 2.0;
+			double top_right_radius = cornerRadius.topRight / 2.0;
+			double bottom_right_radius = cornerRadius.bottomRight / 2.0;
+			double bottom_left_radius = cornerRadius.bottomLeft / 2.0;
 
 			// Draw the top border
 			if (config->top.width > 0) {

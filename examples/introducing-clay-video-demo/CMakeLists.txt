@@ -29,7 +29,7 @@ if(MSVC)
   set(CMAKE_C_FLAGS_DEBUG "/D CLAY_DEBUG")
 else()
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_C_FLAGS_RELEASE "-O3")
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
 add_custom_command(
