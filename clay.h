@@ -764,6 +764,12 @@ typedef struct {
     void *userData;
 } Clay_ErrorHandler;
 
+CLAY__TYPEDEF(Clay_PointQueryResult, struct
+{
+    int32_t length;
+    const Clay_ElementId *results;
+});
+
 // Function Forward Declarations ---------------------------------
 
 // Public API functions ------------------------------------------
@@ -855,6 +861,7 @@ void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 // Resets Clay's internal text measurement cache, useful if memory to represent strings is being re-used.
 // Similar behaviour can be achieved on an individual text element level by using Clay_TextElementConfig.hashStringContents
 void Clay_ResetMeasureTextCache(void);
+Clay_PointQueryResult Clay_GetElementIdsAtPoint(Clay_Vector2 point);
 
 // Internal API functions required by macros ----------------------
 
@@ -1217,6 +1224,8 @@ struct Clay_Context {
     Clay__boolArray treeNodeVisited;
     Clay__charArray dynamicStringData;
     Clay__DebugElementDataArray debugElementData;
+    // Point querying
+    Clay__ElementIdArray pointQueryIds;
 };
 
 Clay_Context* Clay__Context_Allocate_Arena(Clay_Arena *arena) {
@@ -2008,6 +2017,7 @@ void Clay__InitializePersistentMemory(Clay_Context* context) {
     context->measureTextHashMap = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->measuredWords = Clay__MeasuredWordArray_Allocate_Arena(maxMeasureTextCacheWordCount, arena);
     context->pointerOverIds = Clay__ElementIdArray_Allocate_Arena(maxElementCount, arena);
+    context->pointQueryIds = Clay__ElementIdArray_Allocate_Arena(maxElementCount, arena);
     context->debugElementData = Clay__DebugElementDataArray_Allocate_Arena(maxElementCount, arena);
     context->arenaResetOffset = arena->nextAllocation;
 }
@@ -3696,6 +3706,59 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
         }
     }
+}
+
+CLAY_WASM_EXPORT("Clay_GetElementIdsAtPoint")
+Clay_PointQueryResult Clay_GetElementIdsAtPoint(Clay_Vector2 position) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (context->booleanWarnings.maxElementsExceeded) {
+        return CLAY__INIT(Clay_PointQueryResult) { 0, NULL };
+    }
+    context->pointQueryIds.length = 0;
+    Clay__int32_tArray dfsBuffer = context->layoutElementChildrenBuffer;
+    for (int32_t rootIndex = context->layoutElementTreeRoots.length - 1; rootIndex >= 0; --rootIndex) {
+        dfsBuffer.length = 0;
+        Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&context->layoutElementTreeRoots, rootIndex);
+        Clay__int32_tArray_Add(&dfsBuffer, (int32_t)root->layoutElementIndex);
+        context->treeNodeVisited.internalArray[0] = false;
+        bool found = false;
+        while (dfsBuffer.length > 0) {
+            if (context->treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
+                dfsBuffer.length--;
+                continue;
+            }
+            context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
+            Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1));
+            Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO think of a way around this, maybe the fact that it's essentially a binary tree limits the cost, but the worst case is not great
+            Clay_BoundingBox elementBox = mapItem->boundingBox;
+            elementBox.x -= root->pointerOffset.x;
+            elementBox.y -= root->pointerOffset.y;
+            if (mapItem) {
+                if ((Clay__PointIsInsideRect(position, elementBox))) {
+                    Clay__ElementIdArray_Add(&context->pointQueryIds, mapItem->elementId);
+                    found = true;
+                }
+                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
+                    dfsBuffer.length--;
+                    continue;
+                }
+                for (int32_t i = currentElement->childrenOrTextContent.children.length - 1; i >= 0; --i) {
+                    Clay__int32_tArray_Add(&dfsBuffer, currentElement->childrenOrTextContent.children.elements[i]);
+                    context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = false; // TODO needs to be ranged checked
+                }
+            } else {
+                dfsBuffer.length--;
+            }
+        }
+
+        Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&context->layoutElements, root->layoutElementIndex);
+        if (found && Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER) &&
+                Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig->pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_CAPTURE) {
+            break;
+        }
+    }
+
+    return CLAY__INIT(Clay_PointQueryResult) { context->pointQueryIds.length, context->pointQueryIds.internalArray };
 }
 
 CLAY_WASM_EXPORT("Clay_Initialize")
