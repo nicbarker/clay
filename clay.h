@@ -212,9 +212,9 @@ typedef struct {
 typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_NONE = 0,
     CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE = 1,
-    CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER = 2,
-    CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER = 4,
-    CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER = 8,
+    CLAY__ELEMENT_CONFIG_TYPE_BORDER = 2,
+    CLAY__ELEMENT_CONFIG_TYPE_FLOATING = 4,
+    CLAY__ELEMENT_CONFIG_TYPE_SCROLL = 8,
     CLAY__ELEMENT_CONFIG_TYPE_IMAGE = 16,
     CLAY__ELEMENT_CONFIG_TYPE_TEXT = 32,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM = 64,
@@ -550,15 +550,6 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration config);
 void Clay__CloseElement(void);
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
 Clay_ElementId Clay__AttachId(Clay_ElementId id);
-void Clay__AttachLayoutConfig(Clay_LayoutConfig *config);
-void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type);
-Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config);
-Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config);
-Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config);
-Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config);
-Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config);
-Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config);
-Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
 uint32_t Clay__GetParentElementId(void);
@@ -918,6 +909,26 @@ bool Clay__ElementHasConfig(Clay_LayoutElement *element, Clay__ElementConfigType
     return (element->configsEnabled & type);
 }
 
+Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay_GetCurrentContext()->layoutConfigs, config); }
+Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_RectangleElementConfig_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay_GetCurrentContext()->rectangleElementConfigs, config); }
+Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_TextElementConfig_DEFAULT : Clay__TextElementConfigArray_Add(&Clay_GetCurrentContext()->textElementConfigs, config); }
+Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ImageElementConfig_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, config); }
+Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_FloatingElementConfig_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, config); }
+Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
+Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ScrollElementConfig_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay_GetCurrentContext()->scrollElementConfigs, config); }
+Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_BorderElementConfig_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, config); }
+
+Clay_ElementConfig Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (context->booleanWarnings.maxElementsExceeded) {
+        return CLAY__INIT(Clay_ElementConfig) CLAY__DEFAULT_STRUCT;
+    }
+    Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
+    openLayoutElement->elementConfigs.length++;
+    openLayoutElement->configsEnabled |= type;
+    return *Clay__ElementConfigArray_Add(&context->elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
+}
+
 Clay_ElementConfigUnion Clay__FindElementConfigWithType(Clay_LayoutElement *element, Clay__ElementConfigType type) {
     for (int32_t i = 0; i < element->elementConfigs.length; i++) {
         Clay_ElementConfig *config = Clay__ElementConfigArraySlice_Get(&element->elementConfigs, i);
@@ -927,6 +938,42 @@ Clay_ElementConfigUnion Clay__FindElementConfigWithType(Clay_LayoutElement *elem
     }
     return CLAY__INIT(Clay_ElementConfigUnion) { NULL };
 }
+
+Clay_ElementConfig Clay__CurrentConfigUnion(Clay__ElementConfigType type) {
+    Clay_Context *context = Clay_GetCurrentContext();
+    Clay_LayoutElement *openElement = Clay__GetOpenLayoutElement();
+    if (Clay__ElementHasConfig(openElement, type)) {
+        return CLAY__INIT(Clay_ElementConfig) { .config = Clay__FindElementConfigWithType(openElement, type), .type = type };
+    }
+    // Unhandled: structural changes to element
+    switch (type) {
+        case CLAY__ELEMENT_CONFIG_TYPE_NONE:
+            return CLAY__INIT(Clay_ElementConfig) CLAY__DEFAULT_STRUCT;
+        case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE:
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__RectangleElementConfigArray_Add(&Clay_GetCurrentContext()->rectangleElementConfigs, CLAY__INIT(Clay_RectangleElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+        case CLAY__ELEMENT_CONFIG_TYPE_BORDER:
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .textElementConfig = Clay__TextElementConfigArray_Add(&Clay_GetCurrentContext()->textElementConfigs, CLAY__INIT(Clay_TextElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING:
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, CLAY__INIT(Clay_ImageElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL:
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, CLAY__INIT(Clay_FloatingElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE:
+            Clay__int32_tArray_Add(&context->imageElementPointers, context->layoutElements.length - 1);
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, CLAY__INIT(Clay_CustomElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+        case CLAY__ELEMENT_CONFIG_TYPE_TEXT:
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__ScrollElementConfigArray_Add(&Clay_GetCurrentContext()->scrollElementConfigs, CLAY__INIT(Clay_ScrollElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM:
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, CLAY__INIT(Clay_BorderElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+    }
+}
+
+Clay_RectangleElementConfig * Clay_CurrentConfigRectangle() { return Clay__CurrentConfigUnion(CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE).config.rectangleElementConfig; }
+Clay_TextElementConfig * Clay_CurrentConfigText() { return Clay__CurrentConfigUnion(CLAY__ELEMENT_CONFIG_TYPE_TEXT).config.textElementConfig; }
+Clay_ImageElementConfig * Clay_CurrentConfigImage() { return Clay__CurrentConfigUnion(CLAY__ELEMENT_CONFIG_TYPE_IMAGE).config.imageElementConfig; }
+Clay_FloatingElementConfig * Clay_CurrentConfigFloating() { return Clay__CurrentConfigUnion(CLAY__ELEMENT_CONFIG_TYPE_FLOATING).config.floatingElementConfig; }
+Clay_CustomElementConfig * Clay_CurrentConfigCustom() { return Clay__CurrentConfigUnion(CLAY__ELEMENT_CONFIG_TYPE_CUSTOM).config.customElementConfig; }
+Clay_ScrollElementConfig * Clay_CurrentConfigScroll() { return Clay__CurrentConfigUnion(CLAY__ELEMENT_CONFIG_TYPE_SCROLL).config.scrollElementConfig; }
+Clay_BorderElementConfig * Clay_CurrentConfigBorder() { return Clay__CurrentConfigUnion(CLAY__ELEMENT_CONFIG_TYPE_BORDER).config.borderElementConfig; }
 
 Clay_ElementId Clay__HashNumber(const uint32_t offset, const uint32_t seed) {
     uint32_t hash = seed;
@@ -1261,8 +1308,8 @@ void Clay__CloseElement(void) {
     Clay_LayoutConfig *layoutConfig = openLayoutElement->layoutConfig;
     bool elementHasScrollHorizontal = false;
     bool elementHasScrollVertical = false;
-    if (Clay__ElementHasConfig(openLayoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
-        Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(openLayoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+    if (Clay__ElementHasConfig(openLayoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL)) {
+        Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(openLayoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
         elementHasScrollHorizontal = scrollConfig->horizontal;
         elementHasScrollVertical = scrollConfig->vertical;
         context->openClipElementStack.length--;
@@ -1335,7 +1382,7 @@ void Clay__CloseElement(void) {
         openLayoutElement->dimensions.height = 0;
     }
 
-    bool elementIsFloating = Clay__ElementHasConfig(openLayoutElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER);
+    bool elementIsFloating = Clay__ElementHasConfig(openLayoutElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING);
 
     // Close the currently open element
     int32_t closingElementIndex = Clay__int32_tArray_RemoveSwapback(&context->openLayoutElementStack, (int)context->openLayoutElementStack.length - 1);
@@ -1402,7 +1449,7 @@ void Clay__OpenElement() {
         return;
     }
     Clay_LayoutElement layoutElement = CLAY__DEFAULT_STRUCT;
-    Clay_LayoutElement* openLayoutElement = Clay_LayoutElementArray_Add(&context->layoutElements, layoutElement);
+    Clay_LayoutElementArray_Add(&context->layoutElements, layoutElement);
     Clay__int32_tArray_Add(&context->openLayoutElementStack, context->layoutElements.length - 1);
     if (context->openClipElementStack.length > 0) {
         Clay__int32_tArray_Set(&context->layoutElementClipElementIds, context->layoutElements.length - 1, Clay__int32_tArray_GetValue(&context->openClipElementStack, (int)context->openClipElementStack.length - 1));
@@ -1493,14 +1540,14 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
                     .clipElementId = clipElementId,
                     .zIndex = floatingConfig.zIndex,
             });
-            Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(declaration.floating) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER);
+            Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(declaration.floating) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING);
         }
     }
     if (!Clay__MemCmp((char *)(&declaration.custom), (char *)(&Clay_CustomElementConfig_DEFAULT), sizeof(Clay_CustomElementConfig))) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(declaration.custom) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM);
     }
     if (!Clay__MemCmp((char *)(&declaration.scroll), (char *)(&Clay_ScrollElementConfig_DEFAULT), sizeof(Clay_ScrollElementConfig))) {
-        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(declaration.scroll) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER);
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(declaration.scroll) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL);
         Clay__int32_tArray_Add(&context->openClipElementStack, (int)openLayoutElement->id);
         // Retrieve or create cached data to track scroll position across frames
         Clay__ScrollContainerDataInternal *scrollOffset = CLAY__NULL;
@@ -1520,7 +1567,7 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
         }
     }
     if (!Clay__MemCmp((char *)(&declaration.border), (char *)(&Clay_BorderElementConfig_DEFAULT), sizeof(Clay_BorderElementConfig))) {
-        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration.border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER);
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration.border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER);
     }
 }
 
@@ -1645,8 +1692,8 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
         Clay__int32_tArray_Add(&bfsBuffer, (int32_t)root->layoutElementIndex);
 
         // Size floating containers to their parents
-        if (Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)) {
-            Clay_FloatingElementConfig *floatingElementConfig = Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig;
+        if (Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING)) {
+            Clay_FloatingElementConfig *floatingElementConfig = Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING).floatingElementConfig;
             Clay_LayoutElementHashMapItem *parentItem = Clay__GetHashMapItem(floatingElementConfig->parentId);
             if (parentItem && parentItem != &Clay_LayoutElementHashMapItem_DEFAULT) {
                 Clay_LayoutElement *parentLayoutElement = parentItem->layoutElement;
@@ -1722,8 +1769,8 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 // The content is too large, compress the children as much as possible
                 if (sizeToDistribute < 0) {
                     // If the parent can scroll in the axis direction in this direction, don't compress children, just leave them alone
-                    if (Clay__ElementHasConfig(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
-                        Clay_ScrollElementConfig *scrollElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+                    if (Clay__ElementHasConfig(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL)) {
+                        Clay_ScrollElementConfig *scrollElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
                         if (((xAxis && scrollElementConfig->horizontal) || (!xAxis && scrollElementConfig->vertical))) {
                             continue;
                         }
@@ -1764,8 +1811,8 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
 
                     // If we're laying out the children of a scroll panel, grow containers expand to the height of the inner content, not the outer container
                     float maxSize = parentSize - parentPadding;
-                    if (Clay__ElementHasConfig(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
-                        Clay_ScrollElementConfig *scrollElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+                    if (Clay__ElementHasConfig(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL)) {
+                        Clay_ScrollElementConfig *scrollElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
                         if (((xAxis && scrollElementConfig->horizontal) || (!xAxis && scrollElementConfig->vertical))) {
                             maxSize = CLAY__MAX(maxSize, innerContentSize);
                         }
@@ -1979,8 +2026,8 @@ void Clay__CalculateFinalLayout(void) {
         Clay_Vector2 rootPosition = CLAY__DEFAULT_STRUCT;
         Clay_LayoutElementHashMapItem *parentHashMapItem = Clay__GetHashMapItem(root->parentId);
         // Position root floating containers
-        if (Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER) && parentHashMapItem) {
-            Clay_FloatingElementConfig *config = Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig;
+        if (Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING) && parentHashMapItem) {
+            Clay_FloatingElementConfig *config = Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING).floatingElementConfig;
             Clay_Dimensions rootDimensions = rootElement->dimensions;
             Clay_BoundingBox parentBoundingBox = parentHashMapItem->boundingBox;
             // Set X position
@@ -2038,7 +2085,7 @@ void Clay__CalculateFinalLayout(void) {
             if (clipHashMapItem) {
                 // Floating elements that are attached to scrolling contents won't be correctly positioned if external scroll handling is enabled, fix here
                 if (context->externalScrollHandlingEnabled) {
-                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(clipHashMapItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(clipHashMapItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
                         if (mapping->layoutElement == clipHashMapItem->layoutElement) {
@@ -2076,8 +2123,8 @@ void Clay__CalculateFinalLayout(void) {
                 context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
 
                 Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
-                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER)) {
-                    Clay_FloatingElementConfig *floatingElementConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig;
+                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING)) {
+                    Clay_FloatingElementConfig *floatingElementConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING).floatingElementConfig;
                     Clay_Dimensions expand = floatingElementConfig->expand;
                     currentElementBoundingBox.x -= expand.width;
                     currentElementBoundingBox.width += expand.width * 2;
@@ -2087,8 +2134,8 @@ void Clay__CalculateFinalLayout(void) {
 
                 Clay__ScrollContainerDataInternal *scrollContainerData = CLAY__NULL;
                 // Apply scroll offsets to container
-                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
-                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL)) {
+                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
 
                     // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
@@ -2126,7 +2173,7 @@ void Clay__CalculateFinalLayout(void) {
                         int32_t next = sortedConfigIndexes[i + 1];
                         Clay__ElementConfigType currentType = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, current)->type;
                         Clay__ElementConfigType nextType = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, next)->type;
-                        if (nextType == CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER || currentType == CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER) {
+                        if (nextType == CLAY__ELEMENT_CONFIG_TYPE_SCROLL || currentType == CLAY__ELEMENT_CONFIG_TYPE_BORDER) {
                             sortedConfigIndexes[i] = next;
                             sortedConfigIndexes[i + 1] = current;
                         }
@@ -2151,16 +2198,16 @@ void Clay__CalculateFinalLayout(void) {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE;
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: {
+                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER: {
                             shouldRender = false;
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: {
+                        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_NONE;
                             shouldRender = false;
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: {
+                        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START;
                             shouldRender = true;
                             break;
@@ -2259,9 +2306,9 @@ void Clay__CalculateFinalLayout(void) {
             else {
                 // DFS is returning upwards backwards
                 bool closeScrollElement = false;
-                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER)) {
+                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL)) {
                     closeScrollElement = true;
-                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
                         if (mapping->layoutElement == currentElement) {
@@ -2275,13 +2322,13 @@ void Clay__CalculateFinalLayout(void) {
                     }
                 }
 
-                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)) {
+                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER)) {
                     Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
                     Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
 
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                     if (!Clay__ElementIsOffscreen(&currentElementBoundingBox)) {
-                        Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER).borderElementConfig;
+                        Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER).borderElementConfig;
                         Clay_RenderCommand renderCommand = {
                                 .boundingBox = currentElementBoundingBox,
                                 .config = { .borderElementConfig = borderConfig },
@@ -2401,32 +2448,6 @@ Clay_ElementId Clay__AttachId(Clay_ElementId elementId) {
     return elementId;
 }
 
-void Clay__AttachLayoutConfig(Clay_LayoutConfig *config) {
-    Clay_Context* context = Clay_GetCurrentContext();
-    if (context->booleanWarnings.maxElementsExceeded) {
-        return;
-    }
-    Clay__GetOpenLayoutElement()->layoutConfig = config;
-}
-void Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type) {
-    Clay_Context* context = Clay_GetCurrentContext();
-    if (context->booleanWarnings.maxElementsExceeded) {
-        return;
-    }
-    Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
-    openLayoutElement->elementConfigs.length++;
-    openLayoutElement->configsEnabled |= type;
-    Clay__ElementConfigArray_Add(&context->elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
-}
-Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay_GetCurrentContext()->layoutConfigs, config); }
-Clay_RectangleElementConfig * Clay__StoreRectangleElementConfig(Clay_RectangleElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_RectangleElementConfig_DEFAULT : Clay__RectangleElementConfigArray_Add(&Clay_GetCurrentContext()->rectangleElementConfigs, config); }
-Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_TextElementConfig_DEFAULT : Clay__TextElementConfigArray_Add(&Clay_GetCurrentContext()->textElementConfigs, config); }
-Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ImageElementConfig_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, config); }
-Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_FloatingElementConfig_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, config); }
-Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
-Clay_ScrollElementConfig * Clay__StoreScrollElementConfig(Clay_ScrollElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ScrollElementConfig_DEFAULT : Clay__ScrollElementConfigArray_Add(&Clay_GetCurrentContext()->scrollElementConfigs, config); }
-Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_BorderElementConfig_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, config); }
-
 #pragma region DebugTools
 Clay_Color CLAY__DEBUGVIEW_COLOR_1 = {58, 56, 52, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_2 = {62, 60, 58, 255};
@@ -2449,9 +2470,9 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
         case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Rectangle"), {243,134,48,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Scroll"), {242,196,90,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Border"), {108,91,123, 255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Scroll"), {242, 196, 90, 255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_BORDER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Border"), {108, 91, 123, 255} };
         case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), {11,72,107,255} };
         default: break;
     }
@@ -2929,7 +2950,7 @@ void Clay__RenderDebugView(void) {
                             }
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER: {
+                        case CLAY__ELEMENT_CONFIG_TYPE_SCROLL: {
                             Clay_ScrollElementConfig *scrollConfig = elementConfig->config.scrollElementConfig;
                             CLAY({ .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                                 // .vertical
@@ -2941,7 +2962,7 @@ void Clay__RenderDebugView(void) {
                             }
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER: {
+                        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: {
                             Clay_FloatingElementConfig *floatingConfig = elementConfig->config.floatingElementConfig;
                             CLAY({ .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                                 // .offset
@@ -2972,7 +2993,7 @@ void Clay__RenderDebugView(void) {
                             }
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER: {
+                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER: {
                             Clay_BorderElementConfig *borderConfig = elementConfig->config.borderElementConfig;
                             CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoBorderBody"), .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                                 // .left
@@ -3195,8 +3216,8 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
         }
 
         Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&context->layoutElements, root->layoutElementIndex);
-        if (found && Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER) &&
-                Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig->pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_CAPTURE) {
+        if (found && Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING) &&
+                Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING).floatingElementConfig->pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_CAPTURE) {
             break;
         }
     }
@@ -3317,7 +3338,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
 
     if (highestPriorityElementIndex > -1 && highestPriorityScrollData) {
         Clay_LayoutElement *scrollElement = highestPriorityScrollData->layoutElement;
-        Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(scrollElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig;
+        Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(scrollElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
         bool canScrollVertically = scrollConfig->vertical && highestPriorityScrollData->contentSize.height > scrollElement->dimensions.height;
         bool canScrollHorizontally = scrollConfig->horizontal && highestPriorityScrollData->contentSize.width > scrollElement->dimensions.width;
         // Handle wheel scroll
@@ -3471,7 +3492,7 @@ Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
                 .scrollPosition = &scrollContainerData->scrollPosition,
                 .scrollContainerDimensions = { scrollContainerData->boundingBox.width, scrollContainerData->boundingBox.height },
                 .contentDimensions = scrollContainerData->contentSize,
-                .config = *Clay__FindElementConfigWithType(scrollContainerData->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL_CONTAINER).scrollElementConfig,
+                .config = *Clay__FindElementConfigWithType(scrollContainerData->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig,
                 .found = true
             };
         }

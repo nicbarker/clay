@@ -19,12 +19,14 @@ void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerData po
     }
 }
 
+Clay_ElementDeclaration headerButtonStyle = {
+    .layout = {.padding = {16, 16, 8, 8}},
+    .rectangle = {.color = COLOR_BLUE }
+};
+
 // Examples of re-usable "Components"
 void RenderHeaderButton(Clay_String text) {
-    CLAY({
-         .layout = {.padding = {16, 16, 8, 8}},
-         .rectangle = {.color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE}
-    }) {
+    CLAY(headerButtonStyle) {
         Clay_OnHover(HandleHeaderButtonInteraction, 1);
         CLAY_TEXT(text, CLAY_TEXT_CONFIG(headerTextConfig));
     }
@@ -60,7 +62,7 @@ Clay_RenderCommandArray CreateLayout() {
                 RenderHeaderButton(CLAY_STRING("Header Item 2"));
                 RenderHeaderButton(CLAY_STRING("Header Item 3"));
             }
-            CLAY({ .id = CLAY_ID("MainContent"),
+            CLAY({.id = CLAY_ID("MainContent"),
                 .scroll = { .vertical = true },
                 .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {16, 16, 16, 16}, .childGap = 16, .sizing = { CLAY_SIZING_GROW(0) } },
                 .rectangle = { .color = {200, 200, 255, 255} }

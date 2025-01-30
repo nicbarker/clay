@@ -28,7 +28,7 @@ target_link_libraries(clay_examples_introducing_clay_video_demo PUBLIC raylib)
 if(MSVC)
   set(CMAKE_C_FLAGS_DEBUG "/D CLAY_DEBUG")
 else()
-  set(CMAKE_C_FLAGS_DEBUG "-Wall -Werror -Wno-error=missing-braces -DCLAY_DEBUG")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
   set(CMAKE_C_FLAGS_RELEASE "-O3")
 endif()
 
