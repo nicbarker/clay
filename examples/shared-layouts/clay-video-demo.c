@@ -9,8 +9,8 @@ void RenderHeaderButton(Clay_String text) {
         .layout = { .padding = { 16, 16, 8, 8 }},
         .rectangle = {
             .color = { 140, 140, 140, 255 },
-            .cornerRadius = CLAY_CORNER_RADIUS(5)
-        }
+        },
+        .shared = { .cornerRadius = CLAY_CORNER_RADIUS(5) }
     }) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
@@ -103,7 +103,6 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
 
     Clay_RectangleElementConfig contentBackgroundConfig = {
         .color = { 90, 90, 90, 255 },
-        .cornerRadius = CLAY_CORNER_RADIUS(8)
     };
 
     // Build UI here
@@ -129,15 +128,16 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                 .childAlignment = {
                     .y = CLAY_ALIGN_Y_CENTER
                 }
-            }
+            },
+            .shared = { .cornerRadius = CLAY_CORNER_RADIUS(8) }
         }) {
             // Header buttons go here
             CLAY({ .id = CLAY_ID("FileButton"),
                 .layout = { .padding = { 16, 16, 8, 8 }},
                 .rectangle ={
                     .color = { 140, 140, 140, 255 },
-                    .cornerRadius = CLAY_CORNER_RADIUS(5)
-                }
+                },
+                .shared = { .cornerRadius = CLAY_CORNER_RADIUS(5) }
             }) {
                 CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY_16,
@@ -170,8 +170,8 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                             },
                             .rectangle ={
                                 .color = { 40, 40, 40, 255 },
-                                .cornerRadius = CLAY_CORNER_RADIUS(8)
-                            }
+                            },
+                            .shared = { .cornerRadius = CLAY_CORNER_RADIUS(8) }
                         }) {
                             // Render dropdown items here
                             RenderDropdownMenuItem(CLAY_STRING("New"));
@@ -217,8 +217,8 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                             .layout = sidebarButtonLayout,
                             .rectangle = {
                                 .color = { 120, 120, 120, 255 },
-                                .cornerRadius = CLAY_CORNER_RADIUS(8),
-                            }
+                            },
+                            .shared = { .cornerRadius = CLAY_CORNER_RADIUS(8) }
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
@@ -233,11 +233,8 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                         CLAY({ .layout = sidebarButtonLayout }) {
                             Clay_OnHover(HandleSidebarInteraction, (intptr_t)clickData);
                             if (Clay_Hovered()) {
-                                Clay_RectangleElementConfig *rectangle = Clay_CurrentConfigRectangle();
-                                *rectangle = (Clay_RectangleElementConfig) {
-                                    .color = { 120, 120, 120, 120 },
-                                    .cornerRadius = CLAY_CORNER_RADIUS(8)
-                                };
+                                Clay_CurrentConfigRectangle()->color = (Clay_Color) { 120, 120, 120, 120 };
+                                Clay_CurrentConfigShared()->cornerRadius = CLAY_CORNER_RADIUS(8);
                             }
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,

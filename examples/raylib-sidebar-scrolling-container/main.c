@@ -134,7 +134,8 @@ Clay_RenderCommandArray CreateLayout() {
             }) {
                 CLAY({ .id = CLAY_ID("ScrollBarButton"),
                     .layout = { .sizing = {CLAY_SIZING_FIXED(12), CLAY_SIZING_FIXED((scrollData.scrollContainerDimensions.height / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height) }},
-                    .rectangle = { .cornerRadius = {6}, .color = Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0, 0)) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150} }
+                    .rectangle = { .color = Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0, 0)) ? (Clay_Color){100, 100, 140, 150} : (Clay_Color){120, 120, 160, 150} },
+                    .shared = { .cornerRadius = CLAY_CORNER_RADIUS(6) }
                 }) {}
             }
         }
