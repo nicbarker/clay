@@ -990,7 +990,7 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
 
     if (config->hashStringContents) {
         uint32_t maxLengthToHash = CLAY__MIN(text->length, 256);
-        for (int i = 0; i < maxLengthToHash; i++) {
+        for (uint32_t i = 0; i < maxLengthToHash; i++) {
             hash += text->chars[i];
             hash += (hash << 10);
             hash ^= (hash >> 6);
