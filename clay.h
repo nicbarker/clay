@@ -532,6 +532,7 @@ bool Clay_Hovered(void);
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
 bool Clay_PointerOver(Clay_ElementId elementId);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
+Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config);
 void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData);
 void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, uintptr_t userData), uintptr_t userData);
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);

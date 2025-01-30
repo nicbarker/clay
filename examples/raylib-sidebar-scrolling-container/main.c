@@ -21,13 +21,15 @@ void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerData po
 
 Clay_ElementDeclaration headerButtonStyle = {
     .layout = {.padding = {16, 16, 8, 8}},
-    .rectangle = {.color = COLOR_BLUE }
+    .rectangle = { .color = COLOR_BLUE }
 };
 
 // Examples of re-usable "Components"
 void RenderHeaderButton(Clay_String text) {
     CLAY(headerButtonStyle) {
-        Clay_OnHover(HandleHeaderButtonInteraction, 1);
+        if (Clay_Hovered()) {
+            Clay_CurrentConfigRectangle()->color = COLOR_ORANGE;
+        }
         CLAY_TEXT(text, CLAY_TEXT_CONFIG(headerTextConfig));
     }
 }

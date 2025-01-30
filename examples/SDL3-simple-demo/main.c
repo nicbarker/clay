@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "../../renderers/SDL3/clay_renderer_SDL3.c"
+#include "../shared-layouts/clay-video-demo.c"
 
 static const Uint32 FONT_ID = 0;
 
@@ -19,6 +20,7 @@ static const Clay_Color COLOR_LIGHT     = (Clay_Color) {224, 215, 210, 255};
 typedef struct app_state {
     SDL_Window *window;
     SDL_Renderer *renderer;
+    ClayVideoDemo_Data demoData;
 } AppState;
 
 static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData)
@@ -31,75 +33,6 @@ static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextEl
     }
 
     return (Clay_Dimensions) { (float) width, (float) height };
-}
-
-static void Label(const Clay_String text, const int cornerRadius)
-{
-    CLAY(CLAY_LAYOUT({ .padding = {8, 8} }),
-        CLAY_RECTANGLE({
-            .color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE,
-            .cornerRadius = cornerRadius,
-        })) {
-        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-           .textColor = { 255, 255, 255, 255 },
-           .fontId = FONT_ID,
-           .fontSize = 24,
-        }));
-   }
-}
-
-static void LabelBorder(const Clay_String text, const int cornerRadius, const int thickness)
-{
-    CLAY(
-        CLAY_LAYOUT({
-            .padding = {16, 16, 8, 8 } }),
-            CLAY_BORDER_OUTSIDE_RADIUS(
-                thickness,
-                COLOR_BLUE,
-                cornerRadius)
-    ){
-        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-           .textColor = { 255, 255, 255, 255 },
-           .fontId = FONT_ID,
-           .fontSize = 24,
-        }));
-    }
-}
-
-static Clay_RenderCommandArray Clay_CreateLayout()
-{
-    Clay_BeginLayout();
-    CLAY(CLAY_ID("MainContent"),
-        CLAY_LAYOUT({
-            .sizing = {
-                .width = CLAY_SIZING_GROW(),
-                .height = CLAY_SIZING_GROW(),
-            },
-            .childAlignment = {
-                .x = CLAY_ALIGN_X_CENTER,
-                .y = CLAY_ALIGN_Y_CENTER,
-            },
-            .childGap = 10,
-            .padding = { 10, 10 },
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-        }),
-        CLAY_BORDER({
-            .left = { 20, COLOR_BLUE },
-            .right = { 20, COLOR_BLUE },
-            .bottom = { 20, COLOR_BLUE }
-        }),
-        CLAY_RECTANGLE({
-            .color = COLOR_LIGHT,
-        })
-    ) {
-        Label(CLAY_STRING("Rounded - Button 1"), 10);
-        Label(CLAY_STRING("Straight - Button 2") , 0);
-        Label(CLAY_STRING("Rounded+ - Button 3") , 20);
-        LabelBorder(CLAY_STRING("Border - Button 4"), 0, 5);
-        LabelBorder(CLAY_STRING("RoundedBorder - Button 5"), 10, 5);
-        LabelBorder(CLAY_STRING("RoundedBorder - Button 6"), 40, 15);
-    }
-    return Clay_EndLayout();
 }
 
 void HandleClayErrors(Clay_ErrorData errorData) {
@@ -147,6 +80,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float) width, (float) height }, (Clay_ErrorHandler) { HandleClayErrors });
     Clay_SetMeasureTextFunction(SDL_MeasureText, 0);
 
+    state->demoData = ClayVideoDemo_Initialize();
+
     *appstate = state;
     return SDL_APP_CONTINUE;
 }
@@ -180,7 +115,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *state = appstate;
 
-    Clay_RenderCommandArray render_commands = Clay_CreateLayout();
+    Clay_RenderCommandArray render_commands = ClayVideoDemo_CreateLayout(&state->demoData);
 
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer);

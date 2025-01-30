@@ -9,264 +9,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-
-const int FONT_ID_BODY_16 = 0;
-Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
+#include "../shared-layouts/clay-video-demo.c"
 
 SDL_Surface *sample_image;
-
-void RenderHeaderButton(Clay_String text) {
-    CLAY(
-        CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
-        CLAY_RECTANGLE({
-            .color = { 140, 140, 140, 255 },
-            .cornerRadius = 5
-        })
-    ) {
-        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 16,
-            .textColor = { 255, 255, 255, 255 }
-        }));
-    }
-}
-
-void RenderDropdownMenuItem(Clay_String text) {
-    CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(16)})) {
-        CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
-            .fontSize = 16,
-            .textColor = { 255, 255, 255, 255 }
-        }));
-    }
-}
-
-typedef struct {
-    Clay_String title;
-    Clay_String contents;
-} Document;
-
-typedef struct {
-    Document *documents;
-    uint32_t length;
-} DocumentArray;
-
-DocumentArray documents = {
-    .documents = NULL,
-    .length = 5
-};
-
-uint32_t selectedDocumentIndex = 0;
-
-void HandleSidebarInteraction(
-    Clay_ElementId elementId,
-    Clay_PointerData pointerData,
-    intptr_t userData
-) {
-    // If this button was clicked
-    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        if (userData >= 0 && userData < documents.length) {
-            // Select the corresponding document
-            selectedDocumentIndex = userData;
-        }
-    }
-}
-
-static Clay_RenderCommandArray CreateLayout() {
-    Clay_BeginLayout();
-    Clay_Sizing layoutExpand = {
-        .width = CLAY_SIZING_GROW(0),
-        .height = CLAY_SIZING_GROW(0)
-    };
-
-    Clay_RectangleElementConfig contentBackgroundConfig = {
-        .color = { 90, 90, 90, 255 },
-        .cornerRadius = 8
-    };
-
-    Clay_BeginLayout();
-    // Build UI here
-    CLAY(
-        CLAY_ID("OuterContainer"),
-        CLAY_RECTANGLE({ .color = { 43, 41, 51, 255 } }),
-        CLAY_LAYOUT({
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            .sizing = layoutExpand,
-            .padding = CLAY_PADDING_ALL(16),
-            .childGap = 16
-        })
-    ) {
-        // Child elements go inside braces
-        CLAY(
-            CLAY_ID("HeaderBar"),
-            CLAY_RECTANGLE(contentBackgroundConfig),
-            CLAY_LAYOUT({
-                .sizing = {
-                    .height = CLAY_SIZING_FIXED(60),
-                    .width = CLAY_SIZING_GROW(0)
-                },
-                .padding = { 16 },
-                .childGap = 16,
-                .childAlignment = {
-                    .y = CLAY_ALIGN_Y_CENTER
-                }
-            })
-        ) {
-            // Header buttons go here
-            CLAY(
-                CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
-                CLAY_BORDER_ALL({ 2, COLOR_WHITE })
-            ) {
-                CLAY(
-                    CLAY_LAYOUT({ .padding = { 8, 8, 8, 8 }}),
-                    CLAY_IMAGE({ sample_image, { 23, 42 } })
-                ) {}
-            }
-            CLAY(
-                CLAY_ID("FileButton"),
-                CLAY_LAYOUT({ .padding = { 16, 16, 8, 8 }}),
-                CLAY_RECTANGLE({
-                    .color = { 140, 140, 140, 255 },
-                    .cornerRadius = 5
-                })
-            ) {
-                CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 16,
-                    .textColor = { 255, 255, 255, 255 }
-                }));
-
-                bool fileMenuVisible =
-                    Clay_PointerOver(Clay_GetElementId(CLAY_STRING("FileButton")))
-                    ||
-                    Clay_PointerOver(Clay_GetElementId(CLAY_STRING("FileMenu")));
-
-                if (fileMenuVisible) { // Below has been changed slightly to fix the small bug where the menu would dismiss when mousing over the top gap
-                    CLAY(
-                        CLAY_ID("FileMenu"),
-                        CLAY_FLOATING({
-                            .attachment = {
-                                .parent = CLAY_ATTACH_POINT_LEFT_BOTTOM
-                            },
-                        }),
-                        CLAY_LAYOUT({
-                            .padding = {0, 8 }
-                        })
-                    ) {
-                        CLAY(
-                            CLAY_LAYOUT({
-                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                                .sizing = {
-                                        .width = CLAY_SIZING_FIXED(200)
-                                },
-                            }),
-                            CLAY_RECTANGLE({
-                                .color = { 40, 40, 40, 255 },
-                                .cornerRadius = 8
-                            })
-                        ) {
-                            // Render dropdown items here
-                            RenderDropdownMenuItem(CLAY_STRING("New"));
-                            RenderDropdownMenuItem(CLAY_STRING("Open"));
-                            RenderDropdownMenuItem(CLAY_STRING("Close"));
-                        }
-                    }
-                }
-            }
-            RenderHeaderButton(CLAY_STRING("Edit"));
-            CLAY(CLAY_LAYOUT({ .sizing = { CLAY_SIZING_GROW(0) }})) {}
-            RenderHeaderButton(CLAY_STRING("Upload"));
-            RenderHeaderButton(CLAY_STRING("Media"));
-            RenderHeaderButton(CLAY_STRING("Support"));
-        }
-
-        CLAY(
-            CLAY_ID("LowerContent"),
-            CLAY_LAYOUT({ .sizing = layoutExpand, .childGap = 16 })
-        ) {
-            CLAY(
-                CLAY_ID("Sidebar"),
-                CLAY_RECTANGLE(contentBackgroundConfig),
-                CLAY_LAYOUT({
-                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    .padding = CLAY_PADDING_ALL(16),
-                    .childGap = 8,
-                    .sizing = {
-                        .width = CLAY_SIZING_FIXED(250),
-                        .height = CLAY_SIZING_GROW(0)
-                    }
-                })
-            ) {
-                for (int i = 0; i < documents.length; i++) {
-                    Document document = documents.documents[i];
-                    Clay_LayoutConfig sidebarButtonLayout = {
-                        .sizing = { .width = CLAY_SIZING_GROW(0) },
-                        .padding = CLAY_PADDING_ALL(16)
-                    };
-
-                    if (i == selectedDocumentIndex) {
-                        CLAY(
-                            CLAY_LAYOUT(sidebarButtonLayout),
-                            CLAY_RECTANGLE({
-                                .color = { 120, 120, 120, 255 },
-                                .cornerRadius = 8,
-                            })
-                        ) {
-                            CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
-                                .fontSize = 20,
-                                .textColor = { 255, 255, 255, 255 }
-                            }));
-                        }
-                    } else {
-                        CLAY(
-                            CLAY_LAYOUT(sidebarButtonLayout),
-                            Clay_OnHover(HandleSidebarInteraction, i),
-                            Clay_Hovered()
-                                ? CLAY_RECTANGLE({
-                                    .color = { 120, 120, 120, 120 },
-                                    .cornerRadius = 8
-                                })
-                                : 0
-                        ) {
-                            CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
-                                .fontSize = 20,
-                                .textColor = { 255, 255, 255, 255 }
-                            }));
-                        }
-                    }
-                }
-            }
-
-            CLAY(
-                CLAY_ID("MainContent"),
-                CLAY_RECTANGLE(contentBackgroundConfig),
-                CLAY_SCROLL({ .vertical = true }),
-                CLAY_LAYOUT({
-                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    .childGap = 16,
-                    .padding = CLAY_PADDING_ALL(16),
-                    .sizing = layoutExpand
-                })
-            ) {
-                Document selectedDocument = documents.documents[selectedDocumentIndex];
-                CLAY_TEXT(selectedDocument.title, CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 24,
-                    .textColor = COLOR_WHITE
-                }));
-                CLAY_TEXT(selectedDocument.contents, CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
-                    .fontSize = 24,
-                    .textColor = COLOR_WHITE
-                }));
-            }
-        }
-    }
-
-    return Clay_EndLayout();
-}
 
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
@@ -328,6 +73,7 @@ int main(int argc, char *argv[]) {
     Uint64 NOW = SDL_GetPerformanceCounter();
     Uint64 LAST = 0;
     double deltaTime = 0;
+    ClayVideoDemo_Data demoData = ClayVideoDemo_Initialize();
 
     while (true) {
         Clay_Vector2 scrollDelta = {};
@@ -345,6 +91,7 @@ int main(int argc, char *argv[]) {
         LAST = NOW;
         NOW = SDL_GetPerformanceCounter();
         deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency() );
+        printf("%f\n", deltaTime);
 
         int mouseX = 0;
         int mouseY = 0;
@@ -361,7 +108,7 @@ int main(int argc, char *argv[]) {
         SDL_GetWindowSize(window, &windowWidth, &windowHeight);
         Clay_SetLayoutDimensions((Clay_Dimensions) { (float)windowWidth, (float)windowHeight });
 
-        Clay_RenderCommandArray renderCommands = CreateLayout();
+        Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&demoData);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
