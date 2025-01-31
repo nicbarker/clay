@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 // SIMD includes on supported platforms
 #if defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
@@ -362,7 +363,7 @@ typedef struct {
     uint32_t parentId;
     Clay_FloatingAttachPoints attachment;
     Clay_PointerCaptureMode pointerCaptureMode;
-    uint32_t zIndex;
+    int32_t zIndex;
 } Clay_FloatingElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
@@ -1528,6 +1529,22 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     textElement->layoutConfig = &CLAY_LAYOUT_DEFAULT;
 }
 
+void poisonStack() {
+    char* test = (char*)alloca(1024);
+    for (int i = 0; i < 1024; i++) {
+        test[i] = 0xff;
+    }
+}
+
+void doThing() {
+    poisonStack();
+    Clay_FloatingElementConfig floatingConfigMask = {};
+    for (int i = 0; i < sizeof(floatingConfigMask); i++) {
+        char x = ((char*)&floatingConfigMask)[i];
+        char y = x;
+    }
+}
+
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
@@ -1537,6 +1554,8 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
     } else if (openLayoutElement->id == 0) {
         Clay__GenerateIdForAnonymousElement(openLayoutElement);
     }
+
+    doThing();
 
     openLayoutElement->elementConfigs.internalArray = &context->elementConfigs.internalArray[context->elementConfigs.length];
     if (!Clay__MemCmp((char *)(&declaration.rectangle), (char *)(&Clay_RectangleElementConfig_DEFAULT), sizeof(Clay_RectangleElementConfig))) {
@@ -2665,7 +2684,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
     }
 
     if (highlightedElementId) {
-        CLAY({ .id = CLAY_ID("Clay__DebugView_ElementHighlight"), .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .zIndex = 65535, .parentId = highlightedElementId, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH } }) {
+        CLAY({ .id = CLAY_ID("Clay__DebugView_ElementHighlight"), .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .parentId = highlightedElementId, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH, .zIndex = 65535 } }) {
             CLAY({ .id = CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .rectangle = { .color = Clay__debugViewHighlightColor } }) {}
         }
     }
@@ -2799,7 +2818,7 @@ void Clay__RenderDebugView(void) {
     Clay__RenderDebugLayoutData layoutData = CLAY__DEFAULT_STRUCT;
     CLAY({ .id = CLAY_ID("Clay__DebugView"),
          .layout = { .sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(context->layoutDimensions.height) }, .layoutDirection = CLAY_TOP_TO_BOTTOM },
-        .floating = { .zIndex = 65000, .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }},
+        .floating = { .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }, .zIndex = 65000},
         .border = { .bottom = { .width = 1, .color = CLAY__DEBUGVIEW_COLOR_3 }}
     }) {
         CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, CLAY__DEBUGVIEW_OUTER_PADDING }, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }, .rectangle = { .color = CLAY__DEBUGVIEW_COLOR_2 } }) {
@@ -2821,7 +2840,7 @@ void Clay__RenderDebugView(void) {
             CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }, .rectangle = { .color = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1 } }) {
                 Clay_ElementId panelContentsId = Clay__HashString(CLAY_STRING("Clay__DebugViewPaneOuter"), 0, 0);
                 // Element list
-                CLAY({ .id = panelContentsId, .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .zIndex = 65001, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH } }) {
+                CLAY({ .id = panelContentsId, .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = {  .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH, .zIndex = 65001, } }) {
                     CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = { CLAY__DEBUGVIEW_OUTER_PADDING, CLAY__DEBUGVIEW_OUTER_PADDING }, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                         layoutData = Clay__RenderDebugLayoutElementsList((int32_t)initialRootsLength, highlightedRow);
                     }
