@@ -359,10 +359,10 @@ typedef enum {
 typedef struct {
     Clay_Vector2 offset;
     Clay_Dimensions expand;
-    uint16_t zIndex;
     uint32_t parentId;
     Clay_FloatingAttachPoints attachment;
     Clay_PointerCaptureMode pointerCaptureMode;
+    uint32_t zIndex;
 } Clay_FloatingElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
