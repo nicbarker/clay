@@ -101,7 +101,6 @@ RenderCommandType :: enum EnumBackingType {
 
 RectangleElementConfig :: struct {
     color:        Color,
-    cornerRadius: CornerRadius,
 }
 
 TextWrapMode :: enum EnumBackingType {
@@ -135,12 +134,15 @@ BorderElementConfig :: struct {
     top:             BorderData,
     bottom:          BorderData,
     betweenChildren: BorderData,
-    cornerRadius:    CornerRadius,
 }
 
 ScrollElementConfig :: struct {
     horizontal: bool,
     vertical:   bool,
+}
+
+SharedElementConfig :: struct {
+    cornerRadius: CornerRadius
 }
 
 FloatingAttachPointType :: enum EnumBackingType {
@@ -182,13 +184,18 @@ ElementConfigUnion :: struct #raw_union {
     borderElementConfig:    ^BorderElementConfig,
 }
 
+TextOrSharedConfig :: struct #raw_union {
+    text: StringSlice,
+    sharedConfig: ^SharedElementConfig
+}
+
 RenderCommand :: struct {
-    boundingBox: BoundingBox,
-    config:      ElementConfigUnion,
-    text:        StringSlice,
-    zIndex:      i32,
-    id:          u32,
-    commandType: RenderCommandType,
+    boundingBox:        BoundingBox,
+    config:             ElementConfigUnion,
+    textOrSharedConfig: TextOrSharedConfig,
+    zIndex:             i32,
+    id:                 u32,
+    commandType:        RenderCommandType,
 }
 
 ScrollContainerData :: struct {
@@ -273,10 +280,16 @@ ClayArray :: struct($type: typeid) {
     internalArray: [^]type,
 }
 
-TypedConfig :: struct {
-    type:   ElementConfigType,
-    config: rawptr,
-    id:     ElementId,
+ElementDeclaration :: struct {
+    id: ElementId,
+    layout: LayoutConfig,
+    rectangle: RectangleElementConfig,
+    image: ImageElementConfig,
+    floating: FloatingElementConfig,
+    custom: CustomElementConfig,
+    scroll: ScrollElementConfig,
+    border: BorderElementConfig,
+    shared: SharedElementConfig,
 }
 
 ErrorType :: enum {
@@ -321,51 +334,27 @@ foreign Clay {
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
 foreign Clay {
     _OpenElement :: proc() ---
+    _ConfigureOpenElement :: proc(config: ElementDeclaration) ---
     _CloseElement :: proc() ---
-    _ElementPostConfiguration :: proc() ---
     _OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
-    _AttachId :: proc(id: ElementId) ---
-    _AttachLayoutConfig :: proc(layoutConfig: ^LayoutConfig) ---
-    _AttachElementConfig :: proc(config: rawptr, type: ElementConfigType) ---
-    _StoreLayoutConfig :: proc(config: LayoutConfig) -> ^LayoutConfig ---
-    _StoreRectangleElementConfig :: proc(config: RectangleElementConfig) -> ^RectangleElementConfig ---
     _StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
-    _StoreImageElementConfig :: proc(config: ImageElementConfig) -> ^ImageElementConfig ---
-    _StoreFloatingElementConfig :: proc(config: FloatingElementConfig) -> ^FloatingElementConfig ---
-    _StoreCustomElementConfig :: proc(config: CustomElementConfig) -> ^CustomElementConfig ---
-    _StoreScrollElementConfig :: proc(config: ScrollElementConfig) -> ^ScrollElementConfig ---
-    _StoreBorderElementConfig :: proc(config: BorderElementConfig) -> ^BorderElementConfig ---
     _HashString :: proc(toHash: String, index: u32, seed: u32) -> ElementId ---
     _GetOpenLayoutElementId :: proc() -> u32 ---
 }
 
-@(require_results, deferred_none = _CloseElement)
-UI :: proc(configs: ..TypedConfig) -> bool {
+ClayOpenElement :: struct {
+    configure: proc (config: ElementDeclaration) -> bool
+}
+
+ConfigureOpenElement :: proc(config: ElementDeclaration) -> bool {
+    _ConfigureOpenElement(config)
+    return true;
+}
+
+@(deferred_none = _CloseElement)
+UI :: proc() -> ClayOpenElement {
     _OpenElement()
-    for config in configs {
-        #partial switch (config.type) {
-        case ElementConfigType.Id:
-            _AttachId(config.id)
-        case ElementConfigType.Layout:
-            _AttachLayoutConfig(cast(^LayoutConfig)config.config)
-        case:
-            _AttachElementConfig(config.config, config.type)
-        }
-    }
-    _ElementPostConfiguration()
-    return true
-}
-
-Layout :: proc(config: LayoutConfig) -> TypedConfig {
-    return {type = ElementConfigType.Layout, config = _StoreLayoutConfig(config) }
-}
-
-PaddingAll :: proc (padding: u16) -> Padding {
-    return { padding, padding, padding, padding }
-}
-
-Rectangle :: proc(config: RectangleElementConfig) -> TypedConfig {
-    return {type = ElementConfigType.Rectangle, config = _StoreRectangleElementConfig(config)}
+    return { configure = ConfigureOpenElement }
 }
 
 Text :: proc(text: string, config: ^TextElementConfig) {
@@ -376,44 +365,16 @@ TextConfig :: proc(config: TextElementConfig) -> ^TextElementConfig {
     return _StoreTextElementConfig(config)
 }
 
-Image :: proc(config: ImageElementConfig) -> TypedConfig {
-    return {type = ElementConfigType.Image, config = _StoreImageElementConfig(config)}
+PaddingAll :: proc(allPadding: u16) -> Padding {
+    return { left = allPadding, right = allPadding, top = allPadding, bottom = allPadding }
 }
 
-Floating :: proc(config: FloatingElementConfig) -> TypedConfig {
-    return {type = ElementConfigType.Floating, config = _StoreFloatingElementConfig(config)}
+BorderOutside :: proc(outsideBorders: BorderData) -> BorderElementConfig {
+    return { left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders }
 }
 
-Custom :: proc(config: CustomElementConfig) -> TypedConfig {
-    return {type = ElementConfigType.Custom, config = _StoreCustomElementConfig(config)}
-}
-
-Scroll :: proc(config: ScrollElementConfig) -> TypedConfig {
-    return {type = ElementConfigType.Scroll, config = _StoreScrollElementConfig(config)}
-}
-
-Border :: proc(config: BorderElementConfig) -> TypedConfig {
-    return {type = ElementConfigType.Border, config = _StoreBorderElementConfig(config)}
-}
-
-BorderOutside :: proc(outsideBorders: BorderData) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig((BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders}) }
-}
-
-BorderOutsideRadius :: proc(outsideBorders: BorderData, radius: f32) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig(
-        (BorderElementConfig){left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders, cornerRadius = {radius, radius, radius, radius}},
-    ) }
-}
-
-BorderAll :: proc(allBorders: BorderData) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig((BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders}) }
-}
-
-BorderAllRadius :: proc(allBorders: BorderData, radius: f32) -> TypedConfig {
-    return { type = ElementConfigType.Border, config = _StoreBorderElementConfig(
-        (BorderElementConfig){left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, cornerRadius = {radius, radius, radius, radius}},
-    ) }
+BorderAll :: proc(allBorders: BorderData) -> BorderElementConfig {
+    return { left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders }
 }
 
 CornerRadiusAll :: proc(radius: f32) -> CornerRadius {
@@ -440,6 +401,6 @@ MakeString :: proc(label: string) -> String {
     return String{chars = raw_data(label), length = cast(c.int)len(label)}
 }
 
-ID :: proc(label: string, index: u32 = 0) -> TypedConfig {
-    return { type = ElementConfigType.Id, id = _HashString(MakeString(label), index, 0) }
+ID :: proc(label: string, index: u32 = 0) -> ElementId {
+    return _HashString(MakeString(label), index, 0)
 }

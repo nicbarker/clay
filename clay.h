@@ -13,8 +13,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
 
 // SIMD includes on supported platforms
 #ifdef __x86_64__
@@ -2582,7 +2580,8 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                     CLAY({
                         .id = CLAY_IDI("Clay__DebugView_CollapseElement", currentElement->id),
                         .layout = { .sizing = {CLAY_SIZING_FIXED(16), CLAY_SIZING_FIXED(16)}, .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} },
-                        .border = CLAY_BORDER_OUTSIDE({ 1, CLAY__DEBUGVIEW_COLOR_3 })
+                        .border = CLAY_BORDER_OUTSIDE({ 1, CLAY__DEBUGVIEW_COLOR_3 }),
+                        .shared = { .cornerRadius = CLAY_CORNER_RADIUS(4) }
                     }) {
                         CLAY_TEXT((currentElementData && currentElementData->debugData->collapsed) ? CLAY_STRING("+") : CLAY_STRING("-"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
                     }
@@ -2722,9 +2721,7 @@ void Clay__RenderDebugViewColor(Clay_Color color, Clay_TextElementConfig *textCo
         CLAY_TEXT(Clay__IntToString(color.a), textConfig);
         CLAY_TEXT(CLAY_STRING(" }"), textConfig);
         CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(10), CLAY__DEFAULT_STRUCT } } }) {}
-        CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }, .border = CLAY_BORDER_OUTSIDE({ 1, CLAY__DEBUGVIEW_COLOR_4 }) }) {
-            CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }, .rectangle = { .color = color }, .shared = { .cornerRadius = CLAY_CORNER_RADIUS(4) } }) {}
-        }
+        CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }, .border = CLAY_BORDER_OUTSIDE({ 1, CLAY__DEBUGVIEW_COLOR_4 }), .rectangle = { .color = color }, .shared = { .cornerRadius = CLAY_CORNER_RADIUS(4) } }) {}
     }
 }
 
@@ -2809,9 +2806,10 @@ void Clay__RenderDebugView(void) {
             CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0) } } }) {}
             // Close button
             CLAY({
-                 .layout = { .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} },
-                 .rectangle = { .color = {217,91,67,80} },
+                .layout = { .sizing = {CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 10)}, .childAlignment = {CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} },
+                .rectangle = { .color = {217,91,67,80} },
                 .border = CLAY_BORDER_OUTSIDE({ 1, (CLAY__INIT(Clay_Color){217,91,67,255}) }),
+                .shared = { .cornerRadius = CLAY_CORNER_RADIUS(4) }
             }) {
                 Clay_OnHover(HandleDebugViewCloseButtonInteraction, 0);
                 CLAY_TEXT(CLAY_STRING("x"), CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
@@ -2999,7 +2997,7 @@ void Clay__RenderDebugView(void) {
                                 }
                                 // Image Preview
                                 CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
-                                CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0, imageConfig->sourceDimensions.width) }}, .image = { imageConfig } }) {}
+                                CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0, imageConfig->sourceDimensions.width) }}, .image = *imageConfig }) {}
                             }
                             break;
                         }
