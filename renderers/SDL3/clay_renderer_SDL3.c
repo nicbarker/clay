@@ -2,6 +2,7 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3_image/SDL_image.h>
 
 typedef struct {
     SDL_Renderer *renderer;
@@ -231,6 +232,14 @@ static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Cla
                 }
 
             } break;
+            case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
+                const SDL_Surface *image = (SDL_Surface *)rcmd->config.imageElementConfig->imageData;
+                const SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, image);
+                const SDL_FRect dest = { rect.x, rect.y, rect.w, rect.h };
+
+                SDL_RenderTexture(renderer, texture, NULL, &dest);
+                break;
+            }
             default:
                 SDL_Log("Unknown render command type: %d", rcmd->commandType);
         }
