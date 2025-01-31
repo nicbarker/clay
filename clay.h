@@ -15,7 +15,7 @@
 #include <stddef.h>
 
 // SIMD includes on supported platforms
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
 #include <emmintrin.h>
 #elif __aarch64__
 #include <arm_neon.h>
@@ -1413,7 +1413,7 @@ void Clay__CloseElement(void) {
 }
 
 bool Clay__MemCmp(const char *s1, const char *s2, int32_t length);
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
     bool Clay__MemCmp(const char *s1, const char *s2, int32_t length) {
         while (length >= 16) {
             __m128i v1 = _mm_loadu_si128((const __m128i *)s1);
