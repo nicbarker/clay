@@ -55,7 +55,7 @@
 
 #define CLAY_BORDER_OUTSIDE(...) CLAY__CONFIG_WRAPPER(Clay_BorderElementConfig, { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__ })
 
-#define CLAY_BORDER_ALL(...) Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(CLAY__INIT(Clay_BorderElementConfig) { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ } ) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER_CONTAINER)
+#define CLAY_BORDER_ALL(...) CLAY__CONFIG_WRAPPER(Clay_BorderElementConfig, { .left = __VA_ARGS__, .right = __VA_ARGS__, .top = __VA_ARGS__, .bottom = __VA_ARGS__, .betweenChildren = __VA_ARGS__ })
 
 #define CLAY_CORNER_RADIUS(radius) (CLAY__INIT(Clay_CornerRadius) { radius, radius, radius, radius })
 
@@ -69,7 +69,7 @@
 
 #define CLAY_SIZING_PERCENT(percentOfParent) (CLAY__INIT(Clay_SizingAxis) { .size = { .percent = (percentOfParent) }, .type = CLAY__SIZING_TYPE_PERCENT })
 
-#define CLAY_ID(label) Clay__HashString(CLAY_STRING(label), 0, 0)
+#define CLAY_ID(label) CLAY_IDI(label, 0)
 
 #define CLAY_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, 0)
 
@@ -556,7 +556,7 @@ void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 void Clay_ResetMeasureTextCache(void);
 
 // Internal API functions required by macros
-void Clay__OpenElement();
+void Clay__OpenElement(void);
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration config);
 void Clay__CloseElement(void);
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
