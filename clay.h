@@ -2721,7 +2721,7 @@ void Clay__RenderDebugViewColor(Clay_Color color, Clay_TextElementConfig *textCo
         CLAY_TEXT(Clay__IntToString(color.a), textConfig);
         CLAY_TEXT(CLAY_STRING(" }"), textConfig);
         CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(10), CLAY__DEFAULT_STRUCT } } }) {}
-        CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }, .border = CLAY_BORDER_OUTSIDE({ 1, CLAY__DEBUGVIEW_COLOR_4 }), .rectangle = { .color = color }, .shared = { .cornerRadius = CLAY_CORNER_RADIUS(4) } }) {}
+        CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT - 8)} }, .rectangle = { .color = color }, .border = CLAY_BORDER_OUTSIDE({ 1, CLAY__DEBUGVIEW_COLOR_4 }), .shared = { .cornerRadius = CLAY_CORNER_RADIUS(4) } }) {}
     }
 }
 
