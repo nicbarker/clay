@@ -147,18 +147,19 @@ static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArr
         switch (rcmd->commandType) {
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                 const Clay_RectangleElementConfig *config = rcmd->config.rectangleElementConfig;
+                Clay_CornerRadius cornerRadius = rcmd->textOrSharedConfig.sharedConfig->cornerRadius;
                 const Clay_Color color = config->color;
 
                 SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-                if (config->cornerRadius.topLeft > 0) {
-                    SDL_RenderFillRoundedRect(renderer, rect, config->cornerRadius.topLeft, color);
+                if (cornerRadius.topLeft > 0) {
+                    SDL_RenderFillRoundedRect(renderer, rect, cornerRadius.topLeft, color);
                 } else {
                     SDL_RenderFillRect(renderer, &rect);
                 }
             } break;
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 const Clay_TextElementConfig *config = rcmd->config.textElementConfig;
-                const Clay_StringSlice *text = &rcmd->text;
+                const Clay_StringSlice *text = &rcmd->textOrSharedConfig.text;
                 const SDL_Color color = { config->textColor.r, config->textColor.g, config->textColor.b, config->textColor.a };
 
                 TTF_Font *font = gFonts[config->fontId];
@@ -171,13 +172,14 @@ static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArr
             } break;
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {
                 const Clay_BorderElementConfig *config = rcmd->config.borderElementConfig;
+                Clay_CornerRadius cornerRadius = rcmd->textOrSharedConfig.sharedConfig->cornerRadius;
 
                 const float minRadius = SDL_min(rect.w, rect.h) / 2.0f;
                 const Clay_CornerRadius clampedRadii = {
-                    .topLeft = SDL_min(config->cornerRadius.topLeft, minRadius),
-                    .topRight = SDL_min(config->cornerRadius.topRight, minRadius),
-                    .bottomLeft = SDL_min(config->cornerRadius.bottomLeft, minRadius),
-                    .bottomRight = SDL_min(config->cornerRadius.bottomRight, minRadius)
+                    .topLeft = SDL_min(cornerRadius.topLeft, minRadius),
+                    .topRight = SDL_min(cornerRadius.topRight, minRadius),
+                    .bottomLeft = SDL_min(cornerRadius.bottomLeft, minRadius),
+                    .bottomRight = SDL_min(cornerRadius.bottomRight, minRadius)
                 };
                 //edges
                 SDL_SetRenderDrawColor(renderer, config->left.color.r, config->left.color.g, config->left.color.b, config->left.color.a);
@@ -209,25 +211,25 @@ static void SDL_RenderClayCommands(SDL_Renderer *renderer, Clay_RenderCommandArr
                     SDL_RenderFillRect(renderer, &line);
                 }
                 //corners
-                if (config->cornerRadius.topLeft > 0) {
+                if (cornerRadius.topLeft > 0) {
                     const float centerX = rect.x + clampedRadii.topLeft -1;
                     const float centerY = rect.y + clampedRadii.topLeft;
                     SDL_RenderArc(renderer, (SDL_FPoint){centerX, centerY}, clampedRadii.topLeft,
                         180.0f, 270.0f, config->top.width, config->top.color);
                 }
-                if (config->cornerRadius.topRight > 0) {
+                if (cornerRadius.topRight > 0) {
                     const float centerX = rect.x + rect.w - clampedRadii.topRight -1;
                     const float centerY = rect.y + clampedRadii.topRight;
                     SDL_RenderArc(renderer, (SDL_FPoint){centerX, centerY}, clampedRadii.topRight,
                         270.0f, 360.0f, config->top.width, config->top.color);
                 }
-                if (config->cornerRadius.bottomLeft > 0) {
+                if (cornerRadius.bottomLeft > 0) {
                     const float centerX = rect.x + clampedRadii.bottomLeft -1;
                     const float centerY = rect.y + rect.h - clampedRadii.bottomLeft -1;
                     SDL_RenderArc(renderer, (SDL_FPoint){centerX, centerY}, clampedRadii.bottomLeft,
                         90.0f, 180.0f, config->bottom.width, config->bottom.color);
                 }
-                if (config->cornerRadius.bottomRight > 0) {
+                if (cornerRadius.bottomRight > 0) {
                     const float centerX = rect.x + rect.w - clampedRadii.bottomRight -1; //TODO: why need to -1 in all calculations???
                     const float centerY = rect.y + rect.h - clampedRadii.bottomRight -1;
                     SDL_RenderArc(renderer, (SDL_FPoint){centerX, centerY}, clampedRadii.bottomRight,
