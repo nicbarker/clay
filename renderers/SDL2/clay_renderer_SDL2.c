@@ -58,7 +58,7 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
             }
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 Clay_TextElementConfig *config = renderCommand->config.textElementConfig;
-                Clay_StringSlice text = renderCommand->text;
+                Clay_StringSlice text = renderCommand->textOrSharedConfig.text;
                 char *cloned = (char *)calloc(text.length + 1, 1);
                 memcpy(cloned, text.chars, text.length);
                 TTF_Font* font = fonts[config->fontId].font;
@@ -114,34 +114,35 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {
                 Clay_BorderElementConfig *config = renderCommand->config.borderElementConfig;
+                Clay_CornerRadius cornerRadius = renderCommand->textOrSharedConfig.sharedConfig->cornerRadius;
 
                 if (config->left.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->left.color));
-                    SDL_FRect rect = { boundingBox.x, boundingBox.y + config->cornerRadius.topLeft, config->left.width, boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft };
+                    SDL_FRect rect = { boundingBox.x, boundingBox.y + cornerRadius.topLeft, config->left.width, boundingBox.height - cornerRadius.topLeft - cornerRadius.bottomLeft };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->right.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
+                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + cornerRadius.topRight, config->right.width, boundingBox.height - cornerRadius.topRight - cornerRadius.bottomRight };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->right.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + config->cornerRadius.topRight, config->right.width, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
+                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + cornerRadius.topRight, config->right.width, boundingBox.height - cornerRadius.topRight - cornerRadius.bottomRight };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->top.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    SDL_FRect rect = { boundingBox.x + config->cornerRadius.topLeft, boundingBox.y, boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight, config->top.width };
+                    SDL_FRect rect = { boundingBox.x + cornerRadius.topLeft, boundingBox.y, boundingBox.width - cornerRadius.topLeft - cornerRadius.topRight, config->top.width };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
                 if (config->bottom.width > 0) {
                     SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->bottom.color));
-                    SDL_FRect rect = { boundingBox.x + config->cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->bottom.width, boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight, config->bottom.width };
+                    SDL_FRect rect = { boundingBox.x + cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->bottom.width, boundingBox.width - cornerRadius.bottomLeft - cornerRadius.bottomRight, config->bottom.width };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
