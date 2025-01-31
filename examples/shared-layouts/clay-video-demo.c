@@ -1,5 +1,5 @@
 #include "../../clay.h"
-#include <malloc/malloc.h>
+#include <stdlib.h>
 
 const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
