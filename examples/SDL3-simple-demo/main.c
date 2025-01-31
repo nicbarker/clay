@@ -21,6 +21,8 @@ typedef struct app_state {
     SDL_Renderer *renderer;
 } AppState;
 
+SDL_Surface *sample_image;
+
 static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData)
 {
     TTF_Font *font = gFonts[config->fontId];
@@ -92,6 +94,11 @@ static Clay_RenderCommandArray Clay_CreateLayout()
             .color = COLOR_LIGHT,
         })
     ) {
+        CLAY(
+            CLAY_LAYOUT({ .padding = {8, 8} }),
+            CLAY_IMAGE({ sample_image, { 23, 42 } })
+        ) { }
+
         Label(CLAY_STRING("Rounded - Button 1"), 10);
         Label(CLAY_STRING("Straight - Button 2") , 0);
         Label(CLAY_STRING("Rounded+ - Button 3") , 20);
@@ -134,6 +141,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     }
 
     gFonts[FONT_ID] = font;
+
+    sample_image = IMG_Load("resources/sample.png");
 
     /* Initialize Clay */
     uint64_t totalMemorySize = Clay_MinMemorySize();

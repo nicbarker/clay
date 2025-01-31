@@ -34,11 +34,24 @@ message(STATUS "Using SDL_ttf via FetchContent")
 FetchContent_MakeAvailable(SDL_ttf)
 set_property(DIRECTORY "${sdl_ttf_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
 
+# Download SDL_image
+FetchContent_Declare(
+	SDL_image
+	GIT_REPOSITORY "https://github.com/libsdl-org/SDL_image.git"
+	GIT_TAG main # Slightly risky to use main branch, but it's the only one available
+	GIT_SHALLOW TRUE
+	GIT_PROGRESS TRUE
+)
+message(STATUS "Using SDL_image via FetchContent")
+FetchContent_MakeAvailable(SDL_image)
+set_property(DIRECTORY "${SDL_image_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
+
 # Example executable
 add_executable(${PROJECT_NAME} main.c)
 target_link_libraries(${PROJECT_NAME} PRIVATE
 	SDL3::SDL3
 	SDL3_ttf::SDL3_ttf
+	SDL3_image::SDL3_image
 )
 
 add_custom_command(
