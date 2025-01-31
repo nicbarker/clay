@@ -39,7 +39,12 @@ static int NUM_CIRCLE_SEGMENTS = 16;
 
 //all rendering is performed by a single SDL call, avoiding multiple RenderRect + plumbing choice for circles.
 static void SDL_RenderFillRoundedRect(SDL_Renderer* renderer, const SDL_FRect rect, const float cornerRadius, const Clay_Color _color) {
-    const SDL_Color color = { (Uint8)(_color.r), (Uint8)(_color.g), (Uint8)(_color.b), (Uint8)(_color.a), };
+    const SDL_Color color = (SDL_Color) {
+            .r = (Uint8)_color.r,
+            .g = (Uint8)_color.g,
+            .b = (Uint8)_color.b,
+            .a = (Uint8)_color.a,
+    };
 
     int indexCount = 0, vertexCount = 0;
 
