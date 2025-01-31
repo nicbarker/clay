@@ -964,22 +964,21 @@ Clay_ElementConfig Clay__CurrentConfigUnion(Clay__ElementConfigType type) {
         case CLAY__ELEMENT_CONFIG_TYPE_NONE:
             return CLAY__INIT(Clay_ElementConfig) CLAY__DEFAULT_STRUCT;
         case CLAY__ELEMENT_CONFIG_TYPE_RECTANGLE:
-            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__RectangleElementConfigArray_Add(&Clay_GetCurrentContext()->rectangleElementConfigs, CLAY__INIT(Clay_RectangleElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .rectangleElementConfig = Clay__RectangleElementConfigArray_Add(&Clay_GetCurrentContext()->rectangleElementConfigs, CLAY__INIT(Clay_RectangleElementConfig) {CLAY__DEFAULT_STRUCT}) }, type);
         case CLAY__ELEMENT_CONFIG_TYPE_TEXT:
-            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .textElementConfig = Clay__TextElementConfigArray_Add(&Clay_GetCurrentContext()->textElementConfigs, CLAY__INIT(Clay_TextElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .textElementConfig = Clay__TextElementConfigArray_Add(&Clay_GetCurrentContext()->textElementConfigs, CLAY__INIT(Clay_TextElementConfig) {CLAY__DEFAULT_STRUCT}) }, type);
         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE:
-            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, CLAY__INIT(Clay_ImageElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, CLAY__INIT(Clay_ImageElementConfig)CLAY__DEFAULT_STRUCT) }, type);
         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING:
-            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, CLAY__INIT(Clay_FloatingElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, CLAY__INIT(Clay_FloatingElementConfig) {CLAY__DEFAULT_STRUCT}) }, type);
         case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM:
-            Clay__int32_tArray_Add(&context->imageElementPointers, context->layoutElements.length - 1);
-            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, CLAY__INIT(Clay_CustomElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+            Clay__int32_tArray_Add(&context->imageElementPointers, context->layoutElements.length - 1);return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, CLAY__INIT(Clay_CustomElementConfig)CLAY__DEFAULT_STRUCT) }, type);
         case CLAY__ELEMENT_CONFIG_TYPE_SCROLL:
             return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__ScrollElementConfigArray_Add(&Clay_GetCurrentContext()->scrollElementConfigs, CLAY__INIT(Clay_ScrollElementConfig) CLAY__DEFAULT_STRUCT) }, type);
         case CLAY__ELEMENT_CONFIG_TYPE_BORDER:
-            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, CLAY__INIT(Clay_BorderElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, CLAY__INIT(Clay_BorderElementConfig) {CLAY__DEFAULT_STRUCT}) }, type);
         case CLAY__ELEMENT_CONFIG_TYPE_SHARED:
-            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = Clay__SharedElementConfigArray_Add(&Clay_GetCurrentContext()->sharedElementConfigs, CLAY__INIT(Clay_SharedElementConfig) CLAY__DEFAULT_STRUCT) }, type);
+            return Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = Clay__SharedElementConfigArray_Add(&Clay_GetCurrentContext()->sharedElementConfigs, CLAY__INIT(Clay_SharedElementConfig) {CLAY__DEFAULT_STRUCT}) }, type);
     }
 
     return CLAY__INIT(Clay_ElementConfig) CLAY__DEFAULT_STRUCT;
