@@ -113,7 +113,6 @@
     ]};
     let rectangleConfigDefinition = { name: 'rectangle', type: 'struct', members: [
         { name: 'color', ...colorDefinition },
-        { name: 'cornerRadius', ...cornerRadiusDefinition },
         { name: 'link', ...stringDefinition },
         { name: 'cursorPointer', type: 'uint8_t' },
     ]};
@@ -123,7 +122,6 @@
         { name: 'top', ...borderDefinition },
         { name: 'bottom', ...borderDefinition },
         { name: 'betweenChildren', ...borderDefinition },
-        { name: 'cornerRadius', ...cornerRadiusDefinition }
     ]};
     let textConfigDefinition = { name: 'text', type: 'struct', members: [
        { name: 'textColor', ...colorDefinition },
@@ -149,6 +147,9 @@
     let customConfigDefinition = { name: 'custom', type: 'struct', members: [
         { name: 'customData', type: 'uint32_t' },
     ]}
+    let sharedConfigDefinition = { name: 'shared', type: 'struct', members: [
+        { name: 'cornerRadius', ...cornerRadiusDefinition },
+    ]};
     let renderCommandDefinition = {
         name: 'CLay_RenderCommand',
         type: 'struct',
@@ -160,7 +161,10 @@
                 { name: 'height', type: 'float' },
             ]},
             { name: 'config', type: 'uint32_t'},
-            { name: 'text', ...stringSliceDefinition },
+            { name: 'textOrSharedConfig', type: 'union', members: [
+                { name: 'text', ...stringSliceDefinition },
+                { name: 'sharedConfig', type: 'uint32_t' }
+            ]},
             { name: 'zIndex', type: 'int32_t' },
             { name: 'id', type: 'uint32_t' },
             { name: 'commandType', type: 'uint32_t', },
@@ -378,7 +382,7 @@
             let isMultiConfigElement = previousId === renderCommand.id.value;
             if (!elementCache[renderCommand.id.value]) {
                 let elementType = 'div';
-                switch (renderCommand.commandType.value) {
+                switch (renderCommand.commandType.value & 0xff) {
                     case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                         if (readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition).link.length.value > 0) {
                             elementType = 'a';
@@ -386,6 +390,7 @@
                         break;
                     }
                     case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
+                        console.log('test5');
                         elementType = 'img'; break;
                     }
                     default: break;
@@ -439,6 +444,7 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_RECTANGLE): {
                     let config = readStructAtAddress(renderCommand.config.value, rectangleConfigDefinition);
+                    let sharedConfig = readStructAtAddress( renderCommand.textOrSharedConfig.sharedConfig.value, sharedConfigDefinition);
                     let configMemory = new Uint8Array(memoryDataView.buffer.slice(renderCommand.config.value, renderCommand.config.value + config.__size));
                     let linkContents = config.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(config.link.chars.value, config.link.chars.value + config.link.length.value))) : 0;
                     memoryDataView.setUint32(0, renderCommand.id.value, true);
@@ -459,22 +465,23 @@
                     elementData.previousMemoryConfig = configMemory;
                     let color = config.color;
                     element.style.backgroundColor = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
-                    if (config.cornerRadius.topLeft.value > 0) {
-                        element.style.borderTopLeftRadius = config.cornerRadius.topLeft.value + 'px';
+                    if (sharedConfig.cornerRadius.topLeft.value > 0) {
+                        element.style.borderTopLeftRadius = sharedConfig.cornerRadius.topLeft.value + 'px';
                     }
-                    if (config.cornerRadius.topRight.value > 0) {
-                        element.style.borderTopRightRadius = config.cornerRadius.topRight.value + 'px';
+                    if (sharedConfig.cornerRadius.topRight.value > 0) {
+                        element.style.borderTopRightRadius = sharedConfig.cornerRadius.topRight.value + 'px';
                     }
-                    if (config.cornerRadius.bottomLeft.value > 0) {
-                        element.style.borderBottomLeftRadius = config.cornerRadius.bottomLeft.value + 'px';
+                    if (sharedConfig.cornerRadius.bottomLeft.value > 0) {
+                        element.style.borderBottomLeftRadius = sharedConfig.cornerRadius.bottomLeft.value + 'px';
                     }
-                    if (config.cornerRadius.bottomRight.value > 0) {
-                        element.style.borderBottomRightRadius = config.cornerRadius.bottomRight.value + 'px';
+                    if (sharedConfig.cornerRadius.bottomRight.value > 0) {
+                        element.style.borderBottomRightRadius = sharedConfig.cornerRadius.bottomRight.value + 'px';
                     }
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_BORDER): {
                     let config = readStructAtAddress(renderCommand.config.value, borderConfigDefinition);
+                    let sharedConfig = readStructAtAddress( renderCommand.textOrSharedConfig.sharedConfig.value, sharedConfigDefinition);
                     let configMemory = new Uint8Array(memoryDataView.buffer.slice(renderCommand.config.value, renderCommand.config.value + config.__size));
                     if (!dirty && !MemoryIsDifferent(configMemory, elementData.previousMemoryConfig, config.__size)) {
                         break;
@@ -496,24 +503,24 @@
                         let color = config.bottom.color;
                         element.style.borderBottom = `${config.bottom.width.value}px solid rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`
                     }
-                    if (config.cornerRadius.topLeft.value > 0) {
-                        element.style.borderTopLeftRadius = config.cornerRadius.topLeft.value + 'px';
+                    if (sharedConfig.cornerRadius.topLeft.value > 0) {
+                        element.style.borderTopLeftRadius = sharedConfig.cornerRadius.topLeft.value + 'px';
                     }
-                    if (config.cornerRadius.topRight.value > 0) {
-                        element.style.borderTopRightRadius = config.cornerRadius.topRight.value + 'px';
+                    if (sharedConfig.cornerRadius.topRight.value > 0) {
+                        element.style.borderTopRightRadius = sharedConfig.cornerRadius.topRight.value + 'px';
                     }
-                    if (config.cornerRadius.bottomLeft.value > 0) {
-                        element.style.borderBottomLeftRadius = config.cornerRadius.bottomLeft.value + 'px';
+                    if (sharedConfig.cornerRadius.bottomLeft.value > 0) {
+                        element.style.borderBottomLeftRadius = sharedConfig.cornerRadius.bottomLeft.value + 'px';
                     }
-                    if (config.cornerRadius.bottomRight.value > 0) {
-                        element.style.borderBottomRightRadius = config.cornerRadius.bottomRight.value + 'px';
+                    if (sharedConfig.cornerRadius.bottomRight.value > 0) {
+                        element.style.borderBottomRightRadius = sharedConfig.cornerRadius.bottomRight.value + 'px';
                     }
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_TEXT): {
                     let config = readStructAtAddress(renderCommand.config.value, textConfigDefinition);
                     let configMemory = new Uint8Array(memoryDataView.buffer.slice(renderCommand.config.value, renderCommand.config.value + config.__size));
-                    let textContents = renderCommand.text;
+                    let textContents = renderCommand.textOrSharedConfig.text;
                     let stringContents = new Uint8Array(memoryDataView.buffer.slice(textContents.chars.value, textContents.chars.value + textContents.length.value));
                     if (MemoryIsDifferent(configMemory, elementData.previousMemoryConfig, config.__size)) {
                         element.className = 'text';
@@ -549,6 +556,7 @@
                     break;
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_IMAGE): {
+                    console.log('test1');
                     let config = readStructAtAddress(renderCommand.config.value, imageConfigDefinition);
                     let srcContents = new Uint8Array(memoryDataView.buffer.slice(config.sourceURL.chars.value, config.sourceURL.chars.value + config.sourceURL.length.value));
                     if (srcContents.length !== elementData.previousMemoryText.length || MemoryIsDifferent(srcContents, elementData.previousMemoryText, srcContents.length)) {
