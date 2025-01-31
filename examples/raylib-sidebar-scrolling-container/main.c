@@ -44,7 +44,7 @@ void RenderDropdownTextItem(int index) {
     }
 }
 
-Clay_RenderCommandArray CreateLayout() {
+Clay_RenderCommandArray CreateLayout(void) {
     Clay_BeginLayout();
     CLAY({ .id = CLAY_ID("OuterContainer"), .layout = { .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .padding = { 16, 16, 16, 16 }, .childGap = 16 }, .rectangle = { .color = {200, 200, 200, 255} }}) {
         CLAY({ .id = CLAY_ID("SideBar"), .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = {16, 16, 16, 16 }, .childGap = 16 }, .rectangle = { .color = {150, 150, 255, 255} }}) {
@@ -150,7 +150,7 @@ typedef struct
     bool mouseDown;
 } ScrollbarData;
 
-ScrollbarData scrollbarData = {};
+ScrollbarData scrollbarData = {0};
 
 bool debugEnabled = false;
 
