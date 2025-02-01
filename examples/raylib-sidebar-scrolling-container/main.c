@@ -4,8 +4,8 @@
 
 const uint32_t FONT_ID_BODY_24 = 0;
 const uint32_t FONT_ID_BODY_16 = 1;
-#define COLOR_ORANGE (Clay_Color) {225, 138, 50, 255}
-#define COLOR_BLUE (Clay_Color) {111, 173, 162, 255}
+#define COLOR_ORANGE {225, 138, 50, 255}
+#define COLOR_BLUE {111, 173, 162, 255}
 
 Texture2D profilePicture;
 #define RAYLIB_VECTOR2_TO_CLAY_VECTOR2(vector) (Clay_Vector2) { .x = vector.x, .y = vector.y }
@@ -28,7 +28,7 @@ Clay_ElementDeclaration headerButtonStyle = {
 void RenderHeaderButton(Clay_String text) {
     CLAY(headerButtonStyle) {
         if (Clay_Hovered()) {
-            Clay_CurrentConfigRectangle()->color = COLOR_ORANGE;
+            Clay_CurrentConfigRectangle()->color = (Clay_Color) COLOR_ORANGE;
         }
         CLAY_TEXT(text, CLAY_TEXT_CONFIG(headerTextConfig));
     }
