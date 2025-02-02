@@ -1541,7 +1541,6 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
 
     uint8_t* decData = (uint8_t*)&declaration;
     for (int32_t i = 0; i < context->declarationPaddingMask.length; i++) {
-        int offset = context->declarationPaddingMask.internalArray[i];
         *(decData + context->declarationPaddingMask.internalArray[i]) = 0;
     }
 
