@@ -3293,11 +3293,12 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
     }
 }
 
-void Clay__PoisonStack(Clay_Context* context) {
+uint8_t Clay__PoisonStack(Clay_Context* context) {
     uint8_t stackmem[1024];
     for (int i = 0; i < 1024; i++) {
         stackmem[i] = 0xce;
     }
+    return stackmem[0];
 }
 
 void Clay__CalculateDeclarationPaddingMask(const Clay_ElementDeclaration dec, Clay_Context* context) {
