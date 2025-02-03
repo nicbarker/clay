@@ -581,10 +581,6 @@ uint32_t Clay__GetParentElementId(void);
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
 
-inline Clay_BorderElementConfig Clay_BorderAll(Clay_Color color, uint16_t width) {
-    return CLAY__INIT(Clay_BorderElementConfig) { .color = color, .width = {width, width, width, width, width}};
-}
-
 #ifdef __cplusplus
 }
 #endif
