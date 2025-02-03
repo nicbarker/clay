@@ -1016,29 +1016,6 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
     return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = offset, .baseId = base + 1, .stringId = key }; // Reserve the hash result of zero as "null id"
 }
 
-Clay_ElementId Clay__Rehash(Clay_ElementId elementId, uint32_t number) {
-    uint32_t id = elementId.baseId;
-    id += number;
-    id += (id << 10);
-    id ^= (id >> 6);
-
-    id += (id << 3);
-    id ^= (id >> 11);
-    id += (id << 15);
-    return CLAY__INIT(Clay_ElementId) { .id = id, .offset = number, .baseId = elementId.baseId, .stringId = elementId.stringId };
-}
-
-uint32_t Clay__RehashWithNumber(uint32_t id, uint32_t number) {
-    id += number;
-    id += (id << 10);
-    id ^= (id >> 6);
-
-    id += (id << 3);
-    id ^= (id >> 11);
-    id += (id << 15);
-    return id;
-}
-
 uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
     uint32_t hash = 0;
     uintptr_t pointerAsNumber = (uintptr_t)text->chars;
@@ -1500,7 +1477,6 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
         return;
     }
     Clay_LayoutElement *parentElement = Clay__GetOpenLayoutElement();
-    parentElement->childrenOrTextContent.children.length++;
 
     Clay_LayoutElement layoutElement = CLAY__DEFAULT_STRUCT;
     Clay_LayoutElement *textElement = Clay_LayoutElementArray_Add(&context->layoutElements, layoutElement);
@@ -1512,7 +1488,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
 
     Clay__int32_tArray_Add(&context->layoutElementChildrenBuffer, context->layoutElements.length - 1);
     Clay__MeasureTextCacheItem *textMeasured = Clay__MeasureTextCached(&text, textConfig);
-    Clay_ElementId elementId = Clay__HashString(CLAY_STRING("Text"), parentElement->childrenOrTextContent.children.length, parentElement->id);
+    Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
     textElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, textElement);
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
@@ -1525,6 +1501,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
             .internalArray = Clay__ElementConfigArray_Add(&context->elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = CLAY__ELEMENT_CONFIG_TYPE_TEXT, .config = { .textElementConfig = textConfig }})
     };
     textElement->layoutConfig = &CLAY_LAYOUT_DEFAULT;
+    parentElement->childrenOrTextContent.children.length++;
 }
 
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
@@ -2157,7 +2134,7 @@ void Clay__CalculateFinalLayout(void) {
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,
                     .userData = 0,
-                    .id = Clay__RehashWithNumber(rootElement->id, 10), // TODO need a better strategy for managing derived ids
+                    .id = Clay__HashNumber(rootElement->id, rootElement->childrenOrTextContent.children.length + 10).id, // TODO need a better strategy for managing derived ids
                     .zIndex = root->zIndex,
                     .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
                 });
@@ -2291,15 +2268,15 @@ void Clay__CalculateFinalLayout(void) {
                             float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
                             float yPosition = lineHeightOffset;
                             for (int32_t lineIndex = 0; lineIndex < currentElement->childrenOrTextContent.textElementData->wrappedLines.length; ++lineIndex) {
-                                Clay__WrappedTextLine wrappedLine = currentElement->childrenOrTextContent.textElementData->wrappedLines.internalArray[lineIndex]; // todo range check
-                                if (wrappedLine.line.length == 0) {
+                                Clay__WrappedTextLine *wrappedLine = Clay__WrappedTextLineArraySlice_Get(&currentElement->childrenOrTextContent.textElementData->wrappedLines, lineIndex);
+                                if (wrappedLine->line.length == 0) {
                                     yPosition += finalLineHeight;
                                     continue;
                                 }
                                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, wrappedLine.dimensions.width, wrappedLine.dimensions.height },
+                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
                                     .renderData = { .text = {
-                                        .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine.line.length, .chars = wrappedLine.line.chars, .baseChars = currentElement->childrenOrTextContent.textElementData->text.chars },
+                                        .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->childrenOrTextContent.textElementData->text.chars },
                                         .textColor = textElementConfig->textColor,
                                         .fontId = textElementConfig->fontId,
                                         .fontSize = textElementConfig->fontSize,
@@ -2429,7 +2406,7 @@ void Clay__CalculateFinalLayout(void) {
                                     .cornerRadius = sharedConfig->cornerRadius,
                                     .width = borderConfig->width
                                 }},
-                                .id = Clay__RehashWithNumber(currentElement->id, 4),
+                                .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length).id,
                                 .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
                         };
                         Clay__AddRenderCommand(renderCommand);
@@ -2445,7 +2422,7 @@ void Clay__CalculateFinalLayout(void) {
                                             .renderData = { .rectangle = {
                                                 .backgroundColor = borderConfig->color,
                                             } },
-                                            .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
+                                            .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length + 1 + i).id,
                                             .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
                                     }
@@ -2460,7 +2437,7 @@ void Clay__CalculateFinalLayout(void) {
                                                 .renderData = { .rectangle = {
                                                         .backgroundColor = borderConfig->color,
                                                 } },
-                                                .id = Clay__RehashWithNumber(currentElement->id, 5 + i),
+                                                .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length + 1 + i).id,
                                                 .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
                                     }
@@ -2473,7 +2450,7 @@ void Clay__CalculateFinalLayout(void) {
                 // This exists because the scissor needs to end _after_ borders between elements
                 if (closeScrollElement) {
                     Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                        .id = Clay__RehashWithNumber(currentElement->id, 11),
+                        .id = Clay__HashNumber(currentElement->id, rootElement->childrenOrTextContent.children.length + 11).id,
                        .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
                     });
                 }
@@ -2531,7 +2508,7 @@ void Clay__CalculateFinalLayout(void) {
         }
 
         if (root->clipElementId) {
-            Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) { .id = Clay__RehashWithNumber(rootElement->id, 11), .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
+            Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) { .id = Clay__HashNumber(rootElement->id, rootElement->childrenOrTextContent.children.length + 11).id, .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
         }
     }
 }

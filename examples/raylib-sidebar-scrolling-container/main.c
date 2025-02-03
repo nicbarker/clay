@@ -37,7 +37,7 @@ Clay_LayoutConfig dropdownTextItemLayout = { .padding = {8, 8, 4, 4} };
 Clay_TextElementConfig dropdownTextElementConfig = { .fontSize = 24, .textColor = {255,255,255,255} };
 
 void RenderDropdownTextItem(int index) {
-    CLAY({ .id = CLAY_IDI("ScrollContainerItem", index), .layout = dropdownTextItemLayout, .backgroundColor = {180, 180, 180, 255} }) {
+    CLAY({ .layout = dropdownTextItemLayout, .backgroundColor = {180, 180, 180, 255} }) {
         CLAY_TEXT(CLAY_STRING("I'm a text field in a scroll container."), &dropdownTextElementConfig);
     }
 }
@@ -57,7 +57,7 @@ Clay_RenderCommandArray CreateLayout(void) {
         }
 
         CLAY({ .id = CLAY_ID("RightPanel"), .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .childGap = 16 }}) {
-            CLAY({ .id = CLAY_ID("HeaderBar"), .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT }, .padding = {8, 8, 8, 8 }, .childGap = 8 }, .backgroundColor =  {180, 180, 180, 255} }) {
+            CLAY({ .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) }, .childAlignment = { .x = CLAY_ALIGN_X_RIGHT }, .padding = {8, 8, 8, 8 }, .childGap = 8 }, .backgroundColor =  {180, 180, 180, 255} }) {
                 RenderHeaderButton(CLAY_STRING("Header Item 1"));
                 RenderHeaderButton(CLAY_STRING("Header Item 2"));
                 RenderHeaderButton(CLAY_STRING("Header Item 3"));
