@@ -73,6 +73,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                      .backgroundColor = { 140, 80, 200, 200 },
                      .floating = { .attachTo = CLAY_ATTACH_TO_PARENT, .zIndex = 1, .attachPoints = { CLAY_ATTACH_POINT_CENTER_TOP, CLAY_ATTACH_POINT_CENTER_TOP }, .offset = {0, 0} },
                      .border = { .width = CLAY_BORDER_OUTSIDE(2), .color = {80, 80, 80, 255} },
+                     .userData = 8
                  }) {
                      CLAY_TEXT(CLAY_STRING("I'm an inline floating container."), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255,255,255,255} }));
                  }
