@@ -11,6 +11,6 @@ add_executable(clay_examples_cpp_project_example main.cpp)
 target_include_directories(clay_examples_cpp_project_example PUBLIC .)
 
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "-Werror -Wall")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
