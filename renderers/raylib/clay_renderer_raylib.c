@@ -138,23 +138,23 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
         {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
-                Clay_StringSlice text = renderCommand->textOrSharedConfig.text;
-                char *cloned = (char *)malloc(text.length + 1);
-                memcpy(cloned, text.chars, text.length);
-                cloned[text.length] = '\0';
-                Font fontToUse = Raylib_fonts[renderCommand->config.textElementConfig->fontId].font;
-                DrawTextEx(fontToUse, cloned, (Vector2){boundingBox.x, boundingBox.y}, (float)renderCommand->config.textElementConfig->fontSize, (float)renderCommand->config.textElementConfig->letterSpacing, CLAY_COLOR_TO_RAYLIB_COLOR(renderCommand->config.textElementConfig->textColor));
+                Clay_TextRenderData *textData = &renderCommand->renderData.text;
+                char *cloned = (char *)malloc(textData->stringContents.length + 1);
+                memcpy(cloned, textData->stringContents.chars, textData->stringContents.length);
+                cloned[textData->stringContents.length] = '\0';
+                Font fontToUse = Raylib_fonts[textData->fontId].font;
+                DrawTextEx(fontToUse, cloned, (Vector2){boundingBox.x, boundingBox.y}, (float)textData->fontSize, (float)textData->letterSpacing, CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor));
                 free(cloned);
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-                Texture2D imageTexture = *(Texture2D *)renderCommand->config.imageElementConfig->imageData;
+                Texture2D imageTexture = *(Texture2D *)renderCommand->renderData.image.imageData;
                 DrawTextureEx(
-                imageTexture,
-                (Vector2){boundingBox.x, boundingBox.y},
-                0,
-                boundingBox.width / (float)imageTexture.width,
-                WHITE);
+                    imageTexture,
+                    (Vector2){boundingBox.x, boundingBox.y},
+                    0,
+                    boundingBox.width / (float)imageTexture.width,
+                    CLAY_COLOR_TO_RAYLIB_COLOR(renderCommand->renderData.image.backgroundColor));
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
@@ -166,51 +166,50 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                Clay_RectangleElementConfig *config = renderCommand->config.rectangleElementConfig;
-                Clay_CornerRadius cornerRadius = renderCommand->textOrSharedConfig.sharedConfig->cornerRadius;
-                if (cornerRadius.topLeft > 0) {
-                    float radius = (cornerRadius.topLeft * 2) / (float)((boundingBox.width > boundingBox.height) ? boundingBox.height : boundingBox.width);
-                    DrawRectangleRounded((Rectangle) { boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height }, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
+                if (config->cornerRadius.topLeft > 0) {
+                    float radius = (config->cornerRadius.topLeft * 2) / (float)((boundingBox.width > boundingBox.height) ? boundingBox.height : boundingBox.width);
+                    DrawRectangleRounded((Rectangle) { boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height }, radius, 8, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor));
                 } else {
-                    DrawRectangle(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangle(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, CLAY_COLOR_TO_RAYLIB_COLOR(config->backgroundColor));
                 }
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {
-                Clay_BorderElementConfig *config = renderCommand->config.borderElementConfig;
-                Clay_CornerRadius cornerRadius = renderCommand->textOrSharedConfig.sharedConfig->cornerRadius;
+                Clay_BorderRenderData *config = &renderCommand->renderData.border;
                 // Left border
-                if (config->left.width > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x), (int)roundf(boundingBox.y + cornerRadius.topLeft), (int)config->left.width, (int)roundf(boundingBox.height - cornerRadius.topLeft - cornerRadius.bottomLeft), CLAY_COLOR_TO_RAYLIB_COLOR(config->left.color));
+                if (config->width.left > 0) {
+                    DrawRectangle((int)roundf(boundingBox.x), (int)roundf(boundingBox.y + config->cornerRadius.topLeft), (int)config->width.left, (int)roundf(boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft), CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 // Right border
-                if (config->right.width > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + boundingBox.width - config->right.width), (int)roundf(boundingBox.y + cornerRadius.topRight), (int)config->right.width, (int)roundf(boundingBox.height - cornerRadius.topRight - cornerRadius.bottomRight), CLAY_COLOR_TO_RAYLIB_COLOR(config->right.color));
+                if (config->width.right > 0) {
+                    DrawRectangle((int)roundf(boundingBox.x + boundingBox.width - config->width.right), (int)roundf(boundingBox.y + config->cornerRadius.topRight), (int)config->width.right, (int)roundf(boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight), CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 // Top border
-                if (config->top.width > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + cornerRadius.topLeft), (int)roundf(boundingBox.y), (int)roundf(boundingBox.width - cornerRadius.topLeft - cornerRadius.topRight), (int)config->top.width, CLAY_COLOR_TO_RAYLIB_COLOR(config->top.color));
+                if (config->width.top > 0) {
+                    DrawRectangle((int)roundf(boundingBox.x + config->cornerRadius.topLeft), (int)roundf(boundingBox.y), (int)roundf(boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight), (int)config->width.top, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 // Bottom border
-                if (config->bottom.width > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + cornerRadius.bottomLeft), (int)roundf(boundingBox.y + boundingBox.height - config->bottom.width), (int)roundf(boundingBox.width - cornerRadius.bottomLeft - cornerRadius.bottomRight), (int)config->bottom.width, CLAY_COLOR_TO_RAYLIB_COLOR(config->bottom.color));
+                if (config->width.bottom > 0) {
+                    DrawRectangle((int)roundf(boundingBox.x + config->cornerRadius.bottomLeft), (int)roundf(boundingBox.y + boundingBox.height - config->width.bottom), (int)roundf(boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight), (int)config->width.bottom, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
-                if (cornerRadius.topLeft > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + cornerRadius.topLeft), roundf(boundingBox.y + cornerRadius.topLeft) }, roundf(cornerRadius.topLeft - config->top.width), cornerRadius.topLeft, 180, 270, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->top.color));
+                if (config->cornerRadius.topLeft > 0) {
+                    DrawRing((Vector2) { roundf(boundingBox.x + config->cornerRadius.topLeft), roundf(boundingBox.y + config->cornerRadius.topLeft) }, roundf(config->cornerRadius.topLeft - config->width.top), config->cornerRadius.topLeft, 180, 270, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
-                if (cornerRadius.topRight > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + boundingBox.width - cornerRadius.topRight), roundf(boundingBox.y + cornerRadius.topRight) }, roundf(cornerRadius.topRight - config->top.width), cornerRadius.topRight, 270, 360, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->top.color));
+                if (config->cornerRadius.topRight > 0) {
+                    DrawRing((Vector2) { roundf(boundingBox.x + boundingBox.width - config->cornerRadius.topRight), roundf(boundingBox.y + config->cornerRadius.topRight) }, roundf(config->cornerRadius.topRight - config->width.top), config->cornerRadius.topRight, 270, 360, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
-                if (cornerRadius.bottomLeft > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + cornerRadius.bottomLeft), roundf(boundingBox.y + boundingBox.height - cornerRadius.bottomLeft) }, roundf(cornerRadius.bottomLeft - config->top.width), cornerRadius.bottomLeft, 90, 180, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->bottom.color));
+                if (config->cornerRadius.bottomLeft > 0) {
+                    DrawRing((Vector2) { roundf(boundingBox.x + config->cornerRadius.bottomLeft), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomLeft) }, roundf(config->cornerRadius.bottomLeft - config->width.top), config->cornerRadius.bottomLeft, 90, 180, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
-                if (cornerRadius.bottomRight > 0) {
-                    DrawRing((Vector2) { roundf(boundingBox.x + boundingBox.width - cornerRadius.bottomRight), roundf(boundingBox.y + boundingBox.height - cornerRadius.bottomRight) }, roundf(cornerRadius.bottomRight - config->bottom.width), cornerRadius.bottomRight, 0.1, 90, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->bottom.color));
+                if (config->cornerRadius.bottomRight > 0) {
+                    DrawRing((Vector2) { roundf(boundingBox.x + boundingBox.width - config->cornerRadius.bottomRight), roundf(boundingBox.y + boundingBox.height - config->cornerRadius.bottomRight) }, roundf(config->cornerRadius.bottomRight - config->width.bottom), config->cornerRadius.bottomRight, 0.1, 90, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
-                CustomLayoutElement *customElement = (CustomLayoutElement *)renderCommand->config.customElementConfig->customData;
+                Clay_CustomRenderData *config = &renderCommand->renderData.custom;
+                CustomLayoutElement *customElement = (CustomLayoutElement *)config->customData;
                 if (!customElement) continue;
                 switch (customElement->type) {
                     case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {

@@ -7,13 +7,11 @@ Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
 void RenderHeaderButton(Clay_String text) {
     CLAY({
         .layout = { .padding = { 16, 16, 8, 8 }},
-        .rectangle = {
-            .color = { 140, 140, 140, 255 },
-        },
-        .shared = { .cornerRadius = CLAY_CORNER_RADIUS(5) }
+        .backgroundColor = { 140, 140, 140, 255 },
+        .cornerRadius = CLAY_CORNER_RADIUS(5)
     }) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
+            .font = FONT_ID_BODY_16,
             .fontSize = 16,
             .textColor = { 255, 255, 255, 255 }
         }));
@@ -101,13 +99,11 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
         .height = CLAY_SIZING_GROW(0)
     };
 
-    Clay_RectangleElementConfig contentBackgroundConfig = {
-        .color = { 90, 90, 90, 255 },
-    };
+    Clay_Color contentBackgroundColor = { 90, 90, 90, 255 };
 
     // Build UI here
     CLAY({ .id = CLAY_ID("OuterContainer"),
-        .rectangle = { .color = { 43, 41, 51, 255 } },
+        .backgroundColor = {43, 41, 51, 255 },
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = layoutExpand,
@@ -117,7 +113,6 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
     }) {
         // Child elements go inside braces
         CLAY({ .id = CLAY_ID("HeaderBar"),
-            .rectangle = contentBackgroundConfig,
             .layout = {
                 .sizing = {
                     .height = CLAY_SIZING_FIXED(60),
@@ -129,15 +124,14 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                     .y = CLAY_ALIGN_Y_CENTER
                 }
             },
-            .shared = { .cornerRadius = CLAY_CORNER_RADIUS(8) }
+            .backgroundColor = contentBackgroundColor,
+            .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
             // Header buttons go here
             CLAY({ .id = CLAY_ID("FileButton"),
                 .layout = { .padding = { 16, 16, 8, 8 }},
-                .rectangle ={
-                    .color = { 140, 140, 140, 255 },
-                },
-                .shared = { .cornerRadius = CLAY_CORNER_RADIUS(5) }
+                .backgroundColor = {140, 140, 140, 255 },
+                .cornerRadius = CLAY_CORNER_RADIUS(5)
             }) {
                 CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY_16,
@@ -168,10 +162,8 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                                         .width = CLAY_SIZING_FIXED(200)
                                 },
                             },
-                            .rectangle ={
-                                .color = { 40, 40, 40, 255 },
-                            },
-                            .shared = { .cornerRadius = CLAY_CORNER_RADIUS(8) }
+                            .backgroundColor = {40, 40, 40, 255 },
+                            .cornerRadius = CLAY_CORNER_RADIUS(8)
                         }) {
                             // Render dropdown items here
                             RenderDropdownMenuItem(CLAY_STRING("New"));
@@ -194,7 +186,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
         }) {
             CLAY({
                 .id = CLAY_ID("Sidebar"),
-                .rectangle = contentBackgroundConfig,
+                .backgroundColor = contentBackgroundColor,
                 .layout = {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     .padding = CLAY_PADDING_ALL(16),
@@ -215,10 +207,8 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                     if (i == data->selectedDocumentIndex) {
                         CLAY({
                             .layout = sidebarButtonLayout,
-                            .rectangle = {
-                                .color = { 120, 120, 120, 255 },
-                            },
-                            .shared = { .cornerRadius = CLAY_CORNER_RADIUS(8) }
+                            .backgroundColor = {120, 120, 120, 255 },
+                            .cornerRadius = CLAY_CORNER_RADIUS(8)
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
@@ -230,12 +220,8 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                         SidebarClickData *clickData = (SidebarClickData *)(data->frameArena.memory + data->frameArena.offset);
                         *clickData = (SidebarClickData) { .requestedDocumentIndex = i, .selectedDocumentIndex = &data->selectedDocumentIndex };
                         data->frameArena.offset += sizeof(SidebarClickData);
-                        CLAY({ .layout = sidebarButtonLayout }) {
+                        CLAY({ .layout = sidebarButtonLayout, .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 }, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
                             Clay_OnHover(HandleSidebarInteraction, (intptr_t)clickData);
-                            if (Clay_Hovered()) {
-                                Clay_CurrentConfigRectangle()->color = (Clay_Color) { 120, 120, 120, 120 };
-                                Clay_CurrentConfigShared()->cornerRadius = CLAY_CORNER_RADIUS(8);
-                            }
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
                                 .fontSize = 20,
@@ -247,7 +233,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
             }
 
             CLAY({ .id = CLAY_ID("MainContent"),
-                .rectangle = contentBackgroundConfig,
+                .backgroundColor = contentBackgroundColor,
                 .scroll = { .vertical = true },
                 .layout = {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,

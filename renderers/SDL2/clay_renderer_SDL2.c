@@ -44,8 +44,8 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
         switch (renderCommand->commandType)
         {
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                Clay_RectangleElementConfig *config = renderCommand->config.rectangleElementConfig;
-                Clay_Color color = config->color;
+                Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
+                Clay_Color color = config->backgroundColor;
                 SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
                 SDL_FRect rect = (SDL_FRect) {
                         .x = boundingBox.x,
@@ -57,10 +57,9 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
-                Clay_TextElementConfig *config = renderCommand->config.textElementConfig;
-                Clay_StringSlice text = renderCommand->textOrSharedConfig.text;
-                char *cloned = (char *)calloc(text.length + 1, 1);
-                memcpy(cloned, text.chars, text.length);
+                Clay_TextRenderData *config = &renderCommand->renderData.text;
+                char *cloned = (char *)calloc(config->stringContents.length + 1, 1);
+                memcpy(cloned, config->stringContents.chars, config->stringContents.length);
                 TTF_Font* font = fonts[config->fontId].font;
                 SDL_Surface *surface = TTF_RenderUTF8_Blended(font, cloned, (SDL_Color) {
                         .r = (Uint8)config->textColor.r,
@@ -98,9 +97,9 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-                SDL_Surface *image = (SDL_Surface *)renderCommand->config.imageElementConfig->imageData;
+                Clay_ImageRenderData *config = &renderCommand->renderData.image;
 
-                SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, image);
+                SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, config->imageData);
 
                 SDL_Rect destination = (SDL_Rect){
                     .x = boundingBox.x,
@@ -113,36 +112,35 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {
-                Clay_BorderElementConfig *config = renderCommand->config.borderElementConfig;
-                Clay_CornerRadius cornerRadius = renderCommand->textOrSharedConfig.sharedConfig->cornerRadius;
+                Clay_BorderRenderData *config = &renderCommand->renderData.border;
 
-                if (config->left.width > 0) {
-                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->left.color));
-                    SDL_FRect rect = { boundingBox.x, boundingBox.y + cornerRadius.topLeft, config->left.width, boundingBox.height - cornerRadius.topLeft - cornerRadius.bottomLeft };
+                if (config->width.left > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->color));
+                    SDL_FRect rect = { boundingBox.x, boundingBox.y + config->cornerRadius.topLeft, config->width.left, boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
-                if (config->right.width > 0) {
-                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + cornerRadius.topRight, config->right.width, boundingBox.height - cornerRadius.topRight - cornerRadius.bottomRight };
+                if (config->width.right > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->color));
+                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->width.right, boundingBox.y + config->cornerRadius.topRight, config->width.right, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
-                if (config->right.width > 0) {
-                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->right.width, boundingBox.y + cornerRadius.topRight, config->right.width, boundingBox.height - cornerRadius.topRight - cornerRadius.bottomRight };
+                if (config->width.right > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->color));
+                    SDL_FRect rect = { boundingBox.x + boundingBox.width - config->width.right, boundingBox.y + config->cornerRadius.topRight, config->width.right, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
-                if (config->top.width > 0) {
-                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->right.color));
-                    SDL_FRect rect = { boundingBox.x + cornerRadius.topLeft, boundingBox.y, boundingBox.width - cornerRadius.topLeft - cornerRadius.topRight, config->top.width };
+                if (config->width.top > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->color));
+                    SDL_FRect rect = { boundingBox.x + config->cornerRadius.topLeft, boundingBox.y, boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight, config->width.top };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 
-                if (config->bottom.width > 0) {
-                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->bottom.color));
-                    SDL_FRect rect = { boundingBox.x + cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->bottom.width, boundingBox.width - cornerRadius.bottomLeft - cornerRadius.bottomRight, config->bottom.width };
+                if (config->width.bottom > 0) {
+                    SDL_SetRenderDrawColor(renderer, CLAY_COLOR_TO_SDL_COLOR_ARGS(config->color));
+                    SDL_FRect rect = { boundingBox.x + config->cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->width.bottom, boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight, config->width.bottom };
                     SDL_RenderFillRectF(renderer, &rect);
                 }
 

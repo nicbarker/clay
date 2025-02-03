@@ -26,14 +26,6 @@
 #include <string.h>
 #include <math.h>
 
-// TODO: Regarding image support, currently this renderer only
-// supports PNG images, this is due to cairo having just PNG as it's
-// main file format.  We maybe should introduce stb_image to load them
-// as bitmaps and feed cairo that way.
-#define CLAY_EXTEND_CONFIG_IMAGE Clay_String path; // Filesystem path
-
-// TODO: We should use the given `uint16_t fontId` instead of doing this.
-#define CLAY_EXTEND_CONFIG_TEXT Clay_String fontFamily; // Font family
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
 
@@ -50,7 +42,7 @@ void Clay_Cairo_Initialize(cairo_t *cairo);
 
 // Render the command queue to the `cairo_t*` instance you called
 // `Clay_Cairo_Initialize` on.
-void Clay_Cairo_Render(Clay_RenderCommandArray commands);
+void Clay_Cairo_Render(Clay_RenderCommandArray commands, char** fonts);
 ////////////////////////////////
 
 
@@ -88,6 +80,7 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_
 	// once.  Cairo does not factor in whitespaces when computing text
 	// extents, this edge-case serves as a short-circuit to introduce
 	// (somewhat) sensible values into Clay.
+    char** fonts = (char**)userData;
 	if(str.length == 1 && str.chars[0] == ' ') {
 		cairo_text_extents_t te;
 		cairo_text_extents(Clay__Cairo, " ", &te);
@@ -104,7 +97,7 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_
 	// Ensure string is null-terminated for Cairo
     Clay_String toTerminate = (Clay_String){ str.length, str.chars };
 	char *text = Clay_Cairo__NullTerminate(&toTerminate);
-	char *font_family = Clay_Cairo__NullTerminate(&config->fontFamily);
+	char *font_family = fonts[config->fontId];
 
 	// Save and reset the Cairo context to avoid unwanted transformations
 	cairo_save(Clay__Cairo);
@@ -120,7 +113,6 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_
 		fprintf(stderr, "Failed to get scaled font\n");
 		cairo_restore(Clay__Cairo);
 		free(text);
-		free(font_family);
 		return (Clay_Dimensions){0, 0};
 	}
 
@@ -134,7 +126,6 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_
 		fprintf(stderr, "Failed to generate glyphs: %s\n", cairo_status_to_string(status));
 		cairo_restore(Clay__Cairo);
 		free(text);
-		free(font_family);
 		return (Clay_Dimensions){0, 0};
 	}
 
@@ -150,7 +141,6 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_
 
 	// Free temporary strings
 	free(text);
-	free(font_family);
 
 	// Return dimensions
 	return (Clay_Dimensions){
@@ -192,36 +182,34 @@ void Clay_Cairo__Blit_Surface(cairo_surface_t *src_surface, cairo_surface_t *des
 	cairo_destroy(cr);
 }
 
-void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
+void Clay_Cairo_Render(Clay_RenderCommandArray commands, char** fonts) {
 	cairo_t *cr = Clay__Cairo;
 	for(size_t i = 0; i < commands.length; i++) {
 		Clay_RenderCommand *command = Clay_RenderCommandArray_Get(&commands, i);
-        Clay_CornerRadius cornerRadius = command->textOrSharedConfig.sharedConfig->cornerRadius;
 
 		switch(command->commandType) {
 		case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-			Clay_RectangleElementConfig *config = command->config.rectangleElementConfig;
-			Clay_Color color = config->color;
+            Clay_RectangleRenderData *config = &command->renderData.rectangle;
 			Clay_BoundingBox bb = command->boundingBox;
 
-			cairo_set_source_rgba(cr, CLAY_TO_CAIRO(color));
+			cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->backgroundColor));
 
 			cairo_new_sub_path(cr);
-			cairo_arc(cr, bb.x + cornerRadius.topLeft,
-					  bb.y + cornerRadius.topLeft,
-					  cornerRadius.topLeft,
+			cairo_arc(cr, bb.x + config->cornerRadius.topLeft,
+					  bb.y + config->cornerRadius.topLeft,
+					  config->cornerRadius.topLeft,
 					  M_PI, 3 * M_PI / 2); // 180° to 270°
-			cairo_arc(cr, bb.x + bb.width - cornerRadius.topRight,
-					  bb.y + cornerRadius.topRight,
-					  cornerRadius.topRight,
+			cairo_arc(cr, bb.x + bb.width - config->cornerRadius.topRight,
+					  bb.y + config->cornerRadius.topRight,
+					  config->cornerRadius.topRight,
 					  3 * M_PI / 2, 2 * M_PI); // 270° to 360°
-			cairo_arc(cr, bb.x + bb.width - cornerRadius.bottomRight,
-					  bb.y + bb.height - cornerRadius.bottomRight,
-					  cornerRadius.bottomRight,
+			cairo_arc(cr, bb.x + bb.width - config->cornerRadius.bottomRight,
+					  bb.y + bb.height - config->cornerRadius.bottomRight,
+					  config->cornerRadius.bottomRight,
 					  0, M_PI / 2); // 0° to 90°
-			cairo_arc(cr, bb.x + cornerRadius.bottomLeft,
-					  bb.y + bb.height - cornerRadius.bottomLeft,
-					  cornerRadius.bottomLeft,
+			cairo_arc(cr, bb.x + config->cornerRadius.bottomLeft,
+					  bb.y + bb.height - config->cornerRadius.bottomLeft,
+					  config->cornerRadius.bottomLeft,
 					  M_PI / 2, M_PI); // 90° to 180°
 			cairo_close_path(cr);
 
@@ -231,15 +219,16 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 		case CLAY_RENDER_COMMAND_TYPE_TEXT: {
 			// Cairo expects null terminated strings, we need to clone
 			// to temporarily introduce one.
-            Clay_String toTerminate = (Clay_String){ command->textOrSharedConfig.text.length, command->textOrSharedConfig.text.chars };
+            Clay_TextRenderData *config = &command->renderData.text;
+            Clay_String toTerminate = (Clay_String){ config->stringContents.length, config->stringContents.chars };
 			char *text = Clay_Cairo__NullTerminate(&toTerminate);
-			char *font_family = Clay_Cairo__NullTerminate(&command->config.textElementConfig->fontFamily);
+			char *font_family = fonts[config->fontId];
 
 			Clay_BoundingBox bb = command->boundingBox;
-			Clay_Color color = command->config.textElementConfig->textColor;
+			Clay_Color color = config->textColor;
 
 			cairo_select_font_face(Clay__Cairo, font_family, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-			cairo_set_font_size(cr, command->config.textElementConfig->fontSize);
+			cairo_set_font_size(cr, config->fontSize);
 
 			cairo_move_to(cr, bb.x, bb.y + bb.height);
 
@@ -248,22 +237,21 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			cairo_close_path(cr);
 
 			free(text);
-			free(font_family);
 			break;
 		}
 		case CLAY_RENDER_COMMAND_TYPE_BORDER: {
-			Clay_BorderElementConfig *config = command->config.borderElementConfig;
+            Clay_BorderRenderData *config = &command->renderData.border;
 			Clay_BoundingBox bb = command->boundingBox;
 
-			double top_left_radius = cornerRadius.topLeft / 2.0;
-			double top_right_radius = cornerRadius.topRight / 2.0;
-			double bottom_right_radius = cornerRadius.bottomRight / 2.0;
-			double bottom_left_radius = cornerRadius.bottomLeft / 2.0;
+			double top_left_radius = config->cornerRadius.topLeft / 2.0;
+			double top_right_radius = config->cornerRadius.topRight / 2.0;
+			double bottom_right_radius = config->cornerRadius.bottomRight / 2.0;
+			double bottom_left_radius = config->cornerRadius.bottomLeft / 2.0;
 
 			// Draw the top border
-			if (config->top.width > 0) {
-				cairo_set_line_width(cr, config->top.width);
-				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->top.color));
+			if (config->width.top > 0) {
+				cairo_set_line_width(cr, config->width.top);
+				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->color));
 
 				cairo_new_sub_path(cr);
 
@@ -280,9 +268,9 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			}
 
 			// Draw the right border
-			if (config->right.width > 0) {
-				cairo_set_line_width(cr, config->right.width);
-				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->right.color));
+			if (config->width.right > 0) {
+				cairo_set_line_width(cr, config->width.right);
+				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->color));
 
 				cairo_new_sub_path(cr);
 
@@ -299,9 +287,9 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			}
 
 			// Draw the bottom border
-			if (config->bottom.width > 0) {
-				cairo_set_line_width(cr, config->bottom.width);
-				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->bottom.color));
+			if (config->width.bottom > 0) {
+				cairo_set_line_width(cr, config->width.bottom);
+				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->color));
 
 				cairo_new_sub_path(cr);
 
@@ -318,9 +306,9 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			}
 
 			// Draw the left border
-			if (config->left.width > 0) {
-				cairo_set_line_width(cr, config->left.width);
-				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->left.color));
+			if (config->width.left > 0) {
+				cairo_set_line_width(cr, config->width.left);
+				cairo_set_source_rgba(cr, CLAY_TO_CAIRO(config->color));
 
 				cairo_new_sub_path(cr);
 
@@ -338,10 +326,10 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 			break;
 		}
 		case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-			Clay_ImageElementConfig *config = command->config.imageElementConfig;
+            Clay_ImageRenderData *config = &command->renderData.image;
 			Clay_BoundingBox bb = command->boundingBox;
 
-			char *path = Clay_Cairo__NullTerminate(&config->path);
+			char *path = config->imageData;
 
 			cairo_surface_t *surf = cairo_image_surface_create_from_png(path),
 							*origin = cairo_get_target(cr);
@@ -372,7 +360,6 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands) {
 
 			// Clean up the source surface
 			cairo_surface_destroy(surf);
-			free(path);
 			break;
 		}
 		case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {

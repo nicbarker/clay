@@ -31,53 +31,64 @@
 // e.g. render PNGs.
 #include <cairo/cairo-pdf.h>
 
+const uint16_t FONT_CALLISTOGA = 0;
+const uint16_t FONT_QUICKSAND = 0;
+
 // Layout the first page.
 void Layout() {
 	static Clay_Color PRIMARY = { 0xa8, 0x42, 0x1c, 255 };
 	static Clay_Color BACKGROUND = { 0xF4, 0xEB, 0xE6, 255 };
 	static Clay_Color ACCENT = { 0xFA, 0xE0, 0xD4, 255 };
 
-	CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-					   .layoutDirection = CLAY_TOP_TO_BOTTOM },
-		.rectangle = { .color = BACKGROUND } }) {
+	CLAY({
+        .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+		.layoutDirection = CLAY_TOP_TO_BOTTOM },
+		.backgroundColor = BACKGROUND
+    }) {
 		CLAY({ .id = CLAY_ID("PageMargins"), .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
              .padding = { 70, 70, 50, 50 }, // Some nice looking page margins
              .layoutDirection = CLAY_TOP_TO_BOTTOM,
              .childGap = 10}
         }) {
 			// Section Title
-			CLAY_TEXT(CLAY_STRING("Features Overview"), CLAY_TEXT_CONFIG({.fontFamily = CLAY_STRING("Calistoga"), .textColor = PRIMARY, .fontSize = 24}));
+			CLAY_TEXT(CLAY_STRING("Features Overview"), CLAY_TEXT_CONFIG({ .fontId = FONT_CALLISTOGA, .textColor = PRIMARY, .fontSize = 24 }));
 
 			// Feature Box
 			CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }, .childGap = 10 }}) {
-				CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }}, .rectangle = { .color = ACCENT }, .shared = { .cornerRadius = CLAY_CORNER_RADIUS(12) } }) {
+				CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }}, .backgroundColor = ACCENT, .cornerRadius = CLAY_CORNER_RADIUS(12) }) {
 					CLAY({ .layout = {.padding = CLAY_PADDING_ALL(20), .childGap = 4, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
 						CLAY_TEXT(CLAY_STRING("- High performance"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontFamily = CLAY_STRING("Quicksand SemiBold") }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
 						CLAY_TEXT(CLAY_STRING("- Declarative syntax"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontFamily = CLAY_STRING("Quicksand SemiBold") }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
 						CLAY_TEXT(CLAY_STRING("- Flexbox-style responsive layout"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontFamily = CLAY_STRING("Quicksand SemiBold") }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
 						CLAY_TEXT(CLAY_STRING("- Single .h file for C/C++"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontFamily = CLAY_STRING("Quicksand SemiBold") }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
 						CLAY_TEXT(CLAY_STRING("- And now with cairo!"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontFamily = CLAY_STRING("Quicksand SemiBold") }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
 					}
 				}
-				CLAY({ .layout = {
-							.sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
-							.padding = CLAY_PADDING_ALL(10),
-							.layoutDirection = CLAY_TOP_TO_BOTTOM,
-							.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
-							.childGap = 4
-						}, .rectangle = { .color = ACCENT }, .shared = {.cornerRadius = CLAY_CORNER_RADIUS(8)}}) {
+				CLAY({
+                    .layout = {
+                        .sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
+                        .padding = CLAY_PADDING_ALL(10),
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
+                        .childGap = 4
+                    },
+                    .backgroundColor = ACCENT,
+                    .cornerRadius = CLAY_CORNER_RADIUS(8)
+                }) {
 					// Profile picture
 					CLAY({ .layout = {
-								.sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
-								.padding = { 30, 30, 0, 0 },
-								.layoutDirection = CLAY_TOP_TO_BOTTOM,
-								.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER }}, .border = CLAY_BORDER_OUTSIDE(2, PRIMARY), .shared = { .cornerRadius = 10 }}) {
-						CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }, .image = { .sourceDimensions = { 32, 32 }, .path = CLAY_STRING("resources/check.png") }});
+                        .sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
+                        .padding = { 30, 30, 0, 0 },
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER }},
+                        .border = { .color = PRIMARY, .width = 2, 2, 2, 2 }, .cornerRadius = 10
+                    }) {
+						CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }, .image = { .sourceDimensions = { 32, 32 }, .imageData = "resources/check.png" }});
 					}
 				}
 			}
@@ -85,13 +96,13 @@ void Layout() {
 			CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(16) } }});
 
 			CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) }, .childGap = 10, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
-				CLAY_TEXT(CLAY_STRING("Cairo"), CLAY_TEXT_CONFIG({ .fontFamily = CLAY_STRING("Calistoga"), .fontSize = 24, .textColor = PRIMARY }));
-				CLAY({ .layout = { .padding = CLAY_PADDING_ALL(10) }, .rectangle = { .color = ACCENT }, .shared = { .cornerRadius = 10 } }) {
+				CLAY_TEXT(CLAY_STRING("Cairo"), CLAY_TEXT_CONFIG({ .fontId = FONT_CALLISTOGA, .fontSize = 24, .textColor = PRIMARY }));
+				CLAY({ .layout = { .padding = CLAY_PADDING_ALL(10) }, .backgroundColor = ACCENT, .cornerRadius = 10 }) {
 					CLAY_TEXT(CLAY_STRING("Officiis quia quia qui inventore ratione voluptas et. Quidem sunt unde similique. Qui est et exercitationem cumque harum illum. Numquam placeat aliquid quo voluptatem. "
 										  "Deleniti saepe nihil exercitationem nemo illo. Consequatur beatae repellat provident similique. Provident qui exercitationem deserunt sapiente. Quam qui dolor corporis odit. "
 										  "Assumenda corrupti sunt culpa pariatur. Vero sit ut minima. In est consequatur minus et cum sint illum aperiam. Qui ipsa quas nisi omnis aut quia nobis. "
 										  "Corporis deserunt eum mollitia modi rerum voluptas. Expedita non ab esse. Sit voluptates eos voluptatem labore aspernatur quia eum. Modi cumque atque non. Sunt officiis corrupti neque ut inventore excepturi rem minima. Possimus sed soluta qui ea aut ipsum laborum fugit. "
-										  "Voluptate eum consectetur non. Quo autem voluptate soluta atque dolorum maxime. Officiis inventore omnis eveniet beatae ipsa optio. Unde voluptatum ut autem quia sit sit et. Ut inventore qui quia totam consequatur. Sit ea consequatur omnis rerum nulla aspernatur deleniti."), CLAY_TEXT_CONFIG({ .fontFamily = CLAY_STRING("Quicksand SemiBold"), .fontSize = 16, .textColor = PRIMARY, .lineHeight = 16 }));
+										  "Voluptate eum consectetur non. Quo autem voluptate soluta atque dolorum maxime. Officiis inventore omnis eveniet beatae ipsa optio. Unde voluptatum ut autem quia sit sit et. Ut inventore qui quia totam consequatur. Sit ea consequatur omnis rerum nulla aspernatur deleniti."), CLAY_TEXT_CONFIG({ .fontId = FONT_QUICKSAND, .fontSize = 16, .textColor = PRIMARY, .lineHeight = 16 }));
 				}
 			}
 		}
@@ -129,7 +140,12 @@ int main(void) {
 	// We initialize Clay with the same size
 	Clay_Initialize(clayMemory, (Clay_Dimensions) { width, height }, (Clay_ErrorHandler) { HandleClayErrors });
 
-    Clay_SetMeasureTextFunction(Clay_Cairo_MeasureText, 0);
+    char** fonts = (char*[]) {
+        "Callistoga",
+        "Quicksand Semibold"
+    };
+
+    Clay_SetMeasureTextFunction(Clay_Cairo_MeasureText, (uintptr_t)fonts);
 
 	Clay_BeginLayout();
 
@@ -139,7 +155,7 @@ int main(void) {
 
 	Clay_RenderCommandArray commands = Clay_EndLayout();
 	// Pass our layout to the cairo backend
-	Clay_Cairo_Render(commands);
+	Clay_Cairo_Render(commands, fonts);
 
 	// To keep this example short, we will not emit a second page in the PDF.
 	// But to do so, you have to
