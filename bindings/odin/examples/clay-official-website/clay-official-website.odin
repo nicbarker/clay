@@ -93,7 +93,7 @@ LandingPageDesktop :: proc() {
                     "Clay is a flex-box style UI auto layout library in C, with declarative syntax and microsecond performance.",
                     clay.TextConfig({fontSize = 56, fontId = FONT_ID_TITLE_56, textColor = COLOR_RED}),
                 )
-//                if clay.UI().configure(layout = {sizing = {width = clay.SizingGrow({}), height = clay.SizingFixed(32)}})) {}
+                if clay.UI().configure({ layout = { sizing = { width = clay.SizingGrow({}), height = clay.SizingFixed(32) } } }) {}
                 clay.Text(
                     "Clay is laying out this webpage right now!",
                     clay.TextConfig({fontSize = 36, fontId = FONT_ID_TITLE_36, textColor = COLOR_ORANGE}),
@@ -175,7 +175,7 @@ FeatureBlocksDesktop :: proc() {
         if clay.UI().configure({
             id = clay.ID("FeatureBlocksInner"),
             layout = { sizing = { width = clay.SizingGrow({ }) }, childAlignment = { y = .CENTER } },
-            border = border2pxRed,
+            border = { width = { betweenChildren = 2}, color = COLOR_RED },
         }) {
             FeatureBlocks(clay.SizingPercent(0.5), 50)
         }
@@ -186,7 +186,7 @@ FeatureBlocksMobile :: proc() {
     if clay.UI().configure({
         id = clay.ID("FeatureBlocksInner"),
         layout = { layoutDirection = .TOP_TO_BOTTOM, sizing = { width = clay.SizingGrow({ }) } },
-        border = border2pxRed,
+        border = { width = { betweenChildren = 2}, color = COLOR_RED },
     }) {
         FeatureBlocks(clay.SizingGrow({}), 16)
     }

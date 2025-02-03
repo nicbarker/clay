@@ -335,19 +335,27 @@ typedef struct {
     Clay_FloatingAttachPointType parent;
 } Clay_FloatingAttachPoints;
 
-typedef CLAY_PACKED_ENUM{
+typedef CLAY_PACKED_ENUM {
     CLAY_POINTER_CAPTURE_MODE_CAPTURE,
 //    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
 } Clay_PointerCaptureMode;
+
+typedef CLAY_PACKED_ENUM {
+    CLAY_ATTACH_TO_NONE,
+    CLAY_ATTACH_TO_PARENT,
+    CLAY_ATTACH_TO_ELEMENT_WITH_ID,
+    CLAY_ATTACH_TO_ROOT,
+} Clay_FloatingAttachToElement;
 
 typedef struct {
     Clay_Vector2 offset;
     Clay_Dimensions expand;
     uint32_t parentId;
     int32_t zIndex;
-    Clay_FloatingAttachPoints attachment;
+    Clay_FloatingAttachPoints attachPoints;
     Clay_PointerCaptureMode pointerCaptureMode;
+    Clay_FloatingAttachToElement attachTo;
 } Clay_FloatingElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
@@ -596,6 +604,7 @@ Clay_LayoutConfig CLAY_LAYOUT_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 Clay_Color Clay__Color_DEFAULT = CLAY__DEFAULT_STRUCT;
 Clay_CornerRadius Clay__CornerRadius_DEFAULT = CLAY__DEFAULT_STRUCT;
+Clay_BorderWidth Clay__BorderWidth_DEFAULT = CLAY__DEFAULT_STRUCT;
 
 #define CLAY__ARRAY_DEFINE_FUNCTIONS(typeName, arrayName) \
 \
@@ -1531,7 +1540,7 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
 
     openLayoutElement->elementConfigs.internalArray = &context->elementConfigs.internalArray[context->elementConfigs.length];
     Clay_SharedElementConfig *sharedConfig = NULL;
-    if (!Clay__MemCmp((char *)(&declaration.backgroundColor), (char *)(&Clay__Color_DEFAULT), sizeof(Clay_Color))) {
+    if (declaration.backgroundColor.a > 0) {
         sharedConfig = Clay__StoreSharedElementConfig(CLAY__INIT(Clay_SharedElementConfig) { .backgroundColor = declaration.backgroundColor });
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
     }
@@ -1543,23 +1552,23 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
             Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
         }
     }
-    if (!Clay__MemCmp((char *)(&declaration.image), (char *)(&Clay_ImageElementConfig_DEFAULT), sizeof(Clay_ImageElementConfig))) {
+    if (declaration.image.imageData) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(declaration.image) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE);
         Clay__int32_tArray_Add(&context->imageElementPointers, context->layoutElements.length - 1);
     }
-    if (!Clay__MemCmp((char *)(&declaration.floating), (char *)(&Clay_FloatingElementConfig_DEFAULT), sizeof(Clay_FloatingElementConfig))) {
+    if (declaration.floating.attachTo != CLAY_ATTACH_TO_NONE) {
         Clay_FloatingElementConfig floatingConfig = declaration.floating;
         // This looks dodgy but because of the auto generated root element the depth of the tree will always be at least 2 here
         Clay_LayoutElement *hierarchicalParent = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 2));
         if (hierarchicalParent) {
             uint32_t clipElementId = 0;
-            if (floatingConfig.parentId == 0) {
-                // If no parent id was specified, attach to the elements direct hierarchical parent
+            if (declaration.floating.attachTo == CLAY_ATTACH_TO_PARENT) {
+                // Attach to the element's direct hierarchical parent
                 floatingConfig.parentId = hierarchicalParent->id;
                 if (context->openClipElementStack.length > 0) {
                     clipElementId = Clay__int32_tArray_GetValue(&context->openClipElementStack, (int)context->openClipElementStack.length - 1);
                 }
-            } else {
+            } else if (declaration.floating.attachTo == CLAY_ATTACH_TO_ELEMENT_WITH_ID) {
                 Clay_LayoutElementHashMapItem *parentItem = Clay__GetHashMapItem(floatingConfig.parentId);
                 if (!parentItem) {
                     context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
@@ -1569,6 +1578,8 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
                 } else {
                     clipElementId = Clay__int32_tArray_GetValue(&context->layoutElementClipElementIds, parentItem->layoutElement - context->layoutElements.internalArray);
                 }
+            } else if (declaration.floating.attachTo == CLAY_ATTACH_TO_ROOT) {
+                floatingConfig.parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id;
             }
             Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
                     .layoutElementIndex = Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1),
@@ -1579,10 +1590,10 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
             Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(declaration.floating) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING);
         }
     }
-    if (!Clay__MemCmp((char *)(&declaration.custom), (char *)(&Clay_CustomElementConfig_DEFAULT), sizeof(Clay_CustomElementConfig))) {
+    if (declaration.custom.customData) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(declaration.custom) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM);
     }
-    if (!Clay__MemCmp((char *)(&declaration.scroll), (char *)(&Clay_ScrollElementConfig_DEFAULT), sizeof(Clay_ScrollElementConfig))) {
+    if (declaration.scroll.horizontal | declaration.scroll.vertical) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(declaration.scroll) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL);
         Clay__int32_tArray_Add(&context->openClipElementStack, (int)openLayoutElement->id);
         // Retrieve or create cached data to track scroll position across frames
@@ -1602,7 +1613,7 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
             scrollOffset->scrollPosition = Clay__QueryScrollOffset(scrollOffset->elementId, context->queryScrollOffsetUserData);
         }
     }
-    if (!Clay__MemCmp((char *)(&declaration.border), (char *)(&Clay_BorderElementConfig_DEFAULT), sizeof(Clay_BorderElementConfig))) {
+    if (!Clay__MemCmp((char *)(&declaration.border.width), (char *)(&Clay__BorderWidth_DEFAULT), sizeof(Clay_BorderWidth))) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration.border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER);
     }
 }
@@ -2069,7 +2080,7 @@ void Clay__CalculateFinalLayout(void) {
             Clay_BoundingBox parentBoundingBox = parentHashMapItem->boundingBox;
             // Set X position
             Clay_Vector2 targetAttachPosition = CLAY__DEFAULT_STRUCT;
-            switch (config->attachment.parent) {
+            switch (config->attachPoints.parent) {
                 case CLAY_ATTACH_POINT_LEFT_TOP:
                 case CLAY_ATTACH_POINT_LEFT_CENTER:
                 case CLAY_ATTACH_POINT_LEFT_BOTTOM: targetAttachPosition.x = parentBoundingBox.x; break;
@@ -2080,7 +2091,7 @@ void Clay__CalculateFinalLayout(void) {
                 case CLAY_ATTACH_POINT_RIGHT_CENTER:
                 case CLAY_ATTACH_POINT_RIGHT_BOTTOM: targetAttachPosition.x = parentBoundingBox.x + parentBoundingBox.width; break;
             }
-            switch (config->attachment.element) {
+            switch (config->attachPoints.element) {
                 case CLAY_ATTACH_POINT_LEFT_TOP:
                 case CLAY_ATTACH_POINT_LEFT_CENTER:
                 case CLAY_ATTACH_POINT_LEFT_BOTTOM: break;
@@ -2091,7 +2102,7 @@ void Clay__CalculateFinalLayout(void) {
                 case CLAY_ATTACH_POINT_RIGHT_CENTER:
                 case CLAY_ATTACH_POINT_RIGHT_BOTTOM: targetAttachPosition.x -= rootDimensions.width; break;
             }
-            switch (config->attachment.parent) { // I know I could merge the x and y switch statements, but this is easier to read
+            switch (config->attachPoints.parent) { // I know I could merge the x and y switch statements, but this is easier to read
                 case CLAY_ATTACH_POINT_LEFT_TOP:
                 case CLAY_ATTACH_POINT_RIGHT_TOP:
                 case CLAY_ATTACH_POINT_CENTER_TOP: targetAttachPosition.y = parentBoundingBox.y; break;
@@ -2102,7 +2113,7 @@ void Clay__CalculateFinalLayout(void) {
                 case CLAY_ATTACH_POINT_CENTER_BOTTOM:
                 case CLAY_ATTACH_POINT_RIGHT_BOTTOM: targetAttachPosition.y = parentBoundingBox.y + parentBoundingBox.height; break;
             }
-            switch (config->attachment.element) {
+            switch (config->attachPoints.element) {
                 case CLAY_ATTACH_POINT_LEFT_TOP:
                 case CLAY_ATTACH_POINT_RIGHT_TOP:
                 case CLAY_ATTACH_POINT_CENTER_TOP: break;
@@ -2700,7 +2711,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
     }
 
     if (highlightedElementId) {
-        CLAY({ .id = CLAY_ID("Clay__DebugView_ElementHighlight"), .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .parentId = highlightedElementId, .zIndex = 65535, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH } }) {
+        CLAY({ .id = CLAY_ID("Clay__DebugView_ElementHighlight"), .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .parentId = highlightedElementId, .zIndex = 65535, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH, .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID } }) {
             CLAY({ .id = CLAY_ID("Clay__DebugView_ElementHighlightRectangle"), .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .backgroundColor = Clay__debugViewHighlightColor }) {}
         }
     }
@@ -2823,7 +2834,7 @@ void Clay__RenderDebugView(void) {
     Clay__RenderDebugLayoutData layoutData = CLAY__DEFAULT_STRUCT;
     CLAY({ .id = CLAY_ID("Clay__DebugView"),
          .layout = { .sizing = { CLAY_SIZING_FIXED((float)Clay__debugViewWidth) , CLAY_SIZING_FIXED(context->layoutDimensions.height) }, .layoutDirection = CLAY_TOP_TO_BOTTOM },
-        .floating = { .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id, .zIndex = 65000, .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }},
+        .floating = { .zIndex = 65000, .attachPoints = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_CENTER }, .attachTo = CLAY_ATTACH_TO_ROOT },
         .border = { .color = CLAY__DEBUGVIEW_COLOR_3, .width = { .bottom = 1 } }
     }) {
         CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .padding = {CLAY__DEBUGVIEW_OUTER_PADDING, CLAY__DEBUGVIEW_OUTER_PADDING }, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }, .backgroundColor = CLAY__DEBUGVIEW_COLOR_2 }) {
@@ -2845,7 +2856,7 @@ void Clay__RenderDebugView(void) {
             CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }, .backgroundColor = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1 }) {
                 Clay_ElementId panelContentsId = Clay__HashString(CLAY_STRING("Clay__DebugViewPaneOuter"), 0, 0);
                 // Element list
-                CLAY({ .id = panelContentsId, .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .zIndex = 65001, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH } }) {
+                CLAY({ .id = panelContentsId, .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .zIndex = 65001, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH, .attachTo = CLAY_ATTACH_TO_PARENT } }) {
                     CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = { CLAY__DEBUGVIEW_OUTER_PADDING, CLAY__DEBUGVIEW_OUTER_PADDING }, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                         layoutData = Clay__RenderDebugLayoutElementsList((int32_t)initialRootsLength, highlightedRow);
                     }
@@ -3297,42 +3308,6 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
     }
 }
 
-uint8_t Clay__PoisonStack(Clay_Context* context) {
-    uint8_t stackmem[1024];
-    for (int i = 0; i < 1024; i++) {
-        stackmem[i] = 0xce;
-    }
-    return stackmem[0];
-}
-
-void Clay__CalculateDeclarationPaddingMask(const Clay_ElementDeclaration dec, Clay_Context* context) {
-    uint8_t* decData = (uint8_t*)&dec;
-    for (int i = 0; i < sizeof(Clay_ElementDeclaration); i++) {
-        if (decData[i] != 0) {
-            Clay__int32_tArray_Add(&context->declarationPaddingMask, i);
-        }
-    }
-}
-
-void Clay__CreateGarbagePaddingStruct(Clay_Context* context) {
-    Clay__CalculateDeclarationPaddingMask(CLAY__INIT(Clay_ElementDeclaration) {
-        .id = { 0 },
-        .layout = { 0 },
-        .backgroundColor = { 0 },
-        .cornerRadius = { 0 },
-        .image = { 0 },
-        .floating = { 0 },
-        .custom = { 0 },
-        .scroll = { 0 },
-        .border = { 0 },
-    }, context);
-}
-
-void Clay__InitDeclarationPaddingMask(Clay_Context *context) {
-    Clay__PoisonStack(context);
-    Clay__CreateGarbagePaddingStruct(context);
-}
-
 CLAY_WASM_EXPORT("Clay_Initialize")
 Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler) {
     Clay_Context *context = Clay__Context_Allocate_Arena(&arena);
@@ -3349,7 +3324,6 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
     Clay_SetCurrentContext(context);
     Clay__InitializePersistentMemory(context);
     Clay__InitializeEphemeralMemory(context);
-    Clay__InitDeclarationPaddingMask(context);
     for (int32_t i = 0; i < context->layoutElementsHashMap.capacity; ++i) {
         context->layoutElementsHashMap.internalArray[i] = -1;
     }

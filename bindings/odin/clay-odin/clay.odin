@@ -147,15 +147,15 @@ ScrollElementConfig :: struct {
 }
 
 FloatingAttachPointType :: enum EnumBackingType {
-    LEFT_TOP,
-    LEFT_CENTER,
-    LEFT_BOTTOM,
-    CENTER_TOP,
-    CENTER_CENTER,
-    CENTER_BOTTOM,
-    RIGHT_TOP,
-    RIGHT_CENTER,
-    RIGHT_BOTTOM,
+    LeftTop,
+    LeftCenter,
+    LeftBottom,
+    CenterTop,
+    CenterCenter,
+    CenterBottom,
+    RightTop,
+    RightCenter,
+    RightBottom,
 }
 
 FloatingAttachPoints :: struct {
@@ -164,8 +164,15 @@ FloatingAttachPoints :: struct {
 }
 
 PointerCaptureMode :: enum EnumBackingType {
-    CAPTURE,
-    PASSTHROUGH,
+    Capture,
+    Passthrough,
+}
+
+FloatingAttachToElement :: enum EnumBackingType {
+    None,
+    Parent,
+    ElementWithId,
+    Root,
 }
 
 FloatingElementConfig :: struct {
@@ -175,6 +182,7 @@ FloatingElementConfig :: struct {
     zIndex:             i32,
     attachment:         FloatingAttachPoints,
     pointerCaptureMode: PointerCaptureMode,
+    attachTo:           FloatingAttachToElement
 }
 
 TextRenderData :: struct {

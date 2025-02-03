@@ -71,7 +71,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                  CLAY({ .id = CLAY_ID("FloatingContainer"),
                      .layout = { .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) }, .padding = { 16, 16, 16, 16 }},
                      .backgroundColor = { 140, 80, 200, 200 },
-                     .floating = { .zIndex = 1, .attachment = { CLAY_ATTACH_POINT_CENTER_TOP, CLAY_ATTACH_POINT_CENTER_TOP }, .offset = {0, 0} },
+                     .floating = { .attachTo = CLAY_ATTACH_TO_PARENT, .zIndex = 1, .attachPoints = { CLAY_ATTACH_POINT_CENTER_TOP, CLAY_ATTACH_POINT_CENTER_TOP }, .offset = {0, 0} },
                      .border = { .width = CLAY_BORDER_OUTSIDE(2), .color = {80, 80, 80, 255} },
                  }) {
                      CLAY_TEXT(CLAY_STRING("I'm an inline floating container."), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255,255,255,255} }));
@@ -106,9 +106,9 @@ Clay_RenderCommandArray CreateLayout(void) {
             }
         }
 
-        CLAY({ .id = CLAY_ID("Blob4Floating2"), .floating = { .zIndex = 1, .parentId = Clay_GetElementId(CLAY_STRING("SidebarBlob4")).id } }) {
+        CLAY({ .id = CLAY_ID("Blob4Floating2"), .floating = { .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID, .zIndex = 1, .parentId = Clay_GetElementId(CLAY_STRING("SidebarBlob4")).id } }) {
             CLAY({ .id = CLAY_ID("ScrollContainer"), .layout = { .sizing = { .height = CLAY_SIZING_FIXED(200) }, .childGap = 2 }, .scroll = { .vertical = true } }) {
-                CLAY({ .id = CLAY_ID("FloatingContainer2"), .floating = { .zIndex = 1 } }) {
+                CLAY({ .id = CLAY_ID("FloatingContainer2"), .floating = { .attachTo = CLAY_ATTACH_TO_PARENT, .zIndex = 1 } }) {
                     CLAY({ .id = CLAY_ID("FloatingContainerInner"), .layout = { .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) }, .padding = {16, 16, 16, 16} }, .backgroundColor = {140,80, 200, 200} }) {
                         CLAY_TEXT(CLAY_STRING("I'm an inline floating container."), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255,255,255,255} }));
                     }
@@ -124,10 +124,11 @@ Clay_RenderCommandArray CreateLayout(void) {
         if (scrollData.found) {
             CLAY({ .id = CLAY_ID("ScrollBar"),
                 .floating = {
+                    .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID,
                     .offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height },
                     .zIndex = 1,
                     .parentId = Clay_GetElementId(CLAY_STRING("MainContent")).id,
-                    .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP}
+                    .attachPoints = { .element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP }
                 }
             }) {
                 CLAY({ .id = CLAY_ID("ScrollBarButton"),
