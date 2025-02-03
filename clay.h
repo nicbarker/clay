@@ -2371,9 +2371,9 @@ void Clay__CalculateFinalLayout(void) {
             else {
                 // DFS is returning upwards backwards
                 bool closeScrollElement = false;
-                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL)) {
+                Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
+                if (scrollConfig) {
                     closeScrollElement = true;
-                    Clay_ScrollElementConfig *scrollConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SCROLL).scrollElementConfig;
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
                         if (mapping->layoutElement == currentElement) {
@@ -3067,6 +3067,9 @@ void Clay__RenderDebugView(void) {
                                     CLAY_TEXT(Clay__IntToString(borderConfig->width.bottom), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
                                 }
+                                // .textColor
+                                CLAY_TEXT(CLAY_STRING("Border Color"), infoTitleConfig);
+                                Clay__RenderDebugViewColor(borderConfig->color, infoTextConfig);
                             }
                             break;
                         }
