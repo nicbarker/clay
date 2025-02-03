@@ -3313,24 +3313,33 @@ void Clay__CalculateDeclarationPaddingMask(const Clay_ElementDeclaration dec, Cl
         }
     }
 }
+//
+//void Clay__CreateGarbagePaddingStruct(Clay_Context* context) {
+//    Clay__CalculateDeclarationPaddingMask(CLAY__INIT(Clay_ElementDeclaration) {
+//        .id = { 0 },
+//        .layout = { 0 },
+//        .backgroundColor = { 0 },
+//        .cornerRadius = { 0 },
+//        .image = { 0 },
+//        .floating = { 0 },
+//        .custom = { 0 },
+//        .scroll = { 0 },
+//        .border = { 0 },
+//    }, context);
+//}
 
-void Clay__CreateGarbagePaddingStruct(Clay_Context* context) {
-    Clay__CalculateDeclarationPaddingMask(CLAY__INIT(Clay_ElementDeclaration) {
-        .id = { 0 },
-        .layout = { 0 },
-        .backgroundColor = { 0 },
-        .cornerRadius = { 0 },
-        .image = { 0 },
-        .floating = { 0 },
-        .custom = { 0 },
-        .scroll = { 0 },
-        .border = { 0 },
-    }, context);
-}
+typedef union {
+    Clay_ElementDeclaration key;
+    char mask[sizeof(Clay_ElementDeclaration)];
+} DeclarationPaddingMask;
 
 void Clay__InitDeclarationPaddingMask(Clay_Context *context) {
-    Clay__PoisonStack(context);
-    Clay__CreateGarbagePaddingStruct(context);
+    DeclarationPaddingMask helper;
+    for (int i = 0; i < sizeof(helper); i++) {
+        ((char*)&helper)[i] = 0xff;
+    }
+    helper.key = (Clay_ElementDeclaration) { 0 };  // Let compiler do its thing
+    Clay__CalculateDeclarationPaddingMask(helper.key, context);
 }
 
 CLAY_WASM_EXPORT("Clay_Initialize")
