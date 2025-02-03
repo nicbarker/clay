@@ -569,7 +569,7 @@ extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
 
 inline Clay_BorderElementConfig Clay_BorderAll(Clay_Color color, uint16_t width) {
-    return (Clay_BorderElementConfig) { .color = color, .width = {width, width, width, width, width}};
+    return CLAY__INIT(Clay_BorderElementConfig) { .color = color, .width = {width, width, width, width, width}};
 }
 
 #ifdef __cplusplus
@@ -1532,14 +1532,14 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
     openLayoutElement->elementConfigs.internalArray = &context->elementConfigs.internalArray[context->elementConfigs.length];
     Clay_SharedElementConfig *sharedConfig = NULL;
     if (!Clay__MemCmp((char *)(&declaration.backgroundColor), (char *)(&Clay__Color_DEFAULT), sizeof(Clay_Color))) {
-        sharedConfig = Clay__StoreSharedElementConfig((Clay_SharedElementConfig) { .backgroundColor = declaration.backgroundColor });
+        sharedConfig = Clay__StoreSharedElementConfig(CLAY__INIT(Clay_SharedElementConfig) { .backgroundColor = declaration.backgroundColor });
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
     }
     if (!Clay__MemCmp((char *)(&declaration.cornerRadius), (char *)(&Clay__CornerRadius_DEFAULT), sizeof(Clay_CornerRadius))) {
         if (sharedConfig) {
             sharedConfig->cornerRadius = declaration.cornerRadius;
         } else {
-            sharedConfig = Clay__StoreSharedElementConfig((Clay_SharedElementConfig) { .cornerRadius = declaration.cornerRadius });
+            sharedConfig = Clay__StoreSharedElementConfig(CLAY__INIT(Clay_SharedElementConfig) { .cornerRadius = declaration.cornerRadius });
             Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
         }
     }
@@ -2250,7 +2250,7 @@ void Clay__CalculateFinalLayout(void) {
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE;
-                            renderCommand.renderData = (Clay_RenderData) {
+                            renderCommand.renderData = CLAY__INIT(Clay_RenderData) {
                                 .image = {
                                     .backgroundColor = emitRectangle ? sharedConfig->backgroundColor : CLAY__INIT(Clay_Color) { 255, 255, 255, 255 },
                                     .cornerRadius = sharedConfig->cornerRadius,
@@ -2302,7 +2302,7 @@ void Clay__CalculateFinalLayout(void) {
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM;
-                            renderCommand.renderData = (Clay_RenderData) {
+                            renderCommand.renderData = CLAY__INIT(Clay_RenderData) {
                                 .custom = {
                                     .backgroundColor = sharedConfig->backgroundColor,
                                     .cornerRadius = sharedConfig->cornerRadius,
