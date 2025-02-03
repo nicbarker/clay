@@ -3608,7 +3608,7 @@ void Clay_SetMaxElementCount(int32_t maxElementCount) {
         context->maxElementCount = maxElementCount;
     } else {
         Clay__defaultMaxElementCount = maxElementCount; // TODO: Fix this
-	    Clay__defaultMaxMeasureTextWordCacheCount = maxElementCount * 2;
+        Clay__defaultMaxMeasureTextWordCacheCount = maxElementCount * 2;
     }
 }
 
