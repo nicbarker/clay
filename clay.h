@@ -375,7 +375,7 @@ typedef struct {
 
 CLAY__WRAPPER_STRUCT(Clay_ScrollElementConfig);
 
-// Scroll
+// Shared
 typedef struct {
     Clay_Color backgroundColor;
     Clay_CornerRadius cornerRadius;
