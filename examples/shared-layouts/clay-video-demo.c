@@ -147,7 +147,8 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                 if (fileMenuVisible) { // Below has been changed slightly to fix the small bug where the menu would dismiss when mousing over the top gap
                     CLAY({ .id = CLAY_ID("FileMenu"),
                         .floating = {
-                            .attachment = {
+                            .attachTo = CLAY_ATTACH_TO_PARENT,
+                            .attachPoints = {
                                 .parent = CLAY_ATTACH_POINT_LEFT_BOTTOM
                             },
                         },

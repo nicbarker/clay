@@ -402,7 +402,7 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
         float scrollHeight = scrollData.scrollContainerDimensions.height - 12;
         CLAY({
             .id = CLAY_ID("ScrollBar"),
-            .floating = { .offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = Clay_GetElementId(CLAY_STRING("OuterScrollContainer")).id, .attachment = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP }},
+            .floating = { .offset = { .x = -6, .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollHeight + 6}, .zIndex = 1, .parentId = Clay_GetElementId(CLAY_STRING("OuterScrollContainer")).id, .attachPoints = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP }, .attachTo = CLAY_ATTACH_TO_PARENT },
             .layout = { .sizing = {CLAY_SIZING_FIXED(10), CLAY_SIZING_FIXED((scrollHeight / scrollData.contentDimensions.height) * scrollHeight)} },
             .backgroundColor = scrollbarColor,
             .cornerRadius = CLAY_CORNER_RADIUS(5)
