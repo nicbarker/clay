@@ -17,12 +17,10 @@ int main(void) {
        .width = GetScreenWidth(),
        .height = GetScreenHeight()
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
-    Clay_SetMeasureTextFunction(Raylib_MeasureText, 0);
-    Raylib_fonts[FONT_ID_BODY_16] = (Raylib_Font) {
-        .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
-        .fontId = FONT_ID_BODY_16
-    };
-    SetTextureFilter(Raylib_fonts[FONT_ID_BODY_16].font.texture, TEXTURE_FILTER_BILINEAR);
+    Font fonts[1];
+    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
+    SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, (uintptr_t)fonts);
 
     ClayVideoDemo_Data data = ClayVideoDemo_Initialize();
 
@@ -49,7 +47,7 @@ int main(void) {
 
         BeginDrawing();
         ClearBackground(BLACK);
-        Clay_Raylib_Render(renderCommands);
+        Clay_Raylib_Render(renderCommands, fonts);
         EndDrawing();
     }
 }

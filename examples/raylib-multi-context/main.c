@@ -40,6 +40,10 @@ int main(void) {
     };
     Clay_Raylib_Initialize(1024, 768, "Introducing Clay Demo", FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT); // Extra parameters to this function are new since the video was published
 
+    Font fonts[1];
+    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
+    SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
+
     uint64_t clayRequiredMemory = Clay_MinMemorySize();
 
     Clay_Arena clayMemoryTop = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
@@ -48,6 +52,7 @@ int main(void) {
        .height = GetScreenHeight() / 2
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
     ClayVideoDemo_Data dataTop = ClayVideoDemo_Initialize();
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, (uintptr_t)fonts);
 
     Clay_Arena clayMemoryBottom = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Context *clayContextBottom = Clay_Initialize(clayMemoryBottom, (Clay_Dimensions) {
@@ -55,13 +60,7 @@ int main(void) {
             .height = GetScreenHeight() / 2
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
     ClayVideoDemo_Data dataBottom = ClayVideoDemo_Initialize();
-
-    Clay_SetMeasureTextFunction(Raylib_MeasureText, 0);
-    Raylib_fonts[FONT_ID_BODY_16] = (Raylib_Font) {
-        .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
-        .fontId = FONT_ID_BODY_16
-    };
-    SetTextureFilter(Raylib_fonts[FONT_ID_BODY_16].font.texture, TEXTURE_FILTER_BILINEAR);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, (uintptr_t)fonts);
 
     while (!WindowShouldClose()) {
         dataBottom.yOffset = GetScreenHeight() / 2;
@@ -69,8 +68,8 @@ int main(void) {
         Clay_RenderCommandArray renderCommandsBottom = CreateLayout(clayContextBottom, &dataBottom);
         BeginDrawing();
         ClearBackground(BLACK);
-        Clay_Raylib_Render(renderCommandsTop);
-        Clay_Raylib_Render(renderCommandsBottom);
+        Clay_Raylib_Render(renderCommandsTop, fonts);
+        Clay_Raylib_Render(renderCommandsBottom, fonts);
         EndDrawing();
     }
 }

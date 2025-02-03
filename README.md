@@ -50,13 +50,18 @@ static inline Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElemen
 }
 
 // Layout config is just a struct that can be declared statically, or inline
-Clay_LayoutConfig sidebarItemLayout = (Clay_LayoutConfig) {
-    .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) },
+Clay_ElementDeclaration sidebarItemConfig = (Clay_ElementDeclaration) {
+    .layout = {
+        .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }
+    },
+    .backgroundColor = COLOR_ORANGE
 };
 
 // Re-useable components are just normal functions
 void SidebarItemComponent() {
-    CLAY(CLAY_LAYOUT(sidebarItemLayout), CLAY_RECTANGLE({ .color = COLOR_ORANGE })) {}
+    CLAY(sidebarItemConfig) {
+        // children go here...
+    }
 }
 
 int main() {
@@ -65,6 +70,7 @@ int main() {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena arena = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
 
+    // Note: screenWidth and screenHeight will need to come from your environment, Clay doesn't handle window related tasks
     Clay_Initialize(arena, (Clay_Dimensions) { screenWidth, screenHeight }, (Clay_ErrorHandler) { HandleClayErrors });
 
     while(renderLoop()) { // Will be different for each renderer / environment
@@ -79,13 +85,14 @@ int main() {
         Clay_BeginLayout();
 
         // An example of laying out a UI with a fixed width sidebar and flexible width main content
-        CLAY(CLAY_ID("OuterContainer"), CLAY_LAYOUT({ .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(16), .childGap = 16 }), CLAY_RECTANGLE({ .color = {250,250,255,255} })) {
-            CLAY(CLAY_ID("SideBar"),
-                 CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16 }),
-                 CLAY_RECTANGLE({ .color = COLOR_LIGHT })
+        CLAY({ .id = CLAY_ID("OuterContainer"), .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(16), .childGap = 16 }, .backgroundColor = {250,250,255,255} }) {
+            CLAY({
+                .id = CLAY_ID("SideBar"),
+                .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16 },
+                .backgroundColor = COLOR_LIGHT }
             ) {
-                CLAY(CLAY_ID("ProfilePictureOuter"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }), CLAY_RECTANGLE({ .color = COLOR_RED })) {
-                    CLAY(CLAY_ID("ProfilePicture"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}), CLAY_IMAGE({ .imageData = &profilePicture, .sourceDimensions = {60, 60} })) {}
+                CLAY({ .id = CLAY_ID("ProfilePictureOuter"), .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }, .backgroundColor = COLOR_RED }) {
+                    CLAY({ .id = CLAY_ID("ProfilePicture"), .layout = { .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}, .image = { .imageData = &profilePicture, .sourceDimensions = {60, 60} } }) {}
                     CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
                 }
 
@@ -94,7 +101,7 @@ int main() {
                     SidebarItemComponent();
                 }
 
-                CLAY(CLAY_ID("MainContent"), CLAY_LAYOUT({ .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }}), CLAY_RECTANGLE({ .color = COLOR_LIGHT })) {}
+                CLAY({ .id = CLAY_ID("MainContent"), .layout = { .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) } }, .backgroundColor = COLOR_LIGHT }) {}
             }
 
             // All clay layouts are declared between Clay_BeginLayout and Clay_EndLayout
@@ -108,7 +115,7 @@ int main() {
                     case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                         DrawRectangle(
                                 renderCommand->boundingBox,
-                                renderCommand->config.rectangleElementConfig->color);
+                                renderCommand->renderData.rectangle.backgroundColor);
                     }
                         // ... Implement handling of other command types
                 }
@@ -201,11 +208,11 @@ Clay UIs are built using the C macro `CLAY()`. This macro creates a new empty el
 Child elements are added by opening a block: `{}` after calling the `CLAY()` macro (exactly like you would with an `if` statement or `for` loop), and declaring child components inside the braces.
 ```C
 // Parent element with 8px of padding
-CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8) })) {
+CLAY({ .layout = { .padding = CLAY_PADDING_ALL(8) } }) {
     // Child element 1
     CLAY_TEXT(CLAY_STRING("Hello World"), CLAY_TEXT_CONFIG({ .fontSize = 16 }));
     // Child element 2 with red background
-    CLAY(CLAY_RECTANGLE({ .color = COLOR_RED })) {
+    CLAY({ .color = COLOR_RED })) {
         // etc
     }
 }
@@ -216,13 +223,13 @@ However, unlike HTML and other declarative DSLs, these macros are just C. As a r
 // Re-usable "components" are just functions that declare more UI
 void ButtonComponent(Clay_String buttonText) {
     // Red box button with 8px of padding
-    CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8)}), CLAY_RECTANGLE({ .color = COLOR_RED })) {
+    CLAY({ .layout = { .padding = CLAY_PADDING_ALL(8) }, .backgroundColor = COLOR_RED })) {
         CLAY_TEXT(buttonText, textConfig);
     }
 }
 
 // Parent element
-CLAY(CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
+CLAY({ .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
     // Render a bunch of text elements
     for (int i = 0; i < textArray.length; i++) {
         CLAY_TEXT(textArray.elements[i], textConfig);
@@ -242,7 +249,7 @@ CLAY(CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
 ### Configuring Layout and Styling UI Elements
 The layout of clay elements is configured with the `CLAY_LAYOUT()` macro. 
 ```C
-CLAY(CLAY_LAYOUT({ .padding = { 8, 8, 8, 8 }, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
+CLAY({ .layout = { .padding = { 8, 8, 8, 8 }, .layoutDirection = CLAY_TOP_TO_BOTTOM })) {
     // Children are 8px inset into parent, and laid out top to bottom
 }
 ```
@@ -255,7 +262,7 @@ A `Clay_LayoutConfig` struct can be defined in file scope or elsewhere, and reus
 // Define a style in the global / file scope
 Clay_LayoutConfig reusableStyle = (Clay_LayoutConfig) { .backgroundColor = {120, 120, 120, 255} };
 
-CLAY(CLAY_LAYOUT(reusableStyle)) {
+CLAY({ .layout = eusableStyle)) {
     // ...
 }
 ```
@@ -295,7 +302,7 @@ The function `bool Clay_Hovered()` can be called during element construction or 
 
 ```C
 // An orange button that turns blue when hovered
-CLAY(CLAY_RECTANGLE(.color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE)) {
+CLAY(.color = Clay_Hovered() ? COLOR_BLUE : COLOR_ORANGE)) {
     bool buttonHovered = Clay_Hovered();
     CLAY_TEXT(buttonHovered ? CLAY_STRING("Hovered") : CLAY_STRING("Hover me!"), headerTextConfig);
 }
@@ -316,7 +323,7 @@ void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerI
 ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/clay" };
 
 // HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
-CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8)}), Clay_OnHover(HandleButtonInteraction, &linkButton)) {
+CLAY({ .layout = { .padding = CLAY_PADDING_ALL(8)}), Clay_OnHover(HandleButtonInteraction, &linkButton)) {
     CLAY_TEXT(CLAY_STRING("Button"), &headerTextConfig);
 }
 ```
@@ -686,7 +693,7 @@ void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerD
 ButtonData linkButton = (ButtonData) { .link = "https://github.com/nicbarker/clay" };
 
 // HandleButtonInteraction will be called for each frame the mouse / pointer / touch is inside the button boundaries
-CLAY(CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(8)}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
+CLAY({ .layout = { .padding = CLAY_PADDING_ALL(8)}), Clay_OnHover(HandleButtonInteraction, &buttonData)) {
     CLAY_TEXT(CLAY_STRING("Button"), &headerTextConfig);
 }
 ```
@@ -732,17 +739,18 @@ Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for
 **Examples**
 ```C
 // Define an element with 16px of x and y padding
-CLAY(CLAY_ID("Outer"), CLAY_LAYOUT({ .padding = CLAY_PADDING_ALL(16) })) {
+CLAY({ .id = CLAY_ID("Outer"), .layout = { .padding = CLAY_PADDING_ALL(16) } }) {
     // A nested child element
-    CLAY(CLAY_ID("SideBar"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16 })) {
+    CLAY({ .id = CLAY_ID("SideBar"), .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16 } }) {
         // Children laid out top to bottom with a 16 px gap between them
     }
     // A vertical scrolling container with a colored background
-    CLAY(
-        CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16 })
-        CLAY_RECTANGLE({ .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) })
-        CLAY_SCROLL({ .vertical = true })
-    ) {
+    CLAY({
+        .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 16 },
+        .backgroundColor = { 200, 200, 100, 255 },
+        .cornerRadius = CLAY_CORNER_RADIUS(10),
+        .scroll = { .vertical = true }
+    }) {
         // child elements
     }
 }
@@ -845,7 +853,7 @@ An offset version of [CLAY_ID_LOCAL](#clay_local_id). Generates a [Clay_ElementI
 
 **Usage**
 
-`CLAY(CLAY_LAYOUT(...layout config)) {}`
+`CLAY(.layout = { ..layout config)) {}`
 
 **Lifecycle**
 
@@ -957,7 +965,7 @@ CLAY(CLAY_ID("Button"), CLAY_LAYOUT({ .layoutDirection = CLAY_TOP_TO_BOTTOM, .si
 ### CLAY_RECTANGLE
 **Usage**
 
-`CLAY(CLAY_RECTANGLE(...rectangle config)) {}`
+`CLAY(...rectangle config)) {}`
 
 **Lifecycle**
 
@@ -997,7 +1005,7 @@ The underlying `Clay_RectangleElementConfig` can be extended with new members by
 
 **`.color`** - `Clay_Color`
 
-`CLAY_RECTANGLE({ .color = {120, 120, 120, 255} })`
+`.backgroundColor = {120, 120, 120, 255} })`
 
 Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
 
@@ -1021,14 +1029,15 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 // Declare a reusable rectangle config, with a purple color and 10px rounded corners
 Clay_RectangleElementConfig rectangleConfig = (Clay_RectangleElementConfig) { .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) };
 // Declare a rectangle element using a reusable config
-CLAY(CLAY_RECTANGLE(rectangleConfig)) {}
+CLAY(rectangleConfig)) {}
 // Declare a retangle element using an inline config
-CLAY(CLAY_RECTANGLE({ .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) })) {
+CLAY({ .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) })) {
     // child elements
 }
 // Declare a scrolling container with a colored background
-CLAY(
-    CLAY_RECTANGLE({ .color = { 200, 200, 100, 255 }, .cornerRadius = CLAY_CORNER_RADIUS(10) })
+CLAY({ 
+    .backgroundColor = { 200, 200, 100, 255 }, 
+    .cornerRadius = CLAY_CORNER_RADIUS(10)
     CLAY_SCROLL({ .vertical = true })
 ) {
     // child elements
@@ -1615,18 +1624,18 @@ Controls whether pointer events like hover and click should pass through to cont
 
 ```C
 // Horizontal container with three option buttons
-CLAY(CLAY_ID("OptionsList"), CLAY_LAYOUT(.childGap = 16)) {
-    CLAY_RECTANGLE(CLAY_IDI("Option", 1), CLAY_LAYOUT(.padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+CLAY(CLAY_ID("OptionsList"), .layout = { childGap = 16)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 1), .layout = { padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 1), CLAY_STRING("Option 1"), CLAY_TEXT_CONFIG());
     }
-    CLAY_RECTANGLE(CLAY_IDI("Option", 2), CLAY_LAYOUT(.padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 2), .layout = { padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 2), CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
         // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
         CLAY_FLOATING(CLAY_ID("OptionTooltip"), &CLAY_LAYOUT_DEFAULT, CLAY_FLOATING({ .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP } })) {
             CLAY_TEXT(CLAY_IDI("OptionTooltipText", 1), CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
         }
     }
-    CLAY_RECTANGLE(CLAY_IDI("Option", 3), CLAY_LAYOUT(.padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
+    CLAY_RECTANGLE(CLAY_IDI("Option", 3), .layout = { padding = CLAY_PADDING_ALL(16)), CLAY_RECTANGLE(.color = COLOR_BLUE)) {
         CLAY_TEXT(CLAY_IDI("OptionText", 3), CLAY_STRING("Option 3"), CLAY_TEXT_CONFIG());
     }
 }

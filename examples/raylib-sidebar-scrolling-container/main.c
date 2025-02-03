@@ -154,7 +154,7 @@ ScrollbarData scrollbarData = {0};
 
 bool debugEnabled = false;
 
-void UpdateDrawFrame(void)
+void UpdateDrawFrame(Font* fonts)
 {
     Vector2 mouseWheelDelta = GetMouseWheelMoveV();
     float mouseWheelX = mouseWheelDelta.x;
@@ -203,7 +203,7 @@ void UpdateDrawFrame(void)
 //    currentTime = GetTime();
     BeginDrawing();
     ClearBackground(BLACK);
-    Clay_Raylib_Render(renderCommands);
+    Clay_Raylib_Render(renderCommands, fonts);
     EndDrawing();
 //    printf("render time: %f ms\n", (GetTime() - currentTime) * 1000);
 
@@ -227,20 +227,15 @@ int main(void) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
-    Clay_SetMeasureTextFunction(Raylib_MeasureText, 0);
     Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
     profilePicture = LoadTextureFromImage(LoadImage("resources/profile-picture.png"));
-    Raylib_fonts[FONT_ID_BODY_24] = (Raylib_Font) {
-        .font = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400),
-        .fontId = FONT_ID_BODY_24,
-    };
-	SetTextureFilter(Raylib_fonts[FONT_ID_BODY_24].font.texture, TEXTURE_FILTER_BILINEAR);
 
-    Raylib_fonts[FONT_ID_BODY_16] = (Raylib_Font) {
-        .font = LoadFontEx("resources/Roboto-Regular.ttf", 32, 0, 400),
-        .fontId = FONT_ID_BODY_16,
-    };
-    SetTextureFilter(Raylib_fonts[FONT_ID_BODY_16].font.texture, TEXTURE_FILTER_BILINEAR);
+    Font fonts[2];
+    fonts[FONT_ID_BODY_24] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
+	SetTextureFilter(fonts[FONT_ID_BODY_24].texture, TEXTURE_FILTER_BILINEAR);
+    fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 32, 0, 400);
+    SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, (uintptr_t)fonts);
 
     //--------------------------------------------------------------------------------------
 
@@ -254,7 +249,7 @@ int main(void) {
             Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
             reinitializeClay = false;
         }
-        UpdateDrawFrame();
+        UpdateDrawFrame(fonts);
     }
     return 0;
 }

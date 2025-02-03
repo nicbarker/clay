@@ -8,13 +8,6 @@
 #define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) (Rectangle) { .x = rectangle.x, .y = rectangle.y, .width = rectangle.width, .height = rectangle.height }
 #define CLAY_COLOR_TO_RAYLIB_COLOR(color) (Color) { .r = (unsigned char)roundf(color.r), .g = (unsigned char)roundf(color.g), .b = (unsigned char)roundf(color.b), .a = (unsigned char)roundf(color.a) }
 
-typedef struct
-{
-    uint32_t fontId;
-    Font font;
-} Raylib_Font;
-
-Raylib_Font Raylib_fonts[10];
 Camera Raylib_camera;
 
 typedef enum
@@ -96,7 +89,8 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
     float lineTextWidth = 0;
 
     float textHeight = config->fontSize;
-    Font fontToUse = Raylib_fonts[config->fontId].font;
+    Font* fonts = (Font*)userData;
+    Font fontToUse = fonts[config->fontId];
     // Font failed to load, likely the fonts are in the wrong place relative to the execution dir
     if (!fontToUse.glyphs) return textSize;
 
@@ -128,7 +122,7 @@ void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned i
 //    EnableEventWaiting();
 }
 
-void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
+void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
 {
     for (int j = 0; j < renderCommands.length; j++)
     {
@@ -142,7 +136,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands)
                 char *cloned = (char *)malloc(textData->stringContents.length + 1);
                 memcpy(cloned, textData->stringContents.chars, textData->stringContents.length);
                 cloned[textData->stringContents.length] = '\0';
-                Font fontToUse = Raylib_fonts[textData->fontId].font;
+                Font fontToUse = fonts[textData->fontId];
                 DrawTextEx(fontToUse, cloned, (Vector2){boundingBox.x, boundingBox.y}, (float)textData->fontSize, (float)textData->letterSpacing, CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor));
                 free(cloned);
                 break;
