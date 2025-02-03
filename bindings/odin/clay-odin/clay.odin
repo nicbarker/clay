@@ -128,21 +128,22 @@ CustomElementConfig :: struct {
     customData: rawptr,
 }
 
+BorderWidth :: struct {
+    left: u16,
+    right: u16,
+    top: u16,
+    bottom: u16,
+    betweenChildren: u16,
+}
+
 BorderElementConfig :: struct {
-    left:            BorderData,
-    right:           BorderData,
-    top:             BorderData,
-    bottom:          BorderData,
-    betweenChildren: BorderData,
+    color: Color,
+    width: BorderWidth,
 }
 
 ScrollElementConfig :: struct {
     horizontal: bool,
     vertical:   bool,
-}
-
-SharedElementConfig :: struct {
-    cornerRadius: CornerRadius
 }
 
 FloatingAttachPointType :: enum EnumBackingType {
@@ -170,29 +171,56 @@ PointerCaptureMode :: enum EnumBackingType {
 FloatingElementConfig :: struct {
     offset:             Vector2,
     expand:             Dimensions,
-    zIndex:             u16,
     parentId:           u32,
+    zIndex:             i32,
     attachment:         FloatingAttachPoints,
     pointerCaptureMode: PointerCaptureMode,
 }
 
-ElementConfigUnion :: struct #raw_union {
-    rectangleElementConfig: ^RectangleElementConfig,
-    textElementConfig:      ^TextElementConfig,
-    imageElementConfig:     ^ImageElementConfig,
-    customElementConfig:    ^CustomElementConfig,
-    borderElementConfig:    ^BorderElementConfig,
+TextRenderData :: struct {
+    stringContents: StringSlice,
+    textColor: Color,
+    fontId: u16,
+    fontSize: u16,
+    letterSpacing: u16,
+    lineHeight: u16,
 }
 
-TextOrSharedConfig :: struct #raw_union {
-    text: StringSlice,
-    sharedConfig: ^SharedElementConfig
+RectangleRenderData :: struct {
+    backgroundColor: Color,
+    cornerRadius: CornerRadius,
+}
+
+ImageRenderData :: struct {
+    backgroundColor: Color,
+    cornerRadius: CornerRadius,
+    sourceDimensions: Dimensions,
+    imageData: rawptr,
+}
+
+CustomRenderData :: struct {
+    backgroundColor: Color,
+    cornerRadius: CornerRadius,
+    customData: rawptr,
+}
+
+BorderRenderData :: struct {
+    color: Color,
+    cornerRadius: CornerRadius,
+    width: BorderWidth,
+}
+
+RenderCommandData :: struct #raw_union {
+    rectangle: RectangleRenderData,
+    text: TextRenderData,
+    image: ImageRenderData,
+    custom: CustomRenderData,
+    border: BorderRenderData,
 }
 
 RenderCommand :: struct {
     boundingBox:        BoundingBox,
-    config:             ElementConfigUnion,
-    textOrSharedConfig: TextOrSharedConfig,
+    renderData:         RenderCommandData,
     zIndex:             i32,
     id:                 u32,
     commandType:        RenderCommandType,
@@ -283,13 +311,13 @@ ClayArray :: struct($type: typeid) {
 ElementDeclaration :: struct {
     id: ElementId,
     layout: LayoutConfig,
-    rectangle: RectangleElementConfig,
+    backgroundColor: Color,
+    cornerRadius: CornerRadius,
     image: ImageElementConfig,
     floating: FloatingElementConfig,
     custom: CustomElementConfig,
     scroll: ScrollElementConfig,
     border: BorderElementConfig,
-    shared: SharedElementConfig,
 }
 
 ErrorType :: enum {
@@ -367,14 +395,6 @@ TextConfig :: proc(config: TextElementConfig) -> ^TextElementConfig {
 
 PaddingAll :: proc(allPadding: u16) -> Padding {
     return { left = allPadding, right = allPadding, top = allPadding, bottom = allPadding }
-}
-
-BorderOutside :: proc(outsideBorders: BorderData) -> BorderElementConfig {
-    return { left = outsideBorders, right = outsideBorders, top = outsideBorders, bottom = outsideBorders }
-}
-
-BorderAll :: proc(allBorders: BorderData) -> BorderElementConfig {
-    return { left = allBorders, right = allBorders, top = allBorders, bottom = allBorders, betweenChildren = allBorders }
 }
 
 CornerRadiusAll :: proc(radius: f32) -> CornerRadius {

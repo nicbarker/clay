@@ -57,12 +57,17 @@ headerTextConfig := clay.TextElementConfig {
     textColor = {61, 26, 5, 255},
 }
 
+border2pxRed := clay.BorderElementConfig {
+    width = { 2, 2, 2, 2, 0 },
+    color = COLOR_RED
+}
+
 LandingPageBlob :: proc(index: u32, fontSize: u16, fontId: u16, color: clay.Color, text: string, image: ^raylib.Texture2D) {
     if clay.UI().configure({
         id = clay.ID("HeroBlob", index),
         layout = { sizing = { width = clay.SizingGrow({ max = 480 }) }, padding = clay.PaddingAll(16), childGap = 16, childAlignment = clay.ChildAlignment{ y = .CENTER } },
-        border = clay.BorderOutside({ 2, color }),
-        shared = { cornerRadius = clay.CornerRadiusAll(10) }
+        border = border2pxRed,
+        cornerRadius = clay.CornerRadiusAll(10)
     }) {
         if clay.UI().configure({
             id = clay.ID("CheckImage", index),
@@ -81,7 +86,7 @@ LandingPageDesktop :: proc() {
         if clay.UI().configure({
             id = clay.ID("LandingPage1"),
             layout = { sizing = { clay.SizingGrow({ }), clay.SizingGrow({ }) }, childAlignment = { y = .CENTER }, padding = clay.PaddingAll(32), childGap = 32 },
-            border = { left = { 2, COLOR_RED }, right = { 2, COLOR_RED } },
+            border = { COLOR_RED, { left = 2, right = 2 } },
         }) {
             if clay.UI().configure({ id = clay.ID("LeftText"), layout = { sizing = { width = clay.SizingPercent(0.55) }, layoutDirection = .TOP_TO_BOTTOM, childGap = 8 } }) {
                 clay.Text(
@@ -149,7 +154,7 @@ FeatureBlocks :: proc(widthSizing: clay.SizingAxis, outerPadding: u16) {
         id = clay.ID("HFileBoxOuter"),
         layout = { layoutDirection = .TOP_TO_BOTTOM, sizing = { width = widthSizing }, childAlignment = { y = .CENTER }, padding = { outerPadding, outerPadding, 32, 32 }, childGap = 8 },
     }) {
-        if clay.UI().configure({ id = clay.ID("HFileIncludeOuter"), layout = { padding = { 8, 8, 4, 4 } }, rectangle = { color = COLOR_RED }, shared = { cornerRadius = clay.CornerRadiusAll(8) } }) {
+        if clay.UI().configure({ id = clay.ID("HFileIncludeOuter"), layout = { padding = { 8, 8, 4, 4 } }, backgroundColor = COLOR_RED, cornerRadius = clay.CornerRadiusAll(8) }) {
             clay.Text("#include clay.h", clay.TextConfig({fontSize = 24, fontId = FONT_ID_BODY_24, textColor = COLOR_LIGHT}))
         }
         clay.Text("~2000 lines of C99.", textConfig)
@@ -170,7 +175,7 @@ FeatureBlocksDesktop :: proc() {
         if clay.UI().configure({
             id = clay.ID("FeatureBlocksInner"),
             layout = { sizing = { width = clay.SizingGrow({ }) }, childAlignment = { y = .CENTER } },
-            border = { betweenChildren = { width = 2, color = COLOR_RED } },
+            border = border2pxRed,
         }) {
             FeatureBlocks(clay.SizingPercent(0.5), 50)
         }
@@ -181,7 +186,7 @@ FeatureBlocksMobile :: proc() {
     if clay.UI().configure({
         id = clay.ID("FeatureBlocksInner"),
         layout = { layoutDirection = .TOP_TO_BOTTOM, sizing = { width = clay.SizingGrow({ }) } },
-        border = { betweenChildren = { width = 2, color = COLOR_RED } },
+        border = border2pxRed,
     }) {
         FeatureBlocks(clay.SizingGrow({}), 16)
     }
@@ -221,7 +226,7 @@ DeclarativeSyntaxPageDesktop :: proc() {
         if clay.UI().configure({
             id = clay.ID("SyntaxPage"),
             layout = { sizing = { clay.SizingGrow({ }), clay.SizingGrow({ }) }, childAlignment = { y = .CENTER }, padding = clay.PaddingAll(32), childGap = 32 },
-            border = { left = { 2, COLOR_RED }, right = { 2, COLOR_RED } },
+            border = border2pxRed,
         }) {
             DeclarativeSyntaxPage({fontSize = 52, fontId = FONT_ID_TITLE_52, textColor = COLOR_RED}, clay.SizingPercent(0.5))
         }
@@ -270,19 +275,19 @@ HighPerformancePage :: proc(lerpValue: f32, titleTextConfig: clay.TextElementCon
         if clay.UI().configure({
             id = clay.ID("PerformanceRightBorder"),
             layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(400) } },
-            border = clay.BorderAll({ width = 2, color = COLOR_LIGHT }),
+            border = {  COLOR_LIGHT, {2, 2, 2, 2, 2} },
         }) {
             if clay.UI().configure({
                 id = clay.ID("AnimationDemoContainerLeft"),
                 layout = { sizing = { clay.SizingPercent(0.35 + 0.3 * lerpValue), clay.SizingGrow({ }) }, childAlignment = { y = .CENTER }, padding = clay.PaddingAll(16) },
-                rectangle = { color = ColorLerp(COLOR_RED, COLOR_ORANGE, lerpValue) },
+                backgroundColor = ColorLerp(COLOR_RED, COLOR_ORANGE, lerpValue),
             }) {
                 clay.Text(LOREM_IPSUM_TEXT, clay.TextConfig({fontSize = 16, fontId = FONT_ID_BODY_16, textColor = COLOR_LIGHT}))
             }
             if clay.UI().configure({
                 id = clay.ID("AnimationDemoContainerRight"),
                 layout = { sizing = { clay.SizingGrow({ }), clay.SizingGrow({ }) }, childAlignment = { y = .CENTER }, padding = clay.PaddingAll(16) },
-                rectangle = { color = ColorLerp(COLOR_ORANGE, COLOR_RED, lerpValue) },
+                backgroundColor = ColorLerp(COLOR_ORANGE, COLOR_RED, lerpValue),
             }) {
                 clay.Text(LOREM_IPSUM_TEXT, clay.TextConfig({fontSize = 16, fontId = FONT_ID_BODY_16, textColor = COLOR_LIGHT}))
             }
@@ -294,7 +299,7 @@ HighPerformancePageDesktop :: proc(lerpValue: f32) {
     if clay.UI().configure({
         id = clay.ID("PerformanceDesktop"),
         layout = { sizing = { clay.SizingGrow({ }), clay.SizingFit({ min = cast(f32)windowHeight - 50 }) }, childAlignment = { y = .CENTER }, padding = { 82, 82, 32, 32 }, childGap = 64 },
-        rectangle = { color = COLOR_RED },
+        backgroundColor = COLOR_RED,
     }) {
         HighPerformancePage(lerpValue, {fontSize = 52, fontId = FONT_ID_TITLE_52, textColor = COLOR_LIGHT}, clay.SizingPercent(0.5))
     }
@@ -310,7 +315,7 @@ HighPerformancePageMobile :: proc(lerpValue: f32) {
             padding = { 16, 16, 32, 32 },
             childGap = 32,
         },
-        rectangle = { color = COLOR_RED },
+        backgroundColor = COLOR_RED,
     }) {
         HighPerformancePage(lerpValue, {fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_LIGHT}, clay.SizingGrow({}))
     }
@@ -319,20 +324,20 @@ HighPerformancePageMobile :: proc(lerpValue: f32) {
 RendererButtonActive :: proc(index: i32, text: string) {
     if clay.UI().configure({
         layout = { sizing = { width = clay.SizingFixed(300) }, padding = clay.PaddingAll(16) },
-        rectangle = { color = COLOR_RED },
-        shared = { cornerRadius = clay.CornerRadiusAll(10) }
+        backgroundColor = COLOR_RED,
+        cornerRadius = clay.CornerRadiusAll(10)
     }) {
         clay.Text(text, clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_28, textColor = COLOR_LIGHT}))
     }
 }
 
 RendererButtonInactive :: proc(index: u32, text: string) {
-    if clay.UI().configure({ border = clay.BorderOutside({ 2, COLOR_RED }) }) {
+    if clay.UI().configure({ border = border2pxRed }) {
         if clay.UI().configure({
             id = clay.ID("RendererButtonInactiveInner", index),
             layout = { sizing = { width = clay.SizingFixed(300) }, padding = clay.PaddingAll(16) },
-            rectangle = { color = COLOR_LIGHT },
-            shared = { cornerRadius = clay.CornerRadiusAll(10) }
+            backgroundColor = COLOR_LIGHT,
+            cornerRadius = clay.CornerRadiusAll(10)
         }) {
             clay.Text(text, clay.TextConfig({fontSize = 28, fontId = FONT_ID_BODY_28, textColor = COLOR_RED}))
         }
@@ -374,7 +379,7 @@ RendererPageDesktop :: proc() {
         if clay.UI().configure({
             id = clay.ID("RendererPage"),
             layout = { sizing = { clay.SizingGrow({ }), clay.SizingGrow({ }) }, childAlignment = { y = .CENTER }, padding = clay.PaddingAll(32), childGap = 32 },
-            border = { left = { 2, COLOR_RED }, right = { 2, COLOR_RED } },
+            border = { COLOR_RED, { left = 2, right = 2 } },
         }) {
             RendererPage({fontSize = 52, fontId = FONT_ID_TITLE_52, textColor = COLOR_RED}, clay.SizingPercent(0.5))
         }
@@ -391,7 +396,7 @@ RendererPageMobile :: proc() {
             padding = { 16, 16, 32, 32 },
             childGap = 32,
         },
-        rectangle = { color = COLOR_LIGHT },
+        backgroundColor = COLOR_LIGHT,
     }) {
         RendererPage({fontSize = 48, fontId = FONT_ID_TITLE_48, textColor = COLOR_RED}, clay.SizingGrow({}))
     }
@@ -412,7 +417,7 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
     if clay.UI().configure({
         id = clay.ID("OuterContainer"),
         layout = { layoutDirection = .TOP_TO_BOTTOM, sizing = { clay.SizingGrow({ }), clay.SizingGrow({ }) } },
-        rectangle = { color = COLOR_LIGHT },
+        backgroundColor = COLOR_LIGHT,
     }) {
         if clay.UI().configure({
             id = clay.ID("Header"),
@@ -422,34 +427,34 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
             if clay.UI().configure({ layout = { sizing = { width = clay.SizingGrow({ }) } } }) {}
 
             if (!mobileScreen) {
-                if clay.UI().configure({ id = clay.ID("LinkExamplesOuter"), rectangle = {color = {0, 0, 0, 0}} }) {
+                if clay.UI().configure({ id = clay.ID("LinkExamplesOuter"), backgroundColor = {0, 0, 0, 0} }) {
                     clay.Text("Examples", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
                 }
-                if clay.UI().configure({ id = clay.ID("LinkDocsOuter"), rectangle = {color = {0, 0, 0, 0}} }) {
+                if clay.UI().configure({ id = clay.ID("LinkDocsOuter"), backgroundColor = {0, 0, 0, 0} }) {
                     clay.Text("Docs", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
                 }
             }
             if clay.UI().configure({
                 id = clay.ID("LinkGithubOuter"),
                 layout = { padding = { 16, 16, 6, 6 } },
-                border = clay.BorderOutside({ 2, COLOR_RED }),
-                rectangle = { color = clay.PointerOver(clay.GetElementId(clay.MakeString("LinkGithubOuter"))) ? COLOR_LIGHT_HOVER : COLOR_LIGHT },
-                shared = { cornerRadius = clay.CornerRadiusAll(10) }
+                border = border2pxRed,
+                backgroundColor = clay.PointerOver(clay.GetElementId(clay.MakeString("LinkGithubOuter"))) ? COLOR_LIGHT_HOVER : COLOR_LIGHT,
+                cornerRadius = clay.CornerRadiusAll(10)
             }) {
                 clay.Text("Github", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
             }
         }
-        if clay.UI().configure({ id = clay.ID("TopBorder1"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, rectangle = { color = COLOR_TOP_BORDER_5 } }) {}
-        if clay.UI().configure({ id = clay.ID("TopBorder2"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, rectangle = { color = COLOR_TOP_BORDER_4 } }) {}
-        if clay.UI().configure({ id = clay.ID("TopBorder3"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, rectangle = { color = COLOR_TOP_BORDER_3 } }) {}
-        if clay.UI().configure({ id = clay.ID("TopBorder4"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, rectangle = { color = COLOR_TOP_BORDER_2 } }) {}
-        if clay.UI().configure({ id = clay.ID("TopBorder5"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, rectangle = { color = COLOR_TOP_BORDER_1 } }) {}
+        if clay.UI().configure({ id = clay.ID("TopBorder1"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_5 } ) {}
+        if clay.UI().configure({ id = clay.ID("TopBorder2"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_4 } ) {}
+        if clay.UI().configure({ id = clay.ID("TopBorder3"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_3 } ) {}
+        if clay.UI().configure({ id = clay.ID("TopBorder4"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_2 } ) {}
+        if clay.UI().configure({ id = clay.ID("TopBorder5"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_1 } ) {}
         if clay.UI().configure({
             id = clay.ID("ScrollContainerBackgroundRectangle"),
             scroll = { vertical = true },
             layout = { sizing = { clay.SizingGrow({ }), clay.SizingGrow({ }) }, layoutDirection = clay.LayoutDirection.TOP_TO_BOTTOM },
-            rectangle = { color = COLOR_LIGHT },
-            border = { betweenChildren = { 2, COLOR_RED } }
+            backgroundColor = COLOR_LIGHT,
+            border = { COLOR_RED, { betweenChildren = 2} },
         }) {
             if (!mobileScreen) {
                 LandingPageDesktop()
