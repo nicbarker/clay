@@ -313,9 +313,6 @@ CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
 typedef struct {
     void* imageData;
     Clay_Dimensions sourceDimensions;
-    #ifdef CLAY_EXTEND_CONFIG_IMAGE
-    CLAY_EXTEND_CONFIG_IMAGE
-    #endif
 } Clay_ImageElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_ImageElementConfig);
@@ -357,11 +354,7 @@ CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
 
 // Custom
 typedef struct {
-    #ifndef CLAY_EXTEND_CONFIG_CUSTOM
     void* customData;
-    #else
-    CLAY_EXTEND_CONFIG_CUSTOM
-    #endif
 } Clay_CustomElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_CustomElementConfig);
@@ -394,9 +387,6 @@ typedef struct {
 typedef struct {
     Clay_Color color;
     Clay_BorderWidth width;
-    #ifdef CLAY_EXTEND_CONFIG_BORDER
-    CLAY_EXTEND_CONFIG_BORDER
-    #endif
 } Clay_BorderElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);

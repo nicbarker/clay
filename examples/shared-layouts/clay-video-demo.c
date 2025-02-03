@@ -11,7 +11,7 @@ void RenderHeaderButton(Clay_String text) {
         .cornerRadius = CLAY_CORNER_RADIUS(5)
     }) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-            .font = FONT_ID_BODY_16,
+            .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
             .textColor = { 255, 255, 255, 255 }
         }));
