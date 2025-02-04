@@ -62,7 +62,8 @@ jobs:
 
     - name: Install Dependencies
       if: runner.os == 'Linux'
-      run: | 
+      run: |
+        DEBIAN_FRONTEND=noninteractive sudo apt-get update -y
         DEBIAN_FRONTEND=noninteractive sudo apt-get install -y git
         DEBIAN_FRONTEND=noninteractive sudo apt-get install -y libwayland-dev
         DEBIAN_FRONTEND=noninteractive sudo apt-get install -y pkg-config
