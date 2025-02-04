@@ -109,6 +109,8 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
                 };
 
                 SDL_RenderCopy(renderer, texture, NULL, &destination);
+
+                SDL_DestroyTexture(texture);
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {

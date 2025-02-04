@@ -302,9 +302,6 @@ typedef struct {
     uint16_t lineHeight;
     Clay_TextElementConfigWrapMode wrapMode;
     bool hashStringContents;
-    #ifdef CLAY_EXTEND_CONFIG_TEXT
-    CLAY_EXTEND_CONFIG_TEXT
-    #endif
 } Clay_TextElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
