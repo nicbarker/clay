@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     SDL_GetWindowSize(window, &windowWidth, &windowHeight);
     Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)windowWidth, (float)windowHeight }, (Clay_ErrorHandler) { HandleClayErrors });
 
-    Clay_SetMeasureTextFunction(SDL2_MeasureText, (uintptr_t)&fonts);
+    Clay_SetMeasureTextFunction(SDL2_MeasureText, &fonts);
 
     Uint64 NOW = SDL_GetPerformanceCounter();
     Uint64 LAST = 0;

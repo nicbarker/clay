@@ -52,7 +52,7 @@ int main(void) {
        .height = GetScreenHeight() / 2
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
     ClayVideoDemo_Data dataTop = ClayVideoDemo_Initialize();
-    Clay_SetMeasureTextFunction(Raylib_MeasureText, (uintptr_t)fonts);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
     Clay_Arena clayMemoryBottom = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Context *clayContextBottom = Clay_Initialize(clayMemoryBottom, (Clay_Dimensions) {
@@ -60,7 +60,7 @@ int main(void) {
             .height = GetScreenHeight() / 2
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
     ClayVideoDemo_Data dataBottom = ClayVideoDemo_Initialize();
-    Clay_SetMeasureTextFunction(Raylib_MeasureText, (uintptr_t)fonts);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
     while (!WindowShouldClose()) {
         dataBottom.yOffset = GetScreenHeight() / 2;

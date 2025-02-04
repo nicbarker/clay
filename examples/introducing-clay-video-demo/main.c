@@ -20,7 +20,7 @@ int main(void) {
     Font fonts[1];
     fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
     SetTextureFilter(fonts[FONT_ID_BODY_16].texture, TEXTURE_FILTER_BILINEAR);
-    Clay_SetMeasureTextFunction(Raylib_MeasureText, (uintptr_t)fonts);
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
     ClayVideoDemo_Data data = ClayVideoDemo_Initialize();
 

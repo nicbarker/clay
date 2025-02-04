@@ -13,7 +13,7 @@ typedef struct
 } SDL2_Font;
 
 
-static Clay_Dimensions SDL2_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData)
+static Clay_Dimensions SDL2_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData)
 {
     SDL2_Font *fonts = (SDL2_Font*)userData;
 

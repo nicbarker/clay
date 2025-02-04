@@ -23,7 +23,7 @@ typedef struct app_state {
     ClayVideoDemo_Data demoData;
 } AppState;
 
-static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData)
+static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData)
 {
     TTF_Font *font = gFonts[config->fontId];
     int width, height;

@@ -376,7 +376,7 @@ CLAY__WRAPPER_STRUCT(Clay_ScrollElementConfig);
 typedef struct {
     Clay_Color backgroundColor;
     Clay_CornerRadius cornerRadius;
-    uintptr_t userData;
+    void* userData;
 } Clay_SharedElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_SharedElementConfig);
@@ -472,7 +472,7 @@ typedef struct {
     Clay_BoundingBox boundingBox;
     Clay_RenderData renderData;
     // A pointer passed through from the element declaration
-    uintptr_t userData;
+    void *userData;
     uint32_t id;
     int16_t zIndex;
     Clay_RenderCommandType commandType;
@@ -507,7 +507,7 @@ typedef struct {
     Clay_ScrollElementConfig scroll;
     Clay_BorderElementConfig border;
     // A pointer that will be transparently passed through to resulting render commands.
-    uintptr_t userData;
+    void *userData;
 } Clay_ElementDeclaration;
 
 CLAY__WRAPPER_STRUCT(Clay_ElementDeclaration);
@@ -525,12 +525,12 @@ typedef CLAY_PACKED_ENUM {
 typedef struct {
     Clay_ErrorType errorType;
     Clay_String errorText;
-    uintptr_t userData;
+    void *userData;
 } Clay_ErrorData;
 
 typedef struct {
     void (*errorHandlerFunction)(Clay_ErrorData errorText);
-    uintptr_t userData;
+    void *userData;
 } Clay_ErrorHandler;
 
 // Function Forward Declarations ---------------------------------
@@ -553,8 +553,8 @@ void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_Pointer
 bool Clay_PointerOver(Clay_ElementId elementId);
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
 Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config);
-void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData);
-void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, uintptr_t userData), uintptr_t userData);
+void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData), void *userData);
+void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, void *userData), void *userData);
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 void Clay_SetDebugModeEnabled(bool enabled);
 bool Clay_IsDebugModeEnabled(void);
@@ -863,8 +863,8 @@ struct Clay_Context {
     uint32_t debugSelectedElementId;
     uint32_t generation;
     uintptr_t arenaResetOffset;
-    uintptr_t measureTextUserData;
-    uintptr_t queryScrollOffsetUserData;
+    void *measureTextUserData;
+    void *queryScrollOffsetUserData;
     Clay_Arena internalArena;
     // Layout Elements / Render Commands
     Clay_LayoutElementArray layoutElements;
@@ -928,11 +928,11 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__charArray *buffer, Clay_String s
 }
 
 #ifdef CLAY_WASM
-    __attribute__((import_module("clay"), import_name("measureTextFunction"))) Clay_Dimensions Clay__MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData);
-    __attribute__((import_module("clay"), import_name("queryScrollOffsetFunction"))) Clay_Vector2 Clay__QueryScrollOffset(uint32_t elementId, uintptr_t userData);
+    __attribute__((import_module("clay"), import_name("measureTextFunction"))) Clay_Dimensions Clay__MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData);
+    __attribute__((import_module("clay"), import_name("queryScrollOffsetFunction"))) Clay_Vector2 Clay__QueryScrollOffset(uint32_t elementId, void *userData);
 #else
-    Clay_Dimensions (*Clay__MeasureText)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData);
-    Clay_Vector2 (*Clay__QueryScrollOffset)(uint32_t elementId, uintptr_t userData);
+    Clay_Dimensions (*Clay__MeasureText)(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData);
+    Clay_Vector2 (*Clay__QueryScrollOffset)(uint32_t elementId, void *userData);
 #endif
 
 Clay_LayoutElement* Clay__GetOpenLayoutElement(void) {
@@ -3204,12 +3204,12 @@ Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset
 }
 
 #ifndef CLAY_WASM
-void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData) {
+void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData), void *userData) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__MeasureText = measureTextFunction;
     context->measureTextUserData = userData;
 }
-void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, uintptr_t userData), uintptr_t userData) {
+void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, void *userData), void *userData) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__QueryScrollOffset = queryScrollOffsetFunction;
     context->queryScrollOffsetUserData = userData;
