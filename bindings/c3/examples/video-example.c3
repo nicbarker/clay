@@ -68,18 +68,6 @@ const Document[*] ALL_DOCUMENTS = {
 
 uint selectedDocumentIndex = 0;
 
-RectangleElementConfig contentBackgroundConfig = {
-    { 90, 90, 90, 255 },
-    clay::@cornerRadiusUniCT(8)
-};
-
-Sizing layoutExpand = Sizing{ clay::sizingGrow(), clay::sizingGrow() };
-
-LayoutConfig sidebarButtonLayout = LayoutConfig{
-    .sizing = { .width = clay::sizingGrow() },
-    .padding = clay::paddingCT(16, 16, 16, 16)
-};
-
 bool isDebugModeEnabled = false;
 
 fn void main() @public
@@ -103,6 +91,21 @@ fn void main() @public
         clay::renderer::raylibFonts[FONT_ID_BODY_16].font.texture, 
         TextureFilter.BILINEAR
     );
+
+    // ==============================================
+    // ===== predeclarations of re-used configs =====
+    // ==============================================
+    RectangleElementConfig contentBackgroundConfig = {
+        { 90, 90, 90, 255 },
+        clay::@cornerRadiusUniCT(8)
+    };
+
+    Sizing layoutExpand = Sizing{ clay::sizingGrow(), clay::sizingGrow() };
+
+    LayoutConfig sidebarButtonLayout = LayoutConfig{
+        .sizing = { .width = clay::sizingGrow() },
+        .padding = clay::paddingCT(16, 16, 16, 16)
+    };
 
     while (!rl::windowShouldClose()) {
         clay::setLayoutDimensions({rl::getScreenWidth(), rl::getScreenHeight()});
