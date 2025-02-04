@@ -143,12 +143,16 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
                 Texture2D imageTexture = *(Texture2D *)renderCommand->renderData.image.imageData;
+                Clay_Color tintColor = renderCommand->renderData.image.backgroundColor;
+                if (tintColor.r == 0 && tintColor.g == 0 || tintColor.b == 0 || tintColor.a == 0) {
+                    tintColor = (Clay_Color) { 255, 255, 255, 255 };
+                }
                 DrawTextureEx(
                     imageTexture,
                     (Vector2){boundingBox.x, boundingBox.y},
                     0,
                     boundingBox.width / (float)imageTexture.width,
-                    CLAY_COLOR_TO_RAYLIB_COLOR(renderCommand->renderData.image.backgroundColor));
+                    CLAY_COLOR_TO_RAYLIB_COLOR(tintColor));
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
