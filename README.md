@@ -1748,7 +1748,6 @@ Represents the total capacity of the allocated memory in `.internalArray`.
 
 Represents the total number of `Clay_RenderCommand` elements stored consecutively at the address `.internalArray`.
 
-
 ---
 
 **`.internalArray`** - `Clay_RenderCommand`
@@ -1760,12 +1759,12 @@ An array of [Clay_RenderCommand](#clay_rendercommand)s representing the calculat
 ### Clay_RenderCommand
 
 ```C
-typedef struct
-{
+typedef struct {
     Clay_BoundingBox boundingBox;
-    Clay_ElementConfigUnion config;
-    Clay_String text;
+    Clay_RenderData renderData;
+    uintptr_t userData;
     uint32_t id;
+    int16_t zIndex;
     Clay_RenderCommandType commandType;
 } Clay_RenderCommand;
 ```
@@ -1799,31 +1798,93 @@ A rectangle representing the bounding box of this render command, with `.x` and 
 
 ---
 
-**`.config`** - `Clay_ElementConfigUnion`
-
-A C union containing various pointers to config data, with the type dependent on `.commandType`. Possible values include:
-
-- `config.rectangleElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE`. See [CLAY_RECTANGLE](#clay_rectangle) for details.
-- `config.textElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. See [CLAY_TEXT](#clay_text) for details.
-- `config.imageElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE`. See [CLAY_IMAGE](#clay_image) for details.
-- `config.borderElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_BORDER`. See [CLAY_BORDER](#clay_border) for details.
-- `config.customElementConfig` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM`. See [CLAY_CUSTOM](#clay_custom_element) for details.
-- `config.floatingElementConfig` - Not used and will always be NULL.
-- `config.scrollElementConfig` - Not used and will always be NULL.
-
----
-
-**`.text`** - `Clay_String`
-
-Only used if `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. A `Clay_String` containing a string slice (char *chars, int length) representing text to be rendered. **Note: This string is not guaranteed to be null terminated.** Clay saves significant performance overhead by using slices when wrapping text instead of having to clone new null terminated strings. If your renderer does not support **ptr, length** style strings (e.g. Raylib), you will need to clone this to a new C string before rendering.
-
----
-
 **`.id`** - `uint32_t`
 
 The id that was originally used with the element macro that created this render command. See [CLAY_ID](#clay_id) for details.
 
 ---
+
+**`.zIndex`** - `int16_t`
+
+The z index of the element, based on what was passed to the root floating configuration that this element is a child of.
+Higher z indexes should be rendered _on top_ of lower z indexes.
+
+---
+
+**`.renderData`** - `Clay_RenderData`
+
+```C
+typedef union {
+    Clay_RectangleRenderData rectangle;
+    Clay_TextRenderData text;
+    Clay_ImageRenderData image;
+    Clay_CustomRenderData custom;
+    Clay_BorderRenderData border;
+} Clay_RenderData;
+```
+
+A C union containing various structs, with the type dependent on `.commandType`. Possible values include:
+
+- `config.rectangle` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE`.
+- `config.text` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. See [Clay_Text](#clay_text) for details.
+- `config.image` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE`. See [Clay_Image](#clay_imageelementconfig) for details.
+- `config.border` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_BORDER`. See [Clay_Border](#clay_borderelementconfig) for details.
+- `config.custom` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM`. See [Clay_Custom](#clay_customelementconfig) for details.
+
+**Union Structs**
+
+```C
+typedef struct {
+    Clay_StringSlice stringContents;
+    Clay_Color textColor;
+    uint16_t fontId;
+    uint16_t fontSize;
+    uint16_t letterSpacing;
+    uint16_t lineHeight;
+} Clay_TextRenderData;
+```
+
+```C
+typedef struct {
+    Clay_Color backgroundColor;
+    Clay_CornerRadius cornerRadius;
+} Clay_RectangleRenderData;
+```
+
+```C
+typedef struct {
+    Clay_Color backgroundColor;
+    Clay_CornerRadius cornerRadius;
+    Clay_Dimensions sourceDimensions;
+    void* imageData;
+} Clay_ImageRenderData;
+```
+
+```C
+typedef struct {
+    Clay_Color backgroundColor;
+    Clay_CornerRadius cornerRadius;
+    void* customData;
+} Clay_CustomRenderData;
+```
+
+```C
+typedef struct {
+    Clay_Color color;
+    Clay_CornerRadius cornerRadius;
+    Clay_BorderWidth width;
+} Clay_BorderRenderData;
+```
+
+```C
+typedef union {
+    Clay_RectangleRenderData rectangle;
+    Clay_TextRenderData text;
+    Clay_ImageRenderData image;
+    Clay_CustomRenderData custom;
+    Clay_BorderRenderData border;
+} Clay_RenderData;
+```
 
 ### Clay_ScrollContainerData
 
