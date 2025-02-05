@@ -2226,6 +2226,7 @@ void Clay__CalculateFinalLayout(void) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, sortedConfigIndexes[elementConfigIndex]);
                     Clay_RenderCommand renderCommand = {
                         .boundingBox = currentElementBoundingBox,
+                        .userData = sharedConfig->userData,
                         .id = currentElement->id,
                     };
 
@@ -2406,6 +2407,7 @@ void Clay__CalculateFinalLayout(void) {
                                     .cornerRadius = sharedConfig->cornerRadius,
                                     .width = borderConfig->width
                                 }},
+                                .userData = sharedConfig->userData,
                                 .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length).id,
                                 .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
                         };
@@ -2422,6 +2424,7 @@ void Clay__CalculateFinalLayout(void) {
                                             .renderData = { .rectangle = {
                                                 .backgroundColor = borderConfig->color,
                                             } },
+                                            .userData = sharedConfig->userData,
                                             .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length + 1 + i).id,
                                             .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
@@ -2433,12 +2436,13 @@ void Clay__CalculateFinalLayout(void) {
                                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                                     if (i > 0) {
                                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                                .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y, currentElement->dimensions.width, (float)borderConfig->width.betweenChildren },
-                                                .renderData = { .rectangle = {
-                                                        .backgroundColor = borderConfig->color,
-                                                } },
-                                                .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length + 1 + i).id,
-                                                .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                                            .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y, currentElement->dimensions.width, (float)borderConfig->width.betweenChildren },
+                                            .renderData = { .rectangle = {
+                                                    .backgroundColor = borderConfig->color,
+                                            } },
+                                            .userData = sharedConfig->userData,
+                                            .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length + 1 + i).id,
+                                            .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
                                     }
                                     borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap);
@@ -2451,7 +2455,7 @@ void Clay__CalculateFinalLayout(void) {
                 if (closeScrollElement) {
                     Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                         .id = Clay__HashNumber(currentElement->id, rootElement->childrenOrTextContent.children.length + 11).id,
-                       .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
+                        .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
                     });
                 }
 
