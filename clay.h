@@ -801,6 +801,7 @@ typedef struct { // todo get this struct into a single cache line
     intptr_t hoverFunctionUserData;
     int32_t nextIndex;
     uint32_t generation;
+    uint32_t idAlias;
     Clay__DebugElementData *debugData;
 } Clay_LayoutElementHashMapItem;
 
@@ -1210,12 +1211,12 @@ bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_BoundingBox rect) {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 }
 
-Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Clay_LayoutElement* layoutElement) {
+Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Clay_LayoutElement* layoutElement, uint32_t idAlias) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->layoutElementsHashMapInternal.length == context->layoutElementsHashMapInternal.capacity - 1) {
         return NULL;
     }
-    Clay_LayoutElementHashMapItem item = { .elementId = elementId, .layoutElement = layoutElement, .nextIndex = -1, .generation = context->generation + 1 };
+    Clay_LayoutElementHashMapItem item = { .elementId = elementId, .layoutElement = layoutElement, .nextIndex = -1, .generation = context->generation + 1, .idAlias = idAlias };
     uint32_t hashBucket = elementId.id % context->layoutElementsHashMap.capacity;
     int32_t hashItemPrevious = -1;
     int32_t hashItemIndex = context->layoutElementsHashMap.internalArray[hashBucket];
@@ -1271,7 +1272,7 @@ void Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) 
     Clay_LayoutElement *parentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 2));
     Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
     openLayoutElement->id = elementId.id;
-    Clay__AddHashMapItem(elementId, openLayoutElement);
+    Clay__AddHashMapItem(elementId, openLayoutElement, 0);
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
 }
 
@@ -1483,7 +1484,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     Clay__MeasureTextCacheItem *textMeasured = Clay__MeasureTextCached(&text, textConfig);
     Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
     textElement->id = elementId.id;
-    Clay__AddHashMapItem(elementId, textElement);
+    Clay__AddHashMapItem(elementId, textElement, 0);
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
     Clay_Dimensions textDimensions = { .width = textMeasured->unwrappedDimensions.width, .height = textConfig->lineHeight > 0 ? (float)textConfig->lineHeight : textMeasured->unwrappedDimensions.height };
     textElement->dimensions = textDimensions;
@@ -2184,6 +2185,12 @@ void Clay__CalculateFinalLayout(void) {
                 Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(currentElement->id);
                 if (hashMapItem) {
                     hashMapItem->boundingBox = currentElementBoundingBox;
+                    if (hashMapItem->idAlias) {
+                        Clay_LayoutElementHashMapItem *hashMapItemAlias = Clay__GetHashMapItem(hashMapItem->idAlias);
+                        if (hashMapItemAlias) {
+                            hashMapItemAlias->boundingBox = currentElementBoundingBox;
+                        }
+                    }
                 }
 
                 int32_t sortedConfigIndexes[20];
@@ -2512,8 +2519,9 @@ Clay_ElementId Clay__AttachId(Clay_ElementId elementId) {
         return Clay_ElementId_DEFAULT;
     }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
+    uint32_t idAlias = openLayoutElement->id;
     openLayoutElement->id = elementId.id;
-    Clay__AddHashMapItem(elementId, openLayoutElement);
+    Clay__AddHashMapItem(elementId, openLayoutElement, idAlias);
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
     return elementId;
 }
@@ -3254,6 +3262,10 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                     }
                     Clay__ElementIdArray_Add(&context->pointerOverIds, mapItem->elementId);
                     found = true;
+
+                    if (mapItem->idAlias != 0) {
+                        Clay__ElementIdArray_Add(&context->pointerOverIds, CLAY__INIT(Clay_ElementId) { .id = mapItem->idAlias });
+                    }
                 }
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
                     dfsBuffer.length--;
