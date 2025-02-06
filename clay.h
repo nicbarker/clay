@@ -15,9 +15,9 @@
 #include <stddef.h>
 
 // SIMD includes on supported platforms
-#if defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
+#if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
 #include <emmintrin.h>
-#elif __aarch64__
+#elif !defined(CLAY_DISABLE_SIMD) && defined(__aarch64__)
 #include <arm_neon.h>
 #endif
 
@@ -1384,7 +1384,7 @@ void Clay__CloseElement(void) {
 }
 
 bool Clay__MemCmp(const char *s1, const char *s2, int32_t length);
-#if defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
+#if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
     bool Clay__MemCmp(const char *s1, const char *s2, int32_t length) {
         while (length >= 16) {
             __m128i v1 = _mm_loadu_si128((const __m128i *)s1);
@@ -1410,7 +1410,7 @@ bool Clay__MemCmp(const char *s1, const char *s2, int32_t length);
 
         return true;
     }
-#elif defined(__aarch64__)
+#elif !defined(CLAY_DISABLE_SIMD) && defined(__aarch64__)
     bool Clay__MemCmp(const char *s1, const char *s2, int32_t length) {
         while (length >= 16) {
             uint8x16_t v1 = vld1q_u8((const uint8_t *)s1);
