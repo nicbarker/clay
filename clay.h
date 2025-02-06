@@ -519,6 +519,7 @@ typedef CLAY_PACKED_ENUM {
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED,
     CLAY_ERROR_TYPE_DUPLICATE_ID,
     CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND,
+    CLAY_ERROR_TYPE_PERCENTAGE_OVER_1,
     CLAY_ERROR_TYPE_INTERNAL_ERROR,
 } Clay_ErrorType;
 
@@ -1502,6 +1503,12 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     openLayoutElement->layoutConfig = Clay__StoreLayoutConfig(declaration.layout);
+    if ((declaration.layout.sizing.width.type == CLAY__SIZING_TYPE_PERCENT && declaration.layout.sizing.width.size.percent > 1) || (declaration.layout.sizing.height.type == CLAY__SIZING_TYPE_PERCENT && declaration.layout.sizing.height.size.percent > 1)) {
+        context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+                .errorType = CLAY_ERROR_TYPE_PERCENTAGE_OVER_1,
+                .errorText = CLAY_STRING("An element was configured with CLAY_SIZING_PERCENT, but the provided percentage value was over 1.0. Clay expects a value between 0 and 1, i.e. 20% is 0.2."),
+                .userData = context->errorHandler.userData });
+    }
     if (declaration.id.id != 0) {
         Clay__AttachId(declaration.id);
     } else if (openLayoutElement->id == 0) {

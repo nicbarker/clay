@@ -75,19 +75,6 @@ when ODIN_OS == .Windows {
     EnumBackingType :: u8
 }
 
-ElementConfigType :: enum EnumBackingType {
-    Rectangle = 1,
-    Border    = 2,
-    Floating  = 4,
-    Scroll    = 8,
-    Image     = 16,
-    Text      = 32,
-    Custom    = 64,
-    // Odin specific enum types
-    Id        = 65,
-    Layout    = 66,
-}
-
 RenderCommandType :: enum EnumBackingType {
     None,
     Rectangle,
@@ -247,10 +234,10 @@ ScrollContainerData :: struct {
 }
 
 SizingType :: enum EnumBackingType {
-    FIT,
-    GROW,
-    PERCENT,
-    FIXED,
+    Fit,
+    Grow,
+    Percent,
+    Fixed,
 }
 
 SizingConstraintsMinMax :: struct {
@@ -282,20 +269,20 @@ Padding :: struct {
 }
 
 LayoutDirection :: enum EnumBackingType {
-    LEFT_TO_RIGHT,
-    TOP_TO_BOTTOM,
+    LeftToRight,
+    TopToBottom,
 }
 
 LayoutAlignmentX :: enum EnumBackingType {
-    LEFT,
-    RIGHT,
-    CENTER,
+    Left,
+    Right,
+    Center,
 }
 
 LayoutAlignmentY :: enum EnumBackingType {
-    TOP,
-    BOTTOM,
-    CENTER,
+    Top,
+    Bottom,
+    Center,
 }
 
 ChildAlignment :: struct {
@@ -331,13 +318,14 @@ ElementDeclaration :: struct {
 }
 
 ErrorType :: enum {
-    TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
-    ARENA_CAPACITY_EXCEEDED,
-    ELEMENTS_CAPACITY_EXCEEDED,
-    TEXT_MEASUREMENT_CAPACITY_EXCEEDED,
-    DUPLICATE_ID,
-    FLOATING_CONTAINER_PARENT_NOT_FOUND,
-    INTERNAL_ERROR,
+    TextMeasurementFunctionNotProvided,
+    ArenaCapacityExceeded,
+    ElementsCapacityExceeded,
+    TextMeasurementCapacityExceeded,
+    DuplicateId,
+    FloatingContainerParentNotFound,
+    PercentageOver1,
+    InternalError,
 }
 
 ErrorData :: struct {
@@ -412,19 +400,19 @@ CornerRadiusAll :: proc(radius: f32) -> CornerRadius {
 }
 
 SizingFit :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
-    return SizingAxis{type = SizingType.FIT, constraints = {sizeMinMax = sizeMinMax}}
+    return SizingAxis{type = SizingType.Fit, constraints = {sizeMinMax = sizeMinMax}}
 }
 
 SizingGrow :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
-    return SizingAxis{type = SizingType.GROW, constraints = {sizeMinMax = sizeMinMax}}
+    return SizingAxis{type = SizingType.Grow, constraints = {sizeMinMax = sizeMinMax}}
 }
 
 SizingFixed :: proc(size: c.float) -> SizingAxis {
-    return SizingAxis{type = SizingType.FIXED, constraints = {sizeMinMax = {size, size}}}
+    return SizingAxis{type = SizingType.Fixed, constraints = {sizeMinMax = {size, size}}}
 }
 
 SizingPercent :: proc(sizePercent: c.float) -> SizingAxis {
-    return SizingAxis{type = SizingType.PERCENT, constraints = {sizePercent = sizePercent}}
+    return SizingAxis{type = SizingType.Percent, constraints = {sizePercent = sizePercent}}
 }
 
 MakeString :: proc(label: string) -> String {
