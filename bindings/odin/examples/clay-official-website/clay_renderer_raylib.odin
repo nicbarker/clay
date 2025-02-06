@@ -71,9 +71,13 @@ clayRaylibRender :: proc(renderCommands: ^clay.ClayArray(clay.RenderCommand), al
             )
         case clay.RenderCommandType.Image:
             config := renderCommand.renderData.image
+            tintColor := config.backgroundColor
+            if (tintColor.rgba == 0) {
+                tintColor = { 255, 255, 255, 255 }
+            }
             // TODO image handling
             imageTexture := cast(^raylib.Texture2D)config.imageData
-            raylib.DrawTextureEx(imageTexture^, raylib.Vector2{boundingBox.x, boundingBox.y}, 0, boundingBox.width / cast(f32)imageTexture.width, clayColorToRaylibColor(config.backgroundColor))
+            raylib.DrawTextureEx(imageTexture^, raylib.Vector2{boundingBox.x, boundingBox.y}, 0, boundingBox.width / cast(f32)imageTexture.width, clayColorToRaylibColor(tintColor))
         case clay.RenderCommandType.ScissorStart:
             raylib.BeginScissorMode(
                 cast(i32)math.round(boundingBox.x),

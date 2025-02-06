@@ -229,8 +229,9 @@ RenderCommandData :: struct #raw_union {
 RenderCommand :: struct {
     boundingBox:        BoundingBox,
     renderData:         RenderCommandData,
-    zIndex:             i32,
+    userData:           rawptr,
     id:                 u32,
+    zIndex:             i16,
     commandType:        RenderCommandType,
 }
 
@@ -326,6 +327,7 @@ ElementDeclaration :: struct {
     custom: CustomElementConfig,
     scroll: ScrollElementConfig,
     border: BorderElementConfig,
+    userData: rawptr
 }
 
 ErrorType :: enum {
