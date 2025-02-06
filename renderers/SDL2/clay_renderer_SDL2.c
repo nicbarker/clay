@@ -53,11 +53,8 @@ static void SDL_RenderFillRoundedRect(SDL_Renderer* renderer, const SDL_FRect re
 
     const int numCircleSegments = SDL_max(NUM_CIRCLE_SEGMENTS, (int)clampedRadius * 0.5f);
 
-    int totalVertices = 4 + (4 * (numCircleSegments * 2)) + 2 * 4;
-    int totalIndices = 6 + (4 * (numCircleSegments * 3)) + 6 * 4;
-
-    SDL_Vertex vertices[totalVertices];
-    int indices[totalIndices];
+    SDL_Vertex vertices[512];
+    int indices[512];
 
     //define center rectangle
     vertices[vertexCount++] = (SDL_Vertex){ {rect.x + clampedRadius, rect.y + clampedRadius}, color, {0, 0} }; //0 center TL
