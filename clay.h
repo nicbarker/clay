@@ -1390,7 +1390,7 @@ bool Clay__MemCmp(const char *s1, const char *s2, int32_t length);
             __m128i v1 = _mm_loadu_si128((const __m128i *)s1);
             __m128i v2 = _mm_loadu_si128((const __m128i *)s2);
 
-            if (_mm_movemask_epi8(_mm_cmpeq_epi8(v1, v2)) != 0xFFFFFFFF) { // If any byte differs
+            if (_mm_movemask_epi8(_mm_cmpeq_epi8(v1, v2)) != 0xFFFF) { // If any byte differs
                 return false;
             }
 
