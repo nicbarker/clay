@@ -368,19 +368,11 @@ foreign Clay {
     _GetOpenLayoutElementId :: proc() -> u32 ---
 }
 
-ClayOpenElement :: struct {
-    configure: proc (config: ElementDeclaration) -> bool
-}
-
-ConfigureOpenElement :: proc(config: ElementDeclaration) -> bool {
-    _ConfigureOpenElement(config)
-    return true;
-}
-
 @(deferred_none = _CloseElement)
-UI :: proc() -> ClayOpenElement {
+UI :: proc(config: ElementDeclaration) -> bool {
     _OpenElement()
-    return { configure = ConfigureOpenElement }
+    _ConfigureOpenElement(config)
+    return true
 }
 
 Text :: proc(text: string, config: ^TextElementConfig) {
