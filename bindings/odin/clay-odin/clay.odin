@@ -339,6 +339,8 @@ ErrorHandler :: struct {
     userData: rawptr
 }
 
+Context :: struct {} // opaque structure, only use as a pointer
+
 @(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
     MinMemorySize :: proc() -> u32 ---
@@ -355,6 +357,8 @@ foreign Clay {
     SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: StringSlice, config: ^TextElementConfig, userData: uintptr) -> Dimensions, userData: uintptr) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
     SetDebugModeEnabled :: proc(enabled: bool) ---
+    GetCurrentContext :: proc() -> ^Context ---
+    SetCurrentContext :: proc(ctx: ^Context) ---
 }
 
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
