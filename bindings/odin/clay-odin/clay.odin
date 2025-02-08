@@ -351,6 +351,7 @@ foreign Clay {
     SetLayoutDimensions :: proc(dimensions: Dimensions) ---
     BeginLayout :: proc() ---
     EndLayout :: proc() -> ClayArray(RenderCommand) ---
+    Hovered :: proc() -> bool ---
     PointerOver :: proc(id: ElementId) -> bool ---
     GetElementId :: proc(id: String) -> ElementId ---
     GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---

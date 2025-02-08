@@ -438,7 +438,7 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
                 id = clay.ID("LinkGithubOuter"),
                 layout = { padding = { 16, 16, 6, 6 } },
                 border = border2pxRed,
-                backgroundColor = clay.PointerOver(clay.GetElementId(clay.MakeString("LinkGithubOuter"))) ? COLOR_LIGHT_HOVER : COLOR_LIGHT,
+                backgroundColor = clay.Hovered() ? COLOR_LIGHT_HOVER : COLOR_LIGHT,
                 cornerRadius = clay.CornerRadiusAll(10)
             }) {
                 clay.Text("Github", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
