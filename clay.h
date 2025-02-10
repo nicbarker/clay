@@ -3115,11 +3115,11 @@ void Clay__RenderDebugView(void) {
                                 CLAY({{0}}) {
                                     CLAY_TEXT(CLAY_STRING("{ left: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(borderConfig->width.left), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING("{ right: "), infoTextConfig);
+                                    CLAY_TEXT(CLAY_STRING(", right: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(borderConfig->width.right), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING("{ top: "), infoTextConfig);
+                                    CLAY_TEXT(CLAY_STRING(", top: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(borderConfig->width.top), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING("{ bottom: "), infoTextConfig);
+                                    CLAY_TEXT(CLAY_STRING(", bottom: "), infoTextConfig);
                                     CLAY_TEXT(Clay__IntToString(borderConfig->width.bottom), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
                                 }
