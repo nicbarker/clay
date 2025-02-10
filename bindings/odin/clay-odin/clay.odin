@@ -317,7 +317,7 @@ ElementDeclaration :: struct {
     userData: rawptr
 }
 
-ErrorType :: enum {
+ErrorType :: enum EnumBackingType {
     TextMeasurementFunctionNotProvided,
     ArenaCapacityExceeded,
     ElementsCapacityExceeded,
