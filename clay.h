@@ -1274,13 +1274,14 @@ Clay_LayoutElementHashMapItem *Clay__GetHashMapItem(uint32_t id) {
     return &Clay_LayoutElementHashMapItem_DEFAULT;
 }
 
-void Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) {
+Clay_ElementId Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay_LayoutElement *parentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 2));
     Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
     openLayoutElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, openLayoutElement, 0);
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
+    return elementId;
 }
 
 bool Clay__ElementHasConfig(Clay_LayoutElement *layoutElement, Clay__ElementConfigType type) {
@@ -1515,11 +1516,8 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
                 .errorText = CLAY_STRING("An element was configured with CLAY_SIZING_PERCENT, but the provided percentage value was over 1.0. Clay expects a value between 0 and 1, i.e. 20% is 0.2."),
                 .userData = context->errorHandler.userData });
     }
-    if (declaration.id.id != 0) {
-        Clay__AttachId(declaration.id);
-    } else if (openLayoutElement->id == 0) {
-        Clay__GenerateIdForAnonymousElement(openLayoutElement);
-    }
+
+    Clay_ElementId openLayoutElementId = declaration.id;
 
     openLayoutElement->elementConfigs.internalArray = &context->elementConfigs.internalArray[context->elementConfigs.length];
     Clay_SharedElementConfig *sharedConfig = NULL;
@@ -1572,6 +1570,9 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
             } else if (declaration.floating.attachTo == CLAY_ATTACH_TO_ROOT) {
                 floatingConfig.parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id;
             }
+            if (!openLayoutElementId.id) {
+                openLayoutElementId = Clay__HashString(CLAY_STRING("Clay__FloatingContainer"), context->layoutElementTreeRoots.length, 0);
+            }
             Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
                     .layoutElementIndex = Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1),
                     .parentId = floatingConfig.parentId,
@@ -1584,6 +1585,13 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
     if (declaration.custom.customData) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(declaration.custom) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM);
     }
+
+    if (openLayoutElementId.id != 0) {
+        Clay__AttachId(openLayoutElementId);
+    } else if (openLayoutElement->id == 0) {
+        openLayoutElementId = Clay__GenerateIdForAnonymousElement(openLayoutElement);
+    }
+
     if (declaration.scroll.horizontal | declaration.scroll.vertical) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .scrollElementConfig = Clay__StoreScrollElementConfig(declaration.scroll) }, CLAY__ELEMENT_CONFIG_TYPE_SCROLL);
         Clay__int32_tArray_Add(&context->openClipElementStack, (int)openLayoutElement->id);
