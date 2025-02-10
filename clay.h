@@ -425,6 +425,11 @@ typedef struct {
 } Clay_CustomRenderData;
 
 typedef struct {
+    bool horizontal;
+    bool vertical;
+} Clay_ScrollRenderData;
+
+typedef struct {
     Clay_Color color;
     Clay_CornerRadius cornerRadius;
     Clay_BorderWidth width;
@@ -436,6 +441,7 @@ typedef union {
     Clay_ImageRenderData image;
     Clay_CustomRenderData custom;
     Clay_BorderRenderData border;
+    Clay_ScrollRenderData scroll;
 } Clay_RenderData;
 
 // Miscellaneous Structs & Enums ---------------------------------
@@ -2249,6 +2255,12 @@ void Clay__CalculateFinalLayout(void) {
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_SCROLL: {
                             renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START;
+                            renderCommand.renderData = CLAY__INIT(Clay_RenderData) {
+                                .scroll = {
+                                    .horizontal = elementConfig->config.scrollElementConfig->horizontal,
+                                    .vertical = elementConfig->config.scrollElementConfig->vertical,
+                                }
+                            };
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
