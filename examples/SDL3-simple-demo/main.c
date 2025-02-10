@@ -161,8 +161,13 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
         if (state->window)
             SDL_DestroyWindow(state->window);
 
-        if (state->rendererData.fonts)
+        if (state->rendererData.fonts) {
+            for(size_t i = 0; i < sizeof(state->rendererData.fonts) / sizeof(*state->rendererData.fonts); i++) {
+                TTF_CloseFont(state->rendererData.fonts[i]);
+            }
+
             SDL_free(state->rendererData.fonts);
+        }
 
         if (state->rendererData.textEngine)
             TTF_DestroyRendererTextEngine(state->rendererData.textEngine);
