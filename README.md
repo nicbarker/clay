@@ -808,7 +808,7 @@ Clay_TextElementConfig {
 
 `CLAY_TEXT_CONFIG(.textColor = {120, 120, 120, 255})`
 
-Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
+Uses [Clay_Color](#clay_color). Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
 
 ---
 
@@ -1352,6 +1352,14 @@ typedef struct Clay_BorderElementConfig
 
 **Fields**
 
+**`.color`** - `Clay_Color`
+
+`CLAY({ .border = { .color = { 255, 0, 0, 255 } } })`
+
+Uses [Clay_Color](#clay_color). Specifies the shared color for all borders configured by this element. Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
+
+---
+
 **`.width`** - `Clay_BorderWidth`
 
 `CLAY({ .border = { .width = { .left = 2, .right = 10 } } })`
@@ -1369,12 +1377,6 @@ Note:
 Configures the width and color of borders to be drawn between children. These borders will be vertical lines if the parent uses `.layoutDirection = CLAY_LEFT_TO_RIGHT` and horizontal lines if the parent uses `CLAY_TOP_TO_BOTTOM`. Unlike `.left, .top` etc, this option **will generate additional rectangle render commands representing the borders between children.** As a result, the renderer does not need to specifically implement rendering for these border elements.
 
 ---
-
-**`.color`** - `Clay_Color`
-
-`CLAY({ .border = { .color = { 255, 0, 0, 255 } } })`
-
-Defines the radius in pixels for the arc of border corners (`0` is square, `rectangle.width / 2` is circular). It is up to the renderer to decide how to interpolate between differing border widths and colors across shared corners.
 
 **Examples**
 
