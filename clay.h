@@ -482,190 +482,373 @@ typedef struct {
 
 CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);
 
+// Render Command Data -----------------------------
+
+// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_TEXT
 typedef struct {
+    // A string slice containing the text to be rendered.
+    // Note: this is not guaranteed to be null terminated.
     Clay_StringSlice stringContents;
+    // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color textColor;
+    // An integer representing the font to use to render this text, transparently passed through from the text declaration.
     uint16_t fontId;
     uint16_t fontSize;
+    // Specifies the extra whitespace gap in pixels between each character.
     uint16_t letterSpacing;
+    // The height of the bounding box for this line of text.
     uint16_t lineHeight;
 } Clay_TextRenderData;
 
+// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
 typedef struct {
+    // The solid background color to fill this rectangle with. Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color backgroundColor;
+    // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
+    // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
 } Clay_RectangleRenderData;
 
+// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE
 typedef struct {
+    // The tint color for this image. Note that the default value is 0,0,0,0 and should likely be interpreted
+    // as "untinted".
+    // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color backgroundColor;
+    // Controls the "radius", or corner rounding of this image.
+    // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
+    // The original dimensions of the source image, used to control aspect ratio.
     Clay_Dimensions sourceDimensions;
+    // A pointer transparently passed through from the original element definition, typically used to represent image data.
     void* imageData;
 } Clay_ImageRenderData;
 
+// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM
 typedef struct {
+    // Passed through from .backgroundColor in the original element declaration.
+    // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color backgroundColor;
+    // Controls the "radius", or corner rounding of this custom element.
+    // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
+    // A pointer transparently passed through from the original element definition.
     void* customData;
 } Clay_CustomRenderData;
 
+// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
 typedef struct {
     bool horizontal;
     bool vertical;
 } Clay_ScrollRenderData;
 
+// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_BORDER
 typedef struct {
+    // Controls a shared color for all this element's borders.
+    // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color color;
+    // Specifies the "radius", or corner rounding of this border element.
+    // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
+    // Controls individual border side widths.
     Clay_BorderWidth width;
 } Clay_BorderRenderData;
 
+// A struct union containing data specific to this command's .commandType
 typedef union {
+    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
     Clay_RectangleRenderData rectangle;
+    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_TEXT
     Clay_TextRenderData text;
+    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE
     Clay_ImageRenderData image;
+    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM
     Clay_CustomRenderData custom;
+    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_BORDER
     Clay_BorderRenderData border;
+    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCROLL
     Clay_ScrollRenderData scroll;
 } Clay_RenderData;
 
 // Miscellaneous Structs & Enums ---------------------------------
+
+// Data representing the current internal state of a scrolling element.
 typedef struct {
     // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
     // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
     Clay_Vector2 *scrollPosition;
+    // The bounding box of the scroll element.
     Clay_Dimensions scrollContainerDimensions;
+    // The outer dimensions of the inner scroll container content, including the padding of the parent scroll container.
     Clay_Dimensions contentDimensions;
+    // The config that was originally passed to the scroll element.
     Clay_ScrollElementConfig config;
     // Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
     bool found;
 } Clay_ScrollContainerData;
 
-typedef struct
-{
+// Bounding box and other data for a specific UI element.
+typedef struct {
+    // The rectangle that encloses this UI element, with the position relative to the root of the layout.
     Clay_BoundingBox boundingBox;
     // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
     bool found;
 } Clay_ElementData;
 
+// Used by renderers to determine specific handling for each render command.
 typedef CLAY_PACKED_ENUM {
+    // This command type should be skipped.
     CLAY_RENDER_COMMAND_TYPE_NONE,
+    // The renderer should draw a solid color rectangle.
     CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+    // The renderer should draw a colored border inset into the bounding box.
     CLAY_RENDER_COMMAND_TYPE_BORDER,
+    // The renderer should draw text.
     CLAY_RENDER_COMMAND_TYPE_TEXT,
+    // The renderer should draw an image.
     CLAY_RENDER_COMMAND_TYPE_IMAGE,
+    // The renderer should begin clipping all future draw commands, only rendering content that falls within the provided boundingBox.
     CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
+    // The renderer should finish any previously active clipping, and begin rendering elements in full again.
     CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
+    // The renderer should provide a custom implementation for handling this render command based on its .customData
     CLAY_RENDER_COMMAND_TYPE_CUSTOM,
 } Clay_RenderCommandType;
 
 typedef struct {
+    // A rectangular box that fully encloses this UI element, with the position relative to the root of the layout.
     Clay_BoundingBox boundingBox;
+    // A struct union containing data specific to this command's commandType.
     Clay_RenderData renderData;
-    // A pointer passed through from the element declaration
+    // A pointer transparently passed through from the original element declaration.
     void *userData;
+    // The id of this element, transparently passed through from the original element declaration.
     uint32_t id;
+    // The z order required for drawing this command correctly.
+    // Note: the render command array is already sorted in ascending order, and will produce correct results if drawn in naive order.
+    // This field is intended for use in batching renderers for improved performance.
     int16_t zIndex;
+    // Specifies how to handle rendering of this command.
+    // CLAY_RENDER_COMMAND_TYPE_RECTANGLE - The renderer should draw a solid color rectangle.
+    // CLAY_RENDER_COMMAND_TYPE_BORDER - The renderer should draw a colored border inset into the bounding box.
+    // CLAY_RENDER_COMMAND_TYPE_TEXT - The renderer should draw text.
+    // CLAY_RENDER_COMMAND_TYPE_IMAGE - The renderer should draw an image.
+    // CLAY_RENDER_COMMAND_TYPE_SCISSOR_START - The renderer should begin clipping all future draw commands, only rendering content that falls within the provided boundingBox.
+    // CLAY_RENDER_COMMAND_TYPE_SCISSOR_END - The renderer should finish any previously active clipping, and begin rendering elements in full again.
+    // CLAY_RENDER_COMMAND_TYPE_CUSTOM - The renderer should provide a custom implementation for handling this render command based on its .customData
     Clay_RenderCommandType commandType;
 } Clay_RenderCommand;
 
+// A sized array of render commands.
 typedef struct {
+    // The underlying max capacity of the array, not necessarily all initialized.
     int32_t capacity;
+    // The number of initialized elements in this array. Used for loops and iteration.
     int32_t length;
+    // A pointer to the first element in the internal array.
     Clay_RenderCommand* internalArray;
 } Clay_RenderCommandArray;
 
+// Represents the current state of interaction with clay this frame.
 typedef CLAY_PACKED_ENUM {
+    // A left mouse click, or touch occurred this frame.
     CLAY_POINTER_DATA_PRESSED_THIS_FRAME,
+    // The left mouse button click or touch happened at some point in the past, and is still currently held down this frame.
     CLAY_POINTER_DATA_PRESSED,
+    // The left mouse button click or touch was released this frame.
     CLAY_POINTER_DATA_RELEASED_THIS_FRAME,
+    // The left mouse button click or touch is not currently down / was released at some point in the past.
     CLAY_POINTER_DATA_RELEASED,
 } Clay_PointerDataInteractionState;
 
+// Information on the current state of pointer interactions this frame.
 typedef struct {
+    // The position of the mouse / touch / pointer relative to the root of the layout.
     Clay_Vector2 position;
+    // Represents the current state of interaction with clay this frame.
+    // CLAY_POINTER_DATA_PRESSED_THIS_FRAME - A left mouse click, or touch occurred this frame.
+    // CLAY_POINTER_DATA_PRESSED - The left mouse button click or touch happened at some point in the past, and is still currently held down this frame.
+    // CLAY_POINTER_DATA_RELEASED_THIS_FRAME - The left mouse button click or touch was released this frame.
+    // CLAY_POINTER_DATA_RELEASED - The left mouse button click or touch is not currently down / was released at some point in the past.
     Clay_PointerDataInteractionState state;
 } Clay_PointerData;
 
 typedef struct {
-    Clay_ElementId id; // Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros. Represents a hashed string ID used for identifying and finding specific clay UI elements, required by functions such as Clay_PointerOver() and Clay_GetElementData().
-    Clay_LayoutConfig layout; // Controls various settings that affect the size and position of an element, as well as the sizes and positions of any child elements.
-    Clay_Color backgroundColor; // Controls the background color of the resulting element. By convention specified as 0-255, but interpretation is up to the renderer. If no other config is specified, .backgroundColor will generate a RECTANGLE render command, otherwise it will be passed as a property to IMAGE or CUSTOM render commands.
-    Clay_CornerRadius cornerRadius; // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
-    Clay_ImageElementConfig image; // Controls settings related to image elements.
+    // Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros.
+    // Represents a hashed string ID used for identifying and finding specific clay UI elements, required by functions such as Clay_PointerOver() and Clay_GetElementData().
+    Clay_ElementId id;
+    // Controls various settings that affect the size and position of an element, as well as the sizes and positions of any child elements.
+    Clay_LayoutConfig layout;
+    // Controls the background color of the resulting element.
+    // By convention specified as 0-255, but interpretation is up to the renderer.
+    // If no other config is specified, .backgroundColor will generate a RECTANGLE render command, otherwise it will be passed as a property to IMAGE or CUSTOM render commands.
+    Clay_Color backgroundColor;
+    // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
+    Clay_CornerRadius cornerRadius;
+    // Controls settings related to image elements.
+    Clay_ImageElementConfig image;
     // Controls whether and how an element "floats", which means it layers over the top of other elements in z order, and doesn't affect the position and size of siblings or parent elements.
     // Note: in order to activate floating, .floating.attachTo must be set to something other than the default value.
     Clay_FloatingElementConfig floating;
-    Clay_CustomElementConfig custom; // Used to create CUSTOM render commands, usually to render element types not supported by Clay.
-    Clay_ScrollElementConfig scroll; // Controls whether an element should clip its contents and allow scrolling rather than expanding to contain them.
-    Clay_BorderElementConfig border; // Controls settings related to element borders, and will generate BORDER render commands.
-    void *userData; // A pointer that will be transparently passed through to resulting render commands.
+    // Used to create CUSTOM render commands, usually to render element types not supported by Clay.
+    Clay_CustomElementConfig custom;
+    // Controls whether an element should clip its contents and allow scrolling rather than expanding to contain them.
+    Clay_ScrollElementConfig scroll;
+    // Controls settings related to element borders, and will generate BORDER render commands.
+    Clay_BorderElementConfig border;
+    // A pointer that will be transparently passed through to resulting render commands.
+    void *userData;
 } Clay_ElementDeclaration;
 
 CLAY__WRAPPER_STRUCT(Clay_ElementDeclaration);
 
+// Represents the type of error clay encountered while computing layout.
 typedef CLAY_PACKED_ENUM {
+    // A text measurement function wasn't provided using Clay_SetMeasureTextFunction(), or the provided function was null.
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED,
+    // Clay attempted to allocate its internal data structures but ran out of space.
+    // The arena passed to Clay_Initialize was created with a capacity smaller than that required by Clay_MinMemorySize().
     CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED,
+    // Clay ran out of capacity in its internal array for storing elements. This limit can be increased with Clay_SetMaxElementCount().
     CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED,
+    // Clay ran out of capacity in its internal array for storing elements. This limit can be increased with Clay_SetMaxMeasureTextCacheWordCount().
     CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED,
+    // Two elements were declared with exactly the same ID within one layout.
     CLAY_ERROR_TYPE_DUPLICATE_ID,
+    // A floating element was declared using CLAY_ATTACH_TO_ELEMENT_ID and either an invalid .parentId was provided or no element with the provided .parentId was found.
     CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND,
+    // An element was declared that using CLAY_SIZING_PERCENT but the percentage value was over 1. Percentage values are expected to be in the 0-1 range.
     CLAY_ERROR_TYPE_PERCENTAGE_OVER_1,
+    // Clay encountered an internal error. It would be wonderful if you could report this so we can fix it!
     CLAY_ERROR_TYPE_INTERNAL_ERROR,
 } Clay_ErrorType;
 
+// Data to identify the error that clay has encountered.
 typedef struct {
+    // Represents the type of error clay encountered while computing layout.
+    // CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED - A text measurement function wasn't provided using Clay_SetMeasureTextFunction(), or the provided function was null.
+    // CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED - Clay attempted to allocate its internal data structures but ran out of space. The arena passed to Clay_Initialize was created with a capacity smaller than that required by Clay_MinMemorySize().
+    // CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED - Clay ran out of capacity in its internal array for storing elements. This limit can be increased with Clay_SetMaxElementCount().
+    // CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED - Clay ran out of capacity in its internal array for storing elements. This limit can be increased with Clay_SetMaxMeasureTextCacheWordCount().
+    // CLAY_ERROR_TYPE_DUPLICATE_ID - Two elements were declared with exactly the same ID within one layout.
+    // CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND - A floating element was declared using CLAY_ATTACH_TO_ELEMENT_ID and either an invalid .parentId was provided or no element with the provided .parentId was found.
+    // CLAY_ERROR_TYPE_PERCENTAGE_OVER_1 - An element was declared that using CLAY_SIZING_PERCENT but the percentage value was over 1. Percentage values are expected to be in the 0-1 range.
+    // CLAY_ERROR_TYPE_INTERNAL_ERROR - Clay encountered an internal error. It would be wonderful if you could report this so we can fix it!
     Clay_ErrorType errorType;
+    // A string containing human-readable error text that explains the error in more detail.
     Clay_String errorText;
+    // A transparent pointer passed through from when the error handler was first provided.
     void *userData;
 } Clay_ErrorData;
 
+// A wrapper struct around Clay's error handler function.
 typedef struct {
+    // A user provided function to call when Clay encounters an error during layout.
     void (*errorHandlerFunction)(Clay_ErrorData errorText);
+    // A pointer that will be transparently passed through to the error handler when it is called.
     void *userData;
 } Clay_ErrorHandler;
 
 // Function Forward Declarations ---------------------------------
-// Public API functions ---
+
+// Public API functions ------------------------------------------
+
+// Returns the size, in bytes, of the minimum amount of memory Clay requires to operate at its current settings.
 uint32_t Clay_MinMemorySize(void);
-Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset);
+// Creates an arena for clay to use for its internal allocations, given a certain capacity in bytes and a pointer to an allocation of at least that size.
+// Intended to be used with Clay_MinMemorySize in the following way:
+// uint32_t minMemoryRequired = Clay_MinMemorySize();
+// Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(minMemoryRequired, malloc(minMemoryRequired));
+Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *memory);
+// Sets the state of the "pointer" (i.e. the mouse or touch) in Clay's internal data. Used for detecting and responding to mouse events in the debug view,
+// as well as for Clay_Hovered() and scroll element handling.
 void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
+// Initialize Clay's internal arena and setup required data before layout can begin. Only needs to be called once.
+// - arena can be created using Clay_CreateArenaWithCapacityAndMemory()
+// - layoutDimensions are the initial bounding dimensions of the layout (i.e. the screen width and height for a full screen layout)
+// - errorHandler is used by Clay to inform you if something has gone wrong in configuration or layout.
 Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler);
+// Returns the Context that clay is currently using. Used when using multiple instances of clay simultaneously.
 Clay_Context* Clay_GetCurrentContext(void);
+// Sets the context that clay will use to compute the layout.
+// Used to restore a context saved from Clay_GetCurrentContext when using multiple instances of clay simultaneously.
 void Clay_SetCurrentContext(Clay_Context* context);
+// Updates the state of Clay's internal scroll data, updating scroll content positions if scrollDelta is non zero, and progressing momentum scrolling.
+// - enableDragScrolling when set to true will enable mobile device like "touch drag" scroll of scroll containers, including momentum scrolling after the touch has ended.
+// - scrollDelta is the amount to scroll this frame on each axis in pixels.
+// - deltaTime is the time in seconds since the last "frame" (scroll update)
 void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDelta, float deltaTime);
+// Updates the layout dimensions in response to the window or outer container being resized.
 void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
+// Called before starting any layout declarations.
 void Clay_BeginLayout(void);
+// Called when all layout declarations are finished.
+// Computes the layout and generates and returns the array of render commands to draw.
 Clay_RenderCommandArray Clay_EndLayout(void);
+// Calculates a hash ID from the given idString.
+// Generally only used for dynamic strings when CLAY_ID("stringLiteral") can't be used.
 Clay_ElementId Clay_GetElementId(Clay_String idString);
+// Calculates a hash ID from the given idString and index.
+// - index is used to avoid constructing dynamic ID strings in loops.
+// Generally only used for dynamic strings when CLAY_IDI("stringLiteral", index) can't be used.
 Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index);
-Clay_ElementData Clay_GetElementData (Clay_ElementId id);
+// Returns layout data such as the final calculated bounding box for an element with a given ID.
+// The returned Clay_ElementData contains a `found` bool that will be true if an element with the provided ID was found.
+// This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
+Clay_ElementData Clay_GetElementData(Clay_ElementId id);
+// Returns true if the pointer position provided by Clay_SetPointerState is within the current element's bounding box.
+// Works during element declaration, e.g. CLAY({ .backgroundColor = Clay_Hovered() ? BLUE : RED });
 bool Clay_Hovered(void);
+// Bind a callback that will be called when the pointer position provided by Clay_SetPointerState is within the current element's bounding box.
+// - onHoverFunction is a function pointer to a user defined function.
+// - userData is a pointer that will be transparently passed through when the onHoverFunction is called.
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
+// An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
+// This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
 bool Clay_PointerOver(Clay_ElementId elementId);
+// Returns data representing the state of the scrolling element with the provided ID.
+// The returned Clay_ScrollContainerData contains a `found` bool that will be true if a scroll element was found with the provided ID.
+// An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
+// This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
 Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
-Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config);
+// Binds a callback function that Clay will call to determine the dimensions of a given string slice.
+// - measureTextFunction is a user provided function that adheres to the interface Clay_Dimensions (Clay_StringSlice text, Clay_TextElementConfig *config, void *userData);
+// - userData is a pointer that will be transparently passed through when the measureTextFunction is called.
 void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData), void *userData);
+// Experimental - Used in cases where Clay needs to integrate with a system that manages its own scrolling containers externally.
+// Please reach out if you plan to use this function, as it may be subject to change.
 void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, void *userData), void *userData);
+// A bounds-checked "get" function for the Clay_RenderCommandArray returned from Clay_EndLayout().
 Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
+// Enables and disables Clay's internal debug tools.
+// This state is retained and does not need to be set each frame.
 void Clay_SetDebugModeEnabled(bool enabled);
+// Returns true if Clay's internal debug tools are currently enabled.
 bool Clay_IsDebugModeEnabled(void);
+// Enables and disables visibility culling. By default, Clay will not generate render commands for elements whose bounding box is entirely outside the screen.
 void Clay_SetCullingEnabled(bool enabled);
+// Returns the maximum number of UI elements supported by Clay's current configuration.
 int32_t Clay_GetMaxElementCount(void);
+// Modifies the maximum number of UI elements supported by Clay's current configuration.
+// This may require reallocating additional memory, and re-calling Clay_Initialize();
 void Clay_SetMaxElementCount(int32_t maxElementCount);
+// Returns the maximum number of measured "words" (whitespace seperated runs of characters) that Clay can store in its internal text measurement cache.
 int32_t Clay_GetMaxMeasureTextCacheWordCount(void);
+// Modifies the maximum number of measured "words" (whitespace seperated runs of characters) that Clay can store in its internal text measurement cache.
+// This may require reallocating additional memory, and re-calling Clay_Initialize();
 void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
+// Resets Clay's internal text measurement cache, useful if memory to represent strings is being re-used.
+// Similar behaviour can be achieved on an individual text element level by using Clay_TextElementConfig.hashStringContents
 void Clay_ResetMeasureTextCache(void);
 
-// Internal API functions required by macros
+// Internal API functions required by macros ----------------------
+
 void Clay__OpenElement(void);
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration config);
 void Clay__CloseElement(void);
-Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config);
-Clay_ElementId Clay__AttachId(Clay_ElementId id);
 Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
+Clay_TextElementConfig *Clay__StoreTextElementConfig(Clay_TextElementConfig config);
 uint32_t Clay__GetParentElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
@@ -1611,6 +1794,19 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     };
     textElement->layoutConfig = &CLAY_LAYOUT_DEFAULT;
     parentElement->childrenOrTextContent.children.length++;
+}
+
+Clay_ElementId Clay__AttachId(Clay_ElementId elementId) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (context->booleanWarnings.maxElementsExceeded) {
+        return Clay_ElementId_DEFAULT;
+    }
+    Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
+    uint32_t idAlias = openLayoutElement->id;
+    openLayoutElement->id = elementId.id;
+    Clay__AddHashMapItem(elementId, openLayoutElement, idAlias);
+    Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
+    return elementId;
 }
 
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
@@ -2651,19 +2847,6 @@ void Clay__CalculateFinalLayout(void) {
     }
 }
 
-Clay_ElementId Clay__AttachId(Clay_ElementId elementId) {
-    Clay_Context* context = Clay_GetCurrentContext();
-    if (context->booleanWarnings.maxElementsExceeded) {
-        return Clay_ElementId_DEFAULT;
-    }
-    Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
-    uint32_t idAlias = openLayoutElement->id;
-    openLayoutElement->id = elementId.id;
-    Clay__AddHashMapItem(elementId, openLayoutElement, idAlias);
-    Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
-    return elementId;
-}
-
 #pragma region DebugTools
 Clay_Color CLAY__DEBUGVIEW_COLOR_1 = {58, 56, 52, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_2 = {62, 60, 58, 255};
@@ -3361,10 +3544,10 @@ uint32_t Clay_MinMemorySize(void) {
 }
 
 CLAY_WASM_EXPORT("Clay_CreateArenaWithCapacityAndMemory")
-Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset) {
+Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *memory) {
     Clay_Arena arena = {
         .capacity = capacity,
-        .memory = (char *)offset
+        .memory = (char *)memory
     };
     return arena;
 }
