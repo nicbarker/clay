@@ -63,7 +63,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                 RenderHeaderButton(CLAY_STRING("Header Item 3"));
             }
             CLAY({.id = CLAY_ID("MainContent"),
-                .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {16, 16, 16, 16}, .childGap = 16, .sizing = { CLAY_SIZING_GROW(0) } },
+                .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .padding = {16, 16, 16, 16}, .childGap = 16, .sizing = { .width = CLAY_SIZING_GROW(0) } },
                 .backgroundColor = {200, 200, 255, 255},
                 .scroll = { .vertical = true },
             })
@@ -225,7 +225,7 @@ void HandleClayErrors(Clay_ErrorData errorData) {
 int main(void) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-    Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
+    Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors, 0 });
     Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
     profilePicture = LoadTextureFromImage(LoadImage("resources/profile-picture.png"));
 
@@ -245,7 +245,7 @@ int main(void) {
             Clay_SetMaxElementCount(8192);
             totalMemorySize = Clay_MinMemorySize();
             clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-            Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors });
+            Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors, 0 });
             reinitializeClay = false;
         }
         UpdateDrawFrame(fonts);
