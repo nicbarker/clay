@@ -327,6 +327,16 @@ typedef CLAY_PACKED_ENUM {
     CLAY_TEXT_WRAP_NONE,
 } Clay_TextElementConfigWrapMode;
 
+// Controls how wrapped lines of text are horizontally aligned within the outer text bounding box.
+typedef CLAY_PACKED_ENUM {
+    // (default) Horizontally aligns wrapped lines of text to the left hand side of their bounding box.
+    CLAY_TEXT_ALIGN_LEFT,
+    // Horizontally aligns wrapped lines of text to the center of their bounding box.
+    CLAY_TEXT_ALIGN_CENTER,
+    // Horizontally aligns wrapped lines of text to the right hand side of their bounding box.
+    CLAY_TEXT_ALIGN_RIGHT,
+} Clay_TextAlignment;
+
 // Controls various functionality related to text elements.
 typedef struct {
     // The RGBA color of the font to render, conventionally specified as 0-255.
@@ -345,6 +355,11 @@ typedef struct {
     // CLAY_TEXT_WRAP_NEWLINES doesn't break on space characters, only on newlines.
     // CLAY_TEXT_WRAP_NONE disables wrapping entirely.
     Clay_TextElementConfigWrapMode wrapMode;
+    // Controls how wrapped lines of text are horizontally aligned within the outer text bounding box.
+    // CLAY_TEXT_ALIGN_LEFT (default) - Horizontally aligns wrapped lines of text to the left hand side of their bounding box.
+    // CLAY_TEXT_ALIGN_CENTER - Horizontally aligns wrapped lines of text to the center of their bounding box.
+    // CLAY_TEXT_ALIGN_RIGHT - Horizontally aligns wrapped lines of text to the right hand side of their bounding box.
+    Clay_TextAlignment textAlignment;
     // When set to true, clay will hash the entire text contents of this string as an identifier for its internal
     // text measurement cache, rather than just the pointer and length. This will incur significant performance cost for
     // long bodies of text.
@@ -2256,6 +2271,7 @@ void Clay__CalculateFinalLayout(void) {
             textElementData->wrappedLines.length++;
             continue;
         }
+        float spaceWidth = Clay__MeasureText(CLAY__INIT(Clay_StringSlice) { .length = 1, .chars = CLAY__SPACECHAR.chars, .baseChars = CLAY__SPACECHAR.chars }, textConfig, context->measureTextUserData).width;
         int32_t wordIndex = measureTextCacheItem->measuredWordsStartIndex;
         while (wordIndex != -1) {
             if (context->wrappedTextLines.length > context->wrappedTextLines.capacity - 1) {
@@ -2272,7 +2288,8 @@ void Clay__CalculateFinalLayout(void) {
             // measuredWord->length == 0 means a newline character
             else if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
                 // Wrapped text lines list has overflowed, just render out the line
-                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth, lineHeight }, { .length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
+                bool finalCharIsSpace = textElementData->text.chars[lineStartOffset + lineLengthChars - 1] == ' ';
+                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth + (finalCharIsSpace ? -spaceWidth : 0), lineHeight }, { .length = lineLengthChars + (finalCharIsSpace ? -1 : 0), .chars = &textElementData->text.chars[lineStartOffset] } });
                 textElementData->wrappedLines.length++;
                 if (lineLengthChars == 0 || measuredWord->length == 0) {
                     wordIndex = measuredWord->next;
@@ -2604,8 +2621,15 @@ void Clay__CalculateFinalLayout(void) {
                                     yPosition += finalLineHeight;
                                     continue;
                                 }
+                                float offset = (currentElementBoundingBox.width - wrappedLine->dimensions.width);
+                                if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT) {
+                                    offset = 0;
+                                }
+                                if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
+                                    offset /= 2;
+                                }
                                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                    .boundingBox = { currentElementBoundingBox.x, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
+                                    .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
                                     .renderData = { .text = {
                                         .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->childrenOrTextContent.textElementData->text.chars },
                                         .textColor = textElementConfig->textColor,
