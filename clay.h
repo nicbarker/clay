@@ -21,11 +21,6 @@
 #include <arm_neon.h>
 #endif
 
-#ifdef __JETBRAINS_IDE__
-// Help jetbrains IDEs like CLion and Rider with intellisense & debugging
-#define CLAY_IMPLEMENTATION
-#endif
-
 // -----------------------------------------
 // HEADER DECLARATIONS ---------------------
 // -----------------------------------------
@@ -48,10 +43,6 @@
 #endif
 
 // Public Macro API ------------------------
-
-#define CLAY__WRAPPER_TYPE(type) Clay__##type##Wrapper
-#define CLAY__WRAPPER_STRUCT(type) typedef struct { type wrapped; } CLAY__WRAPPER_TYPE(type)
-#define CLAY__CONFIG_WRAPPER(type, ...) (CLAY__INIT(CLAY__WRAPPER_TYPE(type)) { __VA_ARGS__ }).wrapped
 
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
@@ -98,19 +89,20 @@ static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 /* This macro looks scary on the surface, but is actually quite simple.
   It turns a macro call like this:
 
-  CLAY(
-    CLAY_RECTANGLE(),
-    CLAY_ID()
-  ) {
+  CLAY({
+    .id = CLAY_ID("Container"),
+    .backgroundColor = { 255, 200, 200, 255 }
+  }) {
       ...children declared here
   }
 
   Into calls like this:
 
   Clay_OpenElement();
-  CLAY_RECTANGLE();
-  CLAY_ID();
-  Clay_ElementPostConfiguration();
+  Clay_ConfigureOpenElement((Clay_ElementDeclaration) {
+    .id = CLAY_ID("Container"),
+    .backgroundColor = { 255, 200, 200, 255 }
+  });
   ...children declared here
   Clay_CloseElement();
 
@@ -118,12 +110,21 @@ static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
   means that it will run after the body - where the children are declared. It just exists to make sure you don't forget
   to call Clay_CloseElement().
 */
-#define CLAY(...) \
-	for (\
-		CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), Clay__ConfigureOpenElement(CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration, __VA_ARGS__)), 0); \
-		CLAY__ELEMENT_DEFINITION_LATCH < 1; \
-		++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement() \
-	)
+#define CLAY(...)                                                                                                                                           \
+    for (                                                                                                                                                   \
+        CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), Clay__ConfigureOpenElement(CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration, __VA_ARGS__)), 0);  \
+        CLAY__ELEMENT_DEFINITION_LATCH < 1;                                                                                                                 \
+        ++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement()                                                                                              \
+    )
+
+// These macros exist to allow the CLAY() macro to be called both with an inline struct definition, such as
+// CLAY({ .id = something... });
+// As well as by passing a predefined declaration struct
+// Clay_ElementDeclaration declarationStruct = ...
+// CLAY(declarationStruct);
+#define CLAY__WRAPPER_TYPE(type) Clay__##type##Wrapper
+#define CLAY__WRAPPER_STRUCT(type) typedef struct { type wrapped; } CLAY__WRAPPER_TYPE(type)
+#define CLAY__CONFIG_WRAPPER(type, ...) (CLAY__INIT(CLAY__WRAPPER_TYPE(type)) { __VA_ARGS__ }).wrapped
 
 #define CLAY_TEXT(text, textConfig) Clay__OpenTextElement(text, textConfig)
 
@@ -158,22 +159,27 @@ extern "C" {
 #endif
 
 // Utility Structs -------------------------
+
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
 typedef struct {
     int32_t length;
+    // The underlying character memory. Note: this will not be copied and will not extend the lifetime of the underlying memory.
     const char *chars;
 } Clay_String;
 
+// Clay_StringSlice is used to represent non owning string slices, and includes
+// a baseChars field which points to the string this slice is derived from.
 typedef struct {
     int32_t length;
     const char *chars;
-    // The source string / char* that this slice was derived from
-    const char *baseChars;
+    const char *baseChars; // The source string / char* that this slice was derived from
 } Clay_StringSlice;
 
 typedef struct Clay_Context Clay_Context;
 
+// Clay_Arena is a memory arena structure that is used by clay to manage its internal allocations.
+// Rather than creating it by hand, it's easier to use Clay_CreateArenaWithCapacityAndMemory()
 typedef struct {
     uintptr_t nextAllocation;
     size_t capacity;
@@ -188,6 +194,7 @@ typedef struct {
     float x, y;
 } Clay_Vector2;
 
+// Internally clay conventionally represents colors as 0-255, but interpretation is up to the renderer.
 typedef struct {
     float r, g, b, a;
 } Clay_Color;
@@ -196,14 +203,18 @@ typedef struct {
     float x, y, width, height;
 } Clay_BoundingBox;
 
-// baseId + offset = id
+// Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros.
+// Represents a hashed string ID used for identifying and finding specific clay UI elements, required
+// by functions such as Clay_PointerOver() and Clay_GetElementData().
 typedef struct {
-    uint32_t id;
-    uint32_t offset;
-    uint32_t baseId;
-    Clay_String stringId;
+    uint32_t id; // The resulting hash generated from the other fields.
+    uint32_t offset; // A numerical offset applied after computing the hash from stringId.
+    uint32_t baseId; // A base hash value to start from, for example the parent element ID is used when calculating CLAY_ID_LOCAL().
+    Clay_String stringId; // The string id to hash.
 } Clay_ElementId;
 
+// Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
+// The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
 typedef struct {
     float topLeft;
     float topRight;
@@ -211,66 +222,78 @@ typedef struct {
     float bottomRight;
 } Clay_CornerRadius;
 
-typedef CLAY_PACKED_ENUM {
-    CLAY__ELEMENT_CONFIG_TYPE_NONE,
-    CLAY__ELEMENT_CONFIG_TYPE_BORDER,
-    CLAY__ELEMENT_CONFIG_TYPE_FLOATING,
-    CLAY__ELEMENT_CONFIG_TYPE_SCROLL,
-    CLAY__ELEMENT_CONFIG_TYPE_IMAGE,
-    CLAY__ELEMENT_CONFIG_TYPE_TEXT,
-    CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
-    CLAY__ELEMENT_CONFIG_TYPE_SHARED,
-} Clay__ElementConfigType;
-
 // Element Configs ---------------------------
-// Layout
+
+// Controls the direction in which child elements will be automatically laid out.
 typedef CLAY_PACKED_ENUM {
+    // (Default) Lays out child elements from left to right with increasing x.
     CLAY_LEFT_TO_RIGHT,
+    // Lays out child elements from top to bottom with increasing y.
     CLAY_TOP_TO_BOTTOM,
 } Clay_LayoutDirection;
 
+// Controls the alignment along the x axis (horizontal) of child elements.
 typedef CLAY_PACKED_ENUM {
+    // (Default) Aligns child elements to the left hand side of this element, offset by padding.width.left
     CLAY_ALIGN_X_LEFT,
+    // Aligns child elements to the right hand side of this element, offset by padding.width.right
     CLAY_ALIGN_X_RIGHT,
+    // Aligns child elements horizontally to the center of this element
     CLAY_ALIGN_X_CENTER,
 } Clay_LayoutAlignmentX;
 
+// Controls the alignment along the y axis (vertical) of child elements.
 typedef CLAY_PACKED_ENUM {
+    // (Default) Aligns child elements to the top of this element, offset by padding.width.top
     CLAY_ALIGN_Y_TOP,
+    // Aligns child elements to the bottom of this element, offset by padding.width.bottom
     CLAY_ALIGN_Y_BOTTOM,
+    // Aligns child elements vertiically to the center of this element
     CLAY_ALIGN_Y_CENTER,
 } Clay_LayoutAlignmentY;
 
+// Controls how the element takes up space inside its parent container.
 typedef CLAY_PACKED_ENUM {
+    // (default) Wraps tightly to the size of the element's contents.
     CLAY__SIZING_TYPE_FIT,
+    // Expands along this axis to fill available space in the parent element, sharing it with other GROW elements.
     CLAY__SIZING_TYPE_GROW,
+    // Expects 0-1 range. Clamps the axis size to a percent of the parent container's axis size minus padding and child gaps.
     CLAY__SIZING_TYPE_PERCENT,
+    // Clamps the axis size to an exact size in pixels.
     CLAY__SIZING_TYPE_FIXED,
 } Clay__SizingType;
 
+// Controls how child elements are aligned on each axis.
 typedef struct {
-    Clay_LayoutAlignmentX x;
-    Clay_LayoutAlignmentY y;
+    Clay_LayoutAlignmentX x; // Controls alignment of children along the x axis.
+    Clay_LayoutAlignmentY y; // Controls alignment of children along the y axis.
 } Clay_ChildAlignment;
 
+// Controls the minimum and maximum size in pixels that this element is allowed to grow or shrink to,
+// overriding sizing types such as FIT or GROW.
 typedef struct {
-    float min;
-    float max;
+    float min; // The smallest final size of the element on this axis will be this value in pixels.
+    float max; // The largest final size of the element on this axis will be this value in pixels.
 } Clay_SizingMinMax;
 
+// Controls the sizing of this element along one axis inside its parent container.
 typedef struct {
     union {
-        Clay_SizingMinMax minMax;
-        float percent;
+        Clay_SizingMinMax minMax; // Controls the minimum and maximum size in pixels that this element is allowed to grow or shrink to, overriding sizing types such as FIT or GROW.
+        float percent; // Expects 0-1 range. Clamps the axis size to a percent of the parent container's axis size minus padding and child gaps.
     } size;
-    Clay__SizingType type;
+    Clay__SizingType type; // Controls how the element takes up space inside its parent container.
 } Clay_SizingAxis;
 
+// Controls the sizing of this element along one axis inside its parent container.
 typedef struct {
-    Clay_SizingAxis width;
-    Clay_SizingAxis height;
+    Clay_SizingAxis width; // Controls the width sizing of the element, along the x axis.
+    Clay_SizingAxis height;  // Controls the height sizing of the element, along the y axis.
 } Clay_Sizing;
 
+// Controls "padding" in pixels, which is a gap between the bounding box of this element and where its children
+// will be placed.
 typedef struct {
     uint16_t left;
     uint16_t right;
@@ -280,46 +303,70 @@ typedef struct {
 
 CLAY__WRAPPER_STRUCT(Clay_Padding);
 
+// Controls various settings that affect the size and position of an element, as well as the sizes and positions
+// of any child elements.
 typedef struct {
-    Clay_Sizing sizing;
-    Clay_Padding padding;
-    uint16_t childGap;
-    Clay_ChildAlignment childAlignment;
-    Clay_LayoutDirection layoutDirection;
+    Clay_Sizing sizing; // Controls the sizing of this element inside it's parent container, including FIT, GROW, PERCENT and FIXED sizing.
+    Clay_Padding padding; // Controls "padding" in pixels, which is a gap between the bounding box of this element and where its children will be placed.
+    uint16_t childGap; // Controls the gap in pixels between child elements along the layout axis (horizontal gap for LEFT_TO_RIGHT, vertical gap for TOP_TO_BOTTOM).
+    Clay_ChildAlignment childAlignment; // Controls how child elements are aligned on each axis.
+    Clay_LayoutDirection layoutDirection; // Controls the direction in which child elements will be automatically laid out.
 } Clay_LayoutConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_LayoutConfig);
 
 extern Clay_LayoutConfig CLAY_LAYOUT_DEFAULT;
 
-// Text
+// Controls how text "wraps", that is how it is broken into multiple lines when there is insufficient horizontal space.
 typedef CLAY_PACKED_ENUM {
+    // (default) breaks on whitespace characters.
     CLAY_TEXT_WRAP_WORDS,
+    // Don't break on space characters, only on newlines.
     CLAY_TEXT_WRAP_NEWLINES,
+    // Disable text wrapping entirely.
     CLAY_TEXT_WRAP_NONE,
 } Clay_TextElementConfigWrapMode;
 
+// Controls various functionality related to text elements.
 typedef struct {
+    // The RGBA color of the font to render, conventionally specified as 0-255.
     Clay_Color textColor;
+    // An integer transparently passed to Clay_MeasureText to identify the font to use.
+    // The debug view will pass fontId = 0 for its internal text.
     uint16_t fontId;
+    // Controls the size of the font. Handled by the function provided to Clay_MeasureText.
     uint16_t fontSize;
+    // Controls extra horizontal spacing between characters. Handled by the function provided to Clay_MeasureText.
     uint16_t letterSpacing;
+    // Controls additional vertical space between wrapped lines of text.
     uint16_t lineHeight;
+    // Controls how text "wraps", that is how it is broken into multiple lines when there is insufficient horizontal space.
+    // CLAY_TEXT_WRAP_WORDS (default) breaks on whitespace characters.
+    // CLAY_TEXT_WRAP_NEWLINES doesn't break on space characters, only on newlines.
+    // CLAY_TEXT_WRAP_NONE disables wrapping entirely.
     Clay_TextElementConfigWrapMode wrapMode;
+    // When set to true, clay will hash the entire text contents of this string as an identifier for its internal
+    // text measurement cache, rather than just the pointer and length. This will incur significant performance cost for
+    // long bodies of text.
     bool hashStringContents;
 } Clay_TextElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
 
-// Image
+// Image --------------------------------
+
+// Controls various settings related to image elements.
 typedef struct {
-    void* imageData;
-    Clay_Dimensions sourceDimensions;
+    void* imageData; // A transparent pointer used to pass image data through to the renderer.
+    Clay_Dimensions sourceDimensions; // The original dimensions of the source image, used to control aspect ratio.
 } Clay_ImageElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_ImageElementConfig);
 
-// Floating
+// Floating -----------------------------
+
+// Controls where a floating element is offset relative to its parent element.
+// Note: see https://github.com/user-attachments/assets/b8c6dfaa-c1b1-41a4-be55-013473e4a6ce for a visual explanation.
 typedef CLAY_PACKED_ENUM {
     CLAY_ATTACH_POINT_LEFT_TOP,
     CLAY_ATTACH_POINT_LEFT_CENTER,
@@ -332,72 +379,105 @@ typedef CLAY_PACKED_ENUM {
     CLAY_ATTACH_POINT_RIGHT_BOTTOM,
 } Clay_FloatingAttachPointType;
 
+// Controls where a floating element is offset relative to its parent element.
 typedef struct {
-    Clay_FloatingAttachPointType element;
-    Clay_FloatingAttachPointType parent;
+    Clay_FloatingAttachPointType element; // Controls the origin point on a floating element that attaches to its parent.
+    Clay_FloatingAttachPointType parent; // Controls the origin point on the parent element that the floating element attaches to.
 } Clay_FloatingAttachPoints;
 
+// Controls how mouse pointer events like hover and click are captured or passed through to elements underneath a floating element.
 typedef CLAY_PACKED_ENUM {
+    // (default) "Capture" the pointer event and don't allow events like hover and click to pass through to elements underneath.
     CLAY_POINTER_CAPTURE_MODE_CAPTURE,
-//    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
+    //    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
+
+    // Transparently pass through pointer events like hover and click to elements underneath the floating element.
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
 } Clay_PointerCaptureMode;
 
+// Controls which element a floating element is "attached" to (i.e. relative offset from).
 typedef CLAY_PACKED_ENUM {
+    // (default) Disables floating for this element.
     CLAY_ATTACH_TO_NONE,
+    // Attaches this floating element to its parent, positioned based on the .attachPoints and .offset fields.
     CLAY_ATTACH_TO_PARENT,
+    // Attaches this floating element to an element with a specific ID, specified with the .parentId field. positioned based on the .attachPoints and .offset fields.
     CLAY_ATTACH_TO_ELEMENT_WITH_ID,
+    // Attaches this floating element to the root of the layout, which combined with the .offset field provides functionality similar to "absolute positioning".
     CLAY_ATTACH_TO_ROOT,
 } Clay_FloatingAttachToElement;
 
+// Controls various settings related to "floating" elements, which are elements that "float" above other elements, potentially overlapping their boundaries,
+// and not affecting the layout of sibling or parent elements.
 typedef struct {
+    // Offsets this floating element by the provided x,y coordinates from its attachPoints.
     Clay_Vector2 offset;
+    // Expands the boundaries of the outer floating element without affecting its children.
     Clay_Dimensions expand;
+    // When used in conjunction with .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID, attaches this floating element to the element in the hierarchy with the provided ID.
+    // Hint: attach the ID to the other element with .id = CLAY_ID("yourId"), and specify the id the same way, with .parentId = CLAY_ID("yourId").id
     uint32_t parentId;
+    // Controls the z index of this floating element and all its children. Floating elements are sorted in ascending z order before output.
+    // zIndex is also passed to the renderer for all elements contained within this floating element.
     int16_t zIndex;
+    // Controls how mouse pointer events like hover and click are captured or passed through to elements underneath / behind a floating element.
+    // Enum is of the form CLAY_ATTACH_POINT_foo_bar. See Clay_FloatingAttachPoints for more details.
+    // Note: see <img src="https://github.com/user-attachments/assets/b8c6dfaa-c1b1-41a4-be55-013473e4a6ce />
+    // and <img src="https://github.com/user-attachments/assets/ebe75e0d-1904-46b0-982d-418f929d1516 /> for a visual explanation.
     Clay_FloatingAttachPoints attachPoints;
+    // Controls how mouse pointer events like hover and click are captured or passed through to elements underneath a floating element.
+    // CLAY_POINTER_CAPTURE_MODE_CAPTURE (default) - "Capture" the pointer event and don't allow events like hover and click to pass through to elements underneath.
+    // CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH - Transparently pass through pointer events like hover and click to elements underneath the floating element.
     Clay_PointerCaptureMode pointerCaptureMode;
+    // Controls which element a floating element is "attached" to (i.e. relative offset from).
+    // CLAY_ATTACH_TO_NONE (default) - Disables floating for this element.
+    // CLAY_ATTACH_TO_PARENT - Attaches this floating element to its parent, positioned based on the .attachPoints and .offset fields.
+    // CLAY_ATTACH_TO_ELEMENT_WITH_ID - Attaches this floating element to an element with a specific ID, specified with the .parentId field. positioned based on the .attachPoints and .offset fields.
+    // CLAY_ATTACH_TO_ROOT - Attaches this floating element to the root of the layout, which combined with the .offset field provides functionality similar to "absolute positioning".
     Clay_FloatingAttachToElement attachTo;
 } Clay_FloatingElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
 
-// Custom
+// Custom -----------------------------
+
+// Controls various settings related to custom elements.
 typedef struct {
+    // A transparent pointer through which you can pass custom data to the renderer.
+    // Generates CUSTOM render commands.
     void* customData;
 } Clay_CustomElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_CustomElementConfig);
 
-// Scroll
+// Scroll -----------------------------
+
+// Controls the axis on which an element switches to "scrolling", which clips the contents and allows scrolling in that direction.
 typedef struct {
-    bool horizontal;
-    bool vertical;
+    bool horizontal; // Clip overflowing elements on the X axis and allow scrolling left and right.
+    bool vertical; // Clip overflowing elements on the YU axis and allow scrolling up and down.
 } Clay_ScrollElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_ScrollElementConfig);
 
-// Shared
-typedef struct {
-    Clay_Color backgroundColor;
-    Clay_CornerRadius cornerRadius;
-    void* userData;
-} Clay_SharedElementConfig;
+// Border -----------------------------
 
-CLAY__WRAPPER_STRUCT(Clay_SharedElementConfig);
-
-// Border
+// Controls the widths of individual element borders.
 typedef struct {
     uint16_t left;
     uint16_t right;
     uint16_t top;
     uint16_t bottom;
+    // Creates borders between each child element, depending on the .layoutDirection.
+    // e.g. for LEFT_TO_RIGHT, borders will be vertical lines, and for TOP_TO_BOTTOM borders will be horizontal lines.
+    // .betweenChildren borders will result in individual RECTANGLE render commands being generated.
     uint16_t betweenChildren;
 } Clay_BorderWidth;
 
+// Controls settings related to element borders.
 typedef struct {
-    Clay_Color color;
-    Clay_BorderWidth width;
+    Clay_Color color; // Controls the color of all borders with width > 0. Conventionally represented as 0-255, but interpretation is up to the renderer.
+    Clay_BorderWidth width; // Controls the widths of individual borders. At least one of these should be > 0 for a BORDER render command to be generated.
 } Clay_BorderElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);
@@ -508,17 +588,18 @@ typedef struct {
 } Clay_PointerData;
 
 typedef struct {
-    Clay_ElementId id;
-    Clay_LayoutConfig layout;
-    Clay_Color backgroundColor;
-    Clay_CornerRadius cornerRadius;
-    Clay_ImageElementConfig image;
+    Clay_ElementId id; // Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros. Represents a hashed string ID used for identifying and finding specific clay UI elements, required by functions such as Clay_PointerOver() and Clay_GetElementData().
+    Clay_LayoutConfig layout; // Controls various settings that affect the size and position of an element, as well as the sizes and positions of any child elements.
+    Clay_Color backgroundColor; // Controls the background color of the resulting element. By convention specified as 0-255, but interpretation is up to the renderer. If no other config is specified, .backgroundColor will generate a RECTANGLE render command, otherwise it will be passed as a property to IMAGE or CUSTOM render commands.
+    Clay_CornerRadius cornerRadius; // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
+    Clay_ImageElementConfig image; // Controls settings related to image elements.
+    // Controls whether and how an element "floats", which means it layers over the top of other elements in z order, and doesn't affect the position and size of siblings or parent elements.
+    // Note: in order to activate floating, .floating.attachTo must be set to something other than the default value.
     Clay_FloatingElementConfig floating;
-    Clay_CustomElementConfig custom;
-    Clay_ScrollElementConfig scroll;
-    Clay_BorderElementConfig border;
-    // A pointer that will be transparently passed through to resulting render commands.
-    void *userData;
+    Clay_CustomElementConfig custom; // Used to create CUSTOM render commands, usually to render element types not supported by Clay.
+    Clay_ScrollElementConfig scroll; // Controls whether an element should clip its contents and allow scrolling rather than expanding to contain them.
+    Clay_BorderElementConfig border; // Controls settings related to element borders, and will generate BORDER render commands.
+    void *userData; // A pointer that will be transparently passed through to resulting render commands.
 } Clay_ElementDeclaration;
 
 CLAY__WRAPPER_STRUCT(Clay_ElementDeclaration);
@@ -616,66 +697,68 @@ Clay_Color Clay__Color_DEFAULT = CLAY__DEFAULT_STRUCT;
 Clay_CornerRadius Clay__CornerRadius_DEFAULT = CLAY__DEFAULT_STRUCT;
 Clay_BorderWidth Clay__BorderWidth_DEFAULT = CLAY__DEFAULT_STRUCT;
 
-#define CLAY__ARRAY_DEFINE_FUNCTIONS(typeName, arrayName) \
-\
-typedef struct \
-{ \
-    int32_t length; \
-    typeName *internalArray; \
-} arrayName##Slice;           \
-                                     \
-typeName typeName##_DEFAULT = CLAY__DEFAULT_STRUCT; \
-                                     \
-arrayName arrayName##_Allocate_Arena(int32_t capacity, Clay_Arena *arena) { \
-    return CLAY__INIT(arrayName){.capacity = capacity, .length = 0, .internalArray = (typeName *)Clay__Array_Allocate_Arena(capacity, sizeof(typeName), arena)}; \
-} \
-                                     \
-typeName *arrayName##_Get(arrayName *array, int32_t index) { \
-    return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &typeName##_DEFAULT; \
-}                                               \
-\
-typeName arrayName##_GetValue(arrayName *array, int32_t index) { \
-    return Clay__Array_RangeCheck(index, array->length) ? array->internalArray[index] : typeName##_DEFAULT; \
-}                                               \
-                                                \
-typeName *arrayName##_Add(arrayName *array, typeName item) { \
-    if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) { \
-        array->internalArray[array->length++] = item; \
-        return &array->internalArray[array->length - 1]; \
-    } \
-    return &typeName##_DEFAULT; \
-}                                               \
-                                                \
-typeName *arrayName##Slice_Get(arrayName##Slice *slice, int32_t index) { \
-    return Clay__Array_RangeCheck(index, slice->length) ? &slice->internalArray[index] : &typeName##_DEFAULT; \
-}                                               \
-\
-typeName arrayName##_RemoveSwapback(arrayName *array, int32_t index) {\
-	if (Clay__Array_RangeCheck(index, array->length)) {\
-		array->length--; \
-		typeName removed = array->internalArray[index]; \
-		array->internalArray[index] = array->internalArray[array->length]; \
-		return removed; \
-	} \
-	return typeName##_DEFAULT; \
-} \
-\
-void arrayName##_Set(arrayName *array, int32_t index, typeName value) { \
-	if (Clay__Array_RangeCheck(index, array->capacity)) { \
-		array->internalArray[index] = value; \
-		array->length = index < array->length ? array->length : index + 1; \
-	} \
-}                                                         \
+// The below functions define array bounds checking and convenience functions for a provided type.
+#define CLAY__ARRAY_DEFINE_FUNCTIONS(typeName, arrayName)                                                       \
+                                                                                                                \
+typedef struct                                                                                                  \
+{                                                                                                               \
+    int32_t length;                                                                                             \
+    typeName *internalArray;                                                                                    \
+} arrayName##Slice;                                                                                             \
+                                                                                                                \
+typeName typeName##_DEFAULT = CLAY__DEFAULT_STRUCT;                                                             \
+                                                                                                                \
+arrayName arrayName##_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {                                     \
+    return CLAY__INIT(arrayName){.capacity = capacity, .length = 0,                                             \
+        .internalArray = (typeName *)Clay__Array_Allocate_Arena(capacity, sizeof(typeName), arena)};            \
+}                                                                                                               \
+                                                                                                                \
+typeName *arrayName##_Get(arrayName *array, int32_t index) {                                                    \
+    return Clay__Array_RangeCheck(index, array->length) ? &array->internalArray[index] : &typeName##_DEFAULT;   \
+}                                                                                                               \
+                                                                                                                \
+typeName arrayName##_GetValue(arrayName *array, int32_t index) {                                                \
+    return Clay__Array_RangeCheck(index, array->length) ? array->internalArray[index] : typeName##_DEFAULT;     \
+}                                                                                                               \
+                                                                                                                \
+typeName *arrayName##_Add(arrayName *array, typeName item) {                                                    \
+    if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {                                         \
+        array->internalArray[array->length++] = item;                                                           \
+        return &array->internalArray[array->length - 1];                                                        \
+    }                                                                                                           \
+    return &typeName##_DEFAULT;                                                                                 \
+}                                                                                                               \
+                                                                                                                \
+typeName *arrayName##Slice_Get(arrayName##Slice *slice, int32_t index) {                                        \
+    return Clay__Array_RangeCheck(index, slice->length) ? &slice->internalArray[index] : &typeName##_DEFAULT;   \
+}                                                                                                               \
+                                                                                                                \
+typeName arrayName##_RemoveSwapback(arrayName *array, int32_t index) {                                          \
+	if (Clay__Array_RangeCheck(index, array->length)) {                                                         \
+		array->length--;                                                                                        \
+		typeName removed = array->internalArray[index];                                                         \
+		array->internalArray[index] = array->internalArray[array->length];                                      \
+		return removed;                                                                                         \
+	}                                                                                                           \
+	return typeName##_DEFAULT;                                                                                  \
+}                                                                                                               \
+                                                                                                                \
+void arrayName##_Set(arrayName *array, int32_t index, typeName value) {                                         \
+	if (Clay__Array_RangeCheck(index, array->capacity)) {                                                       \
+		array->internalArray[index] = value;                                                                    \
+		array->length = index < array->length ? array->length : index + 1;                                      \
+	}                                                                                                           \
+}                                                                                                               \
 
-#define CLAY__ARRAY_DEFINE(typeName, arrayName)  \
-typedef struct                                   \
-{                                                \
-    int32_t capacity;                            \
-    int32_t length;                              \
-    typeName *internalArray;                     \
-} arrayName;                                     \
-                                                 \
-CLAY__ARRAY_DEFINE_FUNCTIONS(typeName, arrayName) \
+#define CLAY__ARRAY_DEFINE(typeName, arrayName)     \
+typedef struct                                      \
+{                                                   \
+    int32_t capacity;                               \
+    int32_t length;                                 \
+    typeName *internalArray;                        \
+} arrayName;                                        \
+                                                    \
+CLAY__ARRAY_DEFINE_FUNCTIONS(typeName, arrayName)   \
 
 Clay_Context *Clay__currentContext;
 int32_t Clay__defaultMaxElementCount = 8192;
@@ -708,6 +791,14 @@ typedef struct {
     Clay__Warning *internalArray;
 } Clay__WarningArray;
 
+typedef struct {
+    Clay_Color backgroundColor;
+    Clay_CornerRadius cornerRadius;
+    void* userData;
+} Clay_SharedElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_SharedElementConfig);
+
 Clay__WarningArray Clay__WarningArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena);
 Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning item);
 void* Clay__Array_Allocate_Arena(int32_t capacity, uint32_t itemSize, Clay_Arena *arena);
@@ -728,6 +819,17 @@ CLAY__ARRAY_DEFINE(Clay_BorderElementConfig, Clay__BorderElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_String, Clay__StringArray)
 CLAY__ARRAY_DEFINE(Clay_SharedElementConfig, Clay__SharedElementConfigArray)
 CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_RenderCommand, Clay_RenderCommandArray)
+
+typedef CLAY_PACKED_ENUM {
+    CLAY__ELEMENT_CONFIG_TYPE_NONE,
+    CLAY__ELEMENT_CONFIG_TYPE_BORDER,
+    CLAY__ELEMENT_CONFIG_TYPE_FLOATING,
+    CLAY__ELEMENT_CONFIG_TYPE_SCROLL,
+    CLAY__ELEMENT_CONFIG_TYPE_IMAGE,
+    CLAY__ELEMENT_CONFIG_TYPE_TEXT,
+    CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
+    CLAY__ELEMENT_CONFIG_TYPE_SHARED,
+} Clay__ElementConfigType;
 
 typedef union {
     Clay_TextElementConfig *textElementConfig;
