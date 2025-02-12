@@ -2,6 +2,7 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3_image/SDL_image.h>
 
 typedef struct {
     SDL_Renderer *renderer;
@@ -140,12 +141,14 @@ static void SDL_Clay_RenderArc(Clay_SDL3RendererData *rendererData, const SDL_FP
     }
 }
 
+SDL_Rect currentClippingRectangle;
+
 static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Clay_RenderCommandArray *rcommands)
 {
     for (size_t i = 0; i < rcommands->length; i++) {
         Clay_RenderCommand *rcmd = Clay_RenderCommandArray_Get(rcommands, i);
         const Clay_BoundingBox bounding_box = rcmd->boundingBox;
-        const SDL_FRect rect = { bounding_box.x, bounding_box.y, bounding_box.width, bounding_box.height };
+        const SDL_FRect rect = { (int)bounding_box.x, (int)bounding_box.y, (int)bounding_box.width, (int)bounding_box.height };
 
         switch (rcmd->commandType) {
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
@@ -231,6 +234,30 @@ static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Cla
                 }
 
             } break;
+            case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
+                Clay_BoundingBox boundingBox = rcmd->boundingBox;
+                currentClippingRectangle = (SDL_Rect) {
+                        .x = boundingBox.x,
+                        .y = boundingBox.y,
+                        .w = boundingBox.width,
+                        .h = boundingBox.height,
+                };
+                SDL_SetRenderClipRect(rendererData->renderer, &currentClippingRectangle);
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
+                SDL_SetRenderClipRect(rendererData->renderer, NULL);
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
+                SDL_Surface *image = (SDL_Surface *)rcmd->renderData.image.imageData;
+                SDL_Texture *texture = SDL_CreateTextureFromSurface(rendererData->renderer, image);
+                const SDL_FRect dest = { rect.x, rect.y, rect.w, rect.h };
+
+                SDL_RenderTexture(rendererData->renderer, texture, NULL, &dest);
+                SDL_DestroyTexture(texture);
+                break;
+            }
             default:
                 SDL_Log("Unknown render command type: %d", rcmd->commandType);
         }

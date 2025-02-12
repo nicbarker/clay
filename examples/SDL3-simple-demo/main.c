@@ -23,6 +23,8 @@ typedef struct app_state {
     ClayVideoDemo_Data demoData;
 } AppState;
 
+SDL_Surface *sample_image;
+
 static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData)
 {
     TTF_Font **fonts = userData;
@@ -80,6 +82,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
     }
 
     state->rendererData.fonts[FONT_ID] = font;
+
+    sample_image = IMG_Load("resources/sample.png");
 
     /* Initialize Clay */
     uint64_t totalMemorySize = Clay_MinMemorySize();
