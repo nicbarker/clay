@@ -14,7 +14,7 @@ set(FETCHCONTENT_QUIET FALSE)
 FetchContent_Declare(
 	SDL
 	GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-	GIT_TAG preview-3.1.6
+	GIT_TAG release-3.2.4
 	GIT_SHALLOW TRUE
 	GIT_PROGRESS TRUE
 )
@@ -38,7 +38,7 @@ set_property(DIRECTORY "${sdl_ttf_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
 FetchContent_Declare(
 	SDL_image
 	GIT_REPOSITORY "https://github.com/libsdl-org/SDL_image.git"
-	GIT_TAG main # Slightly risky to use main branch, but it's the only one available
+	GIT_TAG release-3.2.0 # Slightly risky to use main branch, but it's the only one available
 	GIT_SHALLOW TRUE
 	GIT_PROGRESS TRUE
 )
