@@ -3,7 +3,7 @@
 
 double windowWidth = 1024, windowHeight = 768;
 float modelPageOneZRotation = 0;
-uint32_t ACTIVE_RENDERER_INDEX = 1;
+uint32_t ACTIVE_RENDERER_INDEX = 0;
 
 const uint32_t FONT_ID_BODY_16 = 0;
 const uint32_t FONT_ID_TITLE_56 = 1;
