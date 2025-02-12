@@ -96,6 +96,12 @@ TextWrapMode :: enum EnumBackingType {
     None,
 }
 
+TextAlignment :: enum EnumBackingType {
+    Left,
+    Center,
+    Right,
+}
+
 TextElementConfig :: struct {
     textColor:          Color,
     fontId:             u16,
@@ -103,6 +109,7 @@ TextElementConfig :: struct {
     letterSpacing:      u16,
     lineHeight:         u16,
     wrapMode:           TextWrapMode,
+    textAlignment:      TextAlignment,
     hashStringContents: bool,
 }
 

@@ -3346,7 +3346,7 @@ void Clay__RenderDebugView(void) {
                                 // .letterSpacing
                                 CLAY_TEXT(CLAY_STRING("Letter Spacing"), infoTitleConfig);
                                 CLAY_TEXT(Clay__IntToString(textConfig->letterSpacing), infoTextConfig);
-                                // .lineSpacing
+                                // .wrapMode
                                 CLAY_TEXT(CLAY_STRING("Wrap Mode"), infoTitleConfig);
                                 Clay_String wrapMode = CLAY_STRING("WORDS");
                                 if (textConfig->wrapMode == CLAY_TEXT_WRAP_NONE) {
@@ -3355,6 +3355,15 @@ void Clay__RenderDebugView(void) {
                                     wrapMode = CLAY_STRING("NEWLINES");
                                 }
                                 CLAY_TEXT(wrapMode, infoTextConfig);
+                                // .textAlignment
+                                CLAY_TEXT(CLAY_STRING("Text Alignment"), infoTitleConfig);
+                                Clay_String textAlignment = CLAY_STRING("LEFT");
+                                if (textConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
+                                    textAlignment = CLAY_STRING("CENTER");
+                                } else if (textConfig->textAlignment == CLAY_TEXT_ALIGN_RIGHT) {
+                                    textAlignment = CLAY_STRING("RIGHT");
+                                }
+                                CLAY_TEXT(textAlignment, infoTextConfig);
                                 // .textColor
                                 CLAY_TEXT(CLAY_STRING("Text Color"), infoTitleConfig);
                                 Clay__RenderDebugViewColor(textConfig->textColor, infoTextConfig);
