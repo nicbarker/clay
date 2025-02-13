@@ -1598,6 +1598,25 @@ bool Clay__ElementHasConfig(Clay_LayoutElement *layoutElement, Clay__ElementConf
     return false;
 }
 
+void Clay__UpdateAspectRatioBox(Clay_LayoutElement *layoutElement) {
+    for (int32_t j = 0; j < layoutElement->elementConfigs.length; j++) {
+        Clay_ElementConfig *config = Clay__ElementConfigArraySlice_Get(&layoutElement->elementConfigs, j);
+        if (config->type == CLAY__ELEMENT_CONFIG_TYPE_IMAGE) {
+            Clay_ImageElementConfig *imageConfig = config->config.imageElementConfig;
+            if (imageConfig->sourceDimensions.width == 0 || imageConfig->sourceDimensions.height == 0) {
+                break;
+            }
+            float aspect = imageConfig->sourceDimensions.width / imageConfig->sourceDimensions.height;
+            if (layoutElement->dimensions.width == 0 && layoutElement->dimensions.height != 0) {
+                layoutElement->dimensions.width = layoutElement->dimensions.height * aspect;
+            } else if (layoutElement->dimensions.width != 0 && layoutElement->dimensions.height == 0) {
+                layoutElement->dimensions.height = layoutElement->dimensions.height * (1 / aspect);
+            }
+            break;
+        }
+    }
+}
+
 void Clay__CloseElement(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->booleanWarnings.maxElementsExceeded) {
@@ -1683,6 +1702,8 @@ void Clay__CloseElement(void) {
     } else {
         openLayoutElement->dimensions.height = 0;
     }
+
+    Clay__UpdateAspectRatioBox(openLayoutElement);
 
     bool elementIsFloating = Clay__ElementHasConfig(openLayoutElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING);
 
@@ -2125,6 +2146,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                     if (sizingAlongAxis) {
                         innerContentSize += *childSize;
                     }
+                    Clay__UpdateAspectRatioBox(childElement);
                 }
             }
 
