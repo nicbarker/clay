@@ -764,11 +764,11 @@ typedef struct {
     void *userData;
 } Clay_ErrorHandler;
 
-CLAY__TYPEDEF(Clay_PointQueryResult, struct
+typedef struct
 {
     int32_t length;
     const Clay_ElementId *results;
-});
+} Clay_PointQueryResult;
 
 // Function Forward Declarations ---------------------------------
 
@@ -3728,7 +3728,7 @@ Clay_PointQueryResult Clay_GetElementIdsAtPoint(Clay_Vector2 position) {
                 continue;
             }
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
-            Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1));
+            Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&dfsBuffer, (int)dfsBuffer.length - 1));
             Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO think of a way around this, maybe the fact that it's essentially a binary tree limits the cost, but the worst case is not great
             Clay_BoundingBox elementBox = mapItem->boundingBox;
             elementBox.x -= root->pointerOffset.x;
@@ -3752,8 +3752,8 @@ Clay_PointQueryResult Clay_GetElementIdsAtPoint(Clay_Vector2 position) {
         }
 
         Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&context->layoutElements, root->layoutElementIndex);
-        if (found && Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER) &&
-                Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING_CONTAINER).floatingElementConfig->pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_CAPTURE) {
+        if (found && Clay__ElementHasConfig(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING) &&
+                Clay__FindElementConfigWithType(rootElement, CLAY__ELEMENT_CONFIG_TYPE_FLOATING).floatingElementConfig->pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_CAPTURE) {
             break;
         }
     }
