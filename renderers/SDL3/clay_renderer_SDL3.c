@@ -153,6 +153,7 @@ static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Cla
         switch (rcmd->commandType) {
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                 Clay_RectangleRenderData *config = &rcmd->renderData.rectangle;
+                SDL_SetRenderDrawBlendMode(rendererData->renderer, SDL_BLENDMODE_BLEND);
                 SDL_SetRenderDrawColor(rendererData->renderer, config->backgroundColor.r, config->backgroundColor.g, config->backgroundColor.b, config->backgroundColor.a);
                 if (config->cornerRadius.topLeft > 0) {
                     SDL_Clay_RenderFillRoundedRect(rendererData, rect, config->cornerRadius.topLeft, config->backgroundColor);
