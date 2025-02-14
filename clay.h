@@ -29,11 +29,11 @@
 #define CLAY_HEADER
 
 #if !( \
-    (defined(__cplusplus) && __cplusplus >= 202002L) || \
+    (defined(__cplusplus) && __cplusplus >= 201103L) || \
     (defined(__STDC__) && __STDC__ == 1 && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
     defined(_MSC_VER) \
 )
-#error "Clay requires C99, C++20, or MSVC"
+#error "Clay requires at least C99, C++11, or MSVC"
 #endif
 
 #ifdef CLAY_WASM
