@@ -177,6 +177,7 @@ For help starting out or to discuss clay, considering joining [the discord serve
     - [Clay_PointerOver](#clay_pointerover)
     - [Clay_GetScrollContainerData](#clay_getscrollcontainerdata)
     - [Clay_GetElementId](#clay_getelementid)
+    - [Clay_GetElementIdsAtPoint](#clay_getelementidsatpoint)
   - [Element Macros](#element-macros)
     - [CLAY](#clay-1)
     - [CLAY_ID](#clay_id)
@@ -197,6 +198,7 @@ For help starting out or to discuss clay, considering joining [the discord serve
     - [Clay_ScrollContainerData](#clay_scrollcontainerdata)
     - [Clay_ErrorHandler](#clay_errorhandler)
     - [Clay_ErrorData](#clay_errordata)
+    - [Clay_PointQueryResult](#clay_pointqueryresult)
 
 ## High Level Documentation
 
@@ -727,6 +729,14 @@ Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll con
 `Clay_ElementId Clay_GetElementId(Clay_String idString)`
 
 Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for querying element info such as mouseover state, scroll container data, etc.
+
+### Clay_GetElementIdsAtPoint
+
+`Clay_PointQueryResult Clay_GetElementIdsAtPoint(Clay_Vector2 position)`
+
+Returns a [Clay_PointQueryResult](#clay_pointqueryresult) that contains a sorted stack of element ids at the specified position. This allows querying elements similar to [Clay_SetPointerState](#clay_setpointerstate), but without triggering hover functions or affecting hover states.
+
+> ⚠️ The returned Clay_PointQueryResult object becomes invalid the next time you call `Clay_GetElementIdsAtPoint`. If you need to call this multiple times in a frame, you will need to copy the data out of the Clay_PointQueryResult struct.
 
 ## Element Macros
 
@@ -2127,5 +2137,29 @@ A [Clay_String](#clay_string) that provides a human readable description of the 
 **`.userData`** - `uintptr_t`
 
 A generic pointer to extra userdata that is transparently passed through from `Clay_Initialize` to Clay's error handler callback. Defaults to NULL.
+
+---
+
+### Clay_PointQueryResult
+
+```C
+typedef struct
+{
+    int32t length;
+    const Clay_ElementId *results;
+} Clay_PointQueryResult;
+```
+
+**Fields**
+
+**`.length`** - `int32_t`
+
+The number of element ids contained in `.results`.
+
+---
+
+**`.results`** - `Clay_ElementId*`
+
+A pointer to a sorted array of `.length` [Clay_ElementIds](#clay_elementid), starting with the root element.
 
 ---
