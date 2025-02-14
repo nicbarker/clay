@@ -736,7 +736,9 @@ Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for
 
 Returns a [Clay_PointQueryResult](#clay_pointqueryresult) that contains a sorted stack of element ids at the specified position. This allows querying elements similar to [Clay_SetPointerState](#clay_setpointerstate), but without triggering hover functions or affecting hover states.
 
-> ⚠️ The returned Clay_PointQueryResult object becomes invalid the next time you call `Clay_GetElementIdsAtPoint`. If you need to call this multiple times in a frame, you will need to copy the data out of the Clay_PointQueryResult struct.
+> ⚠️ This should not be called between BeginLayout and EndLayout, because layout data will be in flux. It is recommended to call this function before BeginLayout.
+
+> ⚠️ The returned Clay_PointQueryResult object becomes invalid the next time `Clay_GetElementIdsAtPoint` is called. If you need to call this multiple times in a frame, you must copy the data out of the Clay_PointQueryResult struct between calls.
 
 ## Element Macros
 
