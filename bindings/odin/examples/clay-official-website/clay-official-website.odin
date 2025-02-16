@@ -509,12 +509,12 @@ main :: proc() {
     loadFont(FONT_ID_BODY_24, 24, "resources/Quicksand-Semibold.ttf")
     loadFont(FONT_ID_BODY_16, 16, "resources/Quicksand-Semibold.ttf")
 
-    syntaxImage = raylib.LoadTextureFromImage(raylib.LoadImage("resources/declarative.png"))
-    checkImage1 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_1.png"))
-    checkImage2 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_2.png"))
-    checkImage3 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_3.png"))
-    checkImage4 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_4.png"))
-    checkImage5 = raylib.LoadTextureFromImage(raylib.LoadImage("resources/check_5.png"))
+    syntaxImage = raylib.LoadTexture("resources/declarative.png")
+    checkImage1 = raylib.LoadTexture("resources/check_1.png")
+    checkImage2 = raylib.LoadTexture("resources/check_2.png")
+    checkImage3 = raylib.LoadTexture("resources/check_3.png")
+    checkImage4 = raylib.LoadTexture("resources/check_4.png")
+    checkImage5 = raylib.LoadTexture("resources/check_5.png")
 
     debugModeEnabled: bool = false
 
