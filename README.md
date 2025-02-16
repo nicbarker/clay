@@ -722,6 +722,15 @@ Returns [Clay_ScrollContainerData](#clay_scrollcontainerdata) for the scroll con
 
 ---
 
+### Clay_GetElementData
+
+`Clay_ElementData Clay_GetElementData(Clay_ElementId id)`
+
+Returns [Clay_ElementData](#clay_elementdata) for the element matching the provided ID.
+Used to retrieve information about elements such as their final calculated bounding box.
+
+---
+
 ### Clay_GetElementId
 
 `Clay_ElementId Clay_GetElementId(Clay_String idString)`
@@ -1967,14 +1976,32 @@ typedef union {
 ### Clay_ScrollContainerData
 
 ```C
-typedef struct
-{
+// Data representing the current internal state of a scrolling element.
+typedef struct {
+    // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
+    // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
     Clay_Vector2 *scrollPosition;
+    // The bounding box of the scroll element.
     Clay_Dimensions scrollContainerDimensions;
+    // The outer dimensions of the inner scroll container content, including the padding of the parent scroll container.
     Clay_Dimensions contentDimensions;
+    // The config that was originally passed to the scroll element.
     Clay_ScrollElementConfig config;
+    // Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
     bool found;
 } Clay_ScrollContainerData;
+```
+
+### Clay_ElementData
+
+```C
+// Bounding box and other data for a specific UI element.
+typedef struct {
+    // The rectangle that encloses this UI element, with the position relative to the root of the layout.
+    Clay_BoundingBox boundingBox;
+    // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
+    bool found;
+} Clay_ElementData;
 ```
 
 **Fields**
