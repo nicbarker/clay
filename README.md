@@ -1240,7 +1240,7 @@ Used to perform **aspect ratio scaling** on the image element. As of this versio
 
 ```C
 // Load an image somewhere in your code
-Image profilePicture = LoadImage("profilePicture.png");
+Texture profilePicture = LoadTexture("profilePicture.png");
 // Note that when rendering, .imageData will be void* type.
 CLAY({ .image = { .imageData = &profilePicture, .sourceDimensions = { 60, 60 } } }) {}
 ```
@@ -1249,7 +1249,7 @@ CLAY({ .image = { .imageData = &profilePicture, .sourceDimensions = { 60, 60 } }
 
 ```C
 // Load an image somewhere in your code
-Image profilePicture = LoadImage("profilePicture.png");
+Texture profilePicture = LoadTexture("profilePicture.png");
 // Declare a reusable image config
 Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture, .sourceDimensions = {60, 60} };
 // Declare an image element using a reusable config
@@ -1257,7 +1257,7 @@ CLAY({ .image = imageConfig }) {}
 // Declare an image element using an inline config
 CLAY({ .image = { .imageData = &profilePicture, .sourceDimensions = {60, 60} } }) {}
 // Rendering example
-Image *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
+Texture *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
 ```
 
 **Rendering**
