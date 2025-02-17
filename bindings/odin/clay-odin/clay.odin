@@ -240,6 +240,23 @@ ScrollContainerData :: struct {
     found:                     bool,
 }
 
+ElementData :: struct {
+    boundingBox: BoundingBox,
+    found:       bool,
+}
+
+PointerDataInteractionState :: enum EnumBackingType {
+    PressedThisFrame,
+    Pressed,
+    ReleasedThisFrame,
+    Released,
+}
+
+PointerData :: struct {
+    position: Vector2,
+    state:    PointerDataInteractionState,
+}
+
 SizingType :: enum EnumBackingType {
     Fit,
     Grow,
@@ -353,20 +370,31 @@ foreign Clay {
     MinMemorySize :: proc() -> u32 ---
     CreateArenaWithCapacityAndMemory :: proc(capacity: u32, offset: [^]u8) -> Arena ---
     SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
-    Initialize :: proc(arena: Arena, layoutDimensions: Dimensions, errorHandler: ErrorHandler) ---
+    Initialize :: proc(arena: Arena, layoutDimensions: Dimensions, errorHandler: ErrorHandler) -> ^Context ---
+    GetCurrentContext :: proc() -> ^Context ---
+    SetCurrentContext :: proc(ctx: ^Context) ---
     UpdateScrollContainers :: proc(enableDragScrolling: bool, scrollDelta: Vector2, deltaTime: c.float) ---
     SetLayoutDimensions :: proc(dimensions: Dimensions) ---
     BeginLayout :: proc() ---
     EndLayout :: proc() -> ClayArray(RenderCommand) ---
-    Hovered :: proc() -> bool ---
-    PointerOver :: proc(id: ElementId) -> bool ---
     GetElementId :: proc(id: String) -> ElementId ---
+    GetElementIdWithIndex :: proc(id: String, index: u32) -> ElementId ---
+    GetElementData :: proc(id: ElementId) -> ElementData ---
+    Hovered :: proc() -> bool ---
+    OnHover :: proc(onHoverFunction: proc "c" (id: ElementId, pointerData: PointerData, userData: rawptr), userData: rawptr) ---
+    PointerOver :: proc(id: ElementId) -> bool ---
     GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
-    SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: StringSlice, config: ^TextElementConfig, userData: uintptr) -> Dimensions, userData: uintptr) ---
+    SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: StringSlice, config: ^TextElementConfig, userData: rawptr) -> Dimensions, userData: rawptr) ---
+    SetQueryScrollOffsetFunction :: proc(queryScrollOffsetFunction: proc "c" (elementId: u32, userData: rawptr) -> Vector2, userData: rawptr) ---
     RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: i32) -> ^RenderCommand ---
     SetDebugModeEnabled :: proc(enabled: bool) ---
-    GetCurrentContext :: proc() -> ^Context ---
-    SetCurrentContext :: proc(ctx: ^Context) ---
+    IsDebugModeEnabled :: proc() -> bool ---
+    SetCullingEnabled :: proc(enabled: bool) ---
+    GetMaxElementCount :: proc() -> i32 ---
+    SetMaxElementCount :: proc(maxElementCount: i32) ---
+    GetMaxMeasureTextCacheWordCount :: proc() -> i32 ---
+    SetMaxMeasureTextCacheWordCount :: proc(maxMeasureTextCacheWordCount: i32) ---
+    ResetMeasureTextCache :: proc() ---
 }
 
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
@@ -374,10 +402,10 @@ foreign Clay {
     _OpenElement :: proc() ---
     _ConfigureOpenElement :: proc(config: ElementDeclaration) ---
     _CloseElement :: proc() ---
+    _HashString :: proc(key: String, offset: u32, seed: u32) -> ElementId ---
     _OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
     _StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
-    _HashString :: proc(toHash: String, index: u32, seed: u32) -> ElementId ---
-    _GetOpenLayoutElementId :: proc() -> u32 ---
+    _GetParentElementId :: proc() -> u32 ---
 }
 
 ClayOpenElement :: struct {
