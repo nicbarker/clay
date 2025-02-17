@@ -1918,7 +1918,7 @@ void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
                     .clipElementId = clipElementId,
                     .zIndex = floatingConfig.zIndex,
             });
-            Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(declaration.floating) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING);
+            Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .floatingElementConfig = Clay__StoreFloatingElementConfig(floatingConfig) }, CLAY__ELEMENT_CONFIG_TYPE_FLOATING);
         }
     }
     if (declaration.custom.customData) {
