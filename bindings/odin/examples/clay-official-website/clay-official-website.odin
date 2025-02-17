@@ -493,7 +493,7 @@ main :: proc() {
     memory := make([^]u8, minMemorySize)
     arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
     clay.Initialize(arena, {cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()}, { handler = errorHandler })
-    clay.SetMeasureTextFunction(measureText, 0)
+    clay.SetMeasureTextFunction(measureText, nil)
 
     raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE, .WINDOW_HIGHDPI, .MSAA_4X_HINT})
     raylib.InitWindow(windowWidth, windowHeight, "Raylib Odin Example")
