@@ -357,6 +357,8 @@ typedef CLAY_PACKED_ENUM {
 
 // Controls various functionality related to text elements.
 typedef struct {
+    // A pointer that will be transparently passed through to the resulting render command.
+    void *userData;
     // The RGBA color of the font to render, conventionally specified as 0-255.
     Clay_Color textColor;
     // An integer transparently passed to Clay_MeasureText to identify the font to use.
@@ -2692,7 +2694,7 @@ void Clay__CalculateFinalLayout(void) {
                                         .letterSpacing = textElementConfig->letterSpacing,
                                         .lineHeight = textElementConfig->lineHeight,
                                     }},
-                                    .userData = sharedConfig->userData,
+                                    .userData = textElementConfig->userData,
                                     .id = Clay__HashNumber(lineIndex, currentElement->id).id,
                                     .zIndex = root->zIndex,
                                     .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
