@@ -1,7 +1,6 @@
 package clay
 
 import "core:c"
-import "core:strings"
 
 when ODIN_OS == .Windows {
     foreign import Clay "windows/clay.lib"
@@ -176,7 +175,7 @@ FloatingElementConfig :: struct {
     zIndex:             i32,
     attachment:         FloatingAttachPoints,
     pointerCaptureMode: PointerCaptureMode,
-    attachTo:           FloatingAttachToElement
+    attachTo:           FloatingAttachToElement,
 }
 
 TextRenderData :: struct {
@@ -338,7 +337,7 @@ ElementDeclaration :: struct {
     custom: CustomElementConfig,
     scroll: ScrollElementConfig,
     border: BorderElementConfig,
-    userData: rawptr
+    userData: rawptr,
 }
 
 ErrorType :: enum EnumBackingType {
@@ -355,12 +354,12 @@ ErrorType :: enum EnumBackingType {
 ErrorData :: struct {
     errorType: ErrorType,
     errorText: String,
-    userData: rawptr
+    userData: rawptr,
 }
 
 ErrorHandler :: struct {
     handler: proc "c" (errorData: ErrorData),
-    userData: rawptr
+    userData: rawptr,
 }
 
 Context :: struct {} // opaque structure, only use as a pointer
@@ -409,12 +408,12 @@ foreign Clay {
 }
 
 ClayOpenElement :: struct {
-    configure: proc (config: ElementDeclaration) -> bool
+    configure: proc (config: ElementDeclaration) -> bool,
 }
 
 ConfigureOpenElement :: proc(config: ElementDeclaration) -> bool {
     _ConfigureOpenElement(config)
-    return true;
+    return true
 }
 
 @(deferred_none = _CloseElement)
