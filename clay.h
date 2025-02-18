@@ -1443,7 +1443,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         measured = Clay__MeasureTextCacheItemArray_Get(&context->measureTextHashMapInternal, newItemIndex);
     } else {
         if (context->measureTextHashMapInternal.length == context->measureTextHashMapInternal.capacity - 1) {
-            if (context->booleanWarnings.maxTextMeasureCacheExceeded) {
+            if (!context->booleanWarnings.maxTextMeasureCacheExceeded) {
                 context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
                         .errorType = CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED,
                         .errorText = CLAY_STRING("Clay ran out of capacity while attempting to measure text elements. Try using Clay_SetMaxElementCount() with a higher value."),
