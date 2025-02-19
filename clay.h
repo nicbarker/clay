@@ -3589,7 +3589,7 @@ uint32_t Clay_MinMemorySize(void) {
     Clay_Context* currentContext = Clay_GetCurrentContext();
     if (currentContext) {
         fakeContext.maxElementCount = currentContext->maxElementCount;
-        fakeContext.maxMeasureTextCacheWordCount = currentContext->maxElementCount;
+        fakeContext.maxMeasureTextCacheWordCount = currentContext->maxMeasureTextCacheWordCount;
     }
     // Reserve space in the arena for the context, important for calculating min memory size correctly
     Clay__Context_Allocate_Arena(&fakeContext.internalArena);
