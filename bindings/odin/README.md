@@ -22,7 +22,7 @@ CLAY({ .id = CLAY_ID("Outer"), .layout = { .padding = CLAY_PADDING_ALL(16) } }) 
 ```Odin
 // Odin form of element macros
 if clay.UI({ id = clay.ID("Outer"), layout = { padding = clay.PaddingAll(16) }}) {
-	// Child elements here
+    // Child elements here
 }
 ```
 
@@ -48,22 +48,22 @@ clay.Initialize(arena)
 ```Odin
 // Example measure text function
 measure_text :: proc "c" (
-	text: clay.StringSlice,
-	config: ^clay.TextElementConfig,
-	userData: rawptr,
+    text: clay.StringSlice,
+    config: ^clay.TextElementConfig,
+    userData: rawptr,
 ) -> clay.Dimensions {
     // clay.TextElementConfig contains members such as fontId, fontSize, letterSpacing, etc..
     // Note: clay.String->chars is not guaranteed to be null terminated
     return {
-		width = f32(text.length * i32(config.fontSize)),
-		height = f32(config.fontSize),
+        width = f32(text.length * i32(config.fontSize)),
+        height = f32(config.fontSize),
     }
 }
 
 
 // Tell clay how to measure text
 clay.SetMeasureTextFunction(measure_text, nil)
-``` 
+```
 
 4. **Optional** - Call [clay.SetPointerState(pointerPosition, isPointerDown)](https://github.com/nicbarker/clay/blob/main/README.md#clay_setpointerstate) if you want to use mouse interactions.
 
@@ -87,17 +87,17 @@ COLOR_BLACK :: clay.Color{0, 0, 0, 255}
 // Layout config is just a struct that can be declared statically, or inline
 sidebar_item_layout := clay.LayoutConfig {
     sizing = {
-    	width = clay.SizingGrow({}),
-    	height = clay.SizingFixed(50)
+        width = clay.SizingGrow({}),
+        height = clay.SizingFixed(50)
     },
 }
 
 // Re-useable components are just normal procs.
 sidebar_item_component :: proc(index: u32) {
     if clay.UI()({
-    	id = clay.ID("SidebarBlob", index),
-    	layout = sidebar_item_layout,
-    	backgroundColor = COLOR_ORANGE,
+        id = clay.ID("SidebarBlob", index),
+        layout = sidebar_item_layout,
+        backgroundColor = COLOR_ORANGE,
     }) {}
 }
 
@@ -111,51 +111,51 @@ create_layout :: proc() -> clay.ClayArray(clay.RenderCommand) {
     if clay.UI()({
         id = clay.ID("OuterContainer"),
         layout = {
-        	sizing = { width = clay.SizingGrow({}), height = clay.SizingGrow({}) },
-        	padding = { 16, 16, 16, 16 },
-        	childGap = 16,
+            sizing = { width = clay.SizingGrow({}), height = clay.SizingGrow({}) },
+            padding = { 16, 16, 16, 16 },
+            childGap = 16,
         },
         backgroundColor = { 250, 250, 255, 255 },
     }) {
         if clay.UI()({
             id = clay.ID("SideBar"),
             layout = {
-				layoutDirection = .TopToBottom,
-				sizing = { width = clay.SizingFixed(300), height = clay.SizingGrow({}) },
-        		padding = { 16, 16, 16, 16 },
-        		childGap = 16,
+                layoutDirection = .TopToBottom,
+                sizing = { width = clay.SizingFixed(300), height = clay.SizingGrow({}) },
+                padding = { 16, 16, 16, 16 },
+                childGap = 16,
             },
             backgroundColor = COLOR_LIGHT,
         }) {
             if clay.UI()({
                 id = clay.ID("ProfilePictureOuter"),
-            	layout = {
-					sizing = { width = clay.SizingGrow({}) },
-					padding = { 16, 16, 16, 16 },
-					childGap = 16,
-					childAlignment = { y = .Center },
-            	},
+                layout = {
+                    sizing = { width = clay.SizingGrow({}) },
+                    padding = { 16, 16, 16, 16 },
+                    childGap = 16,
+                    childAlignment = { y = .Center },
+                },
                 backgroundColor = COLOR_RED,
-				cornerRadius = { 6, 6, 6, 6 },
+                cornerRadius = { 6, 6, 6, 6 },
             }) {
                 if clay.UI()({
                     id = clay.ID("ProfilePicture"),
                     layout = {
-						sizing = { width = clay.SizingFixed(60), height = clay.SizingFixed(60) },
+                        sizing = { width = clay.SizingFixed(60), height = clay.SizingFixed(60) },
                     },
                     image = {
-						imageData = &profile_picture,
-						sourceDimensions = {
-							width = 60,
-							height = 60,
-						},
+                        imageData = &profile_picture,
+                        sourceDimensions = {
+                            width = 60,
+                            height = 60,
+                        },
                     },
                 }) {}
 
-        		clay.Text(
-        			"Clay - UI Library",
-        			clay.TextConfig({ textColor = COLOR_BLACK, fontSize = 16 }),
-        		)
+                clay.Text(
+                    "Clay - UI Library",
+                    clay.TextConfig({ textColor = COLOR_BLACK, fontSize = 16 }),
+                )
             }
 
             // Standard Odin code like loops, etc. work inside components.
@@ -168,14 +168,14 @@ create_layout :: proc() -> clay.ClayArray(clay.RenderCommand) {
         if clay.UI()({
             id = clay.ID("MainContent"),
             layout = {
-				sizing = { width = clay.SizingGrow({}), height = clay.SizingGrow({}) },
+                sizing = { width = clay.SizingGrow({}), height = clay.SizingGrow({}) },
             },
             backgroundColor = COLOR_LIGHT,
         }) {}
     }
 
     // Returns a list of render commands
-	render_commands: clay.ClayArray(clay.RenderCommand) = clay.EndLayout()
+    render_commands: clay.ClayArray(clay.RenderCommand) = clay.EndLayout()
     return render_commands
 }
 ```
