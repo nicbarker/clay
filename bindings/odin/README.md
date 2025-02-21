@@ -21,7 +21,7 @@ CLAY({ .id = CLAY_ID("Outer"), .layout = { .padding = CLAY_PADDING_ALL(16) } }) 
 
 ```Odin
 // Odin form of element macros
-if clay.UI({ id = clay.ID("Outer"), layout = { padding = clay.PaddingAll(16) }}) {
+if clay.UI()({ id = clay.ID("Outer"), layout = { padding = clay.PaddingAll(16) }}) {
     // Child elements here
 }
 ```
@@ -40,7 +40,7 @@ import clay "clay-odin"
 min_memory_size: u32 = clay.MinMemorySize()
 memory := make([^]u8, min_memory_size)
 arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(min_memory_size, memory)
-clay.Initialize(arena)
+clay.Initialize(arena, { width = 1080, height = 720 }, {})
 ``` 
 
 3. Provide a `measure_text(text, config)` proc "c" with [clay.SetMeasureTextFunction(function)](https://github.com/nicbarker/clay/blob/main/README.md#clay_setmeasuretextfunction) so that Clay can measure and wrap text.
@@ -183,10 +183,10 @@ create_layout :: proc() -> clay.ClayArray(clay.RenderCommand) {
 6. Call your layout proc and process the resulting [clay.ClayArray(clay.RenderCommand)](https://github.com/nicbarker/clay/blob/main/README.md#clay_rendercommandarray) in your choice of renderer.
 
 ```Odin
-render_commands = create_layout()
+render_commands := create_layout()
 
-for i in 0 ..< int(render_commands.length) {
-    render_command := clay.RenderCommandArray_Get(render_commands, cast(i32)i)
+for i in 0..<i32(render_commands.length) {
+    render_command := clay.RenderCommandArray_Get(render_commands, i)
 
     switch render_command.commandType {
     case .Rectangle:
