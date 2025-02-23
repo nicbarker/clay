@@ -339,6 +339,8 @@ typedef CLAY_PACKED_ENUM {
 
 // Controls various functionality related to text elements.
 typedef struct {
+    // A pointer that will be transparently passed through to the resulting render command.
+    void *userData;
     // The RGBA color of the font to render, conventionally specified as 0-255.
     Clay_Color textColor;
     // An integer transparently passed to Clay_MeasureText to identify the font to use.
@@ -360,8 +362,6 @@ typedef struct {
     // CLAY_TEXT_ALIGN_CENTER - Horizontally aligns wrapped lines of text to the center of their bounding box.
     // CLAY_TEXT_ALIGN_RIGHT - Horizontally aligns wrapped lines of text to the right hand side of their bounding box.
     Clay_TextAlignment textAlignment;
-    // A pointer that will be transparently passed through to the resulting render command.
-    void *userData;
     // When set to true, clay will hash the entire text contents of this string as an identifier for its internal
     // text measurement cache, rather than just the pointer and length. This will incur significant performance cost for
     // long bodies of text.
