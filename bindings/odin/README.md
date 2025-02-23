@@ -34,13 +34,17 @@ if clay.UI()({ id = clay.ID("Outer"), layout = { padding = clay.PaddingAll(16) }
 import clay "clay-odin"
 ```
 
-2. Ask Clay for how much static memory it needs using [clay.MinMemorySize()](https://github.com/nicbarker/clay/blob/main/README.md#clay_minmemorysize), create an Arena for it to use with [clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)](https://github.com/nicbarker/clay/blob/main/README.md#clay_createarenawithcapacityandmemory), and initialize it with [clay.Initialize(arena)](https://github.com/nicbarker/clay/blob/main/README.md#clay_initialize).
+2. Ask Clay for how much static memory it needs using [clay.MinMemorySize()](https://github.com/nicbarker/clay/blob/main/README.md#clay_minmemorysize), create an Arena for it to use with [clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)](https://github.com/nicbarker/clay/blob/main/README.md#clay_createarenawithcapacityandmemory), and initialize it with [clay.Initialize(clay.Arena, clay.Dimensions, clay.ErrorHandler)](https://github.com/nicbarker/clay/blob/main/README.md#clay_initialize).
 
 ```Odin
+error_handler :: proc "c" (errorData: clay.ErrorData) {
+    // Do something with the error data.
+}
+
 min_memory_size: u32 = clay.MinMemorySize()
 memory := make([^]u8, min_memory_size)
 arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(min_memory_size, memory)
-clay.Initialize(arena, { width = 1080, height = 720 }, {})
+clay.Initialize(arena, { width = 1080, height = 720 }, { handler = error_handler })
 ``` 
 
 3. Provide a `measure_text(text, config)` proc "c" with [clay.SetMeasureTextFunction(function)](https://github.com/nicbarker/clay/blob/main/README.md#clay_setmeasuretextfunction) so that Clay can measure and wrap text.
