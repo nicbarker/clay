@@ -80,7 +80,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                  CLAY_TEXT(CLAY_STRING("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt."),
                      CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {0,0,0,255} }));
 
-                 CLAY({ .id = CLAY_ID("Photos2"), .layout = { .childGap = 16, .padding = { 16, 16, 16, 16 }}, .backgroundColor = {180, 180, 220, 255} }) {
+                 CLAY({ .id = CLAY_ID("Photos2"), .layout = { .childGap = 16, .padding = { 16, 16, 16, 16 }}, .backgroundColor = {180, 180, 220, Clay_Hovered() ? 120 : 255} }) {
                      CLAY({ .id = CLAY_ID("Picture4"), .layout = { .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}, .image = { .imageData = &profilePicture, .sourceDimensions = {120, 120} }}) {}
                      CLAY({ .id = CLAY_ID("Picture5"), .layout = { .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}, .image = { .imageData = &profilePicture, .sourceDimensions = {120, 120} }}) {}
                      CLAY({ .id = CLAY_ID("Picture6"), .layout = { .sizing = { .width = CLAY_SIZING_FIXED(120), .height = CLAY_SIZING_FIXED(120) }}, .image = { .imageData = &profilePicture, .sourceDimensions = {120, 120} }}) {}
