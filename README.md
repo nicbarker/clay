@@ -169,6 +169,7 @@ For help starting out or to discuss clay, considering joining [the discord serve
     - [Clay_SetCurrentContext](#clay_setcurrentcontext)
     - [Clay_SetLayoutDimensions](#clay_setlayoutdimensions)
     - [Clay_SetPointerState](#clay_setpointerstate)
+    - [Clay_GetPointerState](#clay_getpointerstate)
     - [Clay_UpdateScrollContainers](#clay_updatescrollcontainers)
     - [Clay_BeginLayout](#clay_beginlayout)
     - [Clay_EndLayout](#clay_endlayout)
@@ -642,6 +643,14 @@ Sets the internal layout dimensions. Cheap enough to be called every frame with 
 `void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown)`
 
 Sets the internal pointer position and state (i.e. current mouse / touch position) and recalculates overlap info, which is used for mouseover / click calculation (via [Clay_PointerOver](#clay_pointerover) and updating scroll containers with [Clay_UpdateScrollContainers](#clay_updatescrollcontainers). **isPointerDown should represent the current state this frame, e.g. it should be `true` for the entire duration the left mouse button is held down.** Clay has internal handling for detecting click / touch start & end.
+
+---
+
+### Clay_GetPointerState
+
+`Clay_PointerData Clay_GetPointerState()`
+
+Get the internal pointer position and state (i.e. current mouse / touch position). returns clay internal click start and stop state.
 
 ---
 
