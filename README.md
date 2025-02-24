@@ -474,6 +474,7 @@ Clay supports C preprocessor directives to modulate functionality at compile tim
 The supported directives are:
 
 - `CLAY_WASM` - Required when targeting Web Assembly.
+- `CLAY_DLL` - Required when creating a .Dll file.
 
 ### Bindings for non C
 
