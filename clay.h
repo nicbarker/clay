@@ -67,11 +67,19 @@
 
 #define CLAY_ID(label) CLAY_IDI(label, 0)
 
-#define CLAY_IDI(label, index) Clay__HashString(CLAY_STRING(label), index, 0)
+#define CLAY_SID(label) CLAY_SIDI(label, 0)
+
+#define CLAY_IDI(label, index) CLAY_SIDI(CLAY_STRING(label), index)
+
+#define CLAY_SIDI(label, index) Clay__HashString(label, index, 0)
 
 #define CLAY_ID_LOCAL(label) CLAY_IDI_LOCAL(label, 0)
 
-#define CLAY_IDI_LOCAL(label, index) Clay__HashString(CLAY_STRING(label), index, Clay__GetParentElementId())
+#define CLAY_SID_LOCAL(label) CLAY_SIDI_LOCAL(label, 0)
+
+#define CLAY_IDI_LOCAL(label, index) CLAY_SIDI_LOCAL(CLAY_STRING(label), index)
+
+#define CLAY_SIDI_LOCAL(label, index) Clay__HashString(label, index, Clay__GetParentElementId())
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
