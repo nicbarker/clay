@@ -42,6 +42,12 @@
 #define CLAY_WASM_EXPORT(null)
 #endif
 
+#ifdef CLAY_DLL
+#define CLAY_DLL_EXPORT __declspec(dllexport) __stdcall
+#else
+#define CLAY_DLL_EXPORT
+#endif
+
 // Public Macro API ------------------------
 
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -769,102 +775,102 @@ typedef struct {
 // Public API functions ------------------------------------------
 
 // Returns the size, in bytes, of the minimum amount of memory Clay requires to operate at its current settings.
-uint32_t Clay_MinMemorySize(void);
+CLAY_DLL_EXPORT uint32_t Clay_MinMemorySize(void);
 // Creates an arena for clay to use for its internal allocations, given a certain capacity in bytes and a pointer to an allocation of at least that size.
 // Intended to be used with Clay_MinMemorySize in the following way:
 // uint32_t minMemoryRequired = Clay_MinMemorySize();
 // Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(minMemoryRequired, malloc(minMemoryRequired));
-Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *memory);
+CLAY_DLL_EXPORT Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *memory);
 // Sets the state of the "pointer" (i.e. the mouse or touch) in Clay's internal data. Used for detecting and responding to mouse events in the debug view,
 // as well as for Clay_Hovered() and scroll element handling.
-void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
+CLAY_DLL_EXPORT void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
 // Initialize Clay's internal arena and setup required data before layout can begin. Only needs to be called once.
 // - arena can be created using Clay_CreateArenaWithCapacityAndMemory()
 // - layoutDimensions are the initial bounding dimensions of the layout (i.e. the screen width and height for a full screen layout)
 // - errorHandler is used by Clay to inform you if something has gone wrong in configuration or layout.
-Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler);
+CLAY_DLL_EXPORT Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler);
 // Returns the Context that clay is currently using. Used when using multiple instances of clay simultaneously.
-Clay_Context* Clay_GetCurrentContext(void);
+CLAY_DLL_EXPORT Clay_Context* Clay_GetCurrentContext(void);
 // Sets the context that clay will use to compute the layout.
 // Used to restore a context saved from Clay_GetCurrentContext when using multiple instances of clay simultaneously.
-void Clay_SetCurrentContext(Clay_Context* context);
+CLAY_DLL_EXPORT void Clay_SetCurrentContext(Clay_Context* context);
 // Updates the state of Clay's internal scroll data, updating scroll content positions if scrollDelta is non zero, and progressing momentum scrolling.
 // - enableDragScrolling when set to true will enable mobile device like "touch drag" scroll of scroll containers, including momentum scrolling after the touch has ended.
 // - scrollDelta is the amount to scroll this frame on each axis in pixels.
 // - deltaTime is the time in seconds since the last "frame" (scroll update)
-void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDelta, float deltaTime);
+CLAY_DLL_EXPORT void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDelta, float deltaTime);
 // Updates the layout dimensions in response to the window or outer container being resized.
-void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
+CLAY_DLL_EXPORT void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
 // Called before starting any layout declarations.
-void Clay_BeginLayout(void);
+CLAY_DLL_EXPORT void Clay_BeginLayout(void);
 // Called when all layout declarations are finished.
 // Computes the layout and generates and returns the array of render commands to draw.
-Clay_RenderCommandArray Clay_EndLayout(void);
+CLAY_DLL_EXPORT Clay_RenderCommandArray Clay_EndLayout(void);
 // Calculates a hash ID from the given idString.
 // Generally only used for dynamic strings when CLAY_ID("stringLiteral") can't be used.
-Clay_ElementId Clay_GetElementId(Clay_String idString);
+CLAY_DLL_EXPORT Clay_ElementId Clay_GetElementId(Clay_String idString);
 // Calculates a hash ID from the given idString and index.
 // - index is used to avoid constructing dynamic ID strings in loops.
 // Generally only used for dynamic strings when CLAY_IDI("stringLiteral", index) can't be used.
-Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index);
+CLAY_DLL_EXPORT Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index);
 // Returns layout data such as the final calculated bounding box for an element with a given ID.
 // The returned Clay_ElementData contains a `found` bool that will be true if an element with the provided ID was found.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
-Clay_ElementData Clay_GetElementData(Clay_ElementId id);
+CLAY_DLL_EXPORT Clay_ElementData Clay_GetElementData(Clay_ElementId id);
 // Returns true if the pointer position provided by Clay_SetPointerState is within the current element's bounding box.
 // Works during element declaration, e.g. CLAY({ .backgroundColor = Clay_Hovered() ? BLUE : RED });
-bool Clay_Hovered(void);
+CLAY_DLL_EXPORT bool Clay_Hovered(void);
 // Bind a callback that will be called when the pointer position provided by Clay_SetPointerState is within the current element's bounding box.
 // - onHoverFunction is a function pointer to a user defined function.
 // - userData is a pointer that will be transparently passed through when the onHoverFunction is called.
-void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
+CLAY_DLL_EXPORT void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData);
 // An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
-bool Clay_PointerOver(Clay_ElementId elementId);
+CLAY_DLL_EXPORT bool Clay_PointerOver(Clay_ElementId elementId);
 // Returns data representing the state of the scrolling element with the provided ID.
 // The returned Clay_ScrollContainerData contains a `found` bool that will be true if a scroll element was found with the provided ID.
 // An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
-Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
+CLAY_DLL_EXPORT Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
 // Binds a callback function that Clay will call to determine the dimensions of a given string slice.
 // - measureTextFunction is a user provided function that adheres to the interface Clay_Dimensions (Clay_StringSlice text, Clay_TextElementConfig *config, void *userData);
 // - userData is a pointer that will be transparently passed through when the measureTextFunction is called.
-void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData), void *userData);
+CLAY_DLL_EXPORT void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData), void *userData);
 // Experimental - Used in cases where Clay needs to integrate with a system that manages its own scrolling containers externally.
 // Please reach out if you plan to use this function, as it may be subject to change.
-void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, void *userData), void *userData);
+CLAY_DLL_EXPORT void Clay_SetQueryScrollOffsetFunction(Clay_Vector2 (*queryScrollOffsetFunction)(uint32_t elementId, void *userData), void *userData);
 // A bounds-checked "get" function for the Clay_RenderCommandArray returned from Clay_EndLayout().
-Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
+CLAY_DLL_EXPORT Clay_RenderCommand * Clay_RenderCommandArray_Get(Clay_RenderCommandArray* array, int32_t index);
 // Enables and disables Clay's internal debug tools.
 // This state is retained and does not need to be set each frame.
-void Clay_SetDebugModeEnabled(bool enabled);
+CLAY_DLL_EXPORT void Clay_SetDebugModeEnabled(bool enabled);
 // Returns true if Clay's internal debug tools are currently enabled.
-bool Clay_IsDebugModeEnabled(void);
+CLAY_DLL_EXPORT bool Clay_IsDebugModeEnabled(void);
 // Enables and disables visibility culling. By default, Clay will not generate render commands for elements whose bounding box is entirely outside the screen.
-void Clay_SetCullingEnabled(bool enabled);
+CLAY_DLL_EXPORT void Clay_SetCullingEnabled(bool enabled);
 // Returns the maximum number of UI elements supported by Clay's current configuration.
-int32_t Clay_GetMaxElementCount(void);
+CLAY_DLL_EXPORT int32_t Clay_GetMaxElementCount(void);
 // Modifies the maximum number of UI elements supported by Clay's current configuration.
 // This may require reallocating additional memory, and re-calling Clay_Initialize();
-void Clay_SetMaxElementCount(int32_t maxElementCount);
+CLAY_DLL_EXPORT void Clay_SetMaxElementCount(int32_t maxElementCount);
 // Returns the maximum number of measured "words" (whitespace seperated runs of characters) that Clay can store in its internal text measurement cache.
-int32_t Clay_GetMaxMeasureTextCacheWordCount(void);
+CLAY_DLL_EXPORT int32_t Clay_GetMaxMeasureTextCacheWordCount(void);
 // Modifies the maximum number of measured "words" (whitespace seperated runs of characters) that Clay can store in its internal text measurement cache.
 // This may require reallocating additional memory, and re-calling Clay_Initialize();
-void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
+CLAY_DLL_EXPORT void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 // Resets Clay's internal text measurement cache, useful if memory to represent strings is being re-used.
 // Similar behaviour can be achieved on an individual text element level by using Clay_TextElementConfig.hashStringContents
-void Clay_ResetMeasureTextCache(void);
+CLAY_DLL_EXPORT void Clay_ResetMeasureTextCache(void);
 
 // Internal API functions required by macros ----------------------
 
-void Clay__OpenElement(void);
-void Clay__ConfigureOpenElement(const Clay_ElementDeclaration config);
-void Clay__CloseElement(void);
-Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
-void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
-Clay_TextElementConfig *Clay__StoreTextElementConfig(Clay_TextElementConfig config);
-uint32_t Clay__GetParentElementId(void);
+CLAY_DLL_EXPORT void Clay__OpenElement(void);
+CLAY_DLL_EXPORT void Clay__ConfigureOpenElement(const Clay_ElementDeclaration config);
+CLAY_DLL_EXPORT void Clay__CloseElement(void);
+CLAY_DLL_EXPORT Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
+CLAY_DLL_EXPORT void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
+CLAY_DLL_EXPORT Clay_TextElementConfig *Clay__StoreTextElementConfig(Clay_TextElementConfig config);
+CLAY_DLL_EXPORT uint32_t Clay__GetParentElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
