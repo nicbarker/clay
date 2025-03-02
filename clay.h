@@ -2018,9 +2018,19 @@ void Clay__InitializePersistentMemory(Clay_Context* context) {
     context->arenaResetOffset = arena->nextAllocation;
 }
 
-bool Clay__FloatEq(float left, float right) {
+float CLAY__EPSILON = 0.01;
+
+bool Clay__FloatEqual(float left, float right) {
     float subtracted = left - right;
-    return subtracted < 0.01 && subtracted > -0.01;
+    return subtracted < CLAY__EPSILON && subtracted > -CLAY__EPSILON;
+}
+
+bool Clay__FloatGreaterThan(float left, float right) {
+    return left > (right + CLAY__EPSILON);
+}
+
+bool Clay__FloatLessThan(float left, float right) {
+    return (left + CLAY__EPSILON) < right;
 }
 
 void Clay__SizeContainersAlongAxis(bool xAxis) {
@@ -2130,11 +2140,11 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                         for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
                             float childSize = xAxis ? child->dimensions.width : child->dimensions.height;
-                            if (childSize > largest) {
+                            if (Clay__FloatGreaterThan(childSize, largest)) {
                                 secondLargest = largest;
                                 largest = childSize;
                             }
-                            if (childSize < largest) {
+                            if (Clay__FloatLessThan(childSize, largest)) {
                                 secondLargest = CLAY__MAX(secondLargest, childSize);
                                 widthToAdd = secondLargest - largest;
                             }
@@ -2147,7 +2157,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                             float *childSize = xAxis ? &child->dimensions.width : &child->dimensions.height;
                             float minSize = xAxis ? child->minDimensions.width : child->minDimensions.height;
                             float previousWidth = *childSize;
-                            if (Clay__FloatEq(*childSize, largest)) {
+                            if (Clay__FloatEqual(*childSize, largest)) {
                                 *childSize += widthToAdd;
                                 if (*childSize <= minSize) {
                                     *childSize = minSize;
@@ -2173,11 +2183,11 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                         for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
                             float childSize = xAxis ? child->dimensions.width : child->dimensions.height;
-                            if (childSize < smallest) {
+                            if (Clay__FloatLessThan(childSize, smallest)) {
                                 secondSmallest = smallest;
                                 smallest = childSize;
                             }
-                            if (childSize > smallest) {
+                            if (Clay__FloatGreaterThan(childSize, smallest)) {
                                 secondSmallest = CLAY__MIN(secondSmallest, childSize);
                                 widthToAdd = secondSmallest - smallest;
                             }
@@ -2190,7 +2200,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                             float *childSize = xAxis ? &child->dimensions.width : &child->dimensions.height;
                             float maxSize = xAxis ? child->layoutConfig->sizing.width.size.minMax.max : child->layoutConfig->sizing.height.size.minMax.max;
                             float previousWidth = *childSize;
-                            if (Clay__FloatEq(*childSize, smallest)) {
+                            if (Clay__FloatEqual(*childSize, smallest)) {
                                 *childSize += widthToAdd;
                                 if (*childSize >= maxSize) {
                                     *childSize = maxSize;
