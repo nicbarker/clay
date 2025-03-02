@@ -780,7 +780,7 @@ CLAY_DLL_EXPORT uint32_t Clay_MinMemorySize(void);
 // Intended to be used with Clay_MinMemorySize in the following way:
 // uint32_t minMemoryRequired = Clay_MinMemorySize();
 // Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(minMemoryRequired, malloc(minMemoryRequired));
-CLAY_DLL_EXPORT Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *memory);
+CLAY_DLL_EXPORT Clay_Arena Clay_CreateArenaWithCapacityAndMemory(size_t capacity, void *memory);
 // Sets the state of the "pointer" (i.e. the mouse or touch) in Clay's internal data. Used for detecting and responding to mouse events in the debug view,
 // as well as for Clay_Hovered() and scroll element handling.
 CLAY_DLL_EXPORT void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
@@ -3605,7 +3605,7 @@ uint32_t Clay_MinMemorySize(void) {
 }
 
 CLAY_WASM_EXPORT("Clay_CreateArenaWithCapacityAndMemory")
-Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *memory) {
+Clay_Arena Clay_CreateArenaWithCapacityAndMemory(size_t capacity, void *memory) {
     Clay_Arena arena = {
         .capacity = capacity,
         .memory = (char *)memory
