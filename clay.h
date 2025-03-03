@@ -2060,7 +2060,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
             int32_t growContainerCount = 0;
             float parentSize = xAxis ? parent->dimensions.width : parent->dimensions.height;
             float parentPadding = (float)(xAxis ? (parent->layoutConfig->padding.left + parent->layoutConfig->padding.right) : (parent->layoutConfig->padding.top + parent->layoutConfig->padding.bottom));
-            float innerContentSize = 0, growContainerContentSize = 0, totalPaddingAndChildGaps = parentPadding;
+            float innerContentSize = 0, totalPaddingAndChildGaps = parentPadding;
             bool sizingAlongAxis = (xAxis && parentStyleConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) || (!xAxis && parentStyleConfig->layoutDirection == CLAY_TOP_TO_BOTTOM);
             resizableContainerBuffer.length = 0;
             float parentChildGap = parentStyleConfig->childGap;
@@ -2086,7 +2086,6 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 if (sizingAlongAxis) {
                     innerContentSize += (childSizing.type == CLAY__SIZING_TYPE_PERCENT ? 0 : childSize);
                     if (childSizing.type == CLAY__SIZING_TYPE_GROW) {
-                        growContainerContentSize += childSize;
                         growContainerCount++;
                     }
                     if (childOffset > 0) {
