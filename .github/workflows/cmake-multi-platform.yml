@@ -53,7 +53,7 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     - name: Cache
-      uses: actions/cache@v4.0.2
+      uses: actions/cache@v4.2.0
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: "/home/runner/work/clay/clay/build/_deps"
