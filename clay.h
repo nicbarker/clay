@@ -2124,7 +2124,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                         }
                     }
                     // Scrolling containers preferentially compress before others
-                    while (sizeToDistribute < -0.1f && resizableContainerBuffer.length > 0) {
+                    while (sizeToDistribute < -CLAY__EPSILON && resizableContainerBuffer.length > 0) {
                         float largest = 0;
                         float secondLargest = 0;
                         float widthToAdd = sizeToDistribute;
@@ -2168,7 +2168,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                             Clay__int32_tArray_RemoveSwapback(&resizableContainerBuffer, childIndex--);
                         }
                     }
-                    while (sizeToDistribute > 0.1f && resizableContainerBuffer.length > 0) {
+                    while (sizeToDistribute > CLAY__EPSILON && resizableContainerBuffer.length > 0) {
                         float smallest = CLAY__MAXFLOAT;
                         float secondSmallest = CLAY__MAXFLOAT;
                         float widthToAdd = sizeToDistribute;
