@@ -898,7 +898,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 
 **Usage**
 
-`CLAY(CLAY_ID(char* idString)) {}`
+`CLAY(CLAY_ID(STRING_LITERAL idString)) {}`
 
 **Lifecycle**
 
@@ -907,6 +907,8 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 **Notes**
 
 **CLAY_ID()** is used to generate and attach a [Clay_ElementId](#clay_elementid) to a layout element during declaration.
+
+Note this macro only works with String literals and won't compile if used with a `char*` variable. To use a heap allocated `char*` string as an ID, use [CLAY_SID](#clay_sid). 
 
 To regenerate the same ID outside of layout declaration when using utility functions such as [Clay_PointerOver](#clay_pointerover), use the [Clay_GetElementId](#clay_getelementid) function.
 
@@ -930,11 +932,31 @@ if (buttonIsHovered && leftMouseButtonPressed) {
 
 ---
 
+### CLAY_SID()
+
+`Clay_ElementId CLAY_SID(char *label)`
+
+A version of [CLAY_ID](#clay_id) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
+
+---
+
 ### CLAY_IDI()
 
-`Clay_ElementId CLAY_IDI(char *label, int32_t index)`
+`Clay_ElementId CLAY_IDI(STRING_LITERAL label, int32_t index)`
 
-An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`.
+
+Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+
+Note this macro only works with String literals and won't compile if used with a `char*` variable. To use a heap allocated `char*` string as an ID, use [CLAY_SIDI](#clay_sidi).
+
+---
+
+### CLAY_SIDI()
+
+`Clay_ElementId CLAY_SIDI(char *label, int32_t index)`
+
+A version of [CLAY_IDI](#clay_idi) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
 
 ---
 
@@ -942,7 +964,7 @@ An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_ele
 
 **Usage**
 
-`CLAY(CLAY_ID_LOCAL(char* idString)) {}`
+`Clay_ElementId CLAY_ID_LOCAL(STRING_LITERAL idString)`
 
 **Lifecycle**
 
@@ -955,6 +977,8 @@ An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_ele
 Unlike [CLAY_ID](#clay_id) which needs to be globally unique, a local ID is based on the ID of it's parent and only needs to be unique among its siblings.
 
 As a result, local id is suitable for use in reusable components and loops.
+
+Note this macro only works with String literals and won't compile if used with a `char*` variable. To use a heap allocated `char*` string as an ID, use [CLAY_SID_LOCAL](#clay_sid_local).
 
 **Examples**
 
@@ -975,11 +999,31 @@ for (int i = 0; i < headerButtons.length; i++) {
 
 ---
 
+### CLAY_SID_LOCAL()
+
+`Clay_ElementId CLAY_SID_LOCAL(char *label)`
+
+A version of [CLAY_ID_LOCAL](#clay_id_local) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
+
+---
+
 ### CLAY_IDI_LOCAL()
 
-`Clay_ElementId CLAY_IDI_LOCAL(char *label, int32_t index)`
+`Clay_ElementId CLAY_IDI_LOCAL(STRING_LITERAL label, int32_t index)`
 
-An offset version of [CLAY_ID_LOCAL](#clay_local_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`. Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+An offset version of [CLAY_ID_LOCAL](#clay_local_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`.
+
+Used for generating ids for sequential elements (such as in a `for` loop) without having to construct dynamic strings at runtime.
+
+Note this macro only works with String literals and won't compile if used with a `char*` variable. To use a heap allocated `char*` string as an ID, use [CLAY_SIDI_LOCAL](#clay_sidi_local).
+
+---
+
+### CLAY_SIDI_LOCAL()
+
+`Clay_ElementId CLAY_SIDI_LOCAL(char *label, int32_t index)`
+
+A version of [CLAY_IDI_LOCAL](#clay_idi_local) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
 
 ---
 
