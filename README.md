@@ -896,15 +896,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 
 ### CLAY_ID
 
-**Usage**
-
-`CLAY(CLAY_ID(STRING_LITERAL idString)) {}`
-
-**Lifecycle**
-
-`Clay_BeginLayout()` -> `CLAY(` -> `CLAY_ID()` -> `)` -> `Clay_EndLayout()` 
-
-**Notes**
+`Clay_ElementId CLAY_ID(STRING_LITERAL idString)`
 
 **CLAY_ID()** is used to generate and attach a [Clay_ElementId](#clay_elementid) to a layout element during declaration.
 
