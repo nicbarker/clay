@@ -926,7 +926,7 @@ if (buttonIsHovered && leftMouseButtonPressed) {
 
 ### CLAY_SID()
 
-`Clay_ElementId CLAY_SID(char *label)`
+`Clay_ElementId CLAY_SID(Clay_String idString)`
 
 A version of [CLAY_ID](#clay_id) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
 
@@ -934,7 +934,7 @@ A version of [CLAY_ID](#clay_id) that can be used with heap allocated `char *` d
 
 ### CLAY_IDI()
 
-`Clay_ElementId CLAY_IDI(STRING_LITERAL label, int32_t index)`
+`Clay_ElementId CLAY_IDI(STRING_LITERAL idString, int32_t index)`
 
 An offset version of [CLAY_ID](#clay_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`.
 
@@ -946,7 +946,7 @@ Note this macro only works with String literals and won't compile if used with a
 
 ### CLAY_SIDI()
 
-`Clay_ElementId CLAY_SIDI(char *label, int32_t index)`
+`Clay_ElementId CLAY_SIDI(Clay_String idString, int32_t index)`
 
 A version of [CLAY_IDI](#clay_idi) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
 
@@ -993,7 +993,7 @@ for (int i = 0; i < headerButtons.length; i++) {
 
 ### CLAY_SID_LOCAL()
 
-`Clay_ElementId CLAY_SID_LOCAL(char *label)`
+`Clay_ElementId CLAY_SID_LOCAL(Clay_String idString)`
 
 A version of [CLAY_ID_LOCAL](#clay_id_local) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
 
@@ -1001,7 +1001,7 @@ A version of [CLAY_ID_LOCAL](#clay_id_local) that can be used with heap allocate
 
 ### CLAY_IDI_LOCAL()
 
-`Clay_ElementId CLAY_IDI_LOCAL(STRING_LITERAL label, int32_t index)`
+`Clay_ElementId CLAY_IDI_LOCAL(STRING_LITERAL idString, int32_t index)`
 
 An offset version of [CLAY_ID_LOCAL](#clay_local_id). Generates a [Clay_ElementId](#clay_elementid) string id from the provided `char *label`, combined with the `int index`.
 
@@ -1013,7 +1013,7 @@ Note this macro only works with String literals and won't compile if used with a
 
 ### CLAY_SIDI_LOCAL()
 
-`Clay_ElementId CLAY_SIDI_LOCAL(char *label, int32_t index)`
+`Clay_ElementId CLAY_SIDI_LOCAL(Clay_String idString, int32_t index)`
 
 A version of [CLAY_IDI_LOCAL](#clay_idi_local) that can be used with heap allocated `char *` data. The underlying `char` data will not be copied internally and should live until at least the next frame.
 
