@@ -2025,14 +2025,6 @@ bool Clay__FloatEqual(float left, float right) {
     return subtracted < CLAY__EPSILON && subtracted > -CLAY__EPSILON;
 }
 
-bool Clay__FloatGreaterThan(float left, float right) {
-    return left > (right + CLAY__EPSILON);
-}
-
-bool Clay__FloatLessThan(float left, float right) {
-    return (left + CLAY__EPSILON) < right;
-}
-
 void Clay__SizeContainersAlongAxis(bool xAxis) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__int32_tArray bfsBuffer = context->layoutElementChildrenBuffer;
@@ -2140,11 +2132,12 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                         for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
                             float childSize = xAxis ? child->dimensions.width : child->dimensions.height;
-                            if (Clay__FloatGreaterThan(childSize, largest)) {
+                            if (Clay__FloatEqual(childSize, largest)) { continue; }
+                            if (childSize > largest) {
                                 secondLargest = largest;
                                 largest = childSize;
                             }
-                            if (Clay__FloatLessThan(childSize, largest)) {
+                            if (childSize < largest) {
                                 secondLargest = CLAY__MAX(secondLargest, childSize);
                                 widthToAdd = secondLargest - largest;
                             }
@@ -2183,11 +2176,12 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                         for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
                             float childSize = xAxis ? child->dimensions.width : child->dimensions.height;
-                            if (Clay__FloatLessThan(childSize, smallest)) {
+                            if (Clay__FloatEqual(childSize, smallest)) { continue; }
+                            if (childSize < smallest) {
                                 secondSmallest = smallest;
                                 smallest = childSize;
                             }
-                            if (Clay__FloatGreaterThan(childSize, smallest)) {
+                            if (childSize > smallest) {
                                 secondSmallest = CLAY__MIN(secondSmallest, childSize);
                                 widthToAdd = secondSmallest - smallest;
                             }
