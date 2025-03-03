@@ -50,8 +50,8 @@
 
 // Public Macro API ------------------------
 
-#define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define CLAY__MAX(x, y) (__typeof__ (x) _x = (x); __typeof__ (y) _y = (y); ((_x) > (_y)) ? (_x) : (_y))
+#define CLAY__MIN(x, y) (__typeof__ (x) _x = (x); __typeof__ (y) _y = (y); ((_x) < (_y)) ? (_x) : (_y))
 
 #define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__))
 
