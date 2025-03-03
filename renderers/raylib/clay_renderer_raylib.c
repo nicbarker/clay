@@ -132,6 +132,8 @@ void Clay_Raylib_Close()
 {
     if(temp_render_buffer) free(temp_render_buffer);
     temp_render_buffer_len = 0;
+
+    CloseWindow();
 }
 
 
