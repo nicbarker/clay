@@ -366,6 +366,8 @@ Context :: struct {} // opaque structure, only use as a pointer
 
 @(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
+	_OpenElement :: proc() ---
+    _CloseElement :: proc() ---
 	MinMemorySize :: proc() -> u32 ---
 	CreateArenaWithCapacityAndMemory :: proc(capacity: u32, offset: [^]u8) -> Arena ---
 	SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
@@ -398,9 +400,7 @@ foreign Clay {
 
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
 foreign Clay {
-	_OpenElement :: proc() ---
 	_ConfigureOpenElement :: proc(config: ElementDeclaration) ---
-	_CloseElement :: proc() ---
 	_HashString :: proc(key: String, offset: u32, seed: u32) -> ElementId ---
 	_OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
 	_StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
