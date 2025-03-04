@@ -367,7 +367,7 @@ Context :: struct {} // opaque structure, only use as a pointer
 @(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
 	_OpenElement :: proc() ---
-    _CloseElement :: proc() ---
+	_CloseElement :: proc() ---
 	MinMemorySize :: proc() -> u32 ---
 	CreateArenaWithCapacityAndMemory :: proc(capacity: u32, offset: [^]u8) -> Arena ---
 	SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
