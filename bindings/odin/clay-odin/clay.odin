@@ -36,7 +36,7 @@ Dimensions :: struct {
 
 Arena :: struct {
 	nextAllocation: uintptr,
-	capacity:       uintptr,
+	capacity:       c.size_t,
 	memory:         [^]c.char,
 }
 
@@ -367,7 +367,7 @@ Context :: struct {} // opaque structure, only use as a pointer
 @(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
 	MinMemorySize :: proc() -> u32 ---
-	CreateArenaWithCapacityAndMemory :: proc(capacity: u32, offset: [^]u8) -> Arena ---
+	CreateArenaWithCapacityAndMemory :: proc(capacity: c.size_t, offset: [^]u8) -> Arena ---
 	SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
 	Initialize :: proc(arena: Arena, layoutDimensions: Dimensions, errorHandler: ErrorHandler) -> ^Context ---
 	GetCurrentContext :: proc() -> ^Context ---
