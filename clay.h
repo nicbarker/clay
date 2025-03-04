@@ -691,7 +691,8 @@ typedef struct {
     // CLAY_POINTER_DATA_PRESSED - The left mouse button click or touch happened at some point in the past, and is still currently held down this frame.
     // CLAY_POINTER_DATA_RELEASED_THIS_FRAME - The left mouse button click or touch was released this frame.
     // CLAY_POINTER_DATA_RELEASED - The left mouse button click or touch is not currently down / was released at some point in the past.
-    Clay_PointerDataInteractionState state;
+    Clay_PointerDataInteractionState state       : 4;
+    Clay_PointerDataInteractionState right_state : 4;
 } Clay_PointerData;
 
 typedef struct {
@@ -784,6 +785,8 @@ CLAY_DLL_EXPORT Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capaci
 // Sets the state of the "pointer" (i.e. the mouse or touch) in Clay's internal data. Used for detecting and responding to mouse events in the debug view,
 // as well as for Clay_Hovered() and scroll element handling.
 CLAY_DLL_EXPORT void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
+// Same as `Clay_SetPointerState` but includes right click info
+CLAY_DLL_EXPORT void Clay_SetPointerStateEx(Clay_Vector2 position, bool pointerDown, bool rightPointerDown);
 // Initialize Clay's internal arena and setup required data before layout can begin. Only needs to be called once.
 // - arena can be created using Clay_CreateArenaWithCapacityAndMemory()
 // - layoutDimensions are the initial bounding dimensions of the layout (i.e. the screen width and height for a full screen layout)
@@ -3631,8 +3634,8 @@ void Clay_SetLayoutDimensions(Clay_Dimensions dimensions) {
     Clay_GetCurrentContext()->layoutDimensions = dimensions;
 }
 
-CLAY_WASM_EXPORT("Clay_SetPointerState")
-void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
+CLAY_WASM_EXPORT("Clay_SetPointerStateEx")
+void Clay_SetPointerStateEx(Clay_Vector2 position, bool isPointerDown, bool isRightPointerDown) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->booleanWarnings.maxElementsExceeded) {
         return;
@@ -3704,6 +3707,25 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
         }
     }
+    if (isRightPointerDown) {
+        if (context->pointerInfo.right_state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+            context->pointerInfo.right_state = CLAY_POINTER_DATA_PRESSED;
+        } else if (context->pointerInfo.right_state != CLAY_POINTER_DATA_PRESSED) {
+            context->pointerInfo.right_state = CLAY_POINTER_DATA_PRESSED_THIS_FRAME;
+        }
+    } else {
+        if (context->pointerInfo.right_state == CLAY_POINTER_DATA_RELEASED_THIS_FRAME) {
+            context->pointerInfo.right_state = CLAY_POINTER_DATA_RELEASED;
+        } else if (context->pointerInfo.right_state != CLAY_POINTER_DATA_RELEASED)  {
+            context->pointerInfo.right_state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
+        }
+    }
+}
+
+CLAY_WASM_EXPORT("Clay_SetPointerState")
+void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown)
+{
+    Clay_SetPointerStateEx(position, isPointerDown, false);
 }
 
 CLAY_WASM_EXPORT("Clay_Initialize")
