@@ -353,6 +353,8 @@ typedef CLAY_PACKED_ENUM {
     CLAY_TEXT_ALIGN_CENTER,
     // Horizontally aligns wrapped lines of text to the right hand side of their bounding box.
     CLAY_TEXT_ALIGN_RIGHT,
+    // The boundingBox passed to the TEXT render command may be smaller than the measured text size. The renderer must then decide how to shorten the text to make it fit
+    CLAY_TEXT_ALIGN_SHRINK,
 } Clay_TextAlignment;
 
 // Controls various functionality related to text elements.
@@ -2676,14 +2678,23 @@ void Clay__CalculateFinalLayout(void) {
                                     continue;
                                 }
                                 float offset = (currentElementBoundingBox.width - wrappedLine->dimensions.width);
-                                if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT) {
+                                if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT || textElementConfig->textAlignment == CLAY_TEXT_ALIGN_SHRINK) {
                                     offset = 0;
                                 }
                                 if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
                                     offset /= 2;
                                 }
+                                Clay_BoundingBox textBoundingBox = {
+                                	currentElementBoundingBox.x + offset,
+                                	currentElementBoundingBox.y + yPosition,
+                                	wrappedLine->dimensions.width,
+                                	wrappedLine->dimensions.height
+                                };
+                                if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_SHRINK && boundingBox.width > currentElementBoundingBox.width) {
+                                	boundingBox.width = currentElementBoundingBox.width;
+                                }
                                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                    .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
+                                    .boundingBox = textBoundingBox,
                                     .renderData = { .text = {
                                         .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->childrenOrTextContent.textElementData->text.chars },
                                         .textColor = textElementConfig->textColor,
