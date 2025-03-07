@@ -102,6 +102,7 @@ TextAlignment :: enum EnumBackingType {
 }
 
 TextElementConfig :: struct {
+	userData:			rawptr,
 	textColor:          Color,
 	fontId:             u16,
 	fontSize:           u16,
