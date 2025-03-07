@@ -266,7 +266,7 @@ typedef CLAY_PACKED_ENUM {
     CLAY_ALIGN_Y_TOP,
     // Aligns child elements to the bottom of this element, offset by padding.width.bottom
     CLAY_ALIGN_Y_BOTTOM,
-    // Aligns child elements vertiically to the center of this element
+    // Aligns child elements vertically to the center of this element
     CLAY_ALIGN_Y_CENTER,
 } Clay_LayoutAlignmentY;
 
