@@ -1771,7 +1771,7 @@ bool Clay__MemCmp(const char *s1, const char *s2, int32_t length);
             uint8x16_t v2 = vld1q_u8((const uint8_t *)s2);
 
             // Compare vectors
-            if (vminvq_u32(vceqq_u8(v1, v2)) != 0xFFFFFFFF) { // If there's a difference
+            if (vminvq_u32(vreinterpretq_u32_u8(vceqq_u8(v1, v2))) != 0xFFFFFFFF) { // If there's a difference
                 return false;
             }
 
