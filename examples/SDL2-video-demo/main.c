@@ -17,6 +17,41 @@ void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
 
+
+struct ResizeRenderData_ {
+    SDL_Window* window;
+    int windowWidth;
+    int windowHeight;
+    ClayVideoDemo_Data demoData;
+    SDL_Renderer* renderer;
+    SDL2_Font* fonts;
+};
+typedef struct ResizeRenderData_ ResizeRenderData;
+
+int resizeRendering(void* userData, SDL_Event* event) {
+    ResizeRenderData *actualData = userData;
+    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_EXPOSED) {
+        SDL_Window* window          = actualData->window;
+        int windowWidth             = actualData->windowWidth;
+        int windowHeight            = actualData->windowHeight;
+        ClayVideoDemo_Data demoData = actualData->demoData;
+        SDL_Renderer* renderer      = actualData->renderer;
+        SDL2_Font* fonts            = actualData->fonts;
+
+        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+        Clay_SetLayoutDimensions((Clay_Dimensions) { (float)windowWidth, (float)windowHeight });
+
+        Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&demoData);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        Clay_SDL2_Render(renderer, renderCommands, fonts);
+
+        SDL_RenderPresent(renderer);
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         fprintf(stderr, "Error: could not initialize SDL: %s\n", SDL_GetError());
@@ -73,6 +108,18 @@ int main(int argc, char *argv[]) {
     double deltaTime = 0;
     ClayVideoDemo_Data demoData = ClayVideoDemo_Initialize();
 
+    
+    ResizeRenderData userData = {
+        window, // SDL_Window*
+        windowWidth, // int
+        windowHeight, // int
+        demoData, // CustomShit
+        renderer, // SDL_Renderer*
+        fonts // SDL2_Font[1]
+    };
+    // add an event watcher that will render the screen while youre dragging the window to different sizes
+    SDL_AddEventWatch(resizeRendering, &userData);
+    
     while (true) {
         Clay_Vector2 scrollDelta = {};
         SDL_Event event;
