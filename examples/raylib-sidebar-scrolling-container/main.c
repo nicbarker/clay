@@ -250,5 +250,6 @@ int main(void) {
         }
         UpdateDrawFrame(fonts);
     }
+    Clay_Raylib_Close();
     return 0;
 }

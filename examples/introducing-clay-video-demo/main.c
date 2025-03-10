@@ -50,4 +50,6 @@ int main(void) {
         Clay_Raylib_Render(renderCommands, fonts);
         EndDrawing();
     }
+    // This function is new since the video was published
+    Clay_Raylib_Close();
 }
