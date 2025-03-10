@@ -8,10 +8,10 @@
 
 #include <math.h>
 
-#include "clay_renderer_gdi.c"
+#include "../../renderers/win32_gdi/clay_renderer_gdi.c"
 
 #define CLAY_IMPLEMENTATION
-#include "../clay/clay.h"
+#include "../../clay.h"
 
 #include "../shared-layouts/clay-video-demo.c"
 

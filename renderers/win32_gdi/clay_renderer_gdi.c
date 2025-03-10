@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include "../../clay.h"
 
 
 HDC renderer_hdcMem = {0};
@@ -114,11 +115,18 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands)
             break;
         }
 
-            // The renderer should draw a colored border inset into the bounding box.
-        case CLAY_RENDER_COMMAND_TYPE_BORDER:
-        {
-           break;
-        }
+        // // The renderer should draw a colored border inset into the bounding box.
+        // case CLAY_RENDER_COMMAND_TYPE_BORDER:
+        // {
+        //    // TODO:
+        //    break;
+        // }
+
+        // case CLAY_RENDER_COMMAND_TYPE_IMAGE:
+        // {
+        //     // TODO:
+        //     break;
+        // }
 
         default:
             printf("Unhandled render command %d\r\n", renderCommand->commandType);
