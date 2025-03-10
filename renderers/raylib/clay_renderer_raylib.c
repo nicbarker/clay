@@ -91,8 +91,11 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
     float textHeight = config->fontSize;
     Font* fonts = (Font*)userData;
     Font fontToUse = fonts[config->fontId];
-    // Font failed to load, likely the fonts are in the wrong place relative to the execution dir
-    if (!fontToUse.glyphs) return textSize;
+    // Font failed to load, likely the fonts are in the wrong place relative to the execution dir.
+    // RayLib ships with a default font, so we can continue with that built in one. 
+    if (!fontToUse.glyphs) {
+        fontToUse = GetFontDefault();
+    }
 
     float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 

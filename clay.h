@@ -1,4 +1,4 @@
-// VERSION: 0.12
+// VERSION: 0.13
 
 /*
     NOTE: In order to use this library you must define
@@ -266,7 +266,7 @@ typedef CLAY_PACKED_ENUM {
     CLAY_ALIGN_Y_TOP,
     // Aligns child elements to the bottom of this element, offset by padding.width.bottom
     CLAY_ALIGN_Y_BOTTOM,
-    // Aligns child elements vertiically to the center of this element
+    // Aligns child elements vertically to the center of this element
     CLAY_ALIGN_Y_CENTER,
 } Clay_LayoutAlignmentY;
 
@@ -357,6 +357,8 @@ typedef CLAY_PACKED_ENUM {
 
 // Controls various functionality related to text elements.
 typedef struct {
+    // A pointer that will be transparently passed through to the resulting render command.
+    void *userData;
     // The RGBA color of the font to render, conventionally specified as 0-255.
     Clay_Color textColor;
     // An integer transparently passed to Clay_MeasureText to identify the font to use.
@@ -1769,7 +1771,7 @@ bool Clay__MemCmp(const char *s1, const char *s2, int32_t length);
             uint8x16_t v2 = vld1q_u8((const uint8_t *)s2);
 
             // Compare vectors
-            if (vminvq_u32(vceqq_u8(v1, v2)) != 0xFFFFFFFF) { // If there's a difference
+            if (vminvq_u32(vreinterpretq_u32_u8(vceqq_u8(v1, v2))) != 0xFFFFFFFF) { // If there's a difference
                 return false;
             }
 
@@ -2692,7 +2694,7 @@ void Clay__CalculateFinalLayout(void) {
                                         .letterSpacing = textElementConfig->letterSpacing,
                                         .lineHeight = textElementConfig->lineHeight,
                                     }},
-                                    .userData = sharedConfig->userData,
+                                    .userData = textElementConfig->userData,
                                     .id = Clay__HashNumber(lineIndex, currentElement->id).id,
                                     .zIndex = root->zIndex,
                                     .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,

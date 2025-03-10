@@ -489,7 +489,7 @@ errorHandler :: proc "c" (errorData: clay.ErrorData) {
 }
 
 main :: proc() {
-    minMemorySize: u32 = clay.MinMemorySize()
+    minMemorySize: c.size_t = cast(c.size_t)clay.MinMemorySize()
     memory := make([^]u8, minMemorySize)
     arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
     clay.Initialize(arena, {cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()}, { handler = errorHandler })
