@@ -151,11 +151,7 @@ int APIENTRY WinMain(
     uint64_t clayRequiredMemory = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Initialize(clayMemory, (Clay_Dimensions){.width = 800, .height = 600}, (Clay_ErrorHandler){HandleClayErrors}); // This final argument is new since the video was published
-
-    // Font fonts[1];
-    // fonts[FONT_ID_BODY_16] = LoadFontEx("resources/Roboto-Regular.ttf", 48, 0, 400);
-
-    Clay_SetMeasureTextFunction(Clay_Win32_MeasureText, NULL); // was gettings fonts[] passed in
+    Clay_SetMeasureTextFunction(Clay_Win32_MeasureText, NULL); 
 
     ZeroMemory(&wc, sizeof wc);
     wc.hInstance = hInstance;

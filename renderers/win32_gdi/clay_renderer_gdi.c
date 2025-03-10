@@ -1,7 +1,6 @@
 #include <Windows.h>
 #include "../../clay.h"
 
-
 HDC renderer_hdcMem = {0};
 HBITMAP renderer_hbmMem = {0};
 HANDLE renderer_hOld = {0};
@@ -115,18 +114,75 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands)
             break;
         }
 
-        // // The renderer should draw a colored border inset into the bounding box.
-        // case CLAY_RENDER_COMMAND_TYPE_BORDER:
-        // {
-        //    // TODO:
-        //    break;
-        // }
+        // The renderer should draw a colored border inset into the bounding box.
+        case CLAY_RENDER_COMMAND_TYPE_BORDER:
+        {
+            Clay_BorderRenderData brd = renderCommand->renderData.border;
+            RECT r = rc;
 
-        // case CLAY_RENDER_COMMAND_TYPE_IMAGE:
-        // {
-        //     // TODO:
-        //     break;
-        // }
+            r.left = boundingBox.x;
+            r.top = boundingBox.y;
+            r.right = boundingBox.x + boundingBox.width;
+            r.bottom = boundingBox.y + boundingBox.height;
+
+            HPEN topPen = CreatePen(PS_SOLID, brd.width.top, RGB(brd.color.r, brd.color.g, brd.color.b));
+            HPEN leftPen = CreatePen(PS_SOLID, brd.width.left, RGB(brd.color.r, brd.color.g, brd.color.b));
+            HPEN bottomPen = CreatePen(PS_SOLID, brd.width.bottom, RGB(brd.color.r, brd.color.g, brd.color.b));
+            HPEN rightPen = CreatePen(PS_SOLID, brd.width.right, RGB(brd.color.r, brd.color.g, brd.color.b));
+
+            HPEN oldPen = SelectObject(renderer_hdcMem, topPen);
+
+            if (brd.cornerRadius.topLeft == 0)
+            {
+                MoveToEx(renderer_hdcMem, r.left, r.top, NULL);
+                LineTo(renderer_hdcMem, r.right, r.top);
+
+                SelectObject(renderer_hdcMem, leftPen);
+                MoveToEx(renderer_hdcMem, r.left, r.top, NULL);
+                LineTo(renderer_hdcMem, r.left, r.bottom);
+
+                SelectObject(renderer_hdcMem, bottomPen);
+                MoveToEx(renderer_hdcMem, r.left, r.bottom, NULL);
+                LineTo(renderer_hdcMem, r.right, r.bottom);
+
+                SelectObject(renderer_hdcMem, rightPen);
+                MoveToEx(renderer_hdcMem, r.right, r.top, NULL);
+                LineTo(renderer_hdcMem, r.right, r.bottom);
+            }
+            else
+            {
+                // todo: i should be rounded
+                MoveToEx(renderer_hdcMem, r.left, r.top, NULL);
+                LineTo(renderer_hdcMem, r.right, r.top);
+
+                SelectObject(renderer_hdcMem, leftPen);
+                MoveToEx(renderer_hdcMem, r.left, r.top, NULL);
+                LineTo(renderer_hdcMem, r.left, r.bottom);
+
+                SelectObject(renderer_hdcMem, bottomPen);
+                MoveToEx(renderer_hdcMem, r.left, r.bottom, NULL);
+                LineTo(renderer_hdcMem, r.right, r.bottom);
+
+                SelectObject(renderer_hdcMem, rightPen);
+                MoveToEx(renderer_hdcMem, r.right, r.top, NULL);
+                LineTo(renderer_hdcMem, r.right, r.bottom);
+                
+            }
+
+            SelectObject(renderer_hdcMem, oldPen);
+            DeleteObject(topPen);
+            DeleteObject(leftPen);
+            DeleteObject(bottomPen);
+            DeleteObject(rightPen);
+
+            break;
+        }
+
+            // case CLAY_RENDER_COMMAND_TYPE_IMAGE:
+            // {
+            //     // TODO: i couldnt get the win 32 api to load a bitmap.... So im punting on this one :(
+            //     break;
+            // }
 
         default:
             printf("Unhandled render command %d\r\n", renderCommand->commandType);
@@ -143,7 +199,6 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands)
 
     EndPaint(hwnd, &ps);
 }
-
 
 /*
     Hacks due to the windows api not making sence to use.... may measure too large, but never too small
