@@ -72,4 +72,6 @@ int main(void) {
         Clay_Raylib_Render(renderCommandsBottom, fonts);
         EndDrawing();
     }
+
+    Clay_Raylib_Close();
 }
