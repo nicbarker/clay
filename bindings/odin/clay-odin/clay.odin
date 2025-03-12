@@ -173,7 +173,7 @@ FloatingElementConfig :: struct {
 	offset:             Vector2,
 	expand:             Dimensions,
 	parentId:           u32,
-	zIndex:             i32,
+	zIndex:             i16,
 	attachment:         FloatingAttachPoints,
 	pointerCaptureMode: PointerCaptureMode,
 	attachTo:           FloatingAttachToElement,
