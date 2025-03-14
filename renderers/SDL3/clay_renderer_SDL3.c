@@ -238,10 +238,10 @@ static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Cla
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
                 Clay_BoundingBox boundingBox = rcmd->boundingBox;
                 currentClippingRectangle = (SDL_Rect) {
-                        .x = boundingBox.x,
-                        .y = boundingBox.y,
-                        .w = boundingBox.width,
-                        .h = boundingBox.height,
+                        .x = (int)boundingBox.x,
+                        .y = (int)boundingBox.y,
+                        .w = (int)boundingBox.width,
+                        .h = (int)boundingBox.height,
                 };
                 SDL_SetRenderClipRect(rendererData->renderer, &currentClippingRectangle);
                 break;
