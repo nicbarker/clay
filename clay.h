@@ -1654,6 +1654,8 @@ void Clay__CloseElement(void) {
             elementHasScrollVertical = config->config.scrollElementConfig->vertical;
             context->openClipElementStack.length--;
             break;
+        } else if (config->type == CLAY__ELEMENT_CONFIG_TYPE_FLOATING) {
+            context->openClipElementStack.length--;
         }
     }
 
@@ -1933,6 +1935,9 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
             if (!openLayoutElementId.id) {
                 openLayoutElementId = Clay__HashString(CLAY_STRING("Clay__FloatingContainer"), context->layoutElementTreeRoots.length, 0);
             }
+            int32_t currentElementIndex = Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1);
+            Clay__int32_tArray_Set(&context->layoutElementClipElementIds, currentElementIndex, clipElementId);
+            Clay__int32_tArray_Add(&context->openClipElementStack, clipElementId);
             Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
                     .layoutElementIndex = Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1),
                     .parentId = floatingConfig.parentId,
