@@ -102,6 +102,10 @@
 
 static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
+// GCC marks the above CLAY__ELEMENT_DEFINITION_LATCH as an unused variable for files that include clay.h but don't declare any layout
+// This is to suppress that warning
+static inline void Clay__SuppressUnusedLatchDefinitionVariableWarning(void) { (void) CLAY__ELEMENT_DEFINITION_LATCH; }
+
 // Publicly visible layout element macros -----------------------------------------------------
 
 /* This macro looks scary on the surface, but is actually quite simple.
