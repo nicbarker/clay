@@ -99,16 +99,22 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
 
     float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 
-    for (int i = 0; i < text.length; ++i)
-    {
-        if (text.chars[i] == '\n') {
+    int byte_index = 0;
+    while (byte_index < text.length) {
+        if (text.chars[byte_index] == '\n') {
             maxTextWidth = fmax(maxTextWidth, lineTextWidth);
             lineTextWidth = 0;
+            byte_index++;
             continue;
         }
-        int index = text.chars[i] - 32;
-        if (fontToUse.glyphs[index].advanceX != 0) lineTextWidth += fontToUse.glyphs[index].advanceX;
-        else lineTextWidth += (fontToUse.recs[index].width + fontToUse.glyphs[index].offsetX);
+
+        int codepoint_bytes = 0;
+        int codepoint = GetCodepoint(&text.chars[byte_index], &codepoint_bytes);
+        int glyph_index = GetGlyphIndex(fontToUse, codepoint);
+        byte_index += codepoint_bytes;
+
+        if (fontToUse.glyphs[glyph_index].advanceX != 0) lineTextWidth += fontToUse.glyphs[glyph_index].advanceX;
+        else lineTextWidth += (fontToUse.recs[glyph_index].width + fontToUse.glyphs[glyph_index].offsetX);
     }
 
     maxTextWidth = fmax(maxTextWidth, lineTextWidth);
