@@ -17,6 +17,7 @@ when ODIN_OS == .Windows {
 }
 
 String :: struct {
+	isStaticallyAllocated: c.bool,
 	length: c.int32_t,
 	chars:  [^]c.char,
 }
