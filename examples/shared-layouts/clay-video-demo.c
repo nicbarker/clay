@@ -222,7 +222,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                         *clickData = (SidebarClickData) { .requestedDocumentIndex = i, .selectedDocumentIndex = &data->selectedDocumentIndex };
                         data->frameArena.offset += sizeof(SidebarClickData);
                         CLAY({ .layout = sidebarButtonLayout, .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 }, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
-                            Clay_OnHover(HandleSidebarInteraction, (void *)clickData);
+                            Clay_OnHover(HandleSidebarInteraction, clickData);
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
                                 .fontSize = 20,
