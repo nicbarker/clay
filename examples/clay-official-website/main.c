@@ -232,7 +232,7 @@ void HighPerformancePageMobile(float lerpValue) {
     }
 }
 
-void HandleRendererButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData) {
+void HandleRendererButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
     if (pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         ACTIVE_RENDERER_INDEX = (uint32_t)userData;
         Clay_SetCullingEnabled(ACTIVE_RENDERER_INDEX == 1);
@@ -259,7 +259,7 @@ void RendererButtonInactive(Clay_String text, size_t rendererIndex) {
         .cornerRadius = CLAY_CORNER_RADIUS(10),
         .userData = FrameAllocateCustomData((CustomHTMLData) { .disablePointerEvents = true, .cursorPointer = true })
     }) {
-        Clay_OnHover(HandleRendererButtonInteraction, rendererIndex);
+        Clay_OnHover(HandleRendererButtonInteraction, (void *)rendererIndex);
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({ .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED }));
     }
 }
