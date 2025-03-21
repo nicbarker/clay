@@ -96,7 +96,7 @@
 #define CLAY__ENSURE_STRING_LITERAL(x) ("" x "")
 
 // Note: If an error led you here, it's because CLAY_STRING can only be used with string literals, i.e. CLAY_STRING("SomeString") and not CLAY_STRING(yourString)
-#define CLAY_STRING(string) (CLAY__INIT(Clay_String) { .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) })
+#define CLAY_STRING(string) (CLAY__INIT(Clay_String) { .isStaticallyAllocated = true, .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) })
 
 #define CLAY_STRING_CONST(string) { .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) }
 
@@ -185,6 +185,9 @@ extern "C" {
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
 typedef struct {
+    // Set this boolean to true if the char* data underlying this string will live for the entire lifetime of the program.
+    // This will automatically be set for strings created with CLAY_STRING, as the macro requires a string literal.
+    bool isStaticallyAllocated;
     int32_t length;
     // The underlying character memory. Note: this will not be copied and will not extend the lifetime of the underlying memory.
     const char *chars;
@@ -1466,7 +1469,17 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
 #endif
 
 uint32_t Clay__HashStringContentsWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
-    uint32_t hash = Clay__HashData((const uint8_t *)text->chars, text->length) % UINT32_MAX;
+    uint32_t hash = 0;
+    if (false) {
+        hash += (uintptr_t)text->chars;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+        hash += text->length;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    } else {
+        hash = Clay__HashData((const uint8_t *)text->chars, text->length) % UINT32_MAX;
+    }
 
     hash += config->fontId;
     hash += (hash << 10);
