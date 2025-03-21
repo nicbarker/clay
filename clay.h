@@ -16,7 +16,6 @@
 
 // SIMD includes on supported platforms
 #if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
-#include <intrin.h>
 #include <emmintrin.h>
 #elif !defined(CLAY_DISABLE_SIMD) && defined(__aarch64__)
 #include <arm_neon.h>
@@ -1354,7 +1353,7 @@ static inline void Clay__SIMDARXMix(__m128i* a, __m128i* b) {
     *b = _mm_xor_si128(Clay__SIMDRotateLeft(*b, 17), *a);
 }
 
-uint64_t Clay__HashData(const uint8_t* data, size_t len) {
+uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     // Pinched these constants from the BLAKE implementation
     __m128i v0 = _mm_set1_epi64x(0x6a09e667f3bcc908ULL);
     __m128i v1 = _mm_set1_epi64x(0xbb67ae8584caa73bULL);
@@ -1363,38 +1362,34 @@ uint64_t Clay__HashData(const uint8_t* data, size_t len) {
 
     uint8_t overflowBuffer[16] = { 0 };  // Temporary buffer for small inputs
 
-    // Process 16-byte chunks
-    while (len > 0) {
+    while (length > 0) {
         __m128i msg;
-        if (len >= 16) {
+        if (length >= 16) {
             msg = _mm_loadu_si128((const __m128i*)data);
             data += 16;
-            len -= 16;
+            length -= 16;
         }
         else {
-            for (int i = 0; i < len; i++) {
+            for (int i = 0; i < length; i++) {
                 overflowBuffer[i] = data[i];
             }
             msg = _mm_loadu_si128((const __m128i*)overflowBuffer);
-            len = 0;
+            length = 0;
         }
 
         v0 = _mm_xor_si128(v0, msg);
         Clay__SIMDARXMix(&v0, &v1);
         Clay__SIMDARXMix(&v2, &v3);
 
-        // Cross-lane mixing
         v0 = _mm_add_epi64(v0, v2);
         v1 = _mm_add_epi64(v1, v3);
     }
 
-    // Final mixing rounds
     Clay__SIMDARXMix(&v0, &v1);
     Clay__SIMDARXMix(&v2, &v3);
     v0 = _mm_add_epi64(v0, v2);
     v1 = _mm_add_epi64(v1, v3);
 
-    // Extract final hash
     uint64_t result[2];
     _mm_storeu_si128((__m128i*)result, v0);
 
@@ -1419,7 +1414,6 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
 
     uint8_t overflowBuffer[8] = { 0 };
 
-    // Process 16-byte chunks
     while (length > 0) {
         uint64x2_t msg;
         if (length > 16) {
@@ -1448,13 +1442,11 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
         v1 = vaddq_u64(v1, v3);
     }
 
-    // Final mixing rounds
     Clay__SIMDARXMix(&v0, &v1);
     Clay__SIMDARXMix(&v2, &v3);
     v0 = vaddq_u64(v0, v2);
     v1 = vaddq_u64(v1, v3);
 
-    // Extract final hash
     uint64_t result[2];
     vst1q_u64(result, v0);
 
