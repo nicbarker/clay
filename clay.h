@@ -16,6 +16,7 @@
 
 // SIMD includes on supported platforms
 #if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
+#include <intrin.h>
 #include <emmintrin.h>
 #elif !defined(CLAY_DISABLE_SIMD) && defined(__aarch64__)
 #include <arm_neon.h>
@@ -1349,115 +1350,119 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
 }
 
 #if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
-// Rotate left in AVX2 (equivalent to _mm256_rol_epi64 in AVX512)
-static inline __m256i rol64(__m256i x, int r) {
-    return _mm256_or_si256(_mm256_slli_epi64(x, r), _mm256_srli_epi64(x, 64 - r));
+// Rotate left in AVX (equivalent to _mm_rol_epi64 in AVX2)
+static inline __m128i Clay__SIMDRotateLeft(__m128i x, int r) {
+    return _mm_or_si128(_mm_slli_epi64(x, r), _mm_srli_epi64(x, 64 - r));
 }
 
-// A simple ARX mix function
-static inline void arx_mix(__m256i *a, __m256i *b) {
-    *a = _mm256_add_epi64(*a, *b);
-    *b = _mm256_xor_si256(rol64(*b, 17), *a);
+// A simple ARX mix function (AVX)
+static inline void Clay__SIMDARXMix(__m128i* a, __m128i* b) {
+    *a = _mm_add_epi64(*a, *b);
+    *b = _mm_xor_si128(Clay__SIMDRotateLeft(*b, 17), *a);
 }
 
-// SIMD ARX hash function (AVX2)
-uint64_t arx_simd_hash(const uint8_t *data, size_t len) {
+// SIMD ARX hash function (AVX)
+uint64_t Clay__HashData(const uint8_t* data, size_t len) {
     // Pinched these constants from the BLAKE implementation
-    __m256i v0 = _mm256_set1_epi64x(0x6a09e667f3bcc908ULL);
-    __m256i v1 = _mm256_set1_epi64x(0xbb67ae8584caa73bULL);
-    __m256i v2 = _mm256_set1_epi64x(0x3c6ef372fe94f82bULL);
-    __m256i v3 = _mm256_set1_epi64x(0xa54ff53a5f1d36f1ULL);
+    __m128i v0 = _mm_set1_epi64x(0x6a09e667f3bcc908ULL);
+    __m128i v1 = _mm_set1_epi64x(0xbb67ae8584caa73bULL);
+    __m128i v2 = _mm_set1_epi64x(0x3c6ef372fe94f82bULL);
+    __m128i v3 = _mm_set1_epi64x(0xa54ff53a5f1d36f1ULL);
 
-    uint8_t overflowBuffer[16] = {0};  // Temporary buffer for small inputs
+    uint8_t overflowBuffer[16] = { 0 };  // Temporary buffer for small inputs
 
-    // Process 32-byte chunks
+    // Process 16-byte chunks
     while (len > 0) {
-        __m256i msg;
-        if (len >= 32) {
-            msg = _mm256_loadu_si256((const __m256i *)data);
-            data += 32;
-            len -= 32;
-        } else {
-            memset(overflowBuffer, 0, 16);
-            memcpy(overflowBuffer, data, len);
-            msg = _mm256_loadu_si256((const __m256i *)overflowBuffer);
+        __m128i msg;
+        if (len >= 16) {
+            msg = _mm_loadu_si128((const __m128i*)data);
+            data += 16;
+            len -= 16;
+        }
+        else {
+            for (int i = 0; i < len; i++) {
+                overflowBuffer[i] = data[i];
+            }
+            msg = _mm_loadu_si128((const __m128i*)overflowBuffer);
             len = 0;
         }
 
-        v0 = _mm256_xor_si256(v0, msg);
-        arx_mix(&v0, &v1);
-        arx_mix(&v2, &v3);
+        v0 = _mm_xor_si128(v0, msg);
+        Clay__SIMDARXMix(&v0, &v1);
+        Clay__SIMDARXMix(&v2, &v3);
 
         // Cross-lane mixing
-        v0 = _mm256_add_epi64(v0, v2);
-        v1 = _mm256_add_epi64(v1, v3);
+        v0 = _mm_add_epi64(v0, v2);
+        v1 = _mm_add_epi64(v1, v3);
     }
 
     // Final mixing rounds
-    arx_mix(&v0, &v1);
-    arx_mix(&v2, &v3);
-    v0 = _mm256_add_epi64(v0, v2);
-    v1 = _mm256_add_epi64(v1, v3);
+    Clay__SIMDARXMix(&v0, &v1);
+    Clay__SIMDARXMix(&v2, &v3);
+    v0 = _mm_add_epi64(v0, v2);
+    v1 = _mm_add_epi64(v1, v3);
 
     // Extract final hash
-    uint64_t result[4];
-    _mm256_storeu_si256((__m256i *)result, v0);
+    uint64_t result[2];
+    _mm_storeu_si128((__m128i*)result, v0);
 
-    return result[0] ^ result[1] ^ result[2] ^ result[3];
+    return result[0] ^ result[1];
 }
 #elif !defined(CLAY_DISABLE_SIMD) && defined(__aarch64__)
-    // Rotate left in NEON (simulating _mm256_rol_epi64)
-    static inline uint64x2_t rol64(uint64x2_t x, int r) {
-        return vorrq_u64(vshlq_n_u64(x, 17), vshrq_n_u64(x, 64 - 17));
-    }
+// Rotate left in NEON (simulating _mm256_rol_epi64)
+static inline uint64x2_t Clay__SIMDRotateLeft(uint64x2_t x, int r) {
+    return vorrq_u64(vshlq_n_u64(x, 17), vshrq_n_u64(x, 64 - 17));
+}
 
-    // A simple ARX mix function
-    static inline void arx_mix(uint64x2_t *a, uint64x2_t *b) {
-        *a = vaddq_u64(*a, *b);
-        *b = veorq_u64(rol64(*b, 17), *a);
-    }
+// A simple ARX mix function
+static inline void Clay__SIMDARXMix(uint64x2_t* a, uint64x2_t* b) {
+    *a = vaddq_u64(*a, *b);
+    *b = veorq_u64(Clay__SIMDRotateLeft(*b, 17), *a);
+}
 
-    // SIMD ARX hash function (NEON)
-    uint64_t arx_simd_hash(const uint8_t *data, size_t len) {
-        // Pinched these constants from the BLAKE implementation
-        uint64x2_t v0 = vdupq_n_u64(0x6a09e667f3bcc908ULL);
-        uint64x2_t v1 = vdupq_n_u64(0xbb67ae8584caa73bULL);
-        uint64x2_t v2 = vdupq_n_u64(0x3c6ef372fe94f82bULL);
-        uint64x2_t v3 = vdupq_n_u64(0xa54ff53a5f1d36f1ULL);
+// SIMD ARX hash function (NEON)
+uint64_t Clay__HashData(const uint8_t* data, size_t len) {
+    // Pinched these constants from the BLAKE implementation
+    uint64x2_t v0 = vdupq_n_u64(0x6a09e667f3bcc908ULL);
+    uint64x2_t v1 = vdupq_n_u64(0xbb67ae8584caa73bULL);
+    uint64x2_t v2 = vdupq_n_u64(0x3c6ef372fe94f82bULL);
+    uint64x2_t v3 = vdupq_n_u64(0xa54ff53a5f1d36f1ULL);
 
-        uint8_t overflowBuffer[8] = {0};
+    uint8_t overflowBuffer[8] = { 0 };
 
-        // Process 16-byte chunks
-        while (len > 0) {
-            uint64x2_t msg;
-            if (len > 16) {
-                msg = vld1q_u64((const uint64_t *)data);
-                data += 16;
-                len -= 16;
-            } else if (len > 8) {
-                msg = vcombine_u64(vld1_u64((const uint64_t *)data), vdup_n_u64(0));
-                data += 8;
-                len -= 8;
-            } else {
-                for (int i = 0; i < len; i++) {
-                    overflowBuffer[i] = data[i];
-                }
-                uint8x8_t lower = vld1_u8(overflowBuffer); // Load up to 8 bytes
-                msg = vcombine_u8(lower, vdup_n_u8(0)); // Zero upper 8 bytes
-                len = 0;
-            }
-            v0 = veorq_u64(v0, msg);
-            arx_mix(&v0, &v1);
-            arx_mix(&v2, &v3);
-
-            // Cross-lane mixing
-            v0 = vaddq_u64(v0, v2);
-            v1 = vaddq_u64(v1, v3);
+    // Process 16-byte chunks
+    while (len > 0) {
+        uint64x2_t msg;
+        if (len > 16) {
+            msg = vld1q_u64((const uint64_t*)data);
+            data += 16;
+            len -= 16;
         }
+        else if (len > 8) {
+            msg = vcombine_u64(vld1_u64((const uint64_t*)data), vdup_n_u64(0));
+            data += 8;
+            len -= 8;
+        }
+        else {
+            for (int i = 0; i < len; i++) {
+                overflowBuffer[i] = data[i];
+            }
+            uint8x8_t lower = vld1_u8(overflowBuffer); // Load up to 8 bytes
+            msg = vcombine_u8(lower, vdup_n_u8(0)); // Zero upper 8 bytes
+            len = 0;
+        }
+        v0 = veorq_u64(v0, msg);
+        Clay__SIMDARXMix(&v0, &v1);
+        Clay__SIMDARXMix(&v2, &v3);
 
-        // Final mixing rounds
-        arx_mix(&v0, &v1);
-        arx_mix(&v2, &v3);
+        // Cross-lane mixing
+        v0 = vaddq_u64(v0, v2);
+        v1 = vaddq_u64(v1, v3);
+    }
+
+    // Final mixing rounds
+    Clay__SIMDARXMix(&v0, &v1);
+    Clay__SIMDARXMix(&v2, &v3);
         v0 = vaddq_u64(v0, v2);
         v1 = vaddq_u64(v1, v3);
 
@@ -1467,17 +1472,24 @@ uint64_t arx_simd_hash(const uint8_t *data, size_t len) {
 
         return result[0] ^ result[1];
     }
+#else
+uint64_t Clay__HashData(const uint8_t* data, size_t length) {
+    uint64_t hash = 0;
+
+    for (int32_t i = 0; i < length; i++) {
+        hash += data[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    return hash;
+}
 #endif
 
-uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
+uint32_t Clay__HashStringContentsWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
     uint32_t hash = 0;
     uintptr_t pointerAsNumber = (uintptr_t)text->chars;
 
-    hash = arx_simd_hash((const uint8_t *)text->chars, text->length) % UINT32_MAX;
-
-    hash += text->length;
-    hash += (hash << 10);
-    hash ^= (hash >> 6);
+    hash = Clay__HashData((const uint8_t *)text->chars, text->length) % UINT32_MAX;
 
     hash += config->fontId;
     hash += (hash << 10);
@@ -1487,15 +1499,7 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
     hash += (hash << 10);
     hash ^= (hash >> 6);
 
-    hash += config->lineHeight;
-    hash += (hash << 10);
-    hash ^= (hash >> 6);
-
     hash += config->letterSpacing;
-    hash += (hash << 10);
-    hash ^= (hash >> 6);
-
-    hash += config->wrapMode;
     hash += (hash << 10);
     hash ^= (hash >> 6);
 
@@ -1533,7 +1537,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         return &Clay__MeasureTextCacheItem_DEFAULT;
     }
     #endif
-    uint32_t id = Clay__HashTextWithConfig(text, config);
+    uint32_t id = Clay__HashStringContentsWithConfig(text, config);
     uint32_t hashBucket = id % (context->maxMeasureTextCacheWordCount / 32);
     int32_t elementIndexPrevious = 0;
     int32_t elementIndex = context->measureTextHashMap.internalArray[hashBucket];
