@@ -4,7 +4,6 @@ import clay "../../clay-odin"
 import "core:c"
 import "core:fmt"
 import "vendor:raylib"
-import "core:mem"
 
 windowWidth: i32 = 1024
 windowHeight: i32 = 768
