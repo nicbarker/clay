@@ -26,6 +26,9 @@ void CenterWindow(HWND hWnd);
 long lastMsgTime = 0;
 bool ui_debug_mode;
 
+#define RECTWIDTH(rc)   ((rc).right - (rc).left)
+#define RECTHEIGHT(rc)  ((rc).bottom - (rc).top)
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
@@ -165,6 +168,10 @@ int APIENTRY WinMain(
     if (FALSE == RegisterClass(&wc))
         return 0;
 
+    // Calculate window rectangle by given client size
+    // TODO: AdjustWindowRectExForDpi for DPI support
+    RECT rcWindow = { .right = 800, .bottom = 600 };
+    AdjustWindowRect(&rcWindow, WS_OVERLAPPEDWINDOW, FALSE);
 
     hwnd = CreateWindow(
         szAppName,
@@ -172,8 +179,8 @@ int APIENTRY WinMain(
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        800, // CW_USEDEFAULT,
-        600, // CW_USEDEFAULT,
+        RECTWIDTH(rcWindow), // CW_USEDEFAULT,
+        RECTHEIGHT(rcWindow), // CW_USEDEFAULT,
         0,
         0,
         hInstance,
