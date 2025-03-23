@@ -1,7 +1,6 @@
 package clay
 
 import "core:c"
-import "base:intrinsics"
 
 when ODIN_OS == .Windows {
 	foreign import Clay "windows/clay.lib"
