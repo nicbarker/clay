@@ -1,6 +1,7 @@
 package clay
 
 import "core:c"
+import "base:intrinsics"
 
 when ODIN_OS == .Windows {
 	foreign import Clay "windows/clay.lib"
@@ -420,7 +421,13 @@ UI :: proc() -> proc (config: ElementDeclaration) -> bool {
 	return ConfigureOpenElement
 }
 
-Text :: proc(text: string, config: ^TextElementConfig) {
+Text :: proc($text: string, config: ^TextElementConfig) {
+	wrapped := MakeString(text)
+	wrapped.isStaticallyAllocated = true
+	_OpenTextElement(wrapped, config)
+}
+
+TextDynamic :: proc(text: string, config: ^TextElementConfig) {
 	_OpenTextElement(MakeString(text), config)
 }
 
