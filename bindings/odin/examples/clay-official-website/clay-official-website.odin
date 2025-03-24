@@ -62,7 +62,7 @@ border2pxRed := clay.BorderElementConfig {
     color = COLOR_RED
 }
 
-LandingPageBlob :: proc(index: u32, fontSize: u16, fontId: u16, color: clay.Color, text: string, image: ^raylib.Texture2D) {
+LandingPageBlob :: proc(index: u32, fontSize: u16, fontId: u16, color: clay.Color, $text: string, image: ^raylib.Texture2D) {
     if clay.UI()({
         id = clay.ID("HeroBlob", index),
         layout = { sizing = { width = clay.SizingGrow({ max = 480 }) }, padding = clay.PaddingAll(16), childGap = 16, childAlignment = clay.ChildAlignment{ y = .Center } },
@@ -252,7 +252,7 @@ ColorLerp :: proc(a: clay.Color, b: clay.Color, amount: f32) -> clay.Color {
     return clay.Color{a.r + (b.r - a.r) * amount, a.g + (b.g - a.g) * amount, a.b + (b.b - a.b) * amount, a.a + (b.a - a.a) * amount}
 }
 
-LOREM_IPSUM_TEXT := "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+LOREM_IPSUM_TEXT :: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
 HighPerformancePage :: proc(lerpValue: f32, titleTextConfig: clay.TextElementConfig, widthSizing: clay.SizingAxis) {
     if clay.UI()({ id = clay.ID("PerformanceLeftText"), layout = { sizing = { width = widthSizing }, layoutDirection = .TopToBottom, childGap = 8 } }) {
@@ -321,7 +321,7 @@ HighPerformancePageMobile :: proc(lerpValue: f32) {
     }
 }
 
-RendererButtonActive :: proc(index: i32, text: string) {
+RendererButtonActive :: proc(index: i32, $text: string) {
     if clay.UI()({
         layout = { sizing = { width = clay.SizingFixed(300) }, padding = clay.PaddingAll(16) },
         backgroundColor = COLOR_RED,
@@ -331,7 +331,7 @@ RendererButtonActive :: proc(index: i32, text: string) {
     }
 }
 
-RendererButtonInactive :: proc(index: u32, text: string) {
+RendererButtonInactive :: proc(index: u32, $text: string) {
     if clay.UI()({ border = border2pxRed }) {
         if clay.UI()({
             id = clay.ID("RendererButtonInactiveInner", index),
