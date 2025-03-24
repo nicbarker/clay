@@ -5,7 +5,7 @@ HDC renderer_hdcMem = {0};
 HBITMAP renderer_hbmMem = {0};
 HANDLE renderer_hOld = {0};
 
-void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands)
+void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands, HFONT* fonts)
 {
     bool is_clipping = false;
     HRGN clipping_region = {0};
@@ -48,9 +48,16 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands)
             r.right = boundingBox.x + boundingBox.width + r.right;
             r.bottom = boundingBox.y + boundingBox.height + r.bottom;
 
+            uint16_t font_id = renderCommand->renderData.text.fontId;
+            HFONT hFont = fonts[font_id];
+            HFONT hPrevFont = SelectObject(renderer_hdcMem, hFont);
+
+            // Actually draw text
             DrawTextA(renderer_hdcMem, renderCommand->renderData.text.stringContents.chars,
                       renderCommand->renderData.text.stringContents.length,
                       &r, DT_TOP | DT_LEFT);
+
+            SelectObject(renderer_hdcMem, hPrevFont);
 
             break;
         }
@@ -216,6 +223,37 @@ static inline Clay_Dimensions Clay_Win32_MeasureText(Clay_StringSlice text, Clay
 {
     Clay_Dimensions textSize = {0};
 
+    if (userData != NULL)
+    {
+        HFONT* fonts = (HFONT*)userData;
+        HFONT hFont = fonts[config->fontId];
+
+        if (hFont != NULL)
+        {
+            HDC hScreenDC = GetDC(HWND_DESKTOP);
+            HDC hTempDC = CreateCompatibleDC(hScreenDC);
+
+            if (hTempDC != NULL)
+            {
+                HFONT hPrevFont = SelectObject(hTempDC, hFont);
+
+                SIZE size;
+                GetTextExtentPoint32(hTempDC, text.chars, text.length, &size);
+
+                textSize.width = size.cx;
+                textSize.height = size.cy;
+
+                SelectObject(hScreenDC, hPrevFont);
+                DeleteDC(hTempDC);
+
+                return textSize;
+            }
+
+            ReleaseDC(HWND_DESKTOP, hScreenDC);
+        }
+    }
+
+    // Fallback for system bitmap font
     float maxTextWidth = 0.0f;
     float lineTextWidth = 0;
     float textHeight = WIN32_FONT_HEIGHT;
@@ -238,4 +276,46 @@ static inline Clay_Dimensions Clay_Win32_MeasureText(Clay_StringSlice text, Clay
     textSize.height = textHeight;
 
     return textSize;
+}
+
+HFONT Clay_Win32_SimpleCreateFont(const char* filePath, const char* family, int height, int weight)
+{
+    // Add the font resource to the application instance
+    int fontAdded = AddFontResourceEx(filePath, FR_PRIVATE, NULL);
+    if (fontAdded == 0) {
+        return NULL;
+    }
+
+    int fontHeight = height;
+
+    // If negative, treat height as Pt rather than pixels
+    if (height < 0) {
+        // Get the screen DPI
+        HDC hScreenDC = GetDC(HWND_DESKTOP);
+        int iScreenDPI = GetDeviceCaps(hScreenDC, LOGPIXELSY);
+        ReleaseDC(HWND_DESKTOP, hScreenDC);
+
+        // Convert font height from points to pixels
+        fontHeight = MulDiv(height, iScreenDPI, 72);
+    }
+
+    // Create the font using the calculated height and the font name
+    HFONT hFont = CreateFont(
+        fontHeight,             // Height 
+        0,                      // Width (0 means default width)
+        0,                      // Escapement angle
+        0,                      // Orientation angle
+        weight,                 // Font weight
+        FALSE,                  // Italic
+        FALSE,                  // Underline
+        FALSE,                  // Strikeout
+        ANSI_CHARSET,           // Character set
+        OUT_DEFAULT_PRECIS,     // Output precision
+        CLIP_DEFAULT_PRECIS,    // Clipping precision
+        DEFAULT_QUALITY,        // Font quality
+        DEFAULT_PITCH,          // Pitch and family
+        family                  // Font name
+    );
+
+    return hFont;
 }

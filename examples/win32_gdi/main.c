@@ -25,6 +25,7 @@ void CenterWindow(HWND hWnd);
 
 long lastMsgTime = 0;
 bool ui_debug_mode;
+HFONT fonts[1];
 
 #define RECTWIDTH(rc)   ((rc).right - (rc).left)
 #define RECTHEIGHT(rc)  ((rc).bottom - (rc).top)
@@ -116,7 +117,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
     {
         Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&demo_data);
-        Clay_Win32_Render(hwnd, renderCommands);
+        Clay_Win32_Render(hwnd, renderCommands, fonts);
         break;
     }
 
@@ -154,7 +155,10 @@ int APIENTRY WinMain(
     uint64_t clayRequiredMemory = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Initialize(clayMemory, (Clay_Dimensions){.width = 800, .height = 600}, (Clay_ErrorHandler){HandleClayErrors}); // This final argument is new since the video was published
-    Clay_SetMeasureTextFunction(Clay_Win32_MeasureText, NULL); 
+
+    // Initialize clay fonts and text drawing
+    fonts[FONT_ID_BODY_16] = Clay_Win32_SimpleCreateFont("resources/Roboto-Regular.ttf", "Roboto", -11, FW_NORMAL);
+    Clay_SetMeasureTextFunction(Clay_Win32_MeasureText, fonts);
 
     ZeroMemory(&wc, sizeof wc);
     wc.hInstance = hInstance;
