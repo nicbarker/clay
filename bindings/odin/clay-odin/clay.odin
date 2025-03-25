@@ -111,7 +111,6 @@ TextElementConfig :: struct {
 	lineHeight:         u16,
 	wrapMode:           TextWrapMode,
 	textAlignment:      TextAlignment,
-	hashStringContents: bool,
 }
 
 ImageElementConfig :: struct {
