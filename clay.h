@@ -96,9 +96,9 @@
 #define CLAY__ENSURE_STRING_LITERAL(x) ("" x "")
 
 // Note: If an error led you here, it's because CLAY_STRING can only be used with string literals, i.e. CLAY_STRING("SomeString") and not CLAY_STRING(yourString)
-#define CLAY_STRING(string) (CLAY__INIT(Clay_String) { .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) })
+#define CLAY_STRING(string) (CLAY__INIT(Clay_String) { .isStaticallyAllocated = true, .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) })
 
-#define CLAY_STRING_CONST(string) { .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) }
+#define CLAY_STRING_CONST(string) { .isStaticallyAllocated = true, .length = CLAY__STRING_LENGTH(CLAY__ENSURE_STRING_LITERAL(string)), .chars = (string) }
 
 static uint8_t CLAY__ELEMENT_DEFINITION_LATCH;
 
@@ -185,6 +185,9 @@ extern "C" {
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
 typedef struct {
+    // Set this boolean to true if the char* data underlying this string will live for the entire lifetime of the program.
+    // This will automatically be set for strings created with CLAY_STRING, as the macro requires a string literal.
+    bool isStaticallyAllocated;
     int32_t length;
     // The underlying character memory. Note: this will not be copied and will not extend the lifetime of the underlying memory.
     const char *chars;
@@ -384,10 +387,6 @@ typedef struct {
     // CLAY_TEXT_ALIGN_CENTER - Horizontally aligns wrapped lines of text to the center of their bounding box.
     // CLAY_TEXT_ALIGN_RIGHT - Horizontally aligns wrapped lines of text to the right hand side of their bounding box.
     Clay_TextAlignment textAlignment;
-    // When set to true, clay will hash the entire text contents of this string as an identifier for its internal
-    // text measurement cache, rather than just the pointer and length. This will incur significant performance cost for
-    // long bodies of text.
-    bool hashStringContents;
 } Clay_TextElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
@@ -876,8 +875,7 @@ CLAY_DLL_EXPORT int32_t Clay_GetMaxMeasureTextCacheWordCount(void);
 // Modifies the maximum number of measured "words" (whitespace seperated runs of characters) that Clay can store in its internal text measurement cache.
 // This may require reallocating additional memory, and re-calling Clay_Initialize();
 CLAY_DLL_EXPORT void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
-// Resets Clay's internal text measurement cache, useful if memory to represent strings is being re-used.
-// Similar behaviour can be achieved on an individual text element level by using Clay_TextElementConfig.hashStringContents
+// Resets Clay's internal text measurement cache. Useful if font mappings have changed or fonts have been reloaded.
 CLAY_DLL_EXPORT void Clay_ResetMeasureTextCache(void);
 
 // Internal API functions required by macros ----------------------
@@ -1348,26 +1346,140 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const ui
     return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = offset, .baseId = base + 1, .stringId = key }; // Reserve the hash result of zero as "null id"
 }
 
-uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
-    uint32_t hash = 0;
-    uintptr_t pointerAsNumber = (uintptr_t)text->chars;
+#if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
+static inline __m128i Clay__SIMDRotateLeft(__m128i x, int r) {
+    return _mm_or_si128(_mm_slli_epi64(x, r), _mm_srli_epi64(x, 64 - r));
+}
 
-    if (config->hashStringContents) {
-        uint32_t maxLengthToHash = CLAY__MIN(text->length, 256);
-        for (uint32_t i = 0; i < maxLengthToHash; i++) {
-            hash += text->chars[i];
-            hash += (hash << 10);
-            hash ^= (hash >> 6);
+static inline void Clay__SIMDARXMix(__m128i* a, __m128i* b) {
+    *a = _mm_add_epi64(*a, *b);
+    *b = _mm_xor_si128(Clay__SIMDRotateLeft(*b, 17), *a);
+}
+
+uint64_t Clay__HashData(const uint8_t* data, size_t length) {
+    // Pinched these constants from the BLAKE implementation
+    __m128i v0 = _mm_set1_epi64x(0x6a09e667f3bcc908ULL);
+    __m128i v1 = _mm_set1_epi64x(0xbb67ae8584caa73bULL);
+    __m128i v2 = _mm_set1_epi64x(0x3c6ef372fe94f82bULL);
+    __m128i v3 = _mm_set1_epi64x(0xa54ff53a5f1d36f1ULL);
+
+    uint8_t overflowBuffer[16] = { 0 };  // Temporary buffer for small inputs
+
+    while (length > 0) {
+        __m128i msg;
+        if (length >= 16) {
+            msg = _mm_loadu_si128((const __m128i*)data);
+            data += 16;
+            length -= 16;
         }
-    } else {
-        hash += pointerAsNumber;
+        else {
+            for (int i = 0; i < length; i++) {
+                overflowBuffer[i] = data[i];
+            }
+            msg = _mm_loadu_si128((const __m128i*)overflowBuffer);
+            length = 0;
+        }
+
+        v0 = _mm_xor_si128(v0, msg);
+        Clay__SIMDARXMix(&v0, &v1);
+        Clay__SIMDARXMix(&v2, &v3);
+
+        v0 = _mm_add_epi64(v0, v2);
+        v1 = _mm_add_epi64(v1, v3);
+    }
+
+    Clay__SIMDARXMix(&v0, &v1);
+    Clay__SIMDARXMix(&v2, &v3);
+    v0 = _mm_add_epi64(v0, v2);
+    v1 = _mm_add_epi64(v1, v3);
+
+    uint64_t result[2];
+    _mm_storeu_si128((__m128i*)result, v0);
+
+    return result[0] ^ result[1];
+}
+#elif !defined(CLAY_DISABLE_SIMD) && defined(__aarch64__)
+static inline uint64x2_t Clay__SIMDRotateLeft(uint64x2_t x, int r) {
+    return vorrq_u64(vshlq_n_u64(x, 17), vshrq_n_u64(x, 64 - 17));
+}
+
+static inline void Clay__SIMDARXMix(uint64x2_t* a, uint64x2_t* b) {
+    *a = vaddq_u64(*a, *b);
+    *b = veorq_u64(Clay__SIMDRotateLeft(*b, 17), *a);
+}
+
+uint64_t Clay__HashData(const uint8_t* data, size_t length) {
+    // Pinched these constants from the BLAKE implementation
+    uint64x2_t v0 = vdupq_n_u64(0x6a09e667f3bcc908ULL);
+    uint64x2_t v1 = vdupq_n_u64(0xbb67ae8584caa73bULL);
+    uint64x2_t v2 = vdupq_n_u64(0x3c6ef372fe94f82bULL);
+    uint64x2_t v3 = vdupq_n_u64(0xa54ff53a5f1d36f1ULL);
+
+    uint8_t overflowBuffer[8] = { 0 };
+
+    while (length > 0) {
+        uint64x2_t msg;
+        if (length > 16) {
+            msg = vld1q_u64((const uint64_t*)data);
+            data += 16;
+            length -= 16;
+        }
+        else if (length > 8) {
+            msg = vcombine_u64(vld1_u64((const uint64_t*)data), vdup_n_u64(0));
+            data += 8;
+            length -= 8;
+        }
+        else {
+            for (int i = 0; i < length; i++) {
+                overflowBuffer[i] = data[i];
+            }
+            uint8x8_t lower = vld1_u8(overflowBuffer);
+            msg = vcombine_u8(lower, vdup_n_u8(0));
+            length = 0;
+        }
+        v0 = veorq_u64(v0, msg);
+        Clay__SIMDARXMix(&v0, &v1);
+        Clay__SIMDARXMix(&v2, &v3);
+
+        v0 = vaddq_u64(v0, v2);
+        v1 = vaddq_u64(v1, v3);
+    }
+
+    Clay__SIMDARXMix(&v0, &v1);
+    Clay__SIMDARXMix(&v2, &v3);
+    v0 = vaddq_u64(v0, v2);
+    v1 = vaddq_u64(v1, v3);
+
+    uint64_t result[2];
+    vst1q_u64(result, v0);
+
+    return result[0] ^ result[1];
+}
+#else
+uint64_t Clay__HashData(const uint8_t* data, size_t length) {
+    uint64_t hash = 0;
+
+    for (int32_t i = 0; i < length; i++) {
+        hash += data[i];
         hash += (hash << 10);
         hash ^= (hash >> 6);
     }
+    return hash;
+}
+#endif
 
-    hash += text->length;
-    hash += (hash << 10);
-    hash ^= (hash >> 6);
+uint32_t Clay__HashStringContentsWithConfig(Clay_String *text, Clay_TextElementConfig *config) {
+    uint32_t hash = 0;
+    if (text->isStaticallyAllocated) {
+        hash += (uintptr_t)text->chars;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+        hash += text->length;
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    } else {
+        hash = Clay__HashData((const uint8_t *)text->chars, text->length) % UINT32_MAX;
+    }
 
     hash += config->fontId;
     hash += (hash << 10);
@@ -1377,15 +1489,7 @@ uint32_t Clay__HashTextWithConfig(Clay_String *text, Clay_TextElementConfig *con
     hash += (hash << 10);
     hash ^= (hash >> 6);
 
-    hash += config->lineHeight;
-    hash += (hash << 10);
-    hash ^= (hash >> 6);
-
     hash += config->letterSpacing;
-    hash += (hash << 10);
-    hash ^= (hash >> 6);
-
-    hash += config->wrapMode;
     hash += (hash << 10);
     hash ^= (hash >> 6);
 
@@ -1423,7 +1527,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         return &Clay__MeasureTextCacheItem_DEFAULT;
     }
     #endif
-    uint32_t id = Clay__HashTextWithConfig(text, config);
+    uint32_t id = Clay__HashStringContentsWithConfig(text, config);
     uint32_t hashBucket = id % (context->maxMeasureTextCacheWordCount / 32);
     int32_t elementIndexPrevious = 0;
     int32_t elementIndex = context->measureTextHashMap.internalArray[hashBucket];
