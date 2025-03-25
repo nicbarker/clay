@@ -17,6 +17,7 @@ when ODIN_OS == .Windows {
 }
 
 String :: struct {
+	isStaticallyAllocated: c.bool,
 	length: c.int32_t,
 	chars:  [^]c.char,
 }
@@ -102,6 +103,7 @@ TextAlignment :: enum EnumBackingType {
 }
 
 TextElementConfig :: struct {
+	userData:			rawptr,
 	textColor:          Color,
 	fontId:             u16,
 	fontSize:           u16,
@@ -172,7 +174,7 @@ FloatingElementConfig :: struct {
 	offset:             Vector2,
 	expand:             Dimensions,
 	parentId:           u32,
-	zIndex:             i32,
+	zIndex:             i16,
 	attachment:         FloatingAttachPoints,
 	pointerCaptureMode: PointerCaptureMode,
 	attachTo:           FloatingAttachToElement,
@@ -366,6 +368,8 @@ Context :: struct {} // opaque structure, only use as a pointer
 
 @(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
+	_OpenElement :: proc() ---
+	_CloseElement :: proc() ---
 	MinMemorySize :: proc() -> u32 ---
 	CreateArenaWithCapacityAndMemory :: proc(capacity: c.size_t, offset: [^]u8) -> Arena ---
 	SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
@@ -398,9 +402,7 @@ foreign Clay {
 
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
 foreign Clay {
-	_OpenElement :: proc() ---
 	_ConfigureOpenElement :: proc(config: ElementDeclaration) ---
-	_CloseElement :: proc() ---
 	_HashString :: proc(key: String, offset: u32, seed: u32) -> ElementId ---
 	_OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
 	_StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
@@ -418,7 +420,13 @@ UI :: proc() -> proc (config: ElementDeclaration) -> bool {
 	return ConfigureOpenElement
 }
 
-Text :: proc(text: string, config: ^TextElementConfig) {
+Text :: proc($text: string, config: ^TextElementConfig) {
+	wrapped := MakeString(text)
+	wrapped.isStaticallyAllocated = true
+	_OpenTextElement(wrapped, config)
+}
+
+TextDynamic :: proc(text: string, config: ^TextElementConfig) {
 	_OpenTextElement(MakeString(text), config)
 }
 
@@ -456,4 +464,8 @@ MakeString :: proc(label: string) -> String {
 
 ID :: proc(label: string, index: u32 = 0) -> ElementId {
 	return _HashString(MakeString(label), index, 0)
+}
+
+ID_LOCAL :: proc(label: string, index: u32 = 0) -> ElementId {
+	return _HashString(MakeString(label), index, _GetParentElementId())
 }

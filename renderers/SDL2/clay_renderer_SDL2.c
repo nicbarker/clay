@@ -3,6 +3,7 @@
 #include <SDL_ttf.h>
 #include <SDL_image.h>
 #include <stdio.h>
+#include <math.h>
 
 #ifndef M_PI
     #define M_PI 3.14159
@@ -408,7 +409,7 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
                         SDL_RenderCornerBorder(renderer, &boundingBox, config, 1, config->color);
                     }
 
-                    if (config->width.bottom > 0 & config->cornerRadius.bottomLeft > 0) {
+                    if (config->width.bottom > 0 & config->cornerRadius.bottomRight > 0) {
                         SDL_RenderCornerBorder(renderer, &boundingBox, config, 2, config->color);
                     }
 

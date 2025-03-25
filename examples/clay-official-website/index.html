@@ -119,6 +119,7 @@
         {name: 'bottomRight', type: 'float'},
     ]};
     let textConfigDefinition = { name: 'text', type: 'struct', members: [
+        { name: 'userData', type: 'uint32_t' },
         { name: 'textColor', ...colorDefinition },
         { name: 'fontId', type: 'uint16_t' },
         { name: 'fontSize', type: 'uint16_t' },
