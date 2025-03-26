@@ -136,7 +136,7 @@ static inline void Clay__SuppressUnusedLatchDefinitionVariableWarning(void) { (v
     for (                                                                                                                                                   \
         CLAY__ELEMENT_DEFINITION_LATCH = (Clay__OpenElement(), Clay__ConfigureOpenElement(CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration, __VA_ARGS__)), 0);  \
         CLAY__ELEMENT_DEFINITION_LATCH < 1;                                                                                                                 \
-        ++CLAY__ELEMENT_DEFINITION_LATCH, Clay__CloseElement()                                                                                              \
+        CLAY__ELEMENT_DEFINITION_LATCH=1, Clay__CloseElement()                                                                                              \
     )
 
 // These macros exist to allow the CLAY() macro to be called both with an inline struct definition, such as
