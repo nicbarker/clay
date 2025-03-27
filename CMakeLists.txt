@@ -38,3 +38,6 @@ if(NOT MSVC AND (CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_SDL3_EXAMPLES))
 endif()
 
 #  add_subdirectory("examples/cairo-pdf-rendering") Some issue with github actions populating cairo, disable for now
+
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(${PROJECT_NAME} INTERFACE .)
