@@ -1373,7 +1373,7 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
             length -= 16;
         }
         else {
-            for (int i = 0; i < length; i++) {
+            for (size_t i = 0; i < length; i++) {
                 overflowBuffer[i] = data[i];
             }
             msg = _mm_loadu_si128((const __m128i*)overflowBuffer);
