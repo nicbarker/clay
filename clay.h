@@ -1430,11 +1430,11 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
             length -= 8;
         }
         else {
-            for (int i = 0; i < length; i++) {
+            for (size_t i = 0; i < length; i++) {
                 overflowBuffer[i] = data[i];
             }
             uint8x8_t lower = vld1_u8(overflowBuffer);
-            msg = vcombine_u8(lower, vdup_n_u8(0));
+            msg = vreinterpretq_u64_u8(vcombine_u8(lower, vdup_n_u8(0)));
             length = 0;
         }
         v0 = veorq_u64(v0, msg);
