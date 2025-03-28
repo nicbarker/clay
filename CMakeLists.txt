@@ -9,6 +9,7 @@ option(CLAY_INCLUDE_CPP_EXAMPLE "Build C++ example" OFF)
 option(CLAY_INCLUDE_RAYLIB_EXAMPLES "Build raylib examples" OFF)
 option(CLAY_INCLUDE_SDL2_EXAMPLES "Build SDL 2 examples" OFF)
 option(CLAY_INCLUDE_SDL3_EXAMPLES "Build SDL 3 examples" OFF)
+option(CLAY_INCLUDE_WIN32_GDI_EXAMPLES "Build Win32 GDI examples" OFF)
 
 message(STATUS "CLAY_INCLUDE_DEMOS: ${CLAY_INCLUDE_DEMOS}")
 
@@ -35,6 +36,12 @@ if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_SDL2_EXAMPLES)
 endif ()
 if(NOT MSVC AND (CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_SDL3_EXAMPLES))
     add_subdirectory("examples/SDL3-simple-demo")
+endif()
+
+if(WIN32)   # Build only for Win or Wine
+    if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_WIN32_GDI_EXAMPLES)
+        add_subdirectory("examples/win32_gdi")
+    endif()
 endif()
 
 #  add_subdirectory("examples/cairo-pdf-rendering") Some issue with github actions populating cairo, disable for now
