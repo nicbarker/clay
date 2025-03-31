@@ -495,7 +495,7 @@ main :: proc() {
     clay.Initialize(arena, {cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()}, { handler = errorHandler })
     clay.SetMeasureTextFunction(measureText, nil)
 
-    raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE, .WINDOW_HIGHDPI, .MSAA_4X_HINT})
+    raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE, .MSAA_4X_HINT})
     raylib.InitWindow(windowWidth, windowHeight, "Raylib Odin Example")
     raylib.SetTargetFPS(raylib.GetMonitorRefreshRate(0))
     loadFont(FONT_ID_TITLE_56, 56, "resources/Calistoga-Regular.ttf")
