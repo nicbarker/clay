@@ -1399,13 +1399,9 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     return result[0] ^ result[1];
 }
 #elif !defined(CLAY_DISABLE_SIMD) && defined(__aarch64__)
-static inline uint64x2_t Clay__SIMDRotateLeft(uint64x2_t x, int r) {
-    return vorrq_u64(vshlq_n_u64(x, 17), vshrq_n_u64(x, 64 - 17));
-}
-
 static inline void Clay__SIMDARXMix(uint64x2_t* a, uint64x2_t* b) {
     *a = vaddq_u64(*a, *b);
-    *b = veorq_u64(Clay__SIMDRotateLeft(*b, 17), *a);
+    *b = veorq_u64(vorrq_u64(vshlq_n_u64(*b, 17), vshrq_n_u64(*b, 64 - 17)), *a);
 }
 
 uint64_t Clay__HashData(const uint8_t* data, size_t length) {
