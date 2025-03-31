@@ -226,6 +226,7 @@ RenderCommand :: struct {
 	userData:           rawptr,
 	id:                 u32,
 	zIndex:             i16,
+	treeDepth: 			i16,
 	commandType:        RenderCommandType,
 }
 
