@@ -569,22 +569,9 @@ HFONT Clay_Win32_SimpleCreateFont(const char* filePath, const char* family, int 
     }
 
     // Create the font using the calculated height and the font name
-    HFONT hFont = CreateFont(
-        fontHeight,             // Height 
-        0,                      // Width (0 means default width)
-        0,                      // Escapement angle
-        0,                      // Orientation angle
-        weight,                 // Font weight
-        FALSE,                  // Italic
-        FALSE,                  // Underline
-        FALSE,                  // Strikeout
-        ANSI_CHARSET,           // Character set
-        OUT_DEFAULT_PRECIS,     // Output precision
-        CLIP_DEFAULT_PRECIS,    // Clipping precision
-        DEFAULT_QUALITY,        // Font quality
-        DEFAULT_PITCH,          // Pitch and family
-        family                  // Font name
-    );
+    HFONT hFont = CreateFont(fontHeight, 0, 0, 0, weight, FALSE, FALSE, FALSE,
+        ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+        DEFAULT_PITCH, family);
 
     return hFont;
 }
