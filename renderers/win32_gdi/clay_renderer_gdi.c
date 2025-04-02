@@ -11,8 +11,12 @@ HBITMAP renderer_hbmMem = {0};
 HANDLE renderer_hOld = {0};
 bool gdi_fabulous = true;
 
+#ifndef RECTWIDTH
 #define RECTWIDTH(rc)   ((rc).right - (rc).left)
+#endif
+#ifndef RECTHEIGHT
 #define RECTHEIGHT(rc)  ((rc).bottom - (rc).top)
+#endif
 
 /*----------------------------------------------------------------------------+
  | Math stuff start                                                           |

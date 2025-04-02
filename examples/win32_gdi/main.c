@@ -27,8 +27,12 @@ long lastMsgTime = 0;
 bool ui_debug_mode;
 HFONT fonts[1];
 
+#ifndef RECTWIDTH
 #define RECTWIDTH(rc)   ((rc).right - (rc).left)
+#endif
+#ifndef RECTHEIGHT
 #define RECTHEIGHT(rc)  ((rc).bottom - (rc).top)
+#endif
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
