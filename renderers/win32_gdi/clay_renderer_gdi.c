@@ -499,7 +499,7 @@ static inline Clay_Dimensions Clay_Win32_MeasureText(Clay_StringSlice text, Clay
 
         if (hFont != NULL)
         {
-            HDC hScreenDC = GetDC(HWND_DESKTOP);
+            HDC hScreenDC = GetDC(NULL);
             HDC hTempDC = CreateCompatibleDC(hScreenDC);
 
             if (hTempDC != NULL)
@@ -560,7 +560,7 @@ HFONT Clay_Win32_SimpleCreateFont(const char* filePath, const char* family, int 
     // If negative, treat height as Pt rather than pixels
     if (height < 0) {
         // Get the screen DPI
-        HDC hScreenDC = GetDC(HWND_DESKTOP);
+        HDC hScreenDC = GetDC(NULL);
         int iScreenDPI = GetDeviceCaps(hScreenDC, LOGPIXELSY);
         ReleaseDC(HWND_DESKTOP, hScreenDC);
 
