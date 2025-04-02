@@ -1,10 +1,7 @@
 #include <Windows.h>
 
-// #define USE_INTRINSICS
-// #define USE_FAST_SQRT
-
-#if defined(USE_INTRINSICS)
-#include <immintrin.h>
+#if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
+#include <immintrin.h>  // AVX intrinsincs for faster sqrtf
 #endif
 
 #include "../../clay.h"
@@ -20,23 +17,15 @@ bool gdi_fabulous = true;
 /*----------------------------------------------------------------------------+
  | Math stuff start                                                           |
  +----------------------------------------------------------------------------*/
-#if defined(USE_INTRINSICS)
-#define sqrtf_impl(x) intrin_sqrtf(x)
-#elif defined(USE_FAST_SQRT)
-#define sqrtf_impl(x) fast_sqrtf(x)
-#else
-#define sqrtf_impl(x) sqrtf(x)  // Fallback to std sqrtf
-#endif
-
-// Use intrinsics
-#if defined(USE_INTRINSICS)
+// Intrinsincs wrappers
+#if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
 inline float intrin_sqrtf(const float f)
 {
     __m128 temp = _mm_set_ss(f);
     temp = _mm_sqrt_ss(temp);
     return _mm_cvtss_f32(temp);
 }
-#endif  // defined(USE_INTRINSICS)
+#endif
 
 // Use fast inverse square root
 #if defined(USE_FAST_SQRT)
@@ -64,6 +53,15 @@ float fast_sqrtf(float number)
     if (number < 0.0f) return 0.0f; // Handle negative input
     return number * fast_inv_sqrtf(number);
 }
+#endif
+
+// sqrtf_impl implementation chooser
+#if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
+#define sqrtf_impl(x) intrin_sqrtf(x)
+#elif defined(USE_FAST_SQRT)
+#define sqrtf_impl(x) fast_sqrtf(x)
+#else
+#define sqrtf_impl(x) sqrtf(x)  // Fallback to std sqrtf
 #endif
 /*----------------------------------------------------------------------------+
  | Math stuff end                                                             |
