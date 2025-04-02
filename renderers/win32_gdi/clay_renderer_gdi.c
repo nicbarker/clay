@@ -9,7 +9,7 @@
 HDC renderer_hdcMem = {0};
 HBITMAP renderer_hbmMem = {0};
 HANDLE renderer_hOld = {0};
-bool gdi_fabulous = true;
+DWORD g_dwGdiRenderFlags;
 
 #ifndef RECTWIDTH
 #define RECTWIDTH(rc)   ((rc).right - (rc).left)
@@ -17,6 +17,31 @@ bool gdi_fabulous = true;
 #ifndef RECTHEIGHT
 #define RECTHEIGHT(rc)  ((rc).bottom - (rc).top)
 #endif
+
+// Renderer options bit flags
+// RF clearly stated in the name to avoid confusion with possible macro definitions for other purposes
+#define CLAYGDI_RF_ALPHABLEND       0x00000001
+#define CLAYGDI_RF_SMOOTHCORNERS    0x00000002
+// These are bitflags, not indexes. Next would be 0x00000004
+
+inline DWORD Clay_Win32_GetRendererFlags() { return g_dwGdiRenderFlags; }
+
+// Replaces the rendering flags with new ones provided
+inline void Clay_Win32_SetRendererFlags(DWORD dwFlags) { g_dwGdiRenderFlags = dwFlags; }
+
+// Returns `true` if flags were modified
+inline bool Clay_Win32_ModifyRendererFlags(DWORD dwRemove, DWORD dwAdd)
+{
+    DWORD dwSavedFlags = g_dwGdiRenderFlags;
+    DWORD dwNewFlags = (dwSavedFlags & ~dwRemove) | dwAdd;
+
+    if (dwSavedFlags == dwNewFlags)
+        return false;
+
+    Clay_Win32_SetRendererFlags(dwNewFlags);
+    return true;
+}
+
 
 /*----------------------------------------------------------------------------+
  | Math stuff start                                                           |
@@ -99,7 +124,6 @@ static inline Clay_Color ColorBlend(Clay_Color base, Clay_Color overlay, float f
 
 static float RoundedRectPixelCoverage(int x, int y, const Clay_CornerRadius radius, int width, int height) {
     // Check if the pixel is in one of the four rounded corners
-
     if (x < radius.topLeft && y < radius.topLeft) {
         // Top-left corner
         float dx = radius.topLeft - x - 1;
@@ -318,6 +342,7 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands, HFONT*
         }
         case CLAY_RENDER_COMMAND_TYPE_RECTANGLE:
         {
+            DWORD dwFlags = Clay_Win32_GetRendererFlags();
             Clay_RectangleRenderData rrd = renderCommand->renderData.rectangle;
             RECT r = rc;
 
@@ -326,13 +351,20 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands, HFONT*
             r.right = boundingBox.x + boundingBox.width;
             r.bottom = boundingBox.y + boundingBox.height;
 
-            bool translucid = rrd.backgroundColor.a > 0.0f && rrd.backgroundColor.a < 255.0f;
+            bool translucid = false;
+            // There is need to check that only if alphablending is enabled.
+            // In other case the blending will be always opaque and we can jump to simpler FillRgn/Rect
+            if (dwFlags & CLAYGDI_RF_ALPHABLEND)
+                translucid = rrd.backgroundColor.a > 0.0f && rrd.backgroundColor.a < 255.0f;
+            
             bool has_rounded_corners = rrd.cornerRadius.topLeft > 0.0f
                 || rrd.cornerRadius.topRight > 0.0f
                 || rrd.cornerRadius.bottomLeft > 0.0f
                 || rrd.cornerRadius.bottomRight > 0.0f;
 
-            if (gdi_fabulous && (translucid || has_rounded_corners))
+            // We go here if CLAYGDI_RF_SMOOTHCORNERS flag is set and one of the corners is rounded
+            // Also we go here if GLAYGDI_RF_ALPHABLEND flag is set and the fill color is translucid
+            if ((dwFlags & CLAYGDI_RF_ALPHABLEND) && translucid || (dwFlags & CLAYGDI_RF_SMOOTHCORNERS) && has_rounded_corners)
             {
                 __Clay_Win32_FillRoundRect(renderer_hdcMem, &r, rrd.backgroundColor, rrd.cornerRadius);
             }

@@ -160,6 +160,8 @@ int APIENTRY WinMain(
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Initialize(clayMemory, (Clay_Dimensions){.width = 800, .height = 600}, (Clay_ErrorHandler){HandleClayErrors}); // This final argument is new since the video was published
 
+    Clay_Win32_SetRendererFlags(CLAYGDI_RF_ALPHABLEND | CLAYGDI_RF_SMOOTHCORNERS);
+
     // Initialize clay fonts and text drawing
     fonts[FONT_ID_BODY_16] = Clay_Win32_SimpleCreateFont("resources/Roboto-Regular.ttf", "Roboto", -11, FW_NORMAL);
     Clay_SetMeasureTextFunction(Clay_Win32_MeasureText, fonts);
