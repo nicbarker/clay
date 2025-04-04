@@ -1670,6 +1670,8 @@ Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Cl
                 hashItem->generation = context->generation + 1;
                 hashItem->layoutElement = layoutElement;
                 hashItem->debugData->collision = false;
+                hashItem->onHoverFunction = NULL;
+                hashItem->hoverFunctionUserData = 0;
             } else { // Multiple collisions this frame - two elements have the same ID
                 context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
                     .errorType = CLAY_ERROR_TYPE_DUPLICATE_ID,
