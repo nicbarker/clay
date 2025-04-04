@@ -1,3 +1,4 @@
+#define WIN32_LEAN_AND_MEAN // Reduces lots of clunk we aren't using here
 #include <Windows.h>
 #include "../../clay.h"
 
@@ -177,12 +178,58 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands)
 
             break;
         }
+        case CLAY_RENDER_COMMAND_TYPE_IMAGE:
+        {
+            // TODO: Add blending support by replacing StretchBlt with alphablend
+            //       Add corner radius support by setting alpha value of out-of-bounds
+            //       pixels to 0
+            //       Add tinting support by creating an hbitmap with a specific color,
+            //       and alplhablending over the image.
 
-            // case CLAY_RENDER_COMMAND_TYPE_IMAGE:
-            // {
-            //     // TODO: i couldnt get the win 32 api to load a bitmap.... So im punting on this one :(
-            //     break;
-            // }
+            Clay_ImageRenderData *config = &renderCommand->renderData.image;
+
+            HBITMAP img_hbmMem = *((HBITMAP *) config->imageData);
+            HDC img_hdcMem = CreateCompatibleDC(NULL);
+            SelectObject(img_hdcMem, img_hbmMem);
+            
+            int srcWidth = config->sourceDimensions.width;
+            int srcHeight = config->sourceDimensions.height;
+
+            float widthRatio = boundingBox.width / srcWidth; 
+            float heightRatio = boundingBox.height / srcHeight;
+
+            int dstX = boundingBox.x;
+            int dstY = boundingBox.y;
+            int dstWidth;
+            int dstHeight;
+            
+            // Win32 GDI's StretchBlt can scale our image, but will not preserve aspect ratio
+            if (widthRatio > heightRatio)
+            {
+                dstHeight = boundingBox.height;
+                dstWidth = (int) (srcWidth * widthRatio);
+                if (dstWidth > boundingBox.width)
+                {
+                    dstWidth = boundingBox.width;
+                }
+            }
+            else
+            {
+                dstWidth = boundingBox.width;
+                dstHeight = (int) (srcWidth * heightRatio);
+                if (dstHeight > boundingBox.height)
+                {
+                    dstHeight = boundingBox.height;
+                }
+            }
+
+            SetStretchBltMode(renderer_hdcMem, HALFTONE); // Halftone gives really nice scaled images
+	        SetBrushOrgEx(renderer_hdcMem, dstX, dstY, NULL); // Necessary for halftone alignment
+            StretchBlt(renderer_hdcMem, dstX, dstY, dstWidth, dstHeight, img_hdcMem, 0, 0, srcWidth, srcHeight, SRCCOPY);
+
+            DeleteDC(img_hdcMem);
+            break;
+        }
 
         default:
             printf("Unhandled render command %d\r\n", renderCommand->commandType);
