@@ -41,11 +41,15 @@ else()
     add_library(sokol STATIC sokol.c ${sokol_HEADERS})
     if (CMAKE_SYSTEM_NAME STREQUAL Linux)
         target_link_libraries(sokol INTERFACE X11 Xi Xcursor GL dl m)
-        target_link_libraries(sokol PUBLIC Threads::Threads)
     endif()
 endif()
 target_include_directories(sokol INTERFACE ${sokol_SOURCE_DIR} ${fontstash_SOURCE_DIR}/src
                                  PRIVATE ${sokol_SOURCE_DIR} ${fontstash_SOURCE_DIR}/src)
+
+if(MSVC)
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /ENTRY:mainCRTStartup")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /ENTRY:mainCRTStartup")
+endif()
 
 add_executable(sokol_video_demo main.c)
 target_link_libraries(sokol_video_demo PUBLIC sokol)
