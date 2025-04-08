@@ -25,6 +25,14 @@ void CenterWindow(HWND hWnd);
 
 long lastMsgTime = 0;
 bool ui_debug_mode;
+HFONT fonts[1];
+
+#ifndef RECTWIDTH
+#define RECTWIDTH(rc)   ((rc).right - (rc).left)
+#endif
+#ifndef RECTHEIGHT
+#define RECTHEIGHT(rc)  ((rc).bottom - (rc).top)
+#endif
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -113,7 +121,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
     {
         Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&demo_data);
-        Clay_Win32_Render(hwnd, renderCommands);
+        Clay_Win32_Render(hwnd, renderCommands, fonts);
         break;
     }
 
@@ -151,7 +159,12 @@ int APIENTRY WinMain(
     uint64_t clayRequiredMemory = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Initialize(clayMemory, (Clay_Dimensions){.width = 800, .height = 600}, (Clay_ErrorHandler){HandleClayErrors}); // This final argument is new since the video was published
-    Clay_SetMeasureTextFunction(Clay_Win32_MeasureText, NULL); 
+
+    Clay_Win32_SetRendererFlags(CLAYGDI_RF_ALPHABLEND | CLAYGDI_RF_SMOOTHCORNERS);
+
+    // Initialize clay fonts and text drawing
+    fonts[FONT_ID_BODY_16] = Clay_Win32_SimpleCreateFont("resources/Roboto-Regular.ttf", "Roboto", -11, FW_NORMAL);
+    Clay_SetMeasureTextFunction(Clay_Win32_MeasureText, fonts);
 
     ZeroMemory(&wc, sizeof wc);
     wc.hInstance = hInstance;
@@ -165,6 +178,10 @@ int APIENTRY WinMain(
     if (FALSE == RegisterClass(&wc))
         return 0;
 
+    // Calculate window rectangle by given client size
+    // TODO: AdjustWindowRectExForDpi for DPI support
+    RECT rcWindow = { .right = 800, .bottom = 600 };
+    AdjustWindowRect(&rcWindow, WS_OVERLAPPEDWINDOW, FALSE);
 
     hwnd = CreateWindow(
         szAppName,
@@ -172,8 +189,8 @@ int APIENTRY WinMain(
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        800, // CW_USEDEFAULT,
-        600, // CW_USEDEFAULT,
+        RECTWIDTH(rcWindow), // CW_USEDEFAULT,
+        RECTHEIGHT(rcWindow), // CW_USEDEFAULT,
         0,
         0,
         hInstance,
