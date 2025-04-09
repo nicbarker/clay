@@ -4,6 +4,12 @@ project(sokol_video_demo C)
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
+# Linux -pthread shenanigans
+if (CMAKE_SYSTEM_NAME STREQUAL Linux)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+endif()
+
 FetchContent_Declare(
     fontstash
     GIT_REPOSITORY "https://github.com/memononen/fontstash.git"
@@ -42,18 +48,22 @@ else()
     if (CMAKE_SYSTEM_NAME STREQUAL Linux)
         target_compile_definitions(sokol PRIVATE SOKOL_GLCORE=1)
         target_link_libraries(sokol INTERFACE X11 Xi Xcursor GL dl m)
+        target_link_libraries(sokol PUBLIC Threads::Threads)
     endif()
 endif()
 target_include_directories(sokol INTERFACE ${sokol_SOURCE_DIR} ${fontstash_SOURCE_DIR}/src
                                  PRIVATE ${sokol_SOURCE_DIR} ${fontstash_SOURCE_DIR}/src)
 
-if(MSVC)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /ENTRY:mainCRTStartup")
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /ENTRY:mainCRTStartup")
-endif()
 
-add_executable(sokol_video_demo main.c)
+
+if(CMAKE_SYSTEM_NAME STREQUAL Windows)
+    add_executable(sokol_video_demo WIN32 main.c)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT sokol_video_demo)
+else()
+    add_executable(sokol_video_demo main.c)
+endif()
 target_link_libraries(sokol_video_demo PUBLIC sokol)
+
 add_custom_command(
         TARGET sokol_video_demo POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

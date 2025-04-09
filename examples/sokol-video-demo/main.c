@@ -28,7 +28,7 @@ static void init() {
     sclay_setup();
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-    Clay_Initialize(clayMemory, (Clay_Dimensions){ (float)sapp_width(), (float)sapp_height() }, (Clay_ErrorHandler){});
+    Clay_Initialize(clayMemory, (Clay_Dimensions){ (float)sapp_width(), (float)sapp_height() }, (Clay_ErrorHandler){0});
     fonts[FONT_ID_BODY_16] = sclay_add_font("resources/Roboto-Regular.ttf");
     Clay_SetMeasureTextFunction(sclay_measure_text, &fonts);
     demoData = ClayVideoDemo_Initialize();
@@ -75,5 +75,3 @@ sapp_desc sokol_main(int argc, char **argv) {
         .logger.func = slog_func,
     };
 }
-
-int main();
