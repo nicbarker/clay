@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.27)
+project(sokol_corner_radius C)
+
+if(CMAKE_SYSTEM_NAME STREQUAL Windows)
+    add_executable(sokol_corner_radius WIN32 main.c)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT sokol_corner_radius)
+else()
+    add_executable(sokol_corner_radius main.c)
+endif()
+target_link_libraries(sokol_corner_radius PUBLIC sokol)
