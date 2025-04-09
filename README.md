@@ -1787,7 +1787,8 @@ Note: when using the debug tools, their internal colors are represented as 0-255
 
 ```C
 typedef struct {
-    int length;
+    bool isStaticallyAllocated;
+    int32_t length;
     const char *chars;
 } Clay_String;
 ```
@@ -1796,7 +1797,14 @@ typedef struct {
 
 **Fields**
 
-**`.length`** - `int`
+**`.isStaticallyAllocated`** - `bool`
+
+Whether or not the string is statically allocated, or in other words, whether
+or not it lives for the entire lifetime of the program.
+
+---
+
+**`.length`** - `int32_t`
 
 The number of characters in the string, _not including an optional null terminator._
 
