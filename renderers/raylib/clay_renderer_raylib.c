@@ -157,7 +157,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 if(strlen > temp_render_buffer_len) {
                     // Grow the temp buffer if we need a larger string
                     if(temp_render_buffer) free(temp_render_buffer);
-                    temp_render_buffer = malloc(strlen);
+                    temp_render_buffer = (char *) malloc(strlen);
                     temp_render_buffer_len = strlen;
                 }
     
