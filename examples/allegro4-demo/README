@@ -1,0 +1,3 @@
+# Allegro 4 demo
+
+To build this demo on your system of choice, include all source files in this directory, as well as in "renderers/alleg4" and link with a 4.x version of Allegro. It's probably easiest to go with a pre-built binary.
