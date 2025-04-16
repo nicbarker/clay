@@ -22,7 +22,7 @@ FetchContent_MakeAvailable(fontstash)
 FetchContent_Declare(
     sokol
     GIT_REPOSITORY "https://github.com/floooh/sokol.git"
-    GIT_TAG "da9de496f938b7575eff7f01ab774d77469bd390"
+    GIT_TAG "master"
     GIT_PROGRESS TRUE
     GIT_SHALLOW TRUE
 )
