@@ -3256,9 +3256,11 @@ void Clay__RenderDebugLayoutSizing(Clay_SizingAxis sizing, Clay_TextElementConfi
         sizingLabel = CLAY_STRING("FIT");
     } else if (sizing.type == CLAY__SIZING_TYPE_PERCENT) {
         sizingLabel = CLAY_STRING("PERCENT");
+    } else if (sizing.type == CLAY__SIZING_TYPE_FIXED) {
+        sizingLabel = CLAY_STRING("FIXED");
     }
     CLAY_TEXT(sizingLabel, infoTextConfig);
-    if (sizing.type == CLAY__SIZING_TYPE_GROW || sizing.type == CLAY__SIZING_TYPE_FIT) {
+    if (sizing.type == CLAY__SIZING_TYPE_GROW || sizing.type == CLAY__SIZING_TYPE_FIT || sizing.type == CLAY__SIZING_TYPE_FIXED) {
         CLAY_TEXT(CLAY_STRING("("), infoTextConfig);
         if (sizing.size.minMax.min != 0) {
             CLAY_TEXT(CLAY_STRING("min: "), infoTextConfig);
@@ -3272,6 +3274,10 @@ void Clay__RenderDebugLayoutSizing(Clay_SizingAxis sizing, Clay_TextElementConfi
             CLAY_TEXT(Clay__IntToString(sizing.size.minMax.max), infoTextConfig);
         }
         CLAY_TEXT(CLAY_STRING(")"), infoTextConfig);
+    } else if (sizing.type == CLAY__SIZING_TYPE_PERCENT) {
+        CLAY_TEXT(CLAY_STRING("("), infoTextConfig);
+        CLAY_TEXT(Clay__IntToString(sizing.size.percent * 100), infoTextConfig);
+        CLAY_TEXT(CLAY_STRING("%)"), infoTextConfig);
     }
 }
 
