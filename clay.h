@@ -350,6 +350,8 @@ typedef CLAY_PACKED_ENUM {
     CLAY_TEXT_WRAP_NEWLINES,
     // Disable text wrapping entirely.
     CLAY_TEXT_WRAP_NONE,
+    // Inherit from nearest ancestor (or default `CLAY_TEXT_WRAP_WORDS` if none)
+    CLAY_TEXT_WRAP_INHERIT
 } Clay_TextElementConfigWrapMode;
 
 // Controls how wrapped lines of text are horizontally aligned within the outer text bounding box.
@@ -360,6 +362,8 @@ typedef CLAY_PACKED_ENUM {
     CLAY_TEXT_ALIGN_CENTER,
     // Horizontally aligns wrapped lines of text to the right hand side of their bounding box.
     CLAY_TEXT_ALIGN_RIGHT,
+    // Inherit from nearest ancestor (or default `CLAY_TEXT_ALIGN_LEFT` if none)
+    CLAY_TEXT_ALIGN_INHERIT,
 } Clay_TextAlignment;
 
 // Controls various functionality related to text elements.
@@ -390,6 +394,29 @@ typedef struct {
 } Clay_TextElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
+
+// Cascading support --------------------
+
+/* 0xFFFF is outside the signed 16-bit range Clay already uses
+   and cannot conflict with “real” font sizes, IDs, spacing, etc.   */
+#define CLAY_TEXT_INHERIT_U16   ((uint16_t)0xFFFF)
+#define CLAY_TEXT_WRAP_INHERIT     ((Clay_TextElementConfigWrapMode)-1)
+#define CLAY_TEXT_ALIGN_INHERIT    ((Clay_TextAlignment)-1)
+
+/* Chosen because fully–transparent black should never be rendered. */
+static const Clay_Color CLAY_COLOR_INHERIT = {0,0,0,0};
+
+#define CLAY_TEXT_CONFIG_INHERIT_ALL                                          \
+    ((Clay_TextElementConfig){                                                \
+        .userData      = NULL,                                                \
+        .textColor     = CLAY_COLOR_INHERIT,                                  \
+        .fontId        = CLAY_TEXT_INHERIT_U16,                               \
+        .fontSize      = CLAY_TEXT_INHERIT_U16,                               \
+        .letterSpacing = CLAY_TEXT_INHERIT_U16,                               \
+        .lineHeight    = CLAY_TEXT_INHERIT_U16,                               \
+        .wrapMode      = CLAY_TEXT_WRAP_INHERIT,                              \
+        .textAlignment = CLAY_TEXT_ALIGN_INHERIT                              \
+    })
 
 // Image --------------------------------
 
@@ -723,6 +750,8 @@ typedef struct {
     Clay_Color backgroundColor;
     // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
     Clay_CornerRadius cornerRadius;
+    // Controls settings related to text elements.
+    Clay_TextElementConfig text;
     // Controls settings related to image elements.
     Clay_ImageElementConfig image;
     // Controls whether and how an element "floats", which means it layers over the top of other elements in z order, and doesn't affect the position and size of siblings or parent elements.
@@ -1100,6 +1129,7 @@ typedef struct {
     Clay_LayoutConfig *layoutConfig;
     Clay__ElementConfigArraySlice elementConfigs;
     uint32_t id;
+    bool hasTextElementData;
 } Clay_LayoutElement;
 
 CLAY__ARRAY_DEFINE(Clay_LayoutElement, Clay_LayoutElementArray)
@@ -1731,6 +1761,10 @@ bool Clay__ElementHasConfig(Clay_LayoutElement *layoutElement, Clay__ElementConf
     return false;
 }
 
+bool Clay__ElementHasTextElementData(Clay_LayoutElement *layoutElement) {
+    return layoutElement->hasTextElementData;
+}
+
 void Clay__UpdateAspectRatioBox(Clay_LayoutElement *layoutElement) {
     for (int32_t j = 0; j < layoutElement->elementConfigs.length; j++) {
         Clay_ElementConfig *config = Clay__ElementConfigArraySlice_Get(&layoutElement->elementConfigs, j);
@@ -1938,6 +1972,63 @@ void Clay__OpenElement(void) {
     }
 }
 
+#define CLAY__IS_INHERIT_U16(v) ((v) == CLAY_TEXT_INHERIT_U16)
+#define CLAY__IS_INHERIT_WRAP(v) ((v) == CLAY_TEXT_WRAP_INHERIT)
+#define CLAY__IS_INHERIT_ALIGN(v) ((v) == CLAY_TEXT_ALIGN_INHERIT)
+#define CLAY__IS_INHERIT_COLOR(v) \
+    ((v).r == CLAY_COLOR_INHERIT.r && \
+     (v).g == CLAY_COLOR_INHERIT.g && \
+     (v).b == CLAY_COLOR_INHERIT.b && \
+     (v).a == CLAY_COLOR_INHERIT.a)
+
+// Returns true if any of the text properties still needs merging.
+static inline bool Clay__TextConfigHasInherit(const Clay_TextElementConfig *c)
+{
+    return CLAY__IS_INHERIT_U16(c->fontId) || CLAY__IS_INHERIT_U16(c->fontSize) || CLAY__IS_INHERIT_U16(c->letterSpacing) ||
+        CLAY__IS_INHERIT_U16(c->lineHeight) || CLAY__IS_INHERIT_WRAP(c->wrapMode) || CLAY__IS_INHERIT_ALIGN(c->textAlignment) ||
+        (c->textColor.a == CLAY_COLOR_INHERIT.a);
+}
+
+static Clay_TextElementConfig Clay__ResolveTextConfig(const Clay_TextElementConfig *local)
+{
+    Clay_Context* ctx = Clay_GetCurrentContext();
+    Clay_TextElementConfig out = *local;
+
+    int32_t stackLen = (int32_t)ctx->openLayoutElementStack.length;
+    for (int32_t si = stackLen - 1; si >= 0 && Clay__TextConfigHasInherit(&out); --si)
+    {
+        int32_t elemIndex = Clay__int32_tArray_GetValue(&ctx->openLayoutElementStack, si);
+        Clay_LayoutElement *ancestor =  Clay_LayoutElementArray_Get(&ctx->layoutElements, elemIndex);
+
+        for (int32_t ci = 0; ci < ancestor->elementConfigs.length; ++ci) {
+            Clay_ElementConfig *cfg =
+               Clay__ElementConfigArraySlice_Get(&ancestor->elementConfigs, ci);
+            if (cfg->type != CLAY__ELEMENT_CONFIG_TYPE_TEXT)
+                continue;
+
+            Clay_TextElementConfig *anc = cfg->config.textElementConfig;
+            if (CLAY__IS_INHERIT_U16(out.fontId)) out.fontId = anc->fontId;
+            if (CLAY__IS_INHERIT_U16(out.fontSize)) out.fontSize = anc->fontSize;
+            if (CLAY__IS_INHERIT_U16(out.letterSpacing)) out.letterSpacing = anc->letterSpacing;
+            if (CLAY__IS_INHERIT_U16(out.lineHeight)) out.lineHeight = anc->lineHeight;
+            if (CLAY__IS_INHERIT_WRAP(out.wrapMode)) out.wrapMode = anc->wrapMode;
+            if (CLAY__IS_INHERIT_ALIGN(out.textAlignment)) out.textAlignment = anc->textAlignment;
+            if (CLAY__IS_INHERIT_COLOR(out.textColor)) out.textColor = anc->textColor;
+        }
+    }
+
+    // Final fall-backs if there are still "inherit" properties to resolve.
+    if (CLAY__IS_INHERIT_U16(out.fontId)) out.fontId = Clay_TextElementConfig_DEFAULT.fontId;
+    if (CLAY__IS_INHERIT_U16(out.fontSize)) out.fontSize = Clay_TextElementConfig_DEFAULT.fontSize;
+    if (CLAY__IS_INHERIT_U16(out.letterSpacing)) out.letterSpacing = Clay_TextElementConfig_DEFAULT.letterSpacing;
+    if (CLAY__IS_INHERIT_U16(out.lineHeight)) out.lineHeight = Clay_TextElementConfig_DEFAULT.lineHeight;
+    if (CLAY__IS_INHERIT_WRAP(out.wrapMode)) out.wrapMode = Clay_TextElementConfig_DEFAULT.wrapMode;
+    if (CLAY__IS_INHERIT_ALIGN(out.textAlignment)) out.textAlignment = Clay_TextElementConfig_DEFAULT.textAlignment;
+    if (CLAY__IS_INHERIT_COLOR(out.textColor)) out.textColor = Clay_TextElementConfig_DEFAULT.textColor;
+
+    return out;
+}
+
 void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->layoutElements.length == context->layoutElements.capacity - 1 || context->booleanWarnings.maxElementsExceeded) {
@@ -1955,6 +2046,12 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     }
 
     Clay__int32_tArray_Add(&context->layoutElementChildrenBuffer, context->layoutElements.length - 1);
+
+    if (Clay__TextConfigHasInherit(textConfig)) {
+        Clay_TextElementConfig resolvedTextConfig = Clay__ResolveTextConfig(textConfig);
+        textConfig = Clay__StoreTextElementConfig(resolvedTextConfig);
+    }
+
     Clay__MeasureTextCacheItem *textMeasured = Clay__MeasureTextCached(&text, textConfig);
     Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
     textElement->id = elementId.id;
@@ -1964,6 +2061,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
     textElement->dimensions = textDimensions;
     textElement->minDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured->minWidth, .height = textDimensions.height };
     textElement->childrenOrTextContent.textElementData = Clay__TextElementDataArray_Add(&context->textElementData, CLAY__INIT(Clay__TextElementData) { .text = text, .preferredDimensions = textMeasured->unwrappedDimensions, .elementIndex = context->layoutElements.length - 1 });
+    textElement->hasTextElementData = true;
     textElement->elementConfigs = CLAY__INIT(Clay__ElementConfigArraySlice) {
             .length = 1,
             .internalArray = Clay__ElementConfigArray_Add(&context->elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = CLAY__ELEMENT_CONFIG_TYPE_TEXT, .config = { .textElementConfig = textConfig }})
@@ -2097,6 +2195,9 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
     if (!Clay__MemCmp((char *)(&declaration->border.width), (char *)(&Clay__BorderWidth_DEFAULT), sizeof(Clay_BorderWidth))) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration->border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER);
     }
+    if (!Clay__MemCmp((char *)(&declaration->text), (char *)(&Clay_TextElementConfig_DEFAULT), sizeof(Clay_TextElementConfig))) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .textElementConfig = Clay__StoreTextElementConfig(declaration->text) }, CLAY__ELEMENT_CONFIG_TYPE_TEXT);
+    }
 }
 
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
@@ -2212,13 +2313,13 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
                 float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
 
-                if (!Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) && childElement->childrenOrTextContent.children.length > 0) {
+                if (!Clay__ElementHasTextElementData(childElement) && childElement->childrenOrTextContent.children.length > 0) {
                     Clay__int32_tArray_Add(&bfsBuffer, childElementIndex);
                 }
 
                 if (childSizing.type != CLAY__SIZING_TYPE_PERCENT
                     && childSizing.type != CLAY__SIZING_TYPE_FIXED
-                    && (!Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || (Clay__FindElementConfigWithType(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT).textElementConfig->wrapMode == CLAY_TEXT_WRAP_WORDS)) // todo too many loops
+                    && (!Clay__ElementHasTextElementData(childElement) || (Clay__FindElementConfigWithType(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT).textElementConfig->wrapMode == CLAY_TEXT_WRAP_WORDS)) // todo too many loops
                     && (xAxis || !Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_IMAGE))
                 ) {
                     Clay__int32_tArray_Add(&resizableContainerBuffer, childElementIndex);
@@ -2514,7 +2615,7 @@ void Clay__CalculateFinalLayout(void) {
         if (!context->treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             // If the element has no children or is the container for a text element, don't bother inspecting it
-            if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->childrenOrTextContent.children.length == 0) {
+            if (Clay__ElementHasTextElementData(currentElement) || currentElement->childrenOrTextContent.children.length == 0) {
                 dfsBuffer.length--;
                 continue;
             }
@@ -2792,6 +2893,9 @@ void Clay__CalculateFinalLayout(void) {
                                 break;
                             }
                             shouldRender = false;
+                            if (!currentElement->hasTextElementData) {
+                                break;
+                            }
                             Clay_ElementConfigUnion configUnion = elementConfig->config;
                             Clay_TextElementConfig *textElementConfig = configUnion.textElementConfig;
                             float naturalLineHeight = currentElement->childrenOrTextContent.textElementData->preferredDimensions.height;
@@ -2873,7 +2977,7 @@ void Clay__CalculateFinalLayout(void) {
                 }
 
                 // Setup initial on-axis alignment
-                if (!Clay__ElementHasConfig(currentElementTreeNode->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
+                if (!Clay__ElementHasTextElementData(currentElementTreeNode->layoutElement)) {
                     Clay_Dimensions contentSize = {0,0};
                     if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                         for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
@@ -3001,7 +3105,7 @@ void Clay__CalculateFinalLayout(void) {
             }
 
             // Add children to the DFS buffer
-            if (!Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
+            if (!Clay__ElementHasTextElementData(currentElement)) {
                 dfsBuffer.length += currentElement->childrenOrTextContent.children.length;
                 for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
@@ -3114,7 +3218,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             int32_t currentElementIndex = Clay__int32_tArray_GetValue(&dfsBuffer, (int)dfsBuffer.length - 1);
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, (int)currentElementIndex);
             if (context->treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
-                if (!Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) && currentElement->childrenOrTextContent.children.length > 0) {
+                if (!Clay__ElementHasTextElementData(currentElement) && currentElement->childrenOrTextContent.children.length > 0) {
                     Clay__CloseElement();
                     Clay__CloseElement();
                     Clay__CloseElement();
@@ -3138,7 +3242,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             }
             CLAY({ .id = CLAY_IDI("Clay__DebugView_ElementOuter", currentElement->id), .layout = Clay__DebugView_ScrollViewItemLayoutConfig }) {
                 // Collapse icon / button
-                if (!(Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || currentElement->childrenOrTextContent.children.length == 0)) {
+                if (!(Clay__ElementHasTextElementData(currentElement) || currentElement->childrenOrTextContent.children.length == 0)) {
                     CLAY({
                         .id = CLAY_IDI("Clay__DebugView_CollapseElement", currentElement->id),
                         .layout = { .sizing = {CLAY_SIZING_FIXED(16), CLAY_SIZING_FIXED(16)}, .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER} },
@@ -3198,7 +3302,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             }
 
             // Render the text contents below the element as a non-interactive row
-            if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
+            if (Clay__ElementHasTextElementData(currentElement)) {
                 layoutData.rowCount++;
                 Clay__TextElementData *textElementData = currentElement->childrenOrTextContent.textElementData;
                 Clay_TextElementConfig *rawTextConfig = offscreen ? CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }) : &Clay__DebugView_TextNameConfig;
@@ -3221,7 +3325,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             }
 
             layoutData.rowCount++;
-            if (!(Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || (currentElementData && currentElementData->debugData->collapsed))) {
+            if (!(Clay__ElementHasTextElementData(currentElement) || (currentElementData && currentElementData->debugData->collapsed))) {
                 for (int32_t i = currentElement->childrenOrTextContent.children.length - 1; i >= 0; --i) {
                     Clay__int32_tArray_Add(&dfsBuffer, currentElement->childrenOrTextContent.children.elements[i]);
                     context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = false; // TODO needs to be ranged checked
@@ -3826,7 +3930,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                         Clay__ElementIdArray_Add(&context->pointerOverIds, CLAY__INIT(Clay_ElementId) { .id = mapItem->idAlias });
                     }
                 }
-                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
+                if (Clay__ElementHasTextElementData(currentElement)) {
                     dfsBuffer.length--;
                     continue;
                 }
