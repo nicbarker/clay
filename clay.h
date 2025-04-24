@@ -844,6 +844,8 @@ CLAY_DLL_EXPORT void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId element
 // An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
 CLAY_DLL_EXPORT bool Clay_PointerOver(Clay_ElementId elementId);
+// Returns information on the current state of pointer interactions.
+CLAY_DLL_EXPORT Clay_PointerData Clay_GetPointerData(void);
 // Returns data representing the state of the scrolling element with the provided ID.
 // The returned Clay_ScrollContainerData contains a `found` bool that will be true if a scroll element was found with the provided ID.
 // An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
@@ -3052,6 +3054,12 @@ void Clay__CalculateFinalLayout(void) {
             Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) { .id = Clay__HashNumber(rootElement->id, rootElement->childrenOrTextContent.children.length + 11).id, .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
         }
     }
+}
+
+CLAY_WASM_EXPORT("Clay_GetPointerData")
+CLAY_DLL_EXPORT Clay_PointerData Clay_GetPointerData(void) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    return context->pointerInfo;
 }
 
 #pragma region DebugTools
