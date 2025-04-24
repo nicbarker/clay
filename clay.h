@@ -238,6 +238,14 @@ typedef struct {
     Clay_String stringId; // The string id to hash.
 } Clay_ElementId;
 
+// A sized array of Clay_ElementId.
+typedef struct
+{
+    int32_t capacity;
+    int32_t length;
+    Clay_ElementId *internalArray;
+} Clay_ElementIdArray;
+
 // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
 // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
 typedef struct {
@@ -844,6 +852,8 @@ CLAY_DLL_EXPORT void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId element
 // An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
 CLAY_DLL_EXPORT bool Clay_PointerOver(Clay_ElementId elementId);
+// Returns the array of element IDs that the pointer is currently over.
+CLAY_DLL_EXPORT Clay_ElementIdArray Clay_GetPointerOverIds(void);
 // Returns data representing the state of the scrolling element with the provided ID.
 // The returned Clay_ScrollContainerData contains a `found` bool that will be true if a scroll element was found with the provided ID.
 // An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
@@ -1029,7 +1039,7 @@ bool Clay__Array_AddCapacityCheck(int32_t length, int32_t capacity);
 CLAY__ARRAY_DEFINE(bool, Clay__boolArray)
 CLAY__ARRAY_DEFINE(int32_t, Clay__int32_tArray)
 CLAY__ARRAY_DEFINE(char, Clay__charArray)
-CLAY__ARRAY_DEFINE(Clay_ElementId, Clay__ElementIdArray)
+CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_ElementId, Clay_ElementIdArray)
 CLAY__ARRAY_DEFINE(Clay_LayoutConfig, Clay__LayoutConfigArray)
 CLAY__ARRAY_DEFINE(Clay_TextElementConfig, Clay__TextElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_ImageElementConfig, Clay__ImageElementConfigArray)
@@ -1236,7 +1246,7 @@ struct Clay_Context {
     Clay__MeasuredWordArray measuredWords;
     Clay__int32_tArray measuredWordsFreeList;
     Clay__int32_tArray openClipElementStack;
-    Clay__ElementIdArray pointerOverIds;
+    Clay_ElementIdArray pointerOverIds;
     Clay__ScrollContainerDataInternalArray scrollContainerDatas;
     Clay__boolArray treeNodeVisited;
     Clay__charArray dynamicStringData;
@@ -2154,7 +2164,7 @@ void Clay__InitializePersistentMemory(Clay_Context* context) {
     context->measuredWordsFreeList = Clay__int32_tArray_Allocate_Arena(maxMeasureTextCacheWordCount, arena);
     context->measureTextHashMap = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->measuredWords = Clay__MeasuredWordArray_Allocate_Arena(maxMeasureTextCacheWordCount, arena);
-    context->pointerOverIds = Clay__ElementIdArray_Allocate_Arena(maxElementCount, arena);
+    context->pointerOverIds = Clay_ElementIdArray_Allocate_Arena(maxElementCount, arena);
     context->debugElementData = Clay__DebugElementDataArray_Allocate_Arena(maxElementCount, arena);
     context->arenaResetOffset = arena->nextAllocation;
 }
@@ -3054,6 +3064,11 @@ void Clay__CalculateFinalLayout(void) {
     }
 }
 
+CLAY_WASM_EXPORT("Clay_GetPointerOverIds")
+CLAY_DLL_EXPORT Clay_ElementIdArray Clay_GetPointerOverIds(void) {
+    return Clay_GetCurrentContext()->pointerOverIds;
+}
+
 #pragma region DebugTools
 Clay_Color CLAY__DEBUGVIEW_COLOR_1 = {58, 56, 52, 255};
 Clay_Color CLAY__DEBUGVIEW_COLOR_2 = {62, 60, 58, 255};
@@ -3233,7 +3248,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
     if (context->pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         Clay_ElementId collapseButtonId = Clay__HashString(CLAY_STRING("Clay__DebugView_CollapseElement"), 0, 0);
         for (int32_t i = (int)context->pointerOverIds.length - 1; i >= 0; i--) {
-            Clay_ElementId *elementId = Clay__ElementIdArray_Get(&context->pointerOverIds, i);
+            Clay_ElementId *elementId = Clay_ElementIdArray_Get(&context->pointerOverIds, i);
             if (elementId->baseId == collapseButtonId.baseId) {
                 Clay_LayoutElementHashMapItem *highlightedItem = Clay__GetHashMapItem(elementId->offset);
                 highlightedItem->debugData->collapsed = !highlightedItem->debugData->collapsed;
@@ -3331,7 +3346,7 @@ void Clay__RenderDebugView(void) {
     Clay_ElementId closeButtonId = Clay__HashString(CLAY_STRING("Clay__DebugViewTopHeaderCloseButtonOuter"), 0, 0);
     if (context->pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         for (int32_t i = 0; i < context->pointerOverIds.length; ++i) {
-            Clay_ElementId *elementId = Clay__ElementIdArray_Get(&context->pointerOverIds, i);
+            Clay_ElementId *elementId = Clay_ElementIdArray_Get(&context->pointerOverIds, i);
             if (elementId->id == closeButtonId.id) {
                 context->debugModeEnabled = false;
                 return;
@@ -3819,11 +3834,11 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                     if (mapItem->onHoverFunction) {
                         mapItem->onHoverFunction(mapItem->elementId, context->pointerInfo, mapItem->hoverFunctionUserData);
                     }
-                    Clay__ElementIdArray_Add(&context->pointerOverIds, mapItem->elementId);
+                    Clay_ElementIdArray_Add(&context->pointerOverIds, mapItem->elementId);
                     found = true;
 
                     if (mapItem->idAlias != 0) {
-                        Clay__ElementIdArray_Add(&context->pointerOverIds, CLAY__INIT(Clay_ElementId) { .id = mapItem->idAlias });
+                        Clay_ElementIdArray_Add(&context->pointerOverIds, CLAY__INIT(Clay_ElementId) { .id = mapItem->idAlias });
                     }
                 }
                 if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
@@ -3953,7 +3968,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
         scrollData->scrollPosition.y = CLAY__MIN(CLAY__MAX(scrollData->scrollPosition.y, -(CLAY__MAX(scrollData->contentSize.height - scrollData->layoutElement->dimensions.height, 0))), 0);
 
         for (int32_t j = 0; j < context->pointerOverIds.length; ++j) { // TODO n & m are small here but this being n*m gives me the creeps
-            if (scrollData->layoutElement->id == Clay__ElementIdArray_Get(&context->pointerOverIds, j)->id) {
+            if (scrollData->layoutElement->id == Clay_ElementIdArray_Get(&context->pointerOverIds, j)->id) {
                 highestPriorityElementIndex = j;
                 highestPriorityScrollData = scrollData;
             }
@@ -4082,7 +4097,7 @@ bool Clay_Hovered(void) {
         Clay__GenerateIdForAnonymousElement(openLayoutElement);
     }
     for (int32_t i = 0; i < context->pointerOverIds.length; ++i) {
-        if (Clay__ElementIdArray_Get(&context->pointerOverIds, i)->id == openLayoutElement->id) {
+        if (Clay_ElementIdArray_Get(&context->pointerOverIds, i)->id == openLayoutElement->id) {
             return true;
         }
     }
@@ -4107,7 +4122,7 @@ CLAY_WASM_EXPORT("Clay_PointerOver")
 bool Clay_PointerOver(Clay_ElementId elementId) { // TODO return priority for separating multiple results
     Clay_Context* context = Clay_GetCurrentContext();
     for (int32_t i = 0; i < context->pointerOverIds.length; ++i) {
-        if (Clay__ElementIdArray_Get(&context->pointerOverIds, i)->id == elementId.id) {
+        if (Clay_ElementIdArray_Get(&context->pointerOverIds, i)->id == elementId.id) {
             return true;
         }
     }
