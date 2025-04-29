@@ -11,7 +11,7 @@ set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # don't build the supplied example g
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY "https://github.com/raysan5/raylib.git"
-    GIT_TAG "master"
+    GIT_TAG "5.5"
     GIT_PROGRESS TRUE
     GIT_SHALLOW TRUE
 )
