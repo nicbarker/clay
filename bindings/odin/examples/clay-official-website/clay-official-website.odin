@@ -475,11 +475,11 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
 }
 
 loadFont :: proc(fontId: u16, fontSize: u16, path: cstring) {
-    raylibFonts[fontId] = RaylibFont {
+    assign_at(&raylib_fonts,fontId,Raylib_Font{
         font   = raylib.LoadFontEx(path, cast(i32)fontSize * 2, nil, 0),
         fontId = cast(u16)fontId,
-    }
-    raylib.SetTextureFilter(raylibFonts[fontId].font.texture, raylib.TextureFilter.TRILINEAR)
+    })
+    raylib.SetTextureFilter(raylib_fonts[fontId].font.texture, raylib.TextureFilter.TRILINEAR)
 }
 
 errorHandler :: proc "c" (errorData: clay.ErrorData) {
@@ -493,7 +493,7 @@ main :: proc() {
     memory := make([^]u8, minMemorySize)
     arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, memory)
     clay.Initialize(arena, {cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()}, { handler = errorHandler })
-    clay.SetMeasureTextFunction(measureText, nil)
+    clay.SetMeasureTextFunction(measure_text, nil)
 
     raylib.SetConfigFlags({.VSYNC_HINT, .WINDOW_RESIZABLE, .MSAA_4X_HINT})
     raylib.InitWindow(windowWidth, windowHeight, "Raylib Odin Example")
@@ -536,7 +536,7 @@ main :: proc() {
         clay.SetLayoutDimensions({cast(f32)raylib.GetScreenWidth(), cast(f32)raylib.GetScreenHeight()})
         renderCommands: clay.ClayArray(clay.RenderCommand) = createLayout(animationLerpValue < 0 ? (animationLerpValue + 1) : (1 - animationLerpValue))
         raylib.BeginDrawing()
-        clayRaylibRender(&renderCommands)
+        clay_raylib_render(&renderCommands)
         raylib.EndDrawing()
     }
 }
