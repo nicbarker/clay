@@ -1,3 +1,4 @@
+#pragma once
 #include "../../clay.h"
 #include <SFML/Graphics.hpp>
 #include <queue>
