@@ -2690,12 +2690,7 @@ void Clay__CalculateFinalLayout(void) {
                         if (mapping->layoutElement == currentElement) {
                             scrollContainerData = mapping;
                             mapping->boundingBox = currentElementBoundingBox;
-                            if (clipConfig->horizontal) {
-                                scrollOffset.x = mapping->scrollPosition.x;
-                            }
-                            if (clipConfig->vertical) {
-                                scrollOffset.y = mapping->scrollPosition.y;
-                            }
+                            scrollOffset = clipConfig->childOffset;
                             if (context->externalScrollHandlingEnabled) {
                                 scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
                             }
@@ -2917,8 +2912,7 @@ void Clay__CalculateFinalLayout(void) {
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
                         if (mapping->layoutElement == currentElement) {
-                            if (clipConfig->horizontal) { scrollOffset.x = mapping->scrollPosition.x; }
-                            if (clipConfig->vertical) { scrollOffset.y = mapping->scrollPosition.y; }
+                            scrollOffset = clipConfig->childOffset;
                             if (context->externalScrollHandlingEnabled) {
                                 scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
                             }

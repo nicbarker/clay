@@ -127,7 +127,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                     .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID,
                     .offset = { .y = -(scrollData.scrollPosition->y / scrollData.contentDimensions.height) * scrollData.scrollContainerDimensions.height },
                     .zIndex = 1,
-                    .parentId = 55,
+                    .parentId = Clay_GetElementId(CLAY_STRING("MainContent")).id,
                     .attachPoints = { .element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP }
                 }
             }) {
