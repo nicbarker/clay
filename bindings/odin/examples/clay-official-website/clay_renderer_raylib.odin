@@ -121,9 +121,9 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
             // Rounded Borders
             if config.cornerRadius.topLeft > 0 {
                 draw_arc(
-                    math.round(bounds.x + config.cornerRadius.topLeft), 
-                    math.round(bounds.y + config.cornerRadius.topLeft),
-                    math.round(config.cornerRadius.topLeft - f32(config.width.top)),
+                    bounds.x + config.cornerRadius.topLeft, 
+                    bounds.y + config.cornerRadius.topLeft,
+                    config.cornerRadius.topLeft - f32(config.width.top),
                     config.cornerRadius.topLeft,
                     180,
                     270,
@@ -132,9 +132,9 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
             }
             if config.cornerRadius.topRight > 0 {
                 draw_arc(
-                    math.round(bounds.x + bounds.width - config.cornerRadius.topRight),
-                    math.round(bounds.y + config.cornerRadius.topRight),
-                    math.round(config.cornerRadius.topRight - f32(config.width.top)),
+                    bounds.x + bounds.width - config.cornerRadius.topRight,
+                    bounds.y + config.cornerRadius.topRight,
+                    config.cornerRadius.topRight - f32(config.width.top),
                     config.cornerRadius.topRight,
                     270,
                     360,
@@ -143,9 +143,9 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
             }
             if config.cornerRadius.bottomLeft > 0 {
                 draw_arc(
-                    math.round(bounds.x + config.cornerRadius.bottomLeft),
-                    math.round(bounds.y + bounds.height - config.cornerRadius.bottomLeft),
-                    math.round(config.cornerRadius.bottomLeft - f32(config.width.top)),
+                    bounds.x + config.cornerRadius.bottomLeft,
+                    bounds.y + bounds.height - config.cornerRadius.bottomLeft,
+                    config.cornerRadius.bottomLeft - f32(config.width.top),
                     config.cornerRadius.bottomLeft,
                     90,
                     180,
@@ -154,9 +154,9 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
             }
             if config.cornerRadius.bottomRight > 0 {
                 draw_arc(
-                    math.round(bounds.x + bounds.width - config.cornerRadius.bottomRight), 
-                    math.round(bounds.y + bounds.height - config.cornerRadius.bottomRight),
-                    math.round(config.cornerRadius.bottomRight - f32(config.width.bottom)),
+                    bounds.x + bounds.width - config.cornerRadius.bottomRight, 
+                    bounds.y + bounds.height - config.cornerRadius.bottomRight,
+                    config.cornerRadius.bottomRight - f32(config.width.bottom),
                     config.cornerRadius.bottomRight,
                     0.1,
                     90,
@@ -169,13 +169,13 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
     }
 }
 
-// Helper functions, mainly for repeated conversions
+// Helper procs, mainly for repeated conversions
 
 @(private = "file")
 draw_arc :: proc(x, y: f32, inner_rad, outer_rad: f32,start_angle, end_angle: f32, color: clay.Color){
     rl.DrawRing(
-        {x,y},
-        inner_rad,
+        {math.round(x),math.round(y)},
+        math.round(inner_rad),
         outer_rad,
         start_angle,
         end_angle,
