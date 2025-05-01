@@ -379,7 +379,7 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
         CLAY({ .id = CLAY_ID("TopBorder5"), .layout = topBorderConfig, .backgroundColor = COLOR_TOP_BORDER_1 }) {}
         CLAY({ .id = CLAY_ID("OuterScrollContainer"),
             .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) }, .layoutDirection = CLAY_TOP_TO_BOTTOM },
-            .scroll = { .vertical = true },
+            .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
             .border = { .width = { .betweenChildren = 2 }, .color = COLOR_RED }
         }) {
             if (mobileScreen) {
