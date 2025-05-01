@@ -235,7 +235,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
 
             CLAY({ .id = CLAY_ID("MainContent"),
                 .backgroundColor = contentBackgroundColor,
-                .scroll = { .vertical = true },
+                .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
                 .layout = {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     .childGap = 16,
