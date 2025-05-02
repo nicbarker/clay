@@ -451,7 +451,7 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
         if clay.UI()({ id = clay.ID("TopBorder5"), layout = { sizing = { clay.SizingGrow({ }), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_1 } ) {}
         if clay.UI()({
             id = clay.ID("ScrollContainerBackgroundRectangle"),
-            scroll = { vertical = true },
+            clip = { vertical = true, childOffset = clay.GetScrollOffset() },
             layout = { sizing = { clay.SizingGrow({ }), clay.SizingGrow({ }) }, layoutDirection = clay.LayoutDirection.TopToBottom },
             backgroundColor = COLOR_LIGHT,
             border = { COLOR_RED, { betweenChildren = 2} },
