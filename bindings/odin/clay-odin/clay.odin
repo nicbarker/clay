@@ -103,7 +103,7 @@ TextAlignment :: enum EnumBackingType {
 }
 
 TextElementConfig :: struct {
-	userData:			rawptr,
+	userData:           rawptr,
 	textColor:          Color,
 	fontId:             u16,
 	fontSize:           u16,
@@ -135,9 +135,10 @@ BorderElementConfig :: struct {
 	width: BorderWidth,
 }
 
-ScrollElementConfig :: struct {
-	horizontal: bool,
-	vertical:   bool,
+ClipElementConfig :: struct {
+	horizontal:  bool, // clip overflowing elements on the "X" axis
+	vertical:    bool, // clip overflowing elements on the "Y" axis
+	childOffset: Vector2, // offsets the [X,Y] positions of all child elements, primarily for scrolling containers
 }
 
 FloatingAttachPointType :: enum EnumBackingType {
@@ -235,7 +236,7 @@ ScrollContainerData :: struct {
 	scrollPosition:            ^Vector2,
 	scrollContainerDimensions: Dimensions,
 	contentDimensions:         Dimensions,
-	config:                    ScrollElementConfig,
+	config:                    ClipElementConfig,
 	// Indicates whether an actual scroll container matched the provided ID or if the default struct was returned.
 	found:                     bool,
 }
@@ -329,16 +330,16 @@ ClayArray :: struct($type: typeid) {
 }
 
 ElementDeclaration :: struct {
-	id: ElementId,
-	layout: LayoutConfig,
+	id:              ElementId,
+	layout:          LayoutConfig,
 	backgroundColor: Color,
-	cornerRadius: CornerRadius,
-	image: ImageElementConfig,
-	floating: FloatingElementConfig,
-	custom: CustomElementConfig,
-	scroll: ScrollElementConfig,
-	border: BorderElementConfig,
-	userData: rawptr,
+	cornerRadius:    CornerRadius,
+	image:           ImageElementConfig,
+	floating:        FloatingElementConfig,
+	custom:          CustomElementConfig,
+	clip:            ClipElementConfig,
+	border:          BorderElementConfig,
+	userData:        rawptr,
 }
 
 ErrorType :: enum EnumBackingType {
@@ -385,6 +386,7 @@ foreign Clay {
 	Hovered :: proc() -> bool ---
 	OnHover :: proc(onHoverFunction: proc "c" (id: ElementId, pointerData: PointerData, userData: rawptr), userData: rawptr) ---
 	PointerOver :: proc(id: ElementId) -> bool ---
+	GetScrollOffset :: proc() -> Vector2 ---
 	GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
 	SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: StringSlice, config: ^TextElementConfig, userData: rawptr) -> Dimensions, userData: rawptr) ---
 	SetQueryScrollOffsetFunction :: proc(queryScrollOffsetFunction: proc "c" (elementId: u32, userData: rawptr) -> Vector2, userData: rawptr) ---
