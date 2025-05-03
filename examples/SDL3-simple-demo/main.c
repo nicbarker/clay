@@ -24,6 +24,7 @@ typedef struct app_state {
 } AppState;
 
 SDL_Texture *sample_image;
+bool show_demo = true;
 
 static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData)
 {
@@ -41,6 +42,42 @@ static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextEl
 void HandleClayErrors(Clay_ErrorData errorData) {
     printf("%s", errorData.errorText.chars);
 }
+
+
+Clay_RenderCommandArray ClayImageSample_CreateLayout() {
+    Clay_BeginLayout();
+
+    Clay_Sizing layoutExpand = {
+        .width = CLAY_SIZING_GROW(0),
+        .height = CLAY_SIZING_GROW(0)
+    };
+
+    CLAY({ .id = CLAY_ID("OuterContainer"),
+        .layout = {
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            .sizing = layoutExpand,
+            .padding = CLAY_PADDING_ALL(16),
+            .childGap = 16
+        }
+    }) {
+        CLAY({
+            .id = CLAY_ID("SampleImage"),
+            .layout = {
+                .sizing = layoutExpand
+            },
+            .image = {
+                .imageData = sample_image,
+                .sourceDimensions = {
+                    .width = 23,
+                    .height = 42
+                },
+            }
+        });
+    }
+
+    return Clay_EndLayout();
+}
+
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 {
@@ -115,6 +152,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         case SDL_EVENT_QUIT:
             ret_val = SDL_APP_SUCCESS;
             break;
+        case SDL_EVENT_KEY_UP:
+            if (event->key.scancode == SDL_SCANCODE_SPACE) {
+                show_demo = !show_demo;
+            }
+            break;
         case SDL_EVENT_WINDOW_RESIZED:
             Clay_SetLayoutDimensions((Clay_Dimensions) { (float) event->window.data1, (float) event->window.data2 });
             break;
@@ -140,7 +182,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *state = appstate;
 
-    Clay_RenderCommandArray render_commands = ClayVideoDemo_CreateLayout(&state->demoData);
+    Clay_RenderCommandArray render_commands = (show_demo
+        ? ClayVideoDemo_CreateLayout(&state->demoData)
+        : ClayImageSample_CreateLayout()
+    );
 
     SDL_SetRenderDrawColor(state->rendererData.renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->rendererData.renderer);
