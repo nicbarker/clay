@@ -23,7 +23,7 @@ typedef struct app_state {
     ClayVideoDemo_Data demoData;
 } AppState;
 
-SDL_Surface *sample_image;
+SDL_Texture *sample_image;
 
 static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData)
 {
@@ -83,7 +83,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
     state->rendererData.fonts[FONT_ID] = font;
 
-    sample_image = IMG_Load("resources/sample.png");
+    sample_image = IMG_LoadTexture(state->rendererData.renderer, "resources/sample.png");
+    if (!sample_image) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load image: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     /* Initialize Clay */
     uint64_t totalMemorySize = Clay_MinMemorySize();
@@ -157,6 +161,10 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
     }
 
     AppState *state = appstate;
+
+    if (sample_image) {
+        SDL_DestroyTexture(sample_image);
+    }
 
     if (state) {
         if (state->rendererData.renderer)
