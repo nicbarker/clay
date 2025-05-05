@@ -1,10 +1,11 @@
 // This is the video demo with some adjustments so it works on the playdate console
 // The playdate screen is only 400x240 pixels and it can only display black and white, so some
-// fixed sizes and colours needed tweaking!
+// fixed sizes and colours needed tweaking! The file menu was also removed as it does not really make
+// sense when there is no pointer
 #include "../../clay.h"
 #include <stdlib.h>
 
-const int FONT_ID_BODY_16 = 0;
+const int FONT_ID_BODY = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
 Clay_Color COLOR_BLACK = { 0, 0, 0, 255};
 
@@ -15,7 +16,7 @@ void RenderHeaderButton(Clay_String text) {
         .cornerRadius = CLAY_CORNER_RADIUS(4)
     }) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
-            .fontId = FONT_ID_BODY_16,
+            .fontId = FONT_ID_BODY,
             .fontSize = 8,
             .textColor = COLOR_WHITE
         }));
@@ -95,7 +96,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                 .cornerRadius = CLAY_CORNER_RADIUS(4)
             }) {
                 CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
+                    .fontId = FONT_ID_BODY,
                     .fontSize = 8,
                     .textColor = COLOR_WHITE
                 }));
@@ -139,7 +140,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                             .cornerRadius = CLAY_CORNER_RADIUS(4)
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
+                                .fontId = FONT_ID_BODY,
                                 .fontSize = 10,
                                 .textColor = COLOR_WHITE
                             }));
@@ -152,7 +153,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                             .border = contentBorders
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
-                                .fontId = FONT_ID_BODY_16,
+                                .fontId = FONT_ID_BODY,
                                 .fontSize = 10,
                                 .textColor = COLOR_BLACK,
                             }));
@@ -174,12 +175,12 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
             }) {
                 Document selectedDocument = documents.documents[selectedDocumentIndex];
                 CLAY_TEXT(selectedDocument.title, CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
+                    .fontId = FONT_ID_BODY,
                     .fontSize = 12,
                     .textColor = COLOR_BLACK
                 }));
                 CLAY_TEXT(selectedDocument.contents, CLAY_TEXT_CONFIG({
-                    .fontId = FONT_ID_BODY_16,
+                    .fontId = FONT_ID_BODY,
                     .fontSize = 12,
                     .textColor = COLOR_BLACK
                 }));
