@@ -2,6 +2,9 @@
 // The playdate screen is only 400x240 pixels and it can only display black and white, so some
 // fixed sizes and colours needed tweaking! The file menu was also removed as it does not really make
 // sense when there is no pointer
+//
+// The playdate console also does not support dynamic font sizes - fonts must be created at a specific size
+// with the pdc tool. This example only uses the default system font.
 #include "../../clay.h"
 #include <stdlib.h>
 
@@ -17,7 +20,6 @@ void RenderHeaderButton(Clay_String text) {
     }) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY,
-            .fontSize = 8,
             .textColor = COLOR_WHITE
         }));
     }
@@ -97,7 +99,6 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
             }) {
                 CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY,
-                    .fontSize = 8,
                     .textColor = COLOR_WHITE
                 }));
             }
@@ -141,7 +142,6 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY,
-                                .fontSize = 10,
                                 .textColor = COLOR_WHITE
                             }));
                         }
@@ -154,7 +154,6 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY,
-                                .fontSize = 10,
                                 .textColor = COLOR_BLACK,
                             }));
                         }
@@ -176,12 +175,10 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                 Document selectedDocument = documents.documents[selectedDocumentIndex];
                 CLAY_TEXT(selectedDocument.title, CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY,
-                    .fontSize = 12,
                     .textColor = COLOR_BLACK
                 }));
                 CLAY_TEXT(selectedDocument.contents, CLAY_TEXT_CONFIG({
                     .fontId = FONT_ID_BODY,
-                    .fontSize = 12,
                     .textColor = COLOR_BLACK
                 }));
             }

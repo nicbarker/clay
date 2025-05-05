@@ -20,7 +20,6 @@ struct TextUserData {
 static struct TextUserData testUserData = {.font = NULL, .pd = NULL};
 
 static Clay_Dimensions PlayDate_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
-  // TODO: playdate needs to load fonts at the given size, so need to do that before we can use different font sizes!
   struct TextUserData *textUserData = userData;
   int width = textUserData->pd->graphics->getTextWidth(
     textUserData->font,
