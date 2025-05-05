@@ -28,7 +28,10 @@ static size_t utf8_count_codepoints(const char *str, size_t byte_len) {
 }
 
 static LCDColor clayColorToLCDColor(Clay_Color color) {
-  if (color.r == 255 && color.g == 255 && color.b == 255) {
+  // Convert the RGB to grayscale using the standard luminance formula
+  unsigned char grayscale_value = (unsigned char)(0.299 * color.r + 0.587 * color.g + 0.114 * color.b);
+
+  if (grayscale_value > 128) {
     return kColorWhite;
   }
   return kColorBlack;
@@ -42,27 +45,26 @@ static LCDBitmapDrawMode clayColorToDrawMode(Clay_Color color) {
   return kDrawModeCopy;
 }
 
-static void Clay_Playdate_Render(PlaydateAPI *pd,
-                                 Clay_RenderCommandArray renderCommands,
-                                 LCDFont *fonts) {
+static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray renderCommands, LCDFont *fonts) {
 
   for (uint32_t i = 0; i < renderCommands.length; i++) {
-    Clay_RenderCommand *renderCommand =
-        Clay_RenderCommandArray_Get(&renderCommands, i);
+    Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, i);
     Clay_BoundingBox boundingBox = renderCommand->boundingBox;
     switch (renderCommand->commandType) {
     case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
       Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
       struct Rect rect = (struct Rect){
-          .x = boundingBox.x,
-          .y = boundingBox.y,
-          .w = boundingBox.width,
-          .h = boundingBox.height,
+        .x = boundingBox.x,
+        .y = boundingBox.y,
+        .w = boundingBox.width,
+        .h = boundingBox.height,
       };
       if (config->cornerRadius.topLeft > 0) {
         pd->graphics->fillRoundRect(
-            rect.x, rect.y, rect.w, rect.h, config->cornerRadius.topLeft,
-            clayColorToLCDColor(config->backgroundColor));
+          rect.x, rect.y, rect.w, rect.h,
+          config->cornerRadius.topLeft,
+          clayColorToLCDColor(config->backgroundColor)
+        );
       } else {
         pd->graphics->fillRect(rect.x, rect.y, rect.w, rect.h,
                                clayColorToLCDColor(config->backgroundColor));
@@ -76,32 +78,36 @@ static void Clay_Playdate_Render(PlaydateAPI *pd,
       // layout has..
       LCDFont *font = fonts;
       struct Rect destination = (struct Rect){
-          .x = boundingBox.x,
-          .y = boundingBox.y,
-          .w = boundingBox.width,
-          .h = boundingBox.height,
+        .x = boundingBox.x,
+        .y = boundingBox.y,
+        .w = boundingBox.width,
+        .h = boundingBox.height,
       };
       pd->graphics->setDrawMode(clayColorToDrawMode(config->textColor));
       pd->graphics->drawText(
+        renderCommand->renderData.text.stringContents.chars,
+        utf8_count_codepoints(
           renderCommand->renderData.text.stringContents.chars,
-          utf8_count_codepoints(
-              renderCommand->renderData.text.stringContents.chars,
-              renderCommand->renderData.text.stringContents.length),
-          kUTF8Encoding, destination.x, destination.y);
+          renderCommand->renderData.text.stringContents.length
+        ),
+        kUTF8Encoding,
+        destination.x,
+        destination.y
+      );
       pd->graphics->setDrawMode(kDrawModeCopy);
-
       break;
     }
     case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
       struct Rect currentClippingRectangle = (struct Rect){
-          .x = boundingBox.x,
-          .y = boundingBox.y,
-          .w = boundingBox.width,
-          .h = boundingBox.height,
+        .x = boundingBox.x,
+        .y = boundingBox.y,
+        .w = boundingBox.width,
+        .h = boundingBox.height,
       };
       pd->graphics->setClipRect(
-          currentClippingRectangle.x, currentClippingRectangle.y,
-          currentClippingRectangle.w, currentClippingRectangle.h);
+        currentClippingRectangle.x, currentClippingRectangle.y,
+        currentClippingRectangle.w, currentClippingRectangle.h
+      );
       break;
     }
     case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
@@ -111,44 +117,43 @@ static void Clay_Playdate_Render(PlaydateAPI *pd,
     case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
       Clay_ImageRenderData *config = &renderCommand->renderData.image;
       LCDBitmap *texture = config->imageData;
-
       struct Rect destination = (struct Rect){
-          .x = boundingBox.x,
-          .y = boundingBox.y,
-          .w = boundingBox.width,
-          .h = boundingBox.height,
+        .x = boundingBox.x,
+        .y = boundingBox.y,
+        .w = boundingBox.width,
+        .h = boundingBox.height,
       };
-
-      pd->graphics->drawBitmap(texture, destination.x, destination.y,
-                               kBitmapUnflipped);
-
+      pd->graphics->drawBitmap(texture, destination.x, destination.y, kBitmapUnflipped);
       break;
     }
     case CLAY_RENDER_COMMAND_TYPE_BORDER: {
       Clay_BorderRenderData *config = &renderCommand->renderData.border;
-
       struct Rect rect = (struct Rect){
-          .x = boundingBox.x,
-          .y = boundingBox.y,
-          .w = boundingBox.width,
-          .h = boundingBox.height,
+        .x = boundingBox.x,
+        .y = boundingBox.y,
+        .w = boundingBox.width,
+        .h = boundingBox.height,
       };
 
       // TODO: properly support the different border thickness and radius
       // instead of just using topLeft corner /top thickness as a global setting
       if (config->cornerRadius.topLeft > 0) {
         pd->graphics->drawRoundRect(
-            rect.x, rect.y, rect.w, rect.h, config->cornerRadius.topLeft,
-            config->width.top, clayColorToLCDColor(config->color));
+          rect.x, rect.y, rect.w, rect.h,
+          config->cornerRadius.topLeft,
+          config->width.top,
+          clayColorToLCDColor(config->color)
+        );
       } else {
-        pd->graphics->drawRect(rect.x, rect.y, rect.w, rect.h,
-                               clayColorToLCDColor(config->color));
+        pd->graphics->drawRect(
+          rect.x, rect.y, rect.w, rect.h,
+          clayColorToLCDColor(config->color)
+        );
       }
       break;
     }
     default: {
-      pd->system->logToConsole("Error: unhandled render command: %d\n",
-                               renderCommand->commandType);
+      pd->system->logToConsole("Error: unhandled render command: %d\n", renderCommand->commandType);
       return;
     }
     }

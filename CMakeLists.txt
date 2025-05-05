@@ -43,7 +43,9 @@ if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_SOKOL_EXAMPLES)
   add_subdirectory("examples/sokol-video-demo")
   add_subdirectory("examples/sokol-corner-radius")
 endif()
-if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_PLAYDATE_EXAMPLES)
+
+# Playdate example not included in ALL because users need to install the playdate SDK first which requires a license agreement
+if(CLAY_INCLUDE_PLAYDATE_EXAMPLES)
   add_subdirectory("examples/playdate-project-example")
 endif()
 
