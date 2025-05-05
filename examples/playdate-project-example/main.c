@@ -1,5 +1,6 @@
 
 #include "pd_api.h"
+#include "pd_api/pd_api_gfx.h"
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
 
@@ -7,28 +8,27 @@
 #include "clay-video-demo-playdate.c"
 
 static int update(void *userdata);
-const char *fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft";
-LCDFont *font = NULL;
+const char *fontPath = "/System/Fonts/Asheville-Sans-14-Bold.pft";
 
 void HandleClayErrors(Clay_ErrorData errorData) {}
 
 struct TextUserData {
-  LCDFont *font;
+  LCDFont *font[1];
   PlaydateAPI *pd;
 };
 
-static struct TextUserData testUserData = {.font = NULL, .pd = NULL};
+static struct TextUserData textUserData = {.font = {NULL, NULL}, .pd = NULL};
 
 static Clay_Dimensions PlayDate_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
   struct TextUserData *textUserData = userData;
   int width = textUserData->pd->graphics->getTextWidth(
-    textUserData->font,
+    textUserData->font[config->fontId],
     text.chars,
     utf8_count_codepoints(text.chars, text.length),
     kUTF8Encoding,
     0
   );
-  int height = textUserData->pd->graphics->getFontHeight(textUserData->font);
+  int height = textUserData->pd->graphics->getFontHeight(textUserData->font[config->fontId]);
   return (Clay_Dimensions){
       .width = (float)width,
       .height = (float)height,
@@ -42,14 +42,13 @@ int eventHandler(PlaydateAPI* pd, PDSystemEvent event, uint32_t eventArg)
 {
   if (event == kEventInit) {
     const char *err;
-    font = pd->graphics->loadFont(fontpath, &err);
+    textUserData.font[0] = pd->graphics->loadFont(fontPath, &err);
 
-    if (font == NULL) {
-      pd->system->error("%s:%i Couldn't load font %s: %s", __FILE__, __LINE__, fontpath, err);
+    if (textUserData.font[0] == NULL) {
+      pd->system->error("%s:%i Couldn't load font %s: %s", __FILE__, __LINE__, fontPath, err);
     }
 
-    testUserData.pd = pd;
-    testUserData.font = font;
+    textUserData.pd = pd;
     pd->system->setUpdateCallback(update, pd);
 
     uint64_t totalMemorySize = Clay_MinMemorySize();
@@ -59,7 +58,7 @@ int eventHandler(PlaydateAPI* pd, PDSystemEvent event, uint32_t eventArg)
       (Clay_Dimensions){(float)pd->display->getWidth(), (float)pd->display->getHeight()},
       (Clay_ErrorHandler){HandleClayErrors}
     );
-    Clay_SetMeasureTextFunction(PlayDate_MeasureText, &testUserData);
+    Clay_SetMeasureTextFunction(PlayDate_MeasureText, &textUserData);
     ClayVideoDemo_Initialize();
   }
 
@@ -81,7 +80,6 @@ static int update(void *userdata) {
   }
 
   pd->graphics->clear(kColorWhite);
-  pd->graphics->setFont(font);
 
   // A bit hacky, setting the cursor on to the document view so it can be
   // scrolled..
@@ -97,7 +95,7 @@ static int update(void *userdata) {
   );
   Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(selectedDocumentIndex);
 
-  Clay_Playdate_Render(pd, renderCommands, font);
+  Clay_Playdate_Render(pd, renderCommands, textUserData.font);
 
   return 1;
 }

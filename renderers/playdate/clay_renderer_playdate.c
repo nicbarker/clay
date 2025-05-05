@@ -1,16 +1,15 @@
-#include "../../clay.h"
 #include "pd_api.h"
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#include "../../clay.h"
 
-struct Rect {
+struct Clay_Playdate_Rect {
   float x;
   float y;
   float w;
   float h;
 };
 
+// Playdate drawText function expects the number of codepoints to draw, not byte length
 static size_t utf8_count_codepoints(const char *str, size_t byte_len) {
   size_t count = 0;
   size_t i = 0;
@@ -27,38 +26,37 @@ static size_t utf8_count_codepoints(const char *str, size_t byte_len) {
   return count;
 }
 
+// As the playdate can only display black and white, we need to resolve Clay_color to either black or white
+// for both color and draw mode.
+// TODO: Convert to grayscale and then map the grayscale value to different dithering patterns
 static LCDColor clayColorToLCDColor(Clay_Color color) {
-  // Convert the RGB to grayscale using the standard luminance formula
-  unsigned char grayscale_value = (unsigned char)(0.299 * color.r + 0.587 * color.g + 0.114 * color.b);
-
-  if (grayscale_value > 128) {
+  if (color.r > 0 || color.g > 0 || color.b > 0) {
     return kColorWhite;
   }
   return kColorBlack;
 }
 
 static LCDBitmapDrawMode clayColorToDrawMode(Clay_Color color) {
-
-  if (color.r == 255 && color.g == 255 && color.b == 255) {
+  if (color.r > 0 || color.g > 0 || color.b > 0) {
     return kDrawModeFillWhite;
   }
   return kDrawModeCopy;
 }
 
-static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray renderCommands, LCDFont *fonts) {
-
+static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray renderCommands, LCDFont **fonts) {
   for (uint32_t i = 0; i < renderCommands.length; i++) {
     Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, i);
     Clay_BoundingBox boundingBox = renderCommand->boundingBox;
     switch (renderCommand->commandType) {
     case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
       Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
-      struct Rect rect = (struct Rect){
+      struct Clay_Playdate_Rect rect = (struct Clay_Playdate_Rect){
         .x = boundingBox.x,
         .y = boundingBox.y,
         .w = boundingBox.width,
         .h = boundingBox.height,
       };
+      // TODO: support different radius for each corner like clay API allows
       if (config->cornerRadius.topLeft > 0) {
         pd->graphics->fillRoundRect(
           rect.x, rect.y, rect.w, rect.h,
@@ -66,18 +64,18 @@ static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray render
           clayColorToLCDColor(config->backgroundColor)
         );
       } else {
-        pd->graphics->fillRect(rect.x, rect.y, rect.w, rect.h,
-                               clayColorToLCDColor(config->backgroundColor));
+        pd->graphics->fillRect(
+          rect.x, rect.y, rect.w, rect.h,
+          clayColorToLCDColor(config->backgroundColor)
+        );
       }
       break;
     }
     case CLAY_RENDER_COMMAND_TYPE_TEXT: {
       Clay_TextRenderData *config = &renderCommand->renderData.text;
-      // LCDFont *font = fonts[config->fontId];
-      // TODO: support loading more than 1 font and use the fonts that clay
-      // layout has..
-      LCDFont *font = fonts;
-      struct Rect destination = (struct Rect){
+      LCDFont *font = fonts[config->fontId];
+      pd->graphics->setFont(font);
+      struct Clay_Playdate_Rect destination = (struct Clay_Playdate_Rect){
         .x = boundingBox.x,
         .y = boundingBox.y,
         .w = boundingBox.width,
@@ -98,7 +96,7 @@ static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray render
       break;
     }
     case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
-      struct Rect currentClippingRectangle = (struct Rect){
+      struct Clay_Playdate_Rect currentClippingRectangle = (struct Clay_Playdate_Rect){
         .x = boundingBox.x,
         .y = boundingBox.y,
         .w = boundingBox.width,
@@ -117,7 +115,7 @@ static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray render
     case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
       Clay_ImageRenderData *config = &renderCommand->renderData.image;
       LCDBitmap *texture = config->imageData;
-      struct Rect destination = (struct Rect){
+      struct Clay_Playdate_Rect destination = (struct Clay_Playdate_Rect){
         .x = boundingBox.x,
         .y = boundingBox.y,
         .w = boundingBox.width,
@@ -128,7 +126,7 @@ static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray render
     }
     case CLAY_RENDER_COMMAND_TYPE_BORDER: {
       Clay_BorderRenderData *config = &renderCommand->renderData.border;
-      struct Rect rect = (struct Rect){
+      struct Clay_Playdate_Rect rect = (struct Clay_Playdate_Rect){
         .x = boundingBox.x,
         .y = boundingBox.y,
         .w = boundingBox.width,
