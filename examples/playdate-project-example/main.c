@@ -24,7 +24,7 @@ static Clay_Dimensions PlayDate_MeasureText(Clay_StringSlice text, Clay_TextElem
   int width = textUserData->pd->graphics->getTextWidth(
     textUserData->font[config->fontId],
     text.chars,
-    utf8_count_codepoints(text.chars, text.length),
+    Clay_Playdate_CountUtf8Codepoints(text.chars, text.length),
     kUTF8Encoding,
     0
   );

@@ -10,7 +10,7 @@ struct Clay_Playdate_Rect {
 };
 
 // Playdate drawText function expects the number of codepoints to draw, not byte length
-static size_t utf8_count_codepoints(const char *str, size_t byte_len) {
+static size_t Clay_Playdate_CountUtf8Codepoints(const char *str, size_t byte_len) {
   size_t count = 0;
   size_t i = 0;
   while (i < byte_len) {
@@ -84,7 +84,7 @@ static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray render
       pd->graphics->setDrawMode(clayColorToDrawMode(config->textColor));
       pd->graphics->drawText(
         renderCommand->renderData.text.stringContents.chars,
-        utf8_count_codepoints(
+        Clay_Playdate_CountUtf8Codepoints(
           renderCommand->renderData.text.stringContents.chars,
           renderCommand->renderData.text.stringContents.length
         ),
