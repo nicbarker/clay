@@ -455,7 +455,7 @@ switch (renderCommand->commandType) {
 }
 ```
 
-More specific details can be found in the full [Custom Element API](#clay_custom_element).
+More specific details can be found in the full [Custom Element API](#clay_customelementconfig).
 
 ### Retained Mode Rendering
 Clay was originally designed for [Immediate Mode](https://www.youtube.com/watch?v=Z1qyvQsjK5Y) rendering - where the entire UI is redrawn every frame. This may not be possible with your platform, renderer design or performance constraints.
