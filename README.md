@@ -176,6 +176,7 @@ For help starting out or to discuss clay, considering joining [the discord serve
     - [Clay_OnHover](#clay_onhover)
     - [Clay_PointerOver](#clay_pointerover)
     - [Clay_GetScrollContainerData](#clay_getscrollcontainerdata)
+    - [Clay_GetElementData](#clay_getelementdata)
     - [Clay_GetElementId](#clay_getelementid)
   - [Element Macros](#element-macros)
     - [CLAY](#clay)
@@ -2062,18 +2063,6 @@ typedef struct {
 } Clay_ScrollContainerData;
 ```
 
-### Clay_ElementData
-
-```C
-// Bounding box and other data for a specific UI element.
-typedef struct {
-    // The rectangle that encloses this UI element, with the position relative to the root of the layout.
-    Clay_BoundingBox boundingBox;
-    // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
-    bool found;
-} Clay_ElementData;
-```
-
 **Fields**
 
 **`.scrollPosition`** - `Clay_Vector2 *`
@@ -2109,6 +2098,38 @@ Dimensions representing the inner width and height of the content _inside_ the s
 **`.config`** - `Clay_ClipElementConfig`
 
 The [Clay_ClipElementConfig](#clay_scroll) for the matching scroll container element.
+
+---
+
+### Clay_ElementData
+
+```C
+// Bounding box and other data for a specific UI element.
+typedef struct {
+    // The rectangle that encloses this UI element, with the position relative to the root of the layout.
+    Clay_BoundingBox boundingBox;
+    // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
+    bool found;
+} Clay_ElementData;
+```
+
+**Fields**
+
+**`.boundingBox`** - `Clay_BoundingBox`
+
+```C
+typedef struct {
+    float x, y, width, height;
+} Clay_BoundingBox;
+```
+
+A rectangle representing the bounding box of this render command, with `.x` and `.y` representing the top left corner of the element.
+
+---
+
+**`.found`** - `bool`
+
+A boolean representing whether or not the ID passed to [Clay_GetElementData](#clay_getelementdata) matched a valid element or not. In the case that `.found` is `false`, `.boundingBox` will be the default value (zeroed).
 
 ---
 
