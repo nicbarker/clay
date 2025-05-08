@@ -439,6 +439,14 @@ PaddingAll :: proc(allPadding: u16) -> Padding {
 	return { left = allPadding, right = allPadding, top = allPadding, bottom = allPadding }
 }
 
+BorderOutside :: proc(width: u16) -> BorderWidth {
+	return {width, width, width, width, 0}
+}
+
+BorderAll :: proc(width: u16) -> BorderWidth {
+	return {width, width, width, width, width}
+}
+
 CornerRadiusAll :: proc(radius: f32) -> CornerRadius {
 	return CornerRadius{radius, radius, radius, radius}
 }
