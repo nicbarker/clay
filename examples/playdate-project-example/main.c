@@ -1,6 +1,4 @@
-
 #include "pd_api.h"
-#include "pd_api/pd_api_gfx.h"
 #define CLAY_IMPLEMENTATION
 #include "../../clay.h"
 
@@ -17,7 +15,7 @@ struct TextUserData {
   PlaydateAPI *pd;
 };
 
-static struct TextUserData textUserData = {.font = {NULL, NULL}, .pd = NULL};
+static struct TextUserData textUserData = {.font = {NULL}, .pd = NULL};
 
 static Clay_Dimensions PlayDate_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
   struct TextUserData *textUserData = userData;

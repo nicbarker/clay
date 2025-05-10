@@ -116,7 +116,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
             CLAY({
                 .id = CLAY_ID("Sidebar"),
                 .border = contentBorders,
-                .cornerRadius = 4,
+                .cornerRadius = CLAY_CORNER_RADIUS(4),
                 .layout = {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     .padding = CLAY_PADDING_ALL(8),
@@ -138,7 +138,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                         CLAY({
                             .layout = sidebarButtonLayout,
                             .backgroundColor = COLOR_BLACK,
-                            .cornerRadius = CLAY_CORNER_RADIUS(4)
+                            .cornerRadius = { .topLeft = 10, .topRight = 60, .bottomLeft = 30, .bottomRight = 60 }
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY,
@@ -149,7 +149,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                         CLAY({
                             .layout = sidebarButtonLayout,
                             .backgroundColor = (Clay_Color) { 0, 0, 0, Clay_Hovered() ? 120 : 0 },
-                            .cornerRadius = CLAY_CORNER_RADIUS(4),
+                            .cornerRadius = { .topLeft = 10, .topRight = 60, .bottomLeft = 30, .bottomRight = 60 },
                             .border = contentBorders
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
