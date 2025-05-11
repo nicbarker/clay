@@ -9,10 +9,10 @@ struct Clay_Playdate_Rect {
 };
 
 // Playdate drawText function expects the number of codepoints to draw, not byte length
-static size_t Clay_Playdate_CountUtf8Codepoints(const char *str, size_t byte_len) {
+static size_t Clay_Playdate_CountUtf8Codepoints(const char *str, size_t byteLen) {
     size_t count = 0;
     size_t i = 0;
-    while (i < byte_len) {
+    while (i < byteLen) {
         uint8_t c = (uint8_t)str[i];
         if ((c & 0xC0) != 0x80) {
             count++;
