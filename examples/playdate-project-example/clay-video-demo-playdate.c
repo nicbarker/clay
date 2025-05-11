@@ -6,7 +6,8 @@
 //
 // Note: The playdate console also does not support dynamic font sizes - fonts must be
 // created at a specific size with the pdc tool - so any font size set in the clay layout
-// will have noe ffect.
+// will have no effect.
+#include "pd_api.h"
 #include "../../clay.h"
 #include <stdlib.h>
 
@@ -32,6 +33,7 @@ void RenderHeaderButton(Clay_String text) {
 typedef struct {
     Clay_String title;
     Clay_String contents;
+    LCDBitmap* image;
 } Document;
 
 typedef struct {
@@ -44,9 +46,10 @@ Document documentsRaw[MAX_DOCUMENTS];
 
 DocumentArray documents = { .length = MAX_DOCUMENTS, .documents = documentsRaw };
 
-void ClayVideoDemo_Initialize(void) {
+void ClayVideoDemoPlaydate_Initialize(PlaydateAPI* pd) {
     documents.documents[0] = (Document){
         .title = CLAY_STRING("Squirrels"),
+        .image = pd->graphics->loadBitmap("star.png", NULL),
         .contents = CLAY_STRING(
             "The Secret Life of Squirrels: Nature's Clever Acrobats\n"
             "Squirrels are often overlooked creatures, dismissed as mere park "
@@ -128,6 +131,7 @@ void ClayVideoDemo_Initialize(void) {
     };
     documents.documents[1] = (Document){
         .title = CLAY_STRING("Lorem Ipsum"),
+        .image = pd->graphics->loadBitmap("star.png", NULL),
         .contents = CLAY_STRING(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do "
             "eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim "
@@ -140,6 +144,7 @@ void ClayVideoDemo_Initialize(void) {
     };
     documents.documents[2] = (Document){
         .title = CLAY_STRING("Vacuum Instructions"),
+        .image = pd->graphics->loadBitmap("star.png", NULL),
         .contents = CLAY_STRING(
             "Chapter 3: Getting Started - Unpacking and Setup\n"
             "\n"
@@ -192,7 +197,7 @@ void ClayVideoDemo_Initialize(void) {
     };
 }
 
-Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
+Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentIndex) {
 
     Clay_BeginLayout();
 
@@ -324,10 +329,27 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(int selectedDocumentIndex) {
                 }
             }) {
                 Document selectedDocument = documents.documents[selectedDocumentIndex];
-                CLAY_TEXT(
-                    selectedDocument.title,
-                    CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY, .textColor = COLOR_BLACK })
-                );
+                CLAY({
+                    .layout = {
+                        .layoutDirection = CLAY_LEFT_TO_RIGHT,
+                        .childGap = 4,
+                        .childAlignment = { .x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_BOTTOM }
+                    }
+                }) {
+                    CLAY_TEXT(
+                        selectedDocument.title,
+                        CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY, .textColor = COLOR_BLACK })
+                    );
+                    CLAY({
+                        .layout = {
+                            .sizing = {
+                                .width = CLAY_SIZING_FIXED(32),
+                                .height = CLAY_SIZING_FIXED(30)
+                            }
+                        },
+                        .image = { .imageData = selectedDocument.image, .sourceDimensions = { 32, 30 } }
+                    }) {}
+                }
                 CLAY_TEXT(
                     selectedDocument.contents,
                     CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY, .textColor = COLOR_BLACK })

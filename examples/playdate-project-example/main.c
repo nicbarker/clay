@@ -69,7 +69,7 @@ int eventHandler(PlaydateAPI* pd, PDSystemEvent event, uint32_t eventArg) {
             (Clay_ErrorHandler){HandleClayErrors}
         );
         Clay_SetMeasureTextFunction(PlayDate_MeasureText, &textUserData);
-        ClayVideoDemo_Initialize();
+        ClayVideoDemoPlaydate_Initialize(pd);
     }
 
     return 0;
@@ -108,7 +108,7 @@ static int update(void *userdata) {
         pd->system->getElapsedTime()
     );
 
-    Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(selectedDocumentIndex);
+    Clay_RenderCommandArray renderCommands = ClayVideoDemoPlaydate_CreateLayout(selectedDocumentIndex);
     Clay_Playdate_Render(pd, renderCommands, textUserData.font);
 
     return 1;
