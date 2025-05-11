@@ -24,7 +24,6 @@ static size_t Clay_Playdate_CountUtf8Codepoints(const char *str, size_t byteLen)
 
 // As the playdate can only display black and white, we need to resolve Clay_color to either black or white
 // for both color and draw mode.
-// TODO: Convert to grayscale and then map the grayscale value to different dithering patterns
 static LCDColor clayColorToLCDColor(Clay_Color color) {
     if (color.r > 0 || color.g > 0 || color.b > 0) {
         return kColorWhite;
