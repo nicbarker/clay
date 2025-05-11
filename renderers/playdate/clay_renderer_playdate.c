@@ -1,13 +1,6 @@
 #include "pd_api.h"
 #include "../../clay.h"
 
-struct Clay_Playdate_Rect {
-    float x;
-    float y;
-    float w;
-    float h;
-};
-
 // Playdate drawText function expects the number of codepoints to draw, not byte length
 static size_t Clay_Playdate_CountUtf8Codepoints(const char *str, size_t byteLen) {
     size_t count = 0;
