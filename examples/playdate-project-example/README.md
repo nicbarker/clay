@@ -22,7 +22,7 @@ The pdx file will be located at examples/playdate-project-example/clay_playdate_
 
 ## Building for the playdate device
 
-By default the building this example will produce a pdx which can only run on the Playdate simulator application. To build a pdx that can run on the Playdate hardware you need to set the toolchain to use armgcc, toolchain file to the arm.cmake provided in the playdate SDK and make sure to disable the other examples. The Playdate hardware requires threads to be disabled which is not compatible with some of the other examples.
+By default building this example will produce a pdx which can only run on the Playdate simulator application. To build a pdx that can run on the Playdate hardware you need to set the toolchain to use armgcc, toolchain file to the arm.cmake provided in the playdate SDK and make sure to disable the other examples. The Playdate hardware requires threads to be disabled which is not compatible with some of the other examples.
 
 e.g. To setup the cmake-build-release directory for device builds:
 
