@@ -3624,6 +3624,76 @@ void Clay__RenderDebugView(void) {
                                 CLAY_TEXT(CLAY_STRING("Parent"), infoTitleConfig);
                                 Clay_LayoutElementHashMapItem *hashItem = Clay__GetHashMapItem(floatingConfig->parentId);
                                 CLAY_TEXT(hashItem->elementId.stringId, infoTextConfig);
+                                // .attachPoints
+                                CLAY_TEXT(CLAY_STRING("Attach Points"), infoTitleConfig);
+                                CLAY({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
+                                    CLAY_TEXT(CLAY_STRING("{ element: "), infoTextConfig);
+                                    Clay_String attachPointElement = CLAY_STRING("LEFT_TOP");
+                                    if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_LEFT_CENTER) {
+                                        attachPointElement = CLAY_STRING("LEFT_CENTER");
+                                    } else if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_LEFT_BOTTOM) {
+                                        attachPointElement = CLAY_STRING("LEFT_BOTTOM");
+                                    } else if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_CENTER_TOP) {
+                                        attachPointElement = CLAY_STRING("CENTER_TOP");
+                                    } else if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_CENTER_CENTER) {
+                                        attachPointElement = CLAY_STRING("CENTER_CENTER");
+                                    } else if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_CENTER_BOTTOM) {
+                                        attachPointElement = CLAY_STRING("CENTER_BOTTOM");
+                                    } else if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_RIGHT_TOP) {
+                                        attachPointElement = CLAY_STRING("RIGHT_TOP");
+                                    } else if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_RIGHT_CENTER) {
+                                        attachPointElement = CLAY_STRING("RIGHT_CENTER");
+                                    } else if (floatingConfig->attachPoints.element == CLAY_ATTACH_POINT_RIGHT_BOTTOM) {
+                                        attachPointElement = CLAY_STRING("RIGHT_BOTTOM");
+                                    }
+                                    CLAY_TEXT(attachPointElement, infoTextConfig);
+                                    Clay_String attachPointParent = CLAY_STRING("LEFT_TOP");
+                                    if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_LEFT_CENTER) {
+                                        attachPointParent = CLAY_STRING("LEFT_CENTER");
+                                    } else if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_LEFT_BOTTOM) {
+                                        attachPointParent = CLAY_STRING("LEFT_BOTTOM");
+                                    } else if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_CENTER_TOP) {
+                                        attachPointParent = CLAY_STRING("CENTER_TOP");
+                                    } else if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_CENTER_CENTER) {
+                                        attachPointParent = CLAY_STRING("CENTER_CENTER");
+                                    } else if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_CENTER_BOTTOM) {
+                                        attachPointParent = CLAY_STRING("CENTER_BOTTOM");
+                                    } else if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_RIGHT_TOP) {
+                                        attachPointParent = CLAY_STRING("RIGHT_TOP");
+                                    } else if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_RIGHT_CENTER) {
+                                        attachPointParent = CLAY_STRING("RIGHT_CENTER");
+                                    } else if (floatingConfig->attachPoints.parent == CLAY_ATTACH_POINT_RIGHT_BOTTOM) {
+                                        attachPointParent = CLAY_STRING("RIGHT_BOTTOM");
+                                    }
+                                    CLAY_TEXT(CLAY_STRING(", parent: "), infoTextConfig);
+                                    CLAY_TEXT(attachPointParent, infoTextConfig);
+                                    CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
+                                }
+                                // .pointerCaptureMode
+                                CLAY_TEXT(CLAY_STRING("Pointer Capture Mode"), infoTitleConfig);
+                                Clay_String pointerCaptureMode = CLAY_STRING("NONE");
+                                if (floatingConfig->pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH) {
+                                    pointerCaptureMode = CLAY_STRING("PASSTHROUGH");
+                                }
+                                CLAY_TEXT(pointerCaptureMode, infoTextConfig);
+                                // .attachTo
+                                CLAY_TEXT(CLAY_STRING("Attach To"), infoTitleConfig);
+                                Clay_String attachTo = CLAY_STRING("NONE");
+                                if (floatingConfig->attachTo == CLAY_ATTACH_TO_PARENT) {
+                                    attachTo = CLAY_STRING("PARENT");
+                                } else if (floatingConfig->attachTo == CLAY_ATTACH_TO_ELEMENT_WITH_ID) {
+                                    attachTo = CLAY_STRING("ELEMENT_WITH_ID");
+                                } else if (floatingConfig->attachTo == CLAY_ATTACH_TO_ROOT) {
+                                    attachTo = CLAY_STRING("ROOT");
+                                }
+                                CLAY_TEXT(attachTo, infoTextConfig);
+                                // .clipTo
+                                CLAY_TEXT(CLAY_STRING("Clip To"), infoTitleConfig);
+                                Clay_String clipTo = CLAY_STRING("ATTACHED_PARENT");
+                                if (floatingConfig->clipTo == CLAY_CLIP_TO_NONE) {
+                                    clipTo = CLAY_STRING("NONE");
+                                }
+                                CLAY_TEXT(clipTo, infoTextConfig);
                             }
                             break;
                         }
