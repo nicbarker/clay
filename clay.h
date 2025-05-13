@@ -445,6 +445,14 @@ typedef CLAY_PACKED_ENUM {
     CLAY_ATTACH_TO_ROOT,
 } Clay_FloatingAttachToElement;
 
+// Controls how a floating element is clipped
+typedef CLAY_PACKED_ENUM {
+    // (default) The floating element is clipped by the context of its attached parent.
+    CLAY_CLIP_TO_ATTACHED_PARENT,
+    // The floating element is not clipped.
+    CLAY_CLIP_TO_NONE,
+} Clay_FloatingClipToElement;
+
 // Controls various settings related to "floating" elements, which are elements that "float" above other elements, potentially overlapping their boundaries,
 // and not affecting the layout of sibling or parent elements.
 typedef struct {
@@ -473,6 +481,10 @@ typedef struct {
     // CLAY_ATTACH_TO_ELEMENT_WITH_ID - Attaches this floating element to an element with a specific ID, specified with the .parentId field. positioned based on the .attachPoints and .offset fields.
     // CLAY_ATTACH_TO_ROOT - Attaches this floating element to the root of the layout, which combined with the .offset field provides functionality similar to "absolute positioning".
     Clay_FloatingAttachToElement attachTo;
+    // Controls how a floating element is clipped
+    // CLAY_CLIP_TO_ATTACHED_PARENT (default) - The floating element is clipped by the context of its attached parent.
+    // CLAY_CLIP_TO_NONE - The floating element is not clipped.
+    Clay_FloatingClipToElement clipTo;
 } Clay_FloatingElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
@@ -2055,6 +2067,9 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
             }
             if (!openLayoutElementId.id) {
                 openLayoutElementId = Clay__HashString(CLAY_STRING("Clay__FloatingContainer"), context->layoutElementTreeRoots.length, 0);
+            }
+            if (declaration->floating.clipTo == CLAY_CLIP_TO_NONE) {
+                clipElementId = 0;
             }
             int32_t currentElementIndex = Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1);
             Clay__int32_tArray_Set(&context->layoutElementClipElementIds, currentElementIndex, clipElementId);
