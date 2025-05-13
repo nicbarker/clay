@@ -3900,7 +3900,7 @@ CLAY_WASM_EXPORT("Clay_GetScrollOffset")
 Clay_Vector2 Clay_GetScrollOffset(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->booleanWarnings.maxElementsExceeded) {
-        return CLAY__INIT(Clay_Vector2){0};
+        return CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
     }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     // If the element has no id attached at this point, we need to generate one
@@ -3913,7 +3913,7 @@ Clay_Vector2 Clay_GetScrollOffset(void) {
             return mapping->scrollPosition;
         }
     }
-    return CLAY__INIT(Clay_Vector2){0};
+    return CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
 }
 
 CLAY_WASM_EXPORT("Clay_UpdateScrollContainers")
