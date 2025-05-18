@@ -75,7 +75,7 @@ static inline char *Clay_Cairo__NullTerminate(Clay_String *str) {
 }
 
 // Measure text using cairo's *toy* text API.
-static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_TextElementConfig *config, uintptr_t userData) {
+static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_TextElementConfig *config, void *userData) {
 	// Edge case: Clay computes the width of a whitespace character
 	// once.  Cairo does not factor in whitespaces when computing text
 	// extents, this edge-case serves as a short-circuit to introduce
@@ -95,7 +95,7 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_
 	}
 
 	// Ensure string is null-terminated for Cairo
-    Clay_String toTerminate = (Clay_String){ str.length, str.chars };
+    Clay_String toTerminate = (Clay_String){ .chars = str.chars, .length = str.length, .isStaticallyAllocated = false };
 	char *text = Clay_Cairo__NullTerminate(&toTerminate);
 	char *font_family = fonts[config->fontId];
 
@@ -220,7 +220,7 @@ void Clay_Cairo_Render(Clay_RenderCommandArray commands, char** fonts) {
 			// Cairo expects null terminated strings, we need to clone
 			// to temporarily introduce one.
             Clay_TextRenderData *config = &command->renderData.text;
-            Clay_String toTerminate = (Clay_String){ config->stringContents.length, config->stringContents.chars };
+            Clay_String toTerminate = (Clay_String){ .chars = config->stringContents.chars, .length = config->stringContents.length, .isStaticallyAllocated = false };
 			char *text = Clay_Cairo__NullTerminate(&toTerminate);
 			char *font_family = fonts[config->fontId];
 

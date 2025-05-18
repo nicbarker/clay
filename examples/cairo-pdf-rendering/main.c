@@ -145,7 +145,7 @@ int main(void) {
         "Quicksand Semibold"
     };
 
-    Clay_SetMeasureTextFunction(Clay_Cairo_MeasureText, (uintptr_t)fonts);
+    Clay_SetMeasureTextFunction(Clay_Cairo_MeasureText, fonts);
 
 	Clay_BeginLayout();
 
