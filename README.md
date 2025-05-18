@@ -489,6 +489,13 @@ There are also supported bindings for other languages, including:
 - [Odin Bindings](https://github.com/nicbarker/clay/tree/main/bindings/odin)
 - [Rust Bindings](https://github.com/clay-ui-rs/clay)
 
+### Other implementations
+Clay has also been implemented in other languages:
+
+- [`glay`](https://github.com/soypat/glay) - Go line-by-line rewrite with readability as main goal.
+- [`totallygamerjet/clay`](https://github.com/totallygamerjet/clay) - Port using `cxgo`, a C to Go transpiler.
+- [`goclay`](https://github.com/igadmg/goclay) - Go line-by-line rewrite closely matching the reference.
+
 ### Debug Tools
 
 Clay includes built-in UI debugging tools, similar to the "inspector" in browsers such as Chrome or Firefox. These tools are included in `clay.h`, and work by injecting additional render commands into the output [Clay_RenderCommandArray](#clay_rendercommandarray).
