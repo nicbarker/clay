@@ -170,6 +170,11 @@ FloatingAttachToElement :: enum EnumBackingType {
 	Root,
 }
 
+FloatingClipToElement :: enum EnumBackingType {
+	None,
+	AttachedParent,
+}
+
 FloatingElementConfig :: struct {
 	offset:             Vector2,
 	expand:             Dimensions,
@@ -178,6 +183,7 @@ FloatingElementConfig :: struct {
 	attachment:         FloatingAttachPoints,
 	pointerCaptureMode: PointerCaptureMode,
 	attachTo:           FloatingAttachToElement,
+	clipTo: 			FloatingClipToElement,
 }
 
 TextRenderData :: struct {
