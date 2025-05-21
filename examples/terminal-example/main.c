@@ -31,7 +31,7 @@ int main() {
     while (true) {
         Clay_RenderCommandArray renderCommands = ClayVideoDemo_CreateLayout(&demoData);
 
-        Clay_Console_Render(renderCommands, width, height, columnWidth);
+        Clay_Terminal_Render(renderCommands, width, height, columnWidth);
 
         fflush(stdout);
         sleep(1);

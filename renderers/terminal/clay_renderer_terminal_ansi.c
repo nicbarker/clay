@@ -2,7 +2,6 @@
 #include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
-#include "math.h"
 
 #ifdef CLAY_OVERFLOW_TRAP
 #include "signal.h"
@@ -29,7 +28,7 @@ static inline void Console_DrawRectangle(int x0, int y0, int width, int height, 
             }
 
             Console_MoveCursor(x, y);
-            // TODO there are only two colors actually drawn, the background and white
+            // TODO this should be replaced by a better logarithmic scale if we're doing black and white
             if (average > 0.75) {
                 printf("█");
             } else if (average > 0.5) {
@@ -73,7 +72,7 @@ Console_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void 
     return textSize;
 }
 
-void Clay_Console_Render(Clay_RenderCommandArray renderCommands, int width, int height, int columnWidth) {
+void Clay_Terminal_Render(Clay_RenderCommandArray renderCommands, int width, int height, int columnWidth) {
     printf("\033[H\033[J"); // Clear
 
     const Clay_BoundingBox fullWindow = {
@@ -88,10 +87,10 @@ void Clay_Console_Render(Clay_RenderCommandArray renderCommands, int width, int 
     for (int j = 0; j < renderCommands.length; j++) {
         Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
         Clay_BoundingBox boundingBox = (Clay_BoundingBox) {
-                .x = floorf((renderCommand->boundingBox.x / columnWidth) + 0.5),
-                .y = floorf((renderCommand->boundingBox.y / columnWidth) + 0.5),
-                .width = floorf((renderCommand->boundingBox.width / columnWidth) + 0.5),
-                .height = floorf((renderCommand->boundingBox.height / columnWidth) + 0.5),
+                .x = (int)((renderCommand->boundingBox.x / columnWidth) + 0.5),
+                .y = (int)((renderCommand->boundingBox.y / columnWidth) + 0.5),
+                .width = (int)((renderCommand->boundingBox.width / columnWidth) + 0.5),
+                .height = (int)((renderCommand->boundingBox.height / columnWidth) + 0.5),
         };
         switch (renderCommand->commandType) {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
