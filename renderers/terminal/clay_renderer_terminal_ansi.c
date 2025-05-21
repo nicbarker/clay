@@ -88,10 +88,10 @@ void Clay_Console_Render(Clay_RenderCommandArray renderCommands, int width, int 
     for (int j = 0; j < renderCommands.length; j++) {
         Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
         Clay_BoundingBox boundingBox = (Clay_BoundingBox) {
-                .x = roundf((renderCommand->boundingBox.x / columnWidth)),
-                .y = roundf((renderCommand->boundingBox.y / columnWidth)),
-                .width = roundf((renderCommand->boundingBox.width / columnWidth)),
-                .height = roundf((renderCommand->boundingBox.height / columnWidth)),
+                .x = floorf((renderCommand->boundingBox.x / columnWidth) + 0.5),
+                .y = floorf((renderCommand->boundingBox.y / columnWidth) + 0.5),
+                .width = floorf((renderCommand->boundingBox.width / columnWidth) + 0.5),
+                .height = floorf((renderCommand->boundingBox.height / columnWidth) + 0.5),
         };
         switch (renderCommand->commandType) {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
