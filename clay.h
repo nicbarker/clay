@@ -403,7 +403,7 @@ CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
 
 // Controls various settings related to image elements.
 typedef struct {
-    void* imageData; // A transparent pointer used to pass image data through to the renderer.
+    const void* imageData; // A transparent pointer used to pass image data through to the renderer.
     Clay_Dimensions sourceDimensions; // The original dimensions of the source image, used to control aspect ratio.
 } Clay_ImageElementConfig;
 
@@ -580,7 +580,7 @@ typedef struct {
     // The original dimensions of the source image, used to control aspect ratio.
     Clay_Dimensions sourceDimensions;
     // A pointer transparently passed through from the original element definition, typically used to represent image data.
-    void* imageData;
+    const void* imageData;
 } Clay_ImageRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM
