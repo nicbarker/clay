@@ -1,6 +1,25 @@
 # Termbox2 renderer demo
 
-TODO: Supports changing options
+Terminal-based renderer using [termbox2](https://github.com/termbox/termbox2)
+
+Configuration can be overriden by environment variables:
+- CLAY_TB_COLOR_MODE
+  - NORMAL
+  - 256
+  - 216
+  - GRAYSCALE
+  - TRUECOLOR
+  - NOCOLOR
+- CLAY_TB_BORDER_CHARS
+  - DEFAULT
+  - ASCII
+  - UNICODE
+  - NONE
+- CLAY_TB_TRANSPARENCY
+  - 1
+  - 0
+- CLAY_TB_CELL_PIXELS
+  - widthxheight
 
 ## Building
 
@@ -16,7 +35,7 @@ make
 Then run the executable:
 
 ```sh
-./TODO_binary_name
+./clay_examples_termbox2_demo
 ```
 
 ## Attributions
