@@ -61,6 +61,7 @@ enum border_chars {
     CLAY_TB_BORDER_CHARS_DEFAULT,
     CLAY_TB_BORDER_CHARS_ASCII,
     CLAY_TB_BORDER_CHARS_UNICODE,
+    CLAY_TB_BORDER_CHARS_BLANK,
     CLAY_TB_BORDER_CHARS_NONE,
 };
 
@@ -134,6 +135,7 @@ void Clay_Termbox_Set_Border_Mode(enum border_mode border_mode);
                        - CLAY_TB_BORDER_CHARS_DEFAULT - same as BORDER_UNICODE
                        - CLAY_TB_BORDER_CHARS_ASCII   - Uses ascii characters: '+', '|', '-'
                        - CLAY_TB_BORDER_CHARS_UNICODE - Uses unicode box drawing characters
+                       - CLAY_TB_BORDER_CHARS_BLANK   - Draws background colors only
                        - CLAY_TB_BORDER_CHARS_NONE    - Don't draw borders
  */
 void Clay_Termbox_Set_Border_Chars(enum border_chars border_chars);
@@ -192,6 +194,7 @@ static inline Clay_Dimensions Clay_Termbox_MeasureText(
     - DEFAULT
     - ASCII
     - UNICODE
+    - BLANK
     - NONE
   - CLAY_TB_TRANSPARENCY
     - 1
@@ -758,6 +761,8 @@ void Clay_Termbox_Initialize(
             new_border_chars = CLAY_TB_BORDER_CHARS_ASCII;
         } else if (0 == strcmp("UNICODE", env_border_chars)) {
             new_border_chars = CLAY_TB_BORDER_CHARS_UNICODE;
+        } else if (0 == strcmp("BLANK", env_border_chars)) {
+            new_border_chars = CLAY_TB_BORDER_CHARS_BLANK;
         } else if (0 == strcmp("NONE", env_border_chars)) {
             new_border_chars = CLAY_TB_BORDER_CHARS_NONE;
         }
@@ -1004,6 +1009,10 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
                                 } else if (y < border_skip_begin_y || y >= border_skip_end_y) {
                                     ch = '-';
                                 }
+                                break;
+                            }
+                            case CLAY_TB_BORDER_CHARS_BLANK: {
+                                ch = ' ';
                                 break;
                             }
                         }

@@ -261,6 +261,10 @@ void component_termbox_settings(void)
                     border_chars = "CLAY_TB_BORDER_CHARS_UNICODE";
                     break;
                 }
+                case CLAY_TB_BORDER_CHARS_BLANK: {
+                    border_chars = "CLAY_TB_BORDER_CHARS_BLANK";
+                    break;
+                }
                 case CLAY_TB_BORDER_CHARS_NONE: {
                     border_chars = "CLAY_TB_BORDER_CHARS_NONE";
                     break;
