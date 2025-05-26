@@ -207,7 +207,7 @@ static inline Clay_Dimensions Clay_Termbox_MeasureText(
   \param transparency Emulate transparency using background colors
  */
 void Clay_Termbox_Initialize(int color_mode, enum border_mode border_mode,
-    enum border_chars border_chars, bool fake_transparency);
+    enum border_chars border_chars, bool transparency);
 
 /**
  Stop termbox2 and release internal structures
@@ -245,17 +245,10 @@ cell_bounding_box clay_tb_scissor_box;
 
 
 // -----------------------------------------------
-// -- Color buffers
+// -- Color buffer
 
-// Buffers storing background colors from previously drawn items. Used to emulate transparency and
+// Buffer storing background colors from previously drawn items. Used to emulate transparency and
 // set the background color for text.
-
-// Termbox's tb_get_buffer function would allow using it's internal buffer without needing to make
-// a duplicate buffer here, but the function is deprecated. A new function for accessing the buffer
-// might be merged in the future: https://github.com/termbox/termbox2/pull/65
-
-// Buffer storing
-static uintattr_t *clay_tb_color_buffer_termbox = NULL;
 static Clay_Color *clay_tb_color_buffer_clay = NULL;
 // Dimensions are specified in cells
 static clay_tb_dimensions clay_tb_color_buffer_dimensions = { 0, 0 };
@@ -468,41 +461,6 @@ static inline cell_bounding_box cell_snap_bounding_box(Clay_BoundingBox box)
 }
 
 /**
-  Get stored termbox color for a position from the internal color buffer
-
-  \param x X position of cell
-  \param y Y position of cell
- */
-static inline uintattr_t clay_tb_color_buffer_termbox_get(int x, int y)
-{
-    clay_tb_assert(0 <= x && x < clay_tb_color_buffer_dimensions.width,
-        "Cell buffer x position (%d) offscreen (range 0-%d)", x,
-        clay_tb_color_buffer_dimensions.width);
-    clay_tb_assert(0 <= y && y < clay_tb_color_buffer_dimensions.height,
-        "Cell buffer y position (%d) offscreen (range 0-%d)", y,
-        clay_tb_color_buffer_dimensions.height);
-    return clay_tb_color_buffer_termbox[x + (y * clay_tb_color_buffer_dimensions.width)];
-}
-
-/**
-  Set stored termbox color for a position in the internal color buffer
-
-  \param x     X position of cell
-  \param y     Y position of cell
-  \param color Color to store
- */
-static inline void clay_tb_color_buffer_termbox_set(int x, int y, uintattr_t color)
-{
-    clay_tb_assert(0 <= x && x < clay_tb_color_buffer_dimensions.width,
-        "Cell buffer x position (%d) offscreen (range 0-%d)", x,
-        clay_tb_color_buffer_dimensions.width);
-    clay_tb_assert(0 <= y && y < clay_tb_color_buffer_dimensions.height,
-        "Cell buffer y position (%d) offscreen (range 0-%d)", y,
-        clay_tb_color_buffer_dimensions.height);
-    clay_tb_color_buffer_termbox[x + (y * clay_tb_color_buffer_dimensions.width)] = color;
-}
-
-/**
   Get stored clay color for a position from the internal color buffer
 
   \param x X position of cell
@@ -510,8 +468,6 @@ static inline void clay_tb_color_buffer_termbox_set(int x, int y, uintattr_t col
  */
 static inline Clay_Color clay_tb_color_buffer_clay_get(int x, int y)
 {
-    clay_tb_assert(
-        clay_tb_transparency, "Clay color buffer is only available if transparency is enabled\n");
     clay_tb_assert(0 <= x && x < clay_tb_color_buffer_dimensions.width,
         "Cell buffer x position (%d) offscreen (range 0-%d)", x,
         clay_tb_color_buffer_dimensions.width);
@@ -530,8 +486,6 @@ static inline Clay_Color clay_tb_color_buffer_clay_get(int x, int y)
  */
 static inline void clay_tb_color_buffer_clay_set(int x, int y, Clay_Color color)
 {
-    clay_tb_assert(
-        clay_tb_transparency, "Clay color buffer is only available if transparency is enabled\n");
     clay_tb_assert(0 <= x && x < clay_tb_color_buffer_dimensions.width,
         "Cell buffer x position (%d) offscreen (range 0-%d)", x,
         clay_tb_color_buffer_dimensions.width);
@@ -554,17 +508,6 @@ static void clay_tb_resize_buffer(void)
         * clay_tb_color_buffer_max_dimensions.height;
     size_t new_size = (size_t)current_width * current_height;
     if (max_size < new_size) {
-
-        uintattr_t *tmp_termbox
-            = realloc(clay_tb_color_buffer_termbox, sizeof(uintattr_t) * new_size);
-        if (NULL == tmp_termbox) {
-            clay_tb_assert(false, "Reallocation failure for internal termbox color buffer");
-        }
-        clay_tb_color_buffer_termbox = tmp_termbox;
-        for (size_t i = max_size; i < new_size; ++i) {
-            clay_tb_color_buffer_termbox[i] = TB_DEFAULT;
-        }
-
         Clay_Color *tmp_clay = realloc(clay_tb_color_buffer_clay, sizeof(Clay_Color) * new_size);
         if (NULL == tmp_clay) {
             clay_tb_assert(false, "Reallocation failure for internal clay color buffer");
@@ -648,10 +591,7 @@ static int clay_tb_set_cell(
         int err;
         int max_x = CLAY__MIN(x + codepoint_width, tb_width());
         for (int i = x; i < max_x; ++i) {
-            clay_tb_color_buffer_termbox_set(i, y, tb_bg);
-            if (clay_tb_transparency) {
-                clay_tb_color_buffer_clay_set(i, y, bg);
-            }
+            clay_tb_color_buffer_clay_set(i, y, bg);
             err = tb_set_cell(i, y, ch, tb_fg, tb_bg);
             if (TB_OK != err) {
                 break;
@@ -725,16 +665,6 @@ void Clay_Termbox_Set_Transparency(bool transparency)
     if (TB_OUTPUT_NORMAL == clay_tb_color_mode || CLAY_TB_OUTPUT_NOCOLOR == clay_tb_color_mode) {
         clay_tb_transparency = false;
     }
-
-    // Clay color buffer is only needed if emulating transparency
-    if (clay_tb_transparency && NULL == clay_tb_color_buffer_clay) {
-        size_t size = (size_t)tb_width() * tb_height();
-        clay_tb_color_buffer_clay = malloc(sizeof(Clay_Color) * size);
-        for (int i = 0; i < size; ++i) {
-            clay_tb_color_buffer_clay[i] = (Clay_Color) { 0, 0, 0, 0 };
-        }
-    }
-
 }
 
 float Clay_Termbox_Width(void)
@@ -889,9 +819,9 @@ void Clay_Termbox_Initialize(
     Clay_Termbox_Set_Cell_Pixel_Size(new_pixel_size.width, new_pixel_size.height);
 
     size_t size = (size_t)tb_width() * tb_height();
-    clay_tb_color_buffer_termbox = malloc(sizeof(uintattr_t) * size);
+    clay_tb_color_buffer_clay = malloc(sizeof(Clay_Color) * size);
     for (int i = 0; i < size; ++i) {
-        clay_tb_color_buffer_termbox[i] = TB_DEFAULT;
+        clay_tb_color_buffer_clay[i] = (Clay_Color) { 0, 0, 0, 0 };
     }
 }
 
@@ -901,7 +831,6 @@ void Clay_Termbox_Close(void)
         // Disable mouse hover support
         tb_sendf("\x1b[?%d;%dl", 1003, 1006);
 
-        free(clay_tb_color_buffer_termbox);
         free(clay_tb_color_buffer_clay);
         tb_shutdown();
         clay_tb_initialized = false;
@@ -1104,7 +1033,8 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
                             }
                             i += codepoint_length;
 
-                            uintattr_t color_tb_bg = clay_tb_color_buffer_termbox_get(x, y);
+                            uintattr_t color_tb_bg = (clay_tb_transparency) ? TB_DEFAULT
+                                : clay_tb_color_convert(clay_tb_color_buffer_clay_get(x, y));
                             Clay_Color color_bg = { 0 };
                             color_pair color_bg_new = clay_tb_get_transparency_color(
                                 x, y, (color_pair) { color_bg, color_tb_bg });
