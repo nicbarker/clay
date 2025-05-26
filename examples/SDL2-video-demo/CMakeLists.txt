@@ -44,13 +44,6 @@ target_link_libraries(SDL2_video_demo PUBLIC
     SDL2_image::SDL2_image-static
 )
 
-if(MSVC)
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-else()
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-endif()
-
 add_custom_command(
         TARGET SDL2_video_demo POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

@@ -24,12 +24,6 @@ target_compile_options(clay_examples_raylib_sidebar_scrolling_container PUBLIC)
 target_include_directories(clay_examples_raylib_sidebar_scrolling_container PUBLIC .)
 
 target_link_libraries(clay_examples_raylib_sidebar_scrolling_container PUBLIC raylib)
-if(MSVC)
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-else()
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-endif()
 
 add_custom_command(
         TARGET clay_examples_raylib_sidebar_scrolling_container POST_BUILD

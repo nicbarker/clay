@@ -25,9 +25,6 @@ target_include_directories(clay_examples_raylib_multi_context PUBLIC .)
 
 target_link_libraries(clay_examples_raylib_multi_context PUBLIC raylib)
 
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-
 add_custom_command(
         TARGET clay_examples_raylib_multi_context POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

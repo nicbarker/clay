@@ -4,9 +4,6 @@ cmake_minimum_required(VERSION 3.27)
 project(clay_examples_sdl3_simple_demo C)
 set(CMAKE_C_STANDARD 99)
 
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 

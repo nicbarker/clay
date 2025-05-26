@@ -27,9 +27,6 @@ target_link_libraries(clay_examples_introducing_clay_video_demo PUBLIC raylib)
 
 if(MSVC)
   set(CMAKE_C_FLAGS_DEBUG "/D CLAY_DEBUG")
-else()
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
 add_custom_command(
