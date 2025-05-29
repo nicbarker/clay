@@ -796,9 +796,7 @@ int main(void)
     Clay_SetMeasureTextFunction(Clay_Termbox_MeasureText, NULL);
 
     // Initial render before waiting for events
-    Clay_SetLayoutDimensions((Clay_Dimensions) { Clay_Termbox_Width(), Clay_Termbox_Height() });
     Clay_RenderCommandArray commands = CreateLayout(shark_image);
-    tb_clear();
     Clay_Termbox_Render(commands);
     tb_present();
 
@@ -809,7 +807,7 @@ int main(void)
 
         handle_termbox_events();
 
-        Clay_RenderCommandArray commands = CreateLayout(shark_image);
+        commands = CreateLayout(shark_image);
 
         tb_clear();
         Clay_Termbox_Render(commands);
@@ -818,5 +816,6 @@ int main(void)
 
     Clay_Termbox_Close();
     free_image(shark_image);
+    free(memory);
     return 0;
 }

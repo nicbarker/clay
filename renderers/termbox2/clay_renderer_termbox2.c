@@ -33,18 +33,17 @@
 // -- Data structures
 
 typedef struct {
-    int width;
-    int height;
+    int width, height;
 } clay_tb_dimensions;
 
 typedef struct {
-    float width;
-    float height;
+    float width, height;
 } clay_tb_pixel_dimensions;
 
 typedef struct {
-    int x, y, width, height;
-} cell_bounding_box;
+    int x, y;
+    int width, height;
+} clay_tb_cell_bounding_box;
 
 typedef struct {
     Clay_Color clay;
@@ -244,7 +243,7 @@ static clay_tb_pixel_dimensions clay_tb_cell_size = { .width = 9, .height = 21 }
 
 // Scissor mode prevents drawing outside of the specified bounding box
 static bool clay_tb_scissor_enabled = false;
-cell_bounding_box clay_tb_scissor_box;
+clay_tb_cell_bounding_box clay_tb_scissor_box;
 
 
 // -----------------------------------------------
@@ -303,7 +302,8 @@ static int clay_tb_rgb_intensity_to_index(int color)
  */
 static uintattr_t clay_tb_color_convert(Clay_Color color)
 {
-    clay_tb_assert(clay_tb_valid_color(color), "Invalid Clay color");
+    clay_tb_assert(clay_tb_valid_color(color), "Invalid Clay color: (%f, %f, %f, %f)", color.r,
+        color.g, color.b, color.a);
 
     uintattr_t tb_color = TB_DEFAULT;
 
@@ -451,9 +451,9 @@ static inline int clay_tb_roundf(float f)
 
   \param box Bounding box with pixel measurements to convert
  */
-static inline cell_bounding_box cell_snap_bounding_box(Clay_BoundingBox box)
+static inline clay_tb_cell_bounding_box cell_snap_bounding_box(Clay_BoundingBox box)
 {
-    return (cell_bounding_box) {
+    return (clay_tb_cell_bounding_box) {
         .x = clay_tb_roundf(box.x / clay_tb_cell_size.width),
         .y = clay_tb_roundf(box.y / clay_tb_cell_size.height),
         .width = clay_tb_roundf((box.x + box.width) / clay_tb_cell_size.width)
@@ -536,7 +536,8 @@ static void clay_tb_resize_buffer(void)
   \param x     X position of cell
   \param y     Y position of cell
  */
-static inline color_pair clay_tb_get_transparency_color(int x, int y, color_pair color)
+static inline clay_tb_color_pair clay_tb_get_transparency_color(
+    int x, int y, clay_tb_color_pair color)
 {
     if (!clay_tb_transparency) {
         return color;
@@ -550,7 +551,7 @@ static inline color_pair clay_tb_get_transparency_color(int x, int y, color_pair
         .a = 255
     };
 
-    return (color_pair) {
+    return (clay_tb_color_pair) {
         .clay = new_color,
         .termbox = clay_tb_color_convert(new_color)
     };
@@ -849,7 +850,7 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
     clay_tb_resize_buffer();
     for (int32_t i = 0; i < commands.length; ++i) {
         const Clay_RenderCommand *command = Clay_RenderCommandArray_Get(&commands, i);
-        const cell_bounding_box cell_box = cell_snap_bounding_box(command->boundingBox);
+        const clay_tb_cell_bounding_box cell_box = cell_snap_bounding_box(command->boundingBox);
 
         int box_begin_x = CLAY__MAX(cell_box.x, 0);
         int box_end_x = CLAY__MIN(cell_box.x + cell_box.width, tb_width());
@@ -877,8 +878,8 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
 
                 for (int y = box_begin_y; y < box_end_y; ++y) {
                     for (int x = box_begin_x; x < box_end_x; ++x) {
-                        color_pair color_bg_new = clay_tb_get_transparency_color(
-                            x, y, (color_pair) { color_bg, color_tb_bg });
+                        clay_tb_color_pair color_bg_new = clay_tb_get_transparency_color(
+                            x, y, (clay_tb_color_pair) { color_bg, color_tb_bg });
                         clay_tb_set_cell(
                             x, y, ' ', color_tb_fg, color_bg_new.termbox, color_bg_new.clay);
                     }
@@ -1017,8 +1018,8 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
                             }
                         }
 
-                        color_pair color_bg_new = clay_tb_get_transparency_color(
-                            x, y, (color_pair) { color_bg, color_tb_bg });
+                        clay_tb_color_pair color_bg_new = clay_tb_get_transparency_color(
+                            x, y, (clay_tb_color_pair) { color_bg, color_tb_bg });
                         clay_tb_set_cell(
                             x, y, ch, color_tb_fg, color_bg_new.termbox, color_bg_new.clay);
                     }
@@ -1042,11 +1043,12 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
                             }
                             i += codepoint_length;
 
-                            uintattr_t color_tb_bg = (clay_tb_transparency) ? TB_DEFAULT
+                            uintattr_t color_tb_bg = (clay_tb_transparency)
+                                ? TB_DEFAULT
                                 : clay_tb_color_convert(clay_tb_color_buffer_clay_get(x, y));
                             Clay_Color color_bg = { 0 };
-                            color_pair color_bg_new = clay_tb_get_transparency_color(
-                                x, y, (color_pair) { color_bg, color_tb_bg });
+                            clay_tb_color_pair color_bg_new = clay_tb_get_transparency_color(
+                                x, y, (clay_tb_color_pair) { color_bg, color_tb_bg });
                             clay_tb_set_cell(
                                 x, y, ch, color_tb_fg, color_bg_new.termbox, color_bg_new.clay);
                         }
@@ -1108,7 +1110,7 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
-                clay_tb_scissor_box = (cell_bounding_box) {
+                clay_tb_scissor_box = (clay_tb_cell_bounding_box) {
                     .x = box_begin_x,
                     .y = box_begin_y,
                     .width = box_end_x - box_begin_x,
