@@ -1483,7 +1483,7 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
 uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     uint64_t hash = 0;
 
-    for (int32_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         hash += data[i];
         hash += (hash << 10);
         hash ^= (hash >> 6);
