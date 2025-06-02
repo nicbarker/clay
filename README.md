@@ -92,7 +92,7 @@ int main() {
                 .backgroundColor = COLOR_LIGHT
             }) {
                 CLAY({ .id = CLAY_ID("ProfilePictureOuter"), .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }, .backgroundColor = COLOR_RED }) {
-                    CLAY({ .id = CLAY_ID("ProfilePicture"), .layout = { .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}, .image = { .imageData = &profilePicture, .sourceDimensions = {60, 60} } }) {}
+                    CLAY({ .id = CLAY_ID("ProfilePicture"), .layout = { .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}, .image = { .imageData = &profilePicture } }) {}
                     CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
                 }
 
@@ -1062,6 +1062,7 @@ typedef struct {
     Clay_LayoutConfig layout;
     Clay_Color backgroundColor;
     Clay_CornerRadius cornerRadius;
+    Clay_AspectRatioElementConfig aspectRatio;
     Clay_ImageElementConfig image;
     Clay_FloatingElementConfig floating;
     Clay_CustomElementConfig custom;
@@ -1108,9 +1109,17 @@ Note that the `CLAY_CORNER_RADIUS(radius)` function-like macro is available to p
 
 ---
 
+**`.aspectRatio`** - `Clay_AspectRatioElementConfig`
+
+`CLAY({ .aspectRatio = 1 })`
+
+Uses [Clay_AspectRatioElementConfig](#clay_aspectratioelementconfig). Configures the element as an aspect ratio scaling element. Especially useful for rendering images, but can also be used to enforce a fixed width / height ratio of other elements.
+
+---
+
 **`.image`** - `Clay_ImageElementConfig`
 
-`CLAY({ .image = { .imageData = &myImage, .sourceDimensions = { 640, 480 } } })`
+`CLAY({ .image = { .imageData = &myImage } })`
 
 Uses [Clay_ImageElementConfig](#clay_imageelementconfig). Configures the element as an image element. Causes a render command with type `IMAGE` to be emitted.
 
@@ -1294,22 +1303,11 @@ CLAY({ .id = CLAY_ID("Button"), .layout = { .layoutDirection = CLAY_TOP_TO_BOTTO
 
 ```C
 Clay_ImageElementConfig {
-    Clay_Dimensions sourceDimensions {
-        float width; float height; 
-    };
     void * imageData;
 };
 ```
 
 **Fields**
-
-**`.sourceDimensions`** - `Clay_Dimensions`
-
-`CLAY({ .image = { .sourceDimensions = { 1024, 768 } } }) {}`
-
-Used to perform **aspect ratio scaling** on the image element. As of this version of clay, aspect ratio scaling only applies to the `height` of an image (i.e. image height will scale with width growth and limitations, but width will not scale with height growth and limitations)
-
----
 
 **`.imageData`** - `void *`
 
@@ -1321,7 +1319,7 @@ Used to perform **aspect ratio scaling** on the image element. As of this versio
 // Load an image somewhere in your code
 YourImage profilePicture = LoadYourImage("profilePicture.png");
 // Note that when rendering, .imageData will be void* type.
-CLAY({ .image = { .imageData = &profilePicture, .sourceDimensions = { 60, 60 } } }) {}
+CLAY({ .image = { .imageData = &profilePicture } }) {}
 ```
 
 **Examples**
@@ -1330,11 +1328,105 @@ CLAY({ .image = { .imageData = &profilePicture, .sourceDimensions = { 60, 60 } }
 // Load an image somewhere in your code
 YourImage profilePicture = LoadYourImage("profilePicture.png");
 // Declare a reusable image config
-Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture, .sourceDimensions = {60, 60} };
+Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture };
 // Declare an image element using a reusable config
 CLAY({ .image = imageConfig }) {}
 // Declare an image element using an inline config
-CLAY({ .image = { .imageData = &profilePicture, .sourceDimensions = {60, 60} } }) {}
+CLAY({ .image = { .imageData = &profilePicture }, .aspectRatio = 16 / 9 }) {}
+// Rendering example
+YourImage *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
+```
+
+**Rendering**
+
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->renderData.image->imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `renderCommand->renderData.image->backgroundColor` with the image.
+
+---
+
+### Clay_AspectRatioElementConfig
+
+**Usage**
+
+`CLAY({ .aspectRatio = 16 / 9 }) {}`
+
+**Clay_AspectRatioElementConfig** configures a clay element to enforce a fixed width / height ratio in its final dimensions. Mostly used for image elements, but can also be used for non image elements.
+
+**Struct API (Pseudocode)**
+
+```C
+Clay_AspectRatioElementConfig {
+    float aspectRatio;
+};
+```
+
+**Fields**
+
+**`.aspectRatio`** - `float`
+
+`CLAY({ .aspectRatio = { .aspectRatio = 16 / 9 } }) {}`
+
+or alternatively, as C will automatically pass the value to the first nested struct field:
+
+`CLAY({ .aspectRatio = 16 / 9 }) {}`
+
+**Examples**
+
+```C
+// Load an image somewhere in your code
+YourImage profilePicture = LoadYourImage("profilePicture.png");
+// Declare an image element that will grow along the X axis while maintaining its original aspect ratio
+CLAY({
+    .layout = { .width = CLAY_SIZING_GROW() },
+    .aspectRatio = profilePicture.width / profilePicture.height,
+    .image = { .imageData = &profilePicture },
+}) {}
+```
+
+---
+
+### Clay_ImageElementConfig
+**Usage**
+
+`CLAY({ .image = { ...image config } }) {}`
+
+**Clay_ImageElementConfig** configures a clay element to render an image as its background.
+
+**Struct API (Pseudocode)**
+
+```C
+Clay_ImageElementConfig {
+    void * imageData;
+};
+```
+
+**Fields**
+
+**`.imageData`** - `void *`
+
+`CLAY({ .image = { .imageData = &myImage } }) {}`
+
+`.imageData` is a generic void pointer that can be used to pass through image data to the renderer.
+
+```C
+// Load an image somewhere in your code
+YourImage profilePicture = LoadYourImage("profilePicture.png");
+// Note that when rendering, .imageData will be void* type.
+CLAY({ .image = { .imageData = &profilePicture } }) {}
+```
+
+Note: for an image to maintain its original aspect ratio when using dynamic scaling, the [.aspectRatio](#clay_aspectratioelementconfig) config option must be used.
+
+**Examples**
+
+```C
+// Load an image somewhere in your code
+YourImage profilePicture = LoadYourImage("profilePicture.png");
+// Declare a reusable image config
+Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &profilePicture };
+// Declare an image element using a reusable config
+CLAY({ .image = imageConfig }) {}
+// Declare an image element using an inline config
+CLAY({ .image = { .imageData = &profilePicture }, .aspectRatio = 16 / 9 }) {}
 // Rendering example
 YourImage *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
 ```
@@ -2020,7 +2112,6 @@ typedef struct {
 typedef struct {
     Clay_Color backgroundColor;
     Clay_CornerRadius cornerRadius;
-    Clay_Dimensions sourceDimensions;
     void* imageData;
 } Clay_ImageRenderData;
 ```

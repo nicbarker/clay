@@ -113,9 +113,12 @@ TextElementConfig :: struct {
 	textAlignment:      TextAlignment,
 }
 
+AspectRatioElementConfig :: struct {
+	aspectRatio:        f32,
+}
+
 ImageElementConfig :: struct {
 	imageData:        rawptr,
-	sourceDimensions: Dimensions,
 }
 
 CustomElementConfig :: struct {
@@ -203,7 +206,6 @@ RectangleRenderData :: struct {
 ImageRenderData :: struct {
 	backgroundColor: Color,
 	cornerRadius: CornerRadius,
-	sourceDimensions: Dimensions,
 	imageData: rawptr,
 }
 
@@ -340,6 +342,7 @@ ElementDeclaration :: struct {
 	layout:          LayoutConfig,
 	backgroundColor: Color,
 	cornerRadius:    CornerRadius,
+	aspectRatio: 	 AspectRatioElementConfig,
 	image:           ImageElementConfig,
 	floating:        FloatingElementConfig,
 	custom:          CustomElementConfig,
