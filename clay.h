@@ -2264,7 +2264,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 if (childSizing.type != CLAY__SIZING_TYPE_PERCENT
                     && childSizing.type != CLAY__SIZING_TYPE_FIXED
                     && (!Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || (Clay__FindElementConfigWithType(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT).textElementConfig->wrapMode == CLAY_TEXT_WRAP_WORDS)) // todo too many loops
-                    && (xAxis || !Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT))
+//                    && (xAxis || !Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT))
                 ) {
                     Clay__int32_tArray_Add(&resizableContainerBuffer, childElementIndex);
                 }
@@ -2303,9 +2303,9 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 // The content is too large, compress the children as much as possible
                 if (sizeToDistribute < 0) {
                     // If the parent clips content in this axis direction, don't compress children, just leave them alone
-                    Clay_ClipElementConfig *scrollElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_CLIP).clipElementConfig;
-                    if (scrollElementConfig) {
-                        if (((xAxis && scrollElementConfig->horizontal) || (!xAxis && scrollElementConfig->vertical))) {
+                    Clay_ClipElementConfig *clipElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_CLIP).clipElementConfig;
+                    if (clipElementConfig) {
+                        if (((xAxis && clipElementConfig->horizontal) || (!xAxis && clipElementConfig->vertical))) {
                             continue;
                         }
                     }
@@ -2397,10 +2397,6 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                     Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
                     float minSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
                     float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
-
-                    if (!xAxis && Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT)) {
-                        continue; // Currently we don't support resizing aspect ratio elements on the Y axis because it would break the ratio
-                    }
 
                     float maxSize = parentSize - parentPadding;
                     // If we're laying out the children of a scroll panel, grow containers expand to the size of the inner content, not the outer container
@@ -2542,7 +2538,8 @@ void Clay__CalculateFinalLayout(void) {
     for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
         Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
         Clay_AspectRatioElementConfig *config = Clay__FindElementConfigWithType(aspectElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
-        aspectElement->dimensions.height = config->aspectRatio * aspectElement->dimensions.width;
+        aspectElement->dimensions.height = (1 / config->aspectRatio) * aspectElement->dimensions.width;
+        aspectElement->layoutConfig->sizing.height.size.minMax.max = aspectElement->dimensions.height;
     }
 
     // Propagate effect of text wrapping, aspect scaling etc. on height of parents
@@ -2595,6 +2592,13 @@ void Clay__CalculateFinalLayout(void) {
 
     // Calculate sizing along the Y axis
     Clay__SizeContainersAlongAxis(false);
+
+    // Scale horizontal widths according to aspect ratio
+    for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
+        Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
+        Clay_AspectRatioElementConfig *config = Clay__FindElementConfigWithType(aspectElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
+        aspectElement->dimensions.width = config->aspectRatio * aspectElement->dimensions.height;
+    }
 
     // Sort tree roots by z-index
     int32_t sortMax = context->layoutElementTreeRoots.length - 1;
@@ -3113,6 +3117,7 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
     switch (type) {
         case CLAY__ELEMENT_CONFIG_TYPE_SHARED: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Shared"), {243,134,48,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Aspect"), {101,149,194,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_CLIP: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Scroll"), {242, 196, 90, 255} };
@@ -3597,12 +3602,25 @@ void Clay__RenderDebugView(void) {
                             }
                             break;
                         }
+                        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: {
+                            Clay_AspectRatioElementConfig *aspectRatioConfig = elementConfig->config.aspectRatioElementConfig;
+                            CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoAspectRatioBody"), .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
+                                CLAY_TEXT(CLAY_STRING("Aspect Ratio"), infoTitleConfig);
+                                // Aspect Ratio
+                                CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
+                            }
+                            break;
+                        }
                         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
                             Clay_ImageElementConfig *imageConfig = elementConfig->config.imageElementConfig;
+                            Clay_AspectRatioElementConfig aspectConfig = { 1 };
+                            if (Clay__ElementHasConfig(selectedItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT)) {
+                                aspectConfig = *Clay__FindElementConfigWithType(selectedItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
+                            }
                             CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoImageBody"), .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                                 // Image Preview
                                 CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
-                                CLAY({ .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) }}, .image = *imageConfig }) {}
+                                CLAY({ .layout = { .sizing = { .width = CLAY_SIZING_GROW(64, 128), .height = CLAY_SIZING_GROW(64, 128) }}, .aspectRatio = aspectConfig, .image = *imageConfig }) {}
                             }
                             break;
                         }

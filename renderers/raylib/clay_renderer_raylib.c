@@ -174,11 +174,12 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 if (tintColor.r == 0 && tintColor.g == 0 && tintColor.b == 0 && tintColor.a == 0) {
                     tintColor = (Clay_Color) { 255, 255, 255, 255 };
                 }
-                DrawTextureEx(
+                DrawTexturePro(
                     imageTexture,
-                    (Vector2){boundingBox.x, boundingBox.y},
+                    (Rectangle) { 0, 0, imageTexture.width, imageTexture.height },
+                    (Rectangle){boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height},
+                    (Vector2) {},
                     0,
-                    boundingBox.width / (float)imageTexture.width,
                     CLAY_COLOR_TO_RAYLIB_COLOR(tintColor));
                 break;
             }
