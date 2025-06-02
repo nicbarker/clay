@@ -41,10 +41,10 @@ error_handler :: proc "c" (errorData: clay.ErrorData) {
     // Do something with the error data.
 }
 
-min_memory_size: u32 = clay.MinMemorySize()
+min_memory_size := clay.MinMemorySize()
 memory := make([^]u8, min_memory_size)
-arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(min_memory_size, memory)
-clay.Initialize(arena, { width = 1080, height = 720 }, { handler = error_handler })
+arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(uint(min_memory_size), memory)
+clay.Initialize(arena, {1080, 720}, { handler = error_handler })
 ``` 
 
 3. Provide a `measure_text(text, config)` proc "c" with [clay.SetMeasureTextFunction(function)](https://github.com/nicbarker/clay/blob/main/README.md#clay_setmeasuretextfunction) so that Clay can measure and wrap text.
@@ -74,7 +74,7 @@ clay.SetMeasureTextFunction(measure_text, nil)
 ```Odin
 // Update internal pointer position for handling mouseover / click / touch events
 clay.SetPointerState(
-    clay.Vector2 { mouse_pos_x, mouse_pos_y },
+    { mouse_pos_x, mouse_pos_y },
     is_mouse_down,
 )
 ```
@@ -148,6 +148,7 @@ create_layout :: proc() -> clay.ClayArray(clay.RenderCommand) {
                         sizing = { width = clay.SizingFixed(60), height = clay.SizingFixed(60) },
                     },
                     image = {
+                        // How you define `profile_picture` depends on your renderer.
                         imageData = &profile_picture,
                         sourceDimensions = {
                             width = 60,
@@ -179,8 +180,7 @@ create_layout :: proc() -> clay.ClayArray(clay.RenderCommand) {
     }
 
     // Returns a list of render commands
-    render_commands: clay.ClayArray(clay.RenderCommand) = clay.EndLayout()
-    return render_commands
+    return clay.EndLayout()
 }
 ```
 
