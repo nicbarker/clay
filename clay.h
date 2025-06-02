@@ -1781,7 +1781,7 @@ void Clay__UpdateAspectRatioBox(Clay_LayoutElement *layoutElement) {
             if (layoutElement->dimensions.width == 0 && layoutElement->dimensions.height != 0) {
                 layoutElement->dimensions.width = layoutElement->dimensions.height * aspectConfig->aspectRatio;
             } else if (layoutElement->dimensions.width != 0 && layoutElement->dimensions.height == 0) {
-                layoutElement->dimensions.height = layoutElement->dimensions.height * (1 / aspectConfig->aspectRatio);
+                layoutElement->dimensions.height = layoutElement->dimensions.width * (1 / aspectConfig->aspectRatio);
             }
             break;
         }
