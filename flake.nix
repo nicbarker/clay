@@ -19,10 +19,9 @@
         pkgs = nixpkgsFor.${system};
       in {
         formatting =
-          pkgs.runCommand "format-clay" {
+          pkgs.runCommand "format-flake" {
             nativeBuildInputs = with pkgs; [
               alejandra
-              clang-tools
               deadnix
               statix
             ];
@@ -35,10 +34,6 @@
 
             echo "Checking statix"
             statix check .
-
-            echo "Checking formatting of C code"
-            clang-format --dry-run --Werror --style=file examples/**.c
-            clang-format --dry-run --Werror --style=file renderers/**.c
           '';
       }
     );
@@ -132,13 +127,13 @@
           src = ./.;
 
           dontBuild = true;
-          dontInstall = false;
 
           installPhase = ''
             mkdir -p $out/include
-            cp -r clay.h $out/include
-
             mkdir -p $out/lib/pkgconfig
+
+            cp clay.h $out/include
+
             echo "prefix=$out
               includedir=$out/include
 
