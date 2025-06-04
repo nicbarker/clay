@@ -1332,7 +1332,7 @@ Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &
 // Declare an image element using a reusable config
 CLAY({ .image = imageConfig }) {}
 // Declare an image element using an inline config
-CLAY({ .image = { .imageData = &profilePicture }, .aspectRatio = 16 / 9 }) {}
+CLAY({ .image = { .imageData = &profilePicture }, .aspectRatio = 16.0 / 9.0 }) {}
 // Rendering example
 YourImage *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
 ```
@@ -1347,7 +1347,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_
 
 **Usage**
 
-`CLAY({ .aspectRatio = 16 / 9 }) {}`
+`CLAY({ .aspectRatio = 16.0 / 9.0 }) {}`
 
 **Clay_AspectRatioElementConfig** configures a clay element to enforce a fixed width / height ratio in its final dimensions. Mostly used for image elements, but can also be used for non image elements.
 
@@ -1363,11 +1363,11 @@ Clay_AspectRatioElementConfig {
 
 **`.aspectRatio`** - `float`
 
-`CLAY({ .aspectRatio = { .aspectRatio = 16 / 9 } }) {}`
+`CLAY({ .aspectRatio = { .aspectRatio = 16.0 / 9.0 } }) {}`
 
 or alternatively, as C will automatically pass the value to the first nested struct field:
 
-`CLAY({ .aspectRatio = 16 / 9 }) {}`
+`CLAY({ .aspectRatio = 16.0 / 9.0 }) {}`
 
 **Examples**
 
@@ -1426,7 +1426,7 @@ Clay_ImageElementConfig imageConfig = (Clay_ImageElementConfig) { .imageData = &
 // Declare an image element using a reusable config
 CLAY({ .image = imageConfig }) {}
 // Declare an image element using an inline config
-CLAY({ .image = { .imageData = &profilePicture }, .aspectRatio = 16 / 9 }) {}
+CLAY({ .image = { .imageData = &profilePicture }, .aspectRatio = 16.0 / 9.0 }) {}
 // Rendering example
 YourImage *imageToRender = renderCommand->elementConfig.imageElementConfig->imageData;
 ```
