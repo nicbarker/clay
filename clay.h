@@ -1674,7 +1674,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         measuredHeight = CLAY__MAX(measuredHeight, dimensions.height);
         measured->minWidth = CLAY__MAX(dimensions.width, measured->minWidth);
     }
-    measuredWidth = CLAY__MAX(lineWidth, measuredWidth);
+    measuredWidth = CLAY__MAX(lineWidth, measuredWidth) - config->letterSpacing;
 
     measured->measuredWordsStartIndex = tempWord.next;
     measured->unwrappedDimensions.width = measuredWidth;
@@ -2522,13 +2522,13 @@ void Clay__CalculateFinalLayout(void) {
                 lineLengthChars = 0;
                 lineStartOffset = measuredWord->startOffset;
             } else {
-                lineWidth += measuredWord->width;
+                lineWidth += measuredWord->width + textConfig->letterSpacing;
                 lineLengthChars += measuredWord->length;
                 wordIndex = measuredWord->next;
             }
         }
         if (lineLengthChars > 0) {
-            Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth, lineHeight }, {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
+            Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth - textConfig->letterSpacing, lineHeight }, {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
             textElementData->wrappedLines.length++;
         }
         containerElement->dimensions.height = lineHeight * (float)textElementData->wrappedLines.length;

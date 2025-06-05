@@ -11,7 +11,7 @@ Texture2D profilePicture;
 #define RAYLIB_VECTOR2_TO_CLAY_VECTOR2(vector) (Clay_Vector2) { .x = vector.x, .y = vector.y }
 
 Clay_String profileText = CLAY_STRING_CONST("Profile Page one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen");
-Clay_TextElementConfig headerTextConfig = { .fontId = 1, .fontSize = 16, .textColor = {0,0,0,255} };
+Clay_TextElementConfig headerTextConfig = { .fontId = 1, .letterSpacing = 5, .fontSize = 16, .textColor = {0,0,0,255} };
 
 void HandleHeaderButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
