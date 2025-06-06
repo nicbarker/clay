@@ -360,11 +360,11 @@ Clay_UpdateScrollContainers(
 );
 // ...
 // Clay internally tracks the scroll containers offset, and Clay_GetScrollOffset returns the x,y offset of the currently open element
-CLAY({ .clip = vertical, .childOffset = Clay_GetScrollOffset() }) {
+CLAY({ .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() } }) {
     // Scrolling contents
 }
 // .childOffset can be provided directly if you would prefer to manage scrolling outside of clay
-CLAY({ .clip = vertical, .childOffset = myData.scrollContainer.offset }) {
+CLAY({ .clip = { .vertical = true, .childOffset = myData.scrollContainer.offset } }) {
     // Scrolling contents
 }
 ```
