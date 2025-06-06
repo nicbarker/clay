@@ -839,7 +839,6 @@ Clay_TextElementConfig {
         CLAY_TEXT_WRAP_NEWLINES,
         CLAY_TEXT_WRAP_NONE,
     };
-    bool hashStringContents
 };
 ```
 
@@ -896,14 +895,6 @@ Available options are:
 - `CLAY_TEXT_WRAP_WORDS` (default) - Text will wrap on whitespace characters as container width shrinks, preserving whole words.
 - `CLAY_TEXT_WRAP_NEWLINES` -  will only wrap when encountering newline characters.
 - `CLAY_TEXT_WRAP_NONE` - Text will never wrap even if its container is compressed beyond the text measured width.
-
----
-
-**`.hashStringContents`**
-
-`CLAY_TEXT_CONFIG(.hashStringContents = true)`
-
-By default, clay will cache the dimensions of text measured by [the provided MeasureText function](#clay_setmeasuretextfunction) based on the string's pointer and length. Setting `.hashStringContents = true` will cause Clay to hash the entire string contents. Used to fix incorrect measurements caused by re-use of string memory, disabled by default as it will incur significant performance overhead for very large bodies of text.
 
 ---
 
