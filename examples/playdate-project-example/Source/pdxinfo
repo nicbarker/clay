@@ -1,0 +1,5 @@
+name=Clay Playdate Example
+author=Matthew Jennings
+description=A small demo of Clay running on the Playdate
+bundleID=dev.mattahj.clay_example
+imagePath=

@@ -113,9 +113,12 @@ TextElementConfig :: struct {
 	textAlignment:      TextAlignment,
 }
 
+AspectRatioElementConfig :: struct {
+	aspectRatio:        f32,
+}
+
 ImageElementConfig :: struct {
 	imageData:        rawptr,
-	sourceDimensions: Dimensions,
 }
 
 CustomElementConfig :: struct {
@@ -170,6 +173,11 @@ FloatingAttachToElement :: enum EnumBackingType {
 	Root,
 }
 
+FloatingClipToElement :: enum EnumBackingType {
+	None,
+	AttachedParent,
+}
+
 FloatingElementConfig :: struct {
 	offset:             Vector2,
 	expand:             Dimensions,
@@ -178,6 +186,7 @@ FloatingElementConfig :: struct {
 	attachment:         FloatingAttachPoints,
 	pointerCaptureMode: PointerCaptureMode,
 	attachTo:           FloatingAttachToElement,
+	clipTo: 			FloatingClipToElement,
 }
 
 TextRenderData :: struct {
@@ -197,7 +206,6 @@ RectangleRenderData :: struct {
 ImageRenderData :: struct {
 	backgroundColor: Color,
 	cornerRadius: CornerRadius,
-	sourceDimensions: Dimensions,
 	imageData: rawptr,
 }
 
@@ -334,6 +342,7 @@ ElementDeclaration :: struct {
 	layout:          LayoutConfig,
 	backgroundColor: Color,
 	cornerRadius:    CornerRadius,
+	aspectRatio: 	 AspectRatioElementConfig,
 	image:           ImageElementConfig,
 	floating:        FloatingElementConfig,
 	custom:          CustomElementConfig,

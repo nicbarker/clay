@@ -1,4 +1,4 @@
-// VERSION: 0.13
+// VERSION: 0.14
 
 /*
     NOTE: In order to use this library you must define
@@ -184,7 +184,7 @@ extern "C" {
 
 // Note: Clay_String is not guaranteed to be null terminated. It may be if created from a literal C string,
 // but it is also used to represent slices.
-typedef struct {
+typedef struct Clay_String {
     // Set this boolean to true if the char* data underlying this string will live for the entire lifetime of the program.
     // This will automatically be set for strings created with CLAY_STRING, as the macro requires a string literal.
     bool isStaticallyAllocated;
@@ -195,7 +195,7 @@ typedef struct {
 
 // Clay_StringSlice is used to represent non owning string slices, and includes
 // a baseChars field which points to the string this slice is derived from.
-typedef struct {
+typedef struct Clay_StringSlice {
     int32_t length;
     const char *chars;
     const char *baseChars; // The source string / char* that this slice was derived from
@@ -205,33 +205,33 @@ typedef struct Clay_Context Clay_Context;
 
 // Clay_Arena is a memory arena structure that is used by clay to manage its internal allocations.
 // Rather than creating it by hand, it's easier to use Clay_CreateArenaWithCapacityAndMemory()
-typedef struct {
+typedef struct Clay_Arena {
     uintptr_t nextAllocation;
     size_t capacity;
     char *memory;
 } Clay_Arena;
 
-typedef struct {
+typedef struct Clay_Dimensions {
     float width, height;
 } Clay_Dimensions;
 
-typedef struct {
+typedef struct Clay_Vector2 {
     float x, y;
 } Clay_Vector2;
 
 // Internally clay conventionally represents colors as 0-255, but interpretation is up to the renderer.
-typedef struct {
+typedef struct Clay_Color {
     float r, g, b, a;
 } Clay_Color;
 
-typedef struct {
+typedef struct Clay_BoundingBox {
     float x, y, width, height;
 } Clay_BoundingBox;
 
 // Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros.
 // Represents a hashed string ID used for identifying and finding specific clay UI elements, required
 // by functions such as Clay_PointerOver() and Clay_GetElementData().
-typedef struct {
+typedef struct Clay_ElementId {
     uint32_t id; // The resulting hash generated from the other fields.
     uint32_t offset; // A numerical offset applied after computing the hash from stringId.
     uint32_t baseId; // A base hash value to start from, for example the parent element ID is used when calculating CLAY_ID_LOCAL().
@@ -248,7 +248,7 @@ typedef struct
 
 // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
 // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
-typedef struct {
+typedef struct Clay_CornerRadius {
     float topLeft;
     float topRight;
     float bottomLeft;
@@ -298,20 +298,20 @@ typedef CLAY_PACKED_ENUM {
 } Clay__SizingType;
 
 // Controls how child elements are aligned on each axis.
-typedef struct {
+typedef struct Clay_ChildAlignment {
     Clay_LayoutAlignmentX x; // Controls alignment of children along the x axis.
     Clay_LayoutAlignmentY y; // Controls alignment of children along the y axis.
 } Clay_ChildAlignment;
 
 // Controls the minimum and maximum size in pixels that this element is allowed to grow or shrink to,
 // overriding sizing types such as FIT or GROW.
-typedef struct {
+typedef struct Clay_SizingMinMax {
     float min; // The smallest final size of the element on this axis will be this value in pixels.
     float max; // The largest final size of the element on this axis will be this value in pixels.
 } Clay_SizingMinMax;
 
 // Controls the sizing of this element along one axis inside its parent container.
-typedef struct {
+typedef struct Clay_SizingAxis {
     union {
         Clay_SizingMinMax minMax; // Controls the minimum and maximum size in pixels that this element is allowed to grow or shrink to, overriding sizing types such as FIT or GROW.
         float percent; // Expects 0-1 range. Clamps the axis size to a percent of the parent container's axis size minus padding and child gaps.
@@ -320,14 +320,14 @@ typedef struct {
 } Clay_SizingAxis;
 
 // Controls the sizing of this element along one axis inside its parent container.
-typedef struct {
+typedef struct Clay_Sizing {
     Clay_SizingAxis width; // Controls the width sizing of the element, along the x axis.
     Clay_SizingAxis height;  // Controls the height sizing of the element, along the y axis.
 } Clay_Sizing;
 
 // Controls "padding" in pixels, which is a gap between the bounding box of this element and where its children
 // will be placed.
-typedef struct {
+typedef struct Clay_Padding {
     uint16_t left;
     uint16_t right;
     uint16_t top;
@@ -338,7 +338,7 @@ CLAY__WRAPPER_STRUCT(Clay_Padding);
 
 // Controls various settings that affect the size and position of an element, as well as the sizes and positions
 // of any child elements.
-typedef struct {
+typedef struct Clay_LayoutConfig {
     Clay_Sizing sizing; // Controls the sizing of this element inside it's parent container, including FIT, GROW, PERCENT and FIXED sizing.
     Clay_Padding padding; // Controls "padding" in pixels, which is a gap between the bounding box of this element and where its children will be placed.
     uint16_t childGap; // Controls the gap in pixels between child elements along the layout axis (horizontal gap for LEFT_TO_RIGHT, vertical gap for TOP_TO_BOTTOM).
@@ -371,7 +371,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_TextAlignment;
 
 // Controls various functionality related to text elements.
-typedef struct {
+typedef struct Clay_TextElementConfig {
     // A pointer that will be transparently passed through to the resulting render command.
     void *userData;
     // The RGBA color of the font to render, conventionally specified as 0-255.
@@ -399,12 +399,20 @@ typedef struct {
 
 CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
 
+// Aspect Ratio --------------------------------
+
+// Controls various settings related to aspect ratio scaling element.
+typedef struct Clay_AspectRatioElementConfig {
+    float aspectRatio; // A float representing the target "Aspect ratio" for an element, which is its final width divided by its final height.
+} Clay_AspectRatioElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_AspectRatioElementConfig);
+
 // Image --------------------------------
 
 // Controls various settings related to image elements.
-typedef struct {
+typedef struct Clay_ImageElementConfig {
     void* imageData; // A transparent pointer used to pass image data through to the renderer.
-    Clay_Dimensions sourceDimensions; // The original dimensions of the source image, used to control aspect ratio.
 } Clay_ImageElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_ImageElementConfig);
@@ -426,7 +434,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_FloatingAttachPointType;
 
 // Controls where a floating element is offset relative to its parent element.
-typedef struct {
+typedef struct Clay_FloatingAttachPoints {
     Clay_FloatingAttachPointType element; // Controls the origin point on a floating element that attaches to its parent.
     Clay_FloatingAttachPointType parent; // Controls the origin point on the parent element that the floating element attaches to.
 } Clay_FloatingAttachPoints;
@@ -463,7 +471,7 @@ typedef CLAY_PACKED_ENUM {
 
 // Controls various settings related to "floating" elements, which are elements that "float" above other elements, potentially overlapping their boundaries,
 // and not affecting the layout of sibling or parent elements.
-typedef struct {
+typedef struct Clay_FloatingElementConfig {
     // Offsets this floating element by the provided x,y coordinates from its attachPoints.
     Clay_Vector2 offset;
     // Expands the boundaries of the outer floating element without affecting its children.
@@ -500,7 +508,7 @@ CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
 // Custom -----------------------------
 
 // Controls various settings related to custom elements.
-typedef struct {
+typedef struct Clay_CustomElementConfig {
     // A transparent pointer through which you can pass custom data to the renderer.
     // Generates CUSTOM render commands.
     void* customData;
@@ -511,7 +519,7 @@ CLAY__WRAPPER_STRUCT(Clay_CustomElementConfig);
 // Scroll -----------------------------
 
 // Controls the axis on which an element switches to "scrolling", which clips the contents and allows scrolling in that direction.
-typedef struct {
+typedef struct Clay_ClipElementConfig {
     bool horizontal; // Clip overflowing elements on the X axis.
     bool vertical; // Clip overflowing elements on the Y axis.
     Clay_Vector2 childOffset; // Offsets the x,y positions of all child elements. Used primarily for scrolling containers.
@@ -522,7 +530,7 @@ CLAY__WRAPPER_STRUCT(Clay_ClipElementConfig);
 // Border -----------------------------
 
 // Controls the widths of individual element borders.
-typedef struct {
+typedef struct Clay_BorderWidth {
     uint16_t left;
     uint16_t right;
     uint16_t top;
@@ -534,7 +542,7 @@ typedef struct {
 } Clay_BorderWidth;
 
 // Controls settings related to element borders.
-typedef struct {
+typedef struct Clay_BorderElementConfig {
     Clay_Color color; // Controls the color of all borders with width > 0. Conventionally represented as 0-255, but interpretation is up to the renderer.
     Clay_BorderWidth width; // Controls the widths of individual borders. At least one of these should be > 0 for a BORDER render command to be generated.
 } Clay_BorderElementConfig;
@@ -544,7 +552,7 @@ CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);
 // Render Command Data -----------------------------
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_TEXT
-typedef struct {
+typedef struct Clay_TextRenderData {
     // A string slice containing the text to be rendered.
     // Note: this is not guaranteed to be null terminated.
     Clay_StringSlice stringContents;
@@ -560,7 +568,7 @@ typedef struct {
 } Clay_TextRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
-typedef struct {
+typedef struct Clay_RectangleRenderData {
     // The solid background color to fill this rectangle with. Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color backgroundColor;
     // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
@@ -569,7 +577,7 @@ typedef struct {
 } Clay_RectangleRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE
-typedef struct {
+typedef struct Clay_ImageRenderData {
     // The tint color for this image. Note that the default value is 0,0,0,0 and should likely be interpreted
     // as "untinted".
     // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
@@ -577,14 +585,12 @@ typedef struct {
     // Controls the "radius", or corner rounding of this image.
     // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
-    // The original dimensions of the source image, used to control aspect ratio.
-    Clay_Dimensions sourceDimensions;
     // A pointer transparently passed through from the original element definition, typically used to represent image data.
     void* imageData;
 } Clay_ImageRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM
-typedef struct {
+typedef struct Clay_CustomRenderData {
     // Passed through from .backgroundColor in the original element declaration.
     // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color backgroundColor;
@@ -596,13 +602,13 @@ typedef struct {
 } Clay_CustomRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
-typedef struct {
+typedef struct Clay_ScrollRenderData {
     bool horizontal;
     bool vertical;
 } Clay_ClipRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_BORDER
-typedef struct {
+typedef struct Clay_BorderRenderData {
     // Controls a shared color for all this element's borders.
     // Conventionally represented as 0-255 for each channel, but interpretation is up to the renderer.
     Clay_Color color;
@@ -614,7 +620,7 @@ typedef struct {
 } Clay_BorderRenderData;
 
 // A struct union containing data specific to this command's .commandType
-typedef union {
+typedef union Clay_RenderData {
     // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
     Clay_RectangleRenderData rectangle;
     // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_TEXT
@@ -632,7 +638,7 @@ typedef union {
 // Miscellaneous Structs & Enums ---------------------------------
 
 // Data representing the current internal state of a scrolling element.
-typedef struct {
+typedef struct Clay_ScrollContainerData {
     // Note: This is a pointer to the real internal scroll position, mutating it may cause a change in final layout.
     // Intended for use with external functionality that modifies scroll position, such as scroll bars or auto scrolling.
     Clay_Vector2 *scrollPosition;
@@ -647,7 +653,7 @@ typedef struct {
 } Clay_ScrollContainerData;
 
 // Bounding box and other data for a specific UI element.
-typedef struct {
+typedef struct Clay_ElementData {
     // The rectangle that encloses this UI element, with the position relative to the root of the layout.
     Clay_BoundingBox boundingBox;
     // Indicates whether an actual Element matched the provided ID or if the default struct was returned.
@@ -674,7 +680,7 @@ typedef CLAY_PACKED_ENUM {
     CLAY_RENDER_COMMAND_TYPE_CUSTOM,
 } Clay_RenderCommandType;
 
-typedef struct {
+typedef struct Clay_RenderCommand {
     // A rectangular box that fully encloses this UI element, with the position relative to the root of the layout.
     Clay_BoundingBox boundingBox;
     // A struct union containing data specific to this command's commandType.
@@ -699,7 +705,7 @@ typedef struct {
 } Clay_RenderCommand;
 
 // A sized array of render commands.
-typedef struct {
+typedef struct Clay_RenderCommandArray {
     // The underlying max capacity of the array, not necessarily all initialized.
     int32_t capacity;
     // The number of initialized elements in this array. Used for loops and iteration.
@@ -721,7 +727,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_PointerDataInteractionState;
 
 // Information on the current state of pointer interactions this frame.
-typedef struct {
+typedef struct Clay_PointerData {
     // The position of the mouse / touch / pointer relative to the root of the layout.
     Clay_Vector2 position;
     // Represents the current state of interaction with clay this frame.
@@ -732,7 +738,7 @@ typedef struct {
     Clay_PointerDataInteractionState state;
 } Clay_PointerData;
 
-typedef struct {
+typedef struct Clay_ElementDeclaration {
     // Primarily created via the CLAY_ID(), CLAY_IDI(), CLAY_ID_LOCAL() and CLAY_IDI_LOCAL() macros.
     // Represents a hashed string ID used for identifying and finding specific clay UI elements, required by functions such as Clay_PointerOver() and Clay_GetElementData().
     Clay_ElementId id;
@@ -744,6 +750,8 @@ typedef struct {
     Clay_Color backgroundColor;
     // Controls the "radius", or corner rounding of elements, including rectangles, borders and images.
     Clay_CornerRadius cornerRadius;
+    // Controls settings related to aspect ratio scaling.
+    Clay_AspectRatioElementConfig aspectRatio;
     // Controls settings related to image elements.
     Clay_ImageElementConfig image;
     // Controls whether and how an element "floats", which means it layers over the top of other elements in z order, and doesn't affect the position and size of siblings or parent elements.
@@ -783,7 +791,7 @@ typedef CLAY_PACKED_ENUM {
 } Clay_ErrorType;
 
 // Data to identify the error that clay has encountered.
-typedef struct {
+typedef struct Clay_ErrorData {
     // Represents the type of error clay encountered while computing layout.
     // CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED - A text measurement function wasn't provided using Clay_SetMeasureTextFunction(), or the provided function was null.
     // CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED - Clay attempted to allocate its internal data structures but ran out of space. The arena passed to Clay_Initialize was created with a capacity smaller than that required by Clay_MinMemorySize().
@@ -1058,6 +1066,7 @@ CLAY__ARRAY_DEFINE(char, Clay__charArray)
 CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_ElementId, Clay_ElementIdArray)
 CLAY__ARRAY_DEFINE(Clay_LayoutConfig, Clay__LayoutConfigArray)
 CLAY__ARRAY_DEFINE(Clay_TextElementConfig, Clay__TextElementConfigArray)
+CLAY__ARRAY_DEFINE(Clay_AspectRatioElementConfig, Clay__AspectRatioElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_ImageElementConfig, Clay__ImageElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_FloatingElementConfig, Clay__FloatingElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_CustomElementConfig, Clay__CustomElementConfigArray)
@@ -1072,6 +1081,7 @@ typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_BORDER,
     CLAY__ELEMENT_CONFIG_TYPE_FLOATING,
     CLAY__ELEMENT_CONFIG_TYPE_CLIP,
+    CLAY__ELEMENT_CONFIG_TYPE_ASPECT,
     CLAY__ELEMENT_CONFIG_TYPE_IMAGE,
     CLAY__ELEMENT_CONFIG_TYPE_TEXT,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
@@ -1080,6 +1090,7 @@ typedef CLAY_PACKED_ENUM {
 
 typedef union {
     Clay_TextElementConfig *textElementConfig;
+    Clay_AspectRatioElementConfig *aspectRatioElementConfig;
     Clay_ImageElementConfig *imageElementConfig;
     Clay_FloatingElementConfig *floatingElementConfig;
     Clay_CustomElementConfig *customElementConfig;
@@ -1236,13 +1247,14 @@ struct Clay_Context {
     Clay__int32_tArray layoutElementChildren;
     Clay__int32_tArray layoutElementChildrenBuffer;
     Clay__TextElementDataArray textElementData;
-    Clay__int32_tArray imageElementPointers;
+    Clay__int32_tArray aspectRatioElementIndexes;
     Clay__int32_tArray reusableElementIndexBuffer;
     Clay__int32_tArray layoutElementClipElementIds;
     // Configs
     Clay__LayoutConfigArray layoutConfigs;
     Clay__ElementConfigArray elementConfigs;
     Clay__TextElementConfigArray textElementConfigs;
+    Clay__AspectRatioElementConfigArray aspectRatioElementConfigs;
     Clay__ImageElementConfigArray imageElementConfigs;
     Clay__FloatingElementConfigArray floatingElementConfigs;
     Clay__ClipElementConfigArray clipElementConfigs;
@@ -1310,6 +1322,7 @@ uint32_t Clay__GetParentElementId(void) {
 
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay_GetCurrentContext()->layoutConfigs, config); }
 Clay_TextElementConfig * Clay__StoreTextElementConfig(Clay_TextElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_TextElementConfig_DEFAULT : Clay__TextElementConfigArray_Add(&Clay_GetCurrentContext()->textElementConfigs, config); }
+Clay_AspectRatioElementConfig * Clay__StoreAspectRatioElementConfig(Clay_AspectRatioElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_AspectRatioElementConfig_DEFAULT : Clay__AspectRatioElementConfigArray_Add(&Clay_GetCurrentContext()->aspectRatioElementConfigs, config); }
 Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ImageElementConfig_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, config); }
 Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_FloatingElementConfig_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, config); }
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
@@ -1483,7 +1496,7 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
 uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     uint64_t hash = 0;
 
-    for (int32_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         hash += data[i];
         hash += (hash << 10);
         hash ^= (hash >> 6);
@@ -1661,7 +1674,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         measuredHeight = CLAY__MAX(measuredHeight, dimensions.height);
         measured->minWidth = CLAY__MAX(dimensions.width, measured->minWidth);
     }
-    measuredWidth = CLAY__MAX(lineWidth, measuredWidth);
+    measuredWidth = CLAY__MAX(lineWidth, measuredWidth) - config->letterSpacing;
 
     measured->measuredWordsStartIndex = tempWord.next;
     measured->unwrappedDimensions.width = measuredWidth;
@@ -1760,16 +1773,15 @@ bool Clay__ElementHasConfig(Clay_LayoutElement *layoutElement, Clay__ElementConf
 void Clay__UpdateAspectRatioBox(Clay_LayoutElement *layoutElement) {
     for (int32_t j = 0; j < layoutElement->elementConfigs.length; j++) {
         Clay_ElementConfig *config = Clay__ElementConfigArraySlice_Get(&layoutElement->elementConfigs, j);
-        if (config->type == CLAY__ELEMENT_CONFIG_TYPE_IMAGE) {
-            Clay_ImageElementConfig *imageConfig = config->config.imageElementConfig;
-            if (imageConfig->sourceDimensions.width == 0 || imageConfig->sourceDimensions.height == 0) {
+        if (config->type == CLAY__ELEMENT_CONFIG_TYPE_ASPECT) {
+            Clay_AspectRatioElementConfig *aspectConfig = config->config.aspectRatioElementConfig;
+            if (aspectConfig->aspectRatio == 0) {
                 break;
             }
-            float aspect = imageConfig->sourceDimensions.width / imageConfig->sourceDimensions.height;
             if (layoutElement->dimensions.width == 0 && layoutElement->dimensions.height != 0) {
-                layoutElement->dimensions.width = layoutElement->dimensions.height * aspect;
+                layoutElement->dimensions.width = layoutElement->dimensions.height * aspectConfig->aspectRatio;
             } else if (layoutElement->dimensions.width != 0 && layoutElement->dimensions.height == 0) {
-                layoutElement->dimensions.height = layoutElement->dimensions.height * (1 / aspect);
+                layoutElement->dimensions.height = layoutElement->dimensions.width * (1 / aspectConfig->aspectRatio);
             }
             break;
         }
@@ -2048,7 +2060,10 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
     }
     if (declaration->image.imageData) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(declaration->image) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE);
-        Clay__int32_tArray_Add(&context->imageElementPointers, context->layoutElements.length - 1);
+    }
+    if (declaration->aspectRatio.aspectRatio > 0) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .aspectRatioElementConfig = Clay__StoreAspectRatioElementConfig(declaration->aspectRatio) }, CLAY__ELEMENT_CONFIG_TYPE_ASPECT);
+        Clay__int32_tArray_Add(&context->aspectRatioElementIndexes, context->layoutElements.length - 1);
     }
     if (declaration->floating.attachTo != CLAY_ATTACH_TO_NONE) {
         Clay_FloatingElementConfig floatingConfig = declaration->floating;
@@ -2145,6 +2160,7 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->layoutConfigs = Clay__LayoutConfigArray_Allocate_Arena(maxElementCount, arena);
     context->elementConfigs = Clay__ElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->textElementConfigs = Clay__TextElementConfigArray_Allocate_Arena(maxElementCount, arena);
+    context->aspectRatioElementConfigs = Clay__AspectRatioElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->imageElementConfigs = Clay__ImageElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->floatingElementConfigs = Clay__FloatingElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->clipElementConfigs = Clay__ClipElementConfigArray_Allocate_Arena(maxElementCount, arena);
@@ -2159,7 +2175,7 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->layoutElementChildren = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->openLayoutElementStack = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->textElementData = Clay__TextElementDataArray_Allocate_Arena(maxElementCount, arena);
-    context->imageElementPointers = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
+    context->aspectRatioElementIndexes = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->renderCommands = Clay_RenderCommandArray_Allocate_Arena(maxElementCount, arena);
     context->treeNodeVisited = Clay__boolArray_Allocate_Arena(maxElementCount, arena);
     context->treeNodeVisited.length = context->treeNodeVisited.capacity; // This array is accessed directly rather than behaving as a list
@@ -2248,7 +2264,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 if (childSizing.type != CLAY__SIZING_TYPE_PERCENT
                     && childSizing.type != CLAY__SIZING_TYPE_FIXED
                     && (!Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT) || (Clay__FindElementConfigWithType(childElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT).textElementConfig->wrapMode == CLAY_TEXT_WRAP_WORDS)) // todo too many loops
-                    && (xAxis || !Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_IMAGE))
+//                    && (xAxis || !Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT))
                 ) {
                     Clay__int32_tArray_Add(&resizableContainerBuffer, childElementIndex);
                 }
@@ -2287,9 +2303,9 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                 // The content is too large, compress the children as much as possible
                 if (sizeToDistribute < 0) {
                     // If the parent clips content in this axis direction, don't compress children, just leave them alone
-                    Clay_ClipElementConfig *scrollElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_CLIP).clipElementConfig;
-                    if (scrollElementConfig) {
-                        if (((xAxis && scrollElementConfig->horizontal) || (!xAxis && scrollElementConfig->vertical))) {
+                    Clay_ClipElementConfig *clipElementConfig = Clay__FindElementConfigWithType(parent, CLAY__ELEMENT_CONFIG_TYPE_CLIP).clipElementConfig;
+                    if (clipElementConfig) {
+                        if (((xAxis && clipElementConfig->horizontal) || (!xAxis && clipElementConfig->vertical))) {
                             continue;
                         }
                     }
@@ -2381,10 +2397,6 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
                     Clay_SizingAxis childSizing = xAxis ? childElement->layoutConfig->sizing.width : childElement->layoutConfig->sizing.height;
                     float minSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
                     float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
-
-                    if (!xAxis && Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_IMAGE)) {
-                        continue; // Currently we don't support resizing aspect ratio images on the Y axis because it would break the ratio
-                    }
 
                     float maxSize = parentSize - parentPadding;
                     // If we're laying out the children of a scroll panel, grow containers expand to the size of the inner content, not the outer container
@@ -2510,26 +2522,27 @@ void Clay__CalculateFinalLayout(void) {
                 lineLengthChars = 0;
                 lineStartOffset = measuredWord->startOffset;
             } else {
-                lineWidth += measuredWord->width;
+                lineWidth += measuredWord->width + textConfig->letterSpacing;
                 lineLengthChars += measuredWord->length;
                 wordIndex = measuredWord->next;
             }
         }
         if (lineLengthChars > 0) {
-            Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth, lineHeight }, {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
+            Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth - textConfig->letterSpacing, lineHeight }, {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
             textElementData->wrappedLines.length++;
         }
         containerElement->dimensions.height = lineHeight * (float)textElementData->wrappedLines.length;
     }
 
-    // Scale vertical image heights according to aspect ratio
-    for (int32_t i = 0; i < context->imageElementPointers.length; ++i) {
-        Clay_LayoutElement* imageElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->imageElementPointers, i));
-        Clay_ImageElementConfig *config = Clay__FindElementConfigWithType(imageElement, CLAY__ELEMENT_CONFIG_TYPE_IMAGE).imageElementConfig;
-        imageElement->dimensions.height = (config->sourceDimensions.height / CLAY__MAX(config->sourceDimensions.width, 1)) * imageElement->dimensions.width;
+    // Scale vertical heights according to aspect ratio
+    for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
+        Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
+        Clay_AspectRatioElementConfig *config = Clay__FindElementConfigWithType(aspectElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
+        aspectElement->dimensions.height = (1 / config->aspectRatio) * aspectElement->dimensions.width;
+        aspectElement->layoutConfig->sizing.height.size.minMax.max = aspectElement->dimensions.height;
     }
 
-    // Propagate effect of text wrapping, image aspect scaling etc. on height of parents
+    // Propagate effect of text wrapping, aspect scaling etc. on height of parents
     Clay__LayoutElementTreeNodeArray dfsBuffer = context->layoutElementTreeNodeArray1;
     dfsBuffer.length = 0;
     for (int32_t i = 0; i < context->layoutElementTreeRoots.length; ++i) {
@@ -2579,6 +2592,13 @@ void Clay__CalculateFinalLayout(void) {
 
     // Calculate sizing along the Y axis
     Clay__SizeContainersAlongAxis(false);
+
+    // Scale horizontal widths according to aspect ratio
+    for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
+        Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
+        Clay_AspectRatioElementConfig *config = Clay__FindElementConfigWithType(aspectElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
+        aspectElement->dimensions.width = config->aspectRatio * aspectElement->dimensions.height;
+    }
 
     // Sort tree roots by z-index
     int32_t sortMax = context->layoutElementTreeRoots.length - 1;
@@ -2776,6 +2796,7 @@ void Clay__CalculateFinalLayout(void) {
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                     bool shouldRender = !offscreen;
                     switch (elementConfig->type) {
+                        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT:
                         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING:
                         case CLAY__ELEMENT_CONFIG_TYPE_SHARED:
                         case CLAY__ELEMENT_CONFIG_TYPE_BORDER: {
@@ -2798,7 +2819,6 @@ void Clay__CalculateFinalLayout(void) {
                                 .image = {
                                     .backgroundColor = sharedConfig->backgroundColor,
                                     .cornerRadius = sharedConfig->cornerRadius,
-                                    .sourceDimensions = elementConfig->config.imageElementConfig->sourceDimensions,
                                     .imageData = elementConfig->config.imageElementConfig->imageData,
                                }
                             };
@@ -3097,6 +3117,7 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
     switch (type) {
         case CLAY__ELEMENT_CONFIG_TYPE_SHARED: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Shared"), {243,134,48,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
+        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Aspect"), {101,149,194,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_CLIP: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Scroll"), {242, 196, 90, 255} };
@@ -3581,21 +3602,25 @@ void Clay__RenderDebugView(void) {
                             }
                             break;
                         }
+                        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: {
+                            Clay_AspectRatioElementConfig *aspectRatioConfig = elementConfig->config.aspectRatioElementConfig;
+                            CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoAspectRatioBody"), .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
+                                CLAY_TEXT(CLAY_STRING("Aspect Ratio"), infoTitleConfig);
+                                // Aspect Ratio
+                                CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
+                            }
+                            break;
+                        }
                         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
                             Clay_ImageElementConfig *imageConfig = elementConfig->config.imageElementConfig;
+                            Clay_AspectRatioElementConfig aspectConfig = { 1 };
+                            if (Clay__ElementHasConfig(selectedItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT)) {
+                                aspectConfig = *Clay__FindElementConfigWithType(selectedItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
+                            }
                             CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoImageBody"), .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
-                                // .sourceDimensions
-                                CLAY_TEXT(CLAY_STRING("Source Dimensions"), infoTitleConfig);
-                                CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoImageDimensions") }) {
-                                    CLAY_TEXT(CLAY_STRING("{ width: "), infoTextConfig);
-                                    CLAY_TEXT(Clay__IntToString(imageConfig->sourceDimensions.width), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING(", height: "), infoTextConfig);
-                                    CLAY_TEXT(Clay__IntToString(imageConfig->sourceDimensions.height), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
-                                }
                                 // Image Preview
                                 CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
-                                CLAY({ .layout = { .sizing = { .width = CLAY_SIZING_GROW(0, imageConfig->sourceDimensions.width) }}, .image = *imageConfig }) {}
+                                CLAY({ .layout = { .sizing = { .width = CLAY_SIZING_GROW(64, 128), .height = CLAY_SIZING_GROW(64, 128) }}, .aspectRatio = aspectConfig, .image = *imageConfig }) {}
                             }
                             break;
                         }

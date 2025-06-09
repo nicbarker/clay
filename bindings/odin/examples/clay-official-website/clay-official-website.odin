@@ -72,7 +72,8 @@ LandingPageBlob :: proc(index: u32, fontSize: u16, fontId: u16, color: clay.Colo
         if clay.UI()({
             id = clay.ID("CheckImage", index),
             layout = { sizing = { width = clay.SizingFixed(32) } },
-            image = { imageData = image, sourceDimensions = { 128, 128 } },
+            aspectRatio = { 1.0 },
+            image = { imageData = image },
         }) {}
         clay.Text(text, clay.TextConfig({fontSize = fontSize, fontId = fontId, textColor = color}))
     }
@@ -213,7 +214,8 @@ DeclarativeSyntaxPage :: proc(titleTextConfig: clay.TextElementConfig, widthSizi
         if clay.UI()({
             id = clay.ID("SyntaxPageRightImageInner"),
             layout = { sizing = { width = clay.SizingGrow({ max = 568 }) } },
-            image = { imageData = &syntaxImage, sourceDimensions = { 1136, 1194 } },
+            aspectRatio = { 1136.0 / 1194.0 },
+            image = { imageData = &syntaxImage },
         }) {}
     }
 }

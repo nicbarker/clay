@@ -11,6 +11,7 @@ option(CLAY_INCLUDE_SDL2_EXAMPLES "Build SDL 2 examples" OFF)
 option(CLAY_INCLUDE_SDL3_EXAMPLES "Build SDL 3 examples" OFF)
 option(CLAY_INCLUDE_WIN32_GDI_EXAMPLES "Build Win32 GDI examples" OFF)
 option(CLAY_INCLUDE_SOKOL_EXAMPLES "Build Sokol examples" OFF)
+option(CLAY_INCLUDE_PLAYDATE_EXAMPLES "Build Playdate examples" OFF)
 
 message(STATUS "CLAY_INCLUDE_DEMOS: ${CLAY_INCLUDE_DEMOS}")
 
@@ -24,6 +25,7 @@ endif()
 if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_DEMOS)
   if(NOT MSVC)
     add_subdirectory("examples/clay-official-website")
+    add_subdirectory("examples/terminal-example")
   endif()
   add_subdirectory("examples/introducing-clay-video-demo")
 endif ()
@@ -41,6 +43,11 @@ endif()
 if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_SOKOL_EXAMPLES)
   add_subdirectory("examples/sokol-video-demo")
   add_subdirectory("examples/sokol-corner-radius")
+endif()
+
+# Playdate example not included in ALL because users need to install the playdate SDK first which requires a license agreement
+if(CLAY_INCLUDE_PLAYDATE_EXAMPLES)
+  add_subdirectory("examples/playdate-project-example")
 endif()
 
 if(WIN32)   # Build only for Win or Wine
