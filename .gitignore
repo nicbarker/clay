@@ -5,3 +5,6 @@ cmake-build-release/
 node_modules/
 *.dSYM
 .vs/
+.direnv/
+.envrc
+build/
