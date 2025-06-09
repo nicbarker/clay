@@ -8,3 +8,4 @@ node_modules/
 .direnv/
 .envrc
 build/
+result/
