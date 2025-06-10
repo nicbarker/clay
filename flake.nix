@@ -102,7 +102,13 @@
         default = pkgs.mkShell {
           # For testing renderers and examples, aswell as tests
           packages = with pkgs; [
-            # Renderers
+            cmake # this is needed for building examples and tests
+            clang-tools # for clangd and clang-tidy
+            pkg-config
+            alejandra # for formatting nix
+          ];
+
+          buildInputs = with pkgs; [
             SDL2
             SDL2_image
             SDL2_ttf
@@ -115,43 +121,12 @@
             raylib
             sokol
 
-            cmake # this is needed for building examples and tests
-            gcc
-            clang-tools # for clangd and clang-tidy
-            pkg-config
-            alejandra # for formatting nix
-
-            # for tests
-            docker
-            docker-compose
-
             # dependencies for examples and tests
             xorg.libXrandr
             xorg.libXinerama
             xorg.libXcursor
             xorg.libXi
           ];
-
-          LD_LIBRARY_PATH = "${lib.makeLibraryPath [
-            # Renderers
-            pkgs.SDL2
-            pkgs.SDL2_image
-            pkgs.SDL2_ttf
-
-            pkgs.sdl3
-            pkgs.sdl3-ttf
-            pkgs.sdl3-image
-
-            pkgs.cairo
-            pkgs.raylib
-            pkgs.sokol
-
-            # dependencies for examples and tests
-            pkgs.xorg.libXrandr
-            pkgs.xorg.libXinerama
-            pkgs.xorg.libXcursor
-            pkgs.xorg.libXi
-          ]}";
         };
       }
     );
