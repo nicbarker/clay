@@ -7,5 +7,5 @@ node_modules/
 .vs/
 .direnv/
 .envrc
-build/
-result/
+/build/
+/result/

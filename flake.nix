@@ -103,9 +103,11 @@
           # For testing renderers and examples, aswell as tests
           packages = with pkgs; [
             cmake # this is needed for building examples and tests
-            clang-tools # for clangd and clang-tidy
+            clang-tools # for clangd and clang-tidy (optional)
             pkg-config
             alejandra # for formatting nix
+
+            lld # for wasm
           ];
 
           buildInputs = with pkgs; [
@@ -157,7 +159,9 @@
         suffix = "-master-${date}";
       };
 
-      default = self.packages.${system}.stable;
+      # I have no idea how to expose both unstable and stable at the same time
+      # so I'm going to just expose the unstable version for now
+      default = self.packages.${system}.unstable;
     });
   };
 }
