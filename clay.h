@@ -1795,13 +1795,13 @@ void Clay__CloseElement(void) {
     }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     Clay_LayoutConfig *layoutConfig = openLayoutElement->layoutConfig;
-    bool elementHasScrollHorizontal = false;
-    bool elementHasScrollVertical = false;
+    bool elementHasClipHorizontal = false;
+    bool elementHasClipVertical = false;
     for (int32_t i = 0; i < openLayoutElement->elementConfigs.length; i++) {
         Clay_ElementConfig *config = Clay__ElementConfigArraySlice_Get(&openLayoutElement->elementConfigs, i);
         if (config->type == CLAY__ELEMENT_CONFIG_TYPE_CLIP) {
-            elementHasScrollHorizontal = config->config.clipElementConfig->horizontal;
-            elementHasScrollVertical = config->config.clipElementConfig->vertical;
+            elementHasClipHorizontal = config->config.clipElementConfig->horizontal;
+            elementHasClipVertical = config->config.clipElementConfig->vertical;
             context->openClipElementStack.length--;
             break;
         } else if (config->type == CLAY__ELEMENT_CONFIG_TYPE_FLOATING) {
@@ -1822,18 +1822,20 @@ void Clay__CloseElement(void) {
             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, childIndex);
             openLayoutElement->dimensions.width += child->dimensions.width;
             openLayoutElement->dimensions.height = CLAY__MAX(openLayoutElement->dimensions.height, child->dimensions.height + topBottomPadding);
-            // Minimum size of child elements doesn't matter to scroll containers as they can shrink and hide their contents
-            if (!elementHasScrollHorizontal) {
+            // Minimum size of child elements doesn't matter to clip containers as they can shrink and hide their contents
+            if (!elementHasClipHorizontal) {
                 openLayoutElement->minDimensions.width += child->minDimensions.width;
             }
-            if (!elementHasScrollVertical) {
+            if (!elementHasClipVertical) {
                 openLayoutElement->minDimensions.height = CLAY__MAX(openLayoutElement->minDimensions.height, child->minDimensions.height + topBottomPadding);
             }
             Clay__int32_tArray_Add(&context->layoutElementChildren, childIndex);
         }
         float childGap = (float)(CLAY__MAX(openLayoutElement->childrenOrTextContent.children.length - 1, 0) * layoutConfig->childGap);
-        openLayoutElement->dimensions.width += childGap; // TODO this is technically a bug with childgap and scroll containers
-        openLayoutElement->minDimensions.width += childGap;
+        openLayoutElement->dimensions.width += childGap;
+        if (!elementHasClipHorizontal) {
+            openLayoutElement->minDimensions.width += childGap;
+        }
     }
     else if (layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM) {
         openLayoutElement->dimensions.height = topBottomPadding;
@@ -1843,18 +1845,20 @@ void Clay__CloseElement(void) {
             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, childIndex);
             openLayoutElement->dimensions.height += child->dimensions.height;
             openLayoutElement->dimensions.width = CLAY__MAX(openLayoutElement->dimensions.width, child->dimensions.width + leftRightPadding);
-            // Minimum size of child elements doesn't matter to scroll containers as they can shrink and hide their contents
-            if (!elementHasScrollVertical) {
+            // Minimum size of child elements doesn't matter to clip containers as they can shrink and hide their contents
+            if (!elementHasClipVertical) {
                 openLayoutElement->minDimensions.height += child->minDimensions.height;
             }
-            if (!elementHasScrollHorizontal) {
+            if (!elementHasClipHorizontal) {
                 openLayoutElement->minDimensions.width = CLAY__MAX(openLayoutElement->minDimensions.width, child->minDimensions.width + leftRightPadding);
             }
             Clay__int32_tArray_Add(&context->layoutElementChildren, childIndex);
         }
         float childGap = (float)(CLAY__MAX(openLayoutElement->childrenOrTextContent.children.length - 1, 0) * layoutConfig->childGap);
-        openLayoutElement->dimensions.height += childGap; // TODO this is technically a bug with childgap and scroll containers
-        openLayoutElement->minDimensions.height += childGap;
+        openLayoutElement->dimensions.height += childGap;
+        if (!elementHasClipVertical) {
+            openLayoutElement->minDimensions.height += childGap;
+        }
     }
 
     context->layoutElementChildrenBuffer.length -= openLayoutElement->childrenOrTextContent.children.length;
