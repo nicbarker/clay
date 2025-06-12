@@ -31,7 +31,8 @@
 #if !( \
     (defined(__cplusplus) && __cplusplus >= 202002L) || \
     (defined(__STDC__) && __STDC__ == 1 && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-    defined(_MSC_VER) \
+    defined(_MSC_VER) || \
+    defined(__OBJC__) \
 )
 #error "Clay requires C99, C++20, or MSVC"
 #endif
