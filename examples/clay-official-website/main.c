@@ -44,7 +44,7 @@ typedef struct {
 
 Arena frameArena = {};
 
-typedef struct {
+typedef struct d {
     Clay_String link;
     bool cursorPointer;
     bool disablePointerEvents;
@@ -345,11 +345,18 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
             CLAY_TEXT(CLAY_STRING("Clay"), &headerTextConfig);
             CLAY({ .id = CLAY_ID("Spacer"), .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) } } }) {}
             if (!mobileScreen) {
-                CLAY({ .id = CLAY_ID("LinkExamplesOuter"), .layout = { .padding = {8, 8} }, .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples") }) }) {
-                    CLAY_TEXT(CLAY_STRING("Examples"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY({ .id = CLAY_ID("LinkExamplesOuter"), .layout = { .padding = {8, 8} } }) {
+                    CLAY_TEXT(CLAY_STRING("Examples"), CLAY_TEXT_CONFIG({
+                        .userData = FrameAllocateCustomData((CustomHTMLData) {
+                            .link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples")
+                        }),
+                        .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
                 }
-                CLAY({ .id = CLAY_ID("LinkDocsOuter"), .layout = { .padding = {8, 8} }, .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md") }) }) {
-                    CLAY_TEXT(CLAY_STRING("Docs"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY({ .id = CLAY_ID("LinkDocsOuter"), .layout = { .padding = {8, 8} } }) {
+                    CLAY_TEXT(CLAY_STRING("Docs"), CLAY_TEXT_CONFIG({
+                        .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md") }),
+                        .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} })
+                    );
                 }
             }
             CLAY({
@@ -357,9 +364,11 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
                 .backgroundColor = Clay_Hovered() ? COLOR_LIGHT_HOVER : COLOR_LIGHT,
                 .border = { .width = {2, 2, 2, 2}, .color = COLOR_RED },
                 .cornerRadius = CLAY_CORNER_RADIUS(10),
-                .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples") }),
+                .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://discord.gg/b4FTWkxdvT") }),
             }) {
-                CLAY_TEXT(CLAY_STRING("Discord"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY_TEXT(CLAY_STRING("Discord"), CLAY_TEXT_CONFIG({
+                    .userData = FrameAllocateCustomData((CustomHTMLData) { .disablePointerEvents = true }),
+                    .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
             }
             CLAY({
                 .layout = { .padding = {16, 16, 6, 6} },
@@ -368,7 +377,9 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
                 .cornerRadius = CLAY_CORNER_RADIUS(10),
                 .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay") }),
             }) {
-                CLAY_TEXT(CLAY_STRING("Github"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY_TEXT(CLAY_STRING("Github"), CLAY_TEXT_CONFIG({
+                    .userData = FrameAllocateCustomData((CustomHTMLData) { .disablePointerEvents = true }),
+                    .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
             }
         }
         Clay_LayoutConfig topBorderConfig = (Clay_LayoutConfig) { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(4) }};

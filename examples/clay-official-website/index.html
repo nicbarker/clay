@@ -166,6 +166,7 @@
         { name: 'link', ...stringDefinition },
         { name: 'cursorPointer', type: 'uint8_t' },
         { name: 'disablePointerEvents', type: 'uint8_t' },
+        { name: 'padding', type: 'uint16_t'}
     ]};
     let renderCommandDefinition = {
         name: 'Clay_RenderCommand',
@@ -425,10 +426,13 @@
             if (!elementCache[renderCommand.id.value]) {
                 let elementType = 'div';
                 switch (renderCommand.commandType.value & 0xff) {
+                    case CLAY_RENDER_COMMAND_TYPE_TEXT:
                     case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                        // if (readStructAtAddress(renderCommand.renderData.rectangle.value, rectangleRenderDataDefinition).link.length.value > 0) { TODO reimplement links
-                        //     elementType = 'a';
-                        // }
+                        if (renderCommand.userData.value !== 0) {
+                            if (readStructAtAddress(renderCommand.userData.value, customHTMLDataDefinition).link.length.value > 0) {
+                                elementType = 'a';
+                            }
+                        }
                         break;
                     }
                     case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
@@ -549,7 +553,6 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_TEXT): {
                     let config = renderCommand.renderData.text;
-                    let customData = readStructAtAddress(renderCommand.userData.value, customHTMLDataDefinition);
                     let configMemory = JSON.stringify(config);
                     let stringContents = new Uint8Array(memoryDataView.buffer.slice(config.stringContents.chars.value, config.stringContents.chars.value + config.stringContents.length.value));
                     if (configMemory !== elementData.previousMemoryConfig) {
@@ -559,7 +562,23 @@
                         element.style.color = `rgba(${textColor.r.value}, ${textColor.g.value}, ${textColor.b.value}, ${textColor.a.value})`;
                         element.style.fontFamily = fontsById[config.fontId.value];
                         element.style.fontSize = fontSize + 'px';
-                        element.style.pointerEvents = customData.disablePointerEvents.value ? 'none' : 'all';
+                        if (renderCommand.userData.value !== 0) {
+                            let customData = readStructAtAddress(renderCommand.userData.value, customHTMLDataDefinition);
+                            element.style.pointerEvents = customData.disablePointerEvents.value ? 'none' : 'all';
+                            let linkContents = customData.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(customData.link.chars.value, customData.link.chars.value + customData.link.length.value))) : 0;
+                            memoryDataView.setUint32(0, renderCommand.id.value, true);
+                            if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(0)) {
+                                window.location.href = linkContents;
+                            }
+                            if (linkContents.length > 0) {
+                                element.href = linkContents;
+                            }
+
+                            if (linkContents.length > 0 || customData.cursorPointer.value) {
+                                element.style.pointerEvents = 'all';
+                                element.style.cursor = 'pointer';
+                            }
+                        }
                         elementData.previousMemoryConfig = configMemory;
                     }
                     if (stringContents.length !== elementData.previousMemoryText.length || MemoryIsDifferent(stringContents, elementData.previousMemoryText, stringContents.length)) {
