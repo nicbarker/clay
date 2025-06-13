@@ -2695,7 +2695,6 @@ void Clay__CalculateFinalLayout(void) {
                     if (clipConfig->vertical) {
                         rootPosition.y += clipConfig->childOffset.y;
                     }
-                    break;
                 }
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
                     .boundingBox = clipHashMapItem->boundingBox,

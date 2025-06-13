@@ -564,7 +564,6 @@
                         element.style.fontSize = fontSize + 'px';
                         if (renderCommand.userData.value !== 0) {
                             let customData = readStructAtAddress(renderCommand.userData.value, customHTMLDataDefinition);
-                            console.log(customData.disablePointerEvents.value);
                             element.style.pointerEvents = customData.disablePointerEvents.value ? 'none' : 'all';
                             let linkContents = customData.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(customData.link.chars.value, customData.link.chars.value + customData.link.length.value))) : 0;
                             memoryDataView.setUint32(0, renderCommand.id.value, true);
