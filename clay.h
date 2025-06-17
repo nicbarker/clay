@@ -1284,15 +1284,12 @@ struct Clay_Context {
 
 Clay_Context* Clay__Context_Allocate_Arena(Clay_Arena *arena) {
     size_t totalSizeBytes = sizeof(Clay_Context);
-    uintptr_t memoryAddress = (uintptr_t)arena->memory;
-    // Make sure the memory address passed in for clay to use is cache line aligned
-    uintptr_t nextAllocOffset = (memoryAddress % 64);
-    if (nextAllocOffset + totalSizeBytes > arena->capacity)
+    if (totalSizeBytes > arena->capacity)
     {
         return NULL;
     }
-    arena->nextAllocation = nextAllocOffset + totalSizeBytes;
-    return (Clay_Context*)(memoryAddress + nextAllocOffset);
+    arena->nextAllocation += totalSizeBytes;
+    return (Clay_Context*)(arena->memory);
 }
 
 Clay_String Clay__WriteStringToCharBuffer(Clay__charArray *buffer, Clay_String string) {
@@ -3990,6 +3987,10 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
 
 CLAY_WASM_EXPORT("Clay_Initialize")
 Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler) {
+    // Cacheline align memory passed in
+    uintptr_t baseOffset = 64 - ((uintptr_t)arena.memory % 64);
+    baseOffset = baseOffset == 64 ? 0 : baseOffset;
+    arena.memory += baseOffset;
     Clay_Context *context = Clay__Context_Allocate_Arena(&arena);
     if (context == NULL) return NULL;
     // DEFAULTS
