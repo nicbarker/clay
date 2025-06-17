@@ -65,12 +65,9 @@ Clay_RenderCommandArray ClayImageSample_CreateLayout() {
             .layout = {
                 .sizing = layoutExpand
             },
+            .aspectRatio = { 23.0 / 42.0 },
             .image = {
                 .imageData = sample_image,
-                .sourceDimensions = {
-                    .width = 23,
-                    .height = 42
-                },
             }
         });
     }
