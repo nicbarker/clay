@@ -413,7 +413,7 @@ CLAY__WRAPPER_STRUCT(Clay_AspectRatioElementConfig);
 
 // Controls various settings related to image elements.
 typedef struct Clay_ImageElementConfig {
-    void* imageData; // A transparent pointer used to pass image data through to the renderer.
+    const void* imageData; // A transparent pointer used to pass image data through to the renderer.
 } Clay_ImageElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_ImageElementConfig);
@@ -587,7 +587,7 @@ typedef struct Clay_ImageRenderData {
     // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
     // A pointer transparently passed through from the original element definition, typically used to represent image data.
-    void* imageData;
+    const void* imageData;
 } Clay_ImageRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM
