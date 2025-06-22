@@ -23,6 +23,7 @@ static Clay_Dimensions SDL2_MeasureText(Clay_StringSlice text, Clay_TextElementC
     SDL2_Font *fonts = (SDL2_Font*)userData;
 
     TTF_Font *font = fonts[config->fontId].font;
+    TTF_SetFontSize(font, config->fontSize);
     char *chars = (char *)calloc(text.length + 1, 1);
     memcpy(chars, text.chars, text.length);
     int width = 0;
@@ -294,6 +295,7 @@ static void Clay_SDL2_Render(SDL_Renderer *renderer, Clay_RenderCommandArray ren
                 char *cloned = (char *)calloc(config->stringContents.length + 1, 1);
                 memcpy(cloned, config->stringContents.chars, config->stringContents.length);
                 TTF_Font* font = fonts[config->fontId].font;
+                TTF_SetFontSize(font, config->fontSize);
                 SDL_Surface *surface = TTF_RenderUTF8_Blended(font, cloned, (SDL_Color) {
                         .r = (Uint8)config->textColor.r,
                         .g = (Uint8)config->textColor.g,
