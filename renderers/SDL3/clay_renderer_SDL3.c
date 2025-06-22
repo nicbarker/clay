@@ -164,6 +164,7 @@ static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Cla
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 Clay_TextRenderData *config = &rcmd->renderData.text;
                 TTF_Font *font = rendererData->fonts[config->fontId];
+                TTF_SetFontSize(font, config->fontSize);
                 TTF_Text *text = TTF_CreateText(rendererData->textEngine, font, config->stringContents.chars, config->stringContents.length);
                 TTF_SetTextColor(text, config->textColor.r, config->textColor.g, config->textColor.b, config->textColor.a);
                 TTF_DrawRendererText(text, rect.x, rect.y);
