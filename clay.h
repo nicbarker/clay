@@ -2931,6 +2931,7 @@ void Clay__CalculateFinalLayout(void) {
                             default: break;
                         }
                         currentElementTreeNode->nextChildOffset.x += extraSpace;
+                        extraSpace = CLAY__MAX(0, extraSpace);
                     } else {
                         for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
                             Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
@@ -2944,6 +2945,7 @@ void Clay__CalculateFinalLayout(void) {
                             case CLAY_ALIGN_Y_CENTER: extraSpace /= 2; break;
                             default: break;
                         }
+                        extraSpace = CLAY__MAX(0, extraSpace);
                         currentElementTreeNode->nextChildOffset.y += extraSpace;
                     }
 
