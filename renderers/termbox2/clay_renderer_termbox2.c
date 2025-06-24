@@ -224,6 +224,7 @@ void Clay_Termbox_Close(void);
 void Clay_Termbox_Render(Clay_RenderCommandArray commands);
 
 
+
 // -------------------------------------------------------------------------------------------------
 // -- Internal state
 
@@ -244,7 +245,6 @@ static clay_tb_pixel_dimensions clay_tb_cell_size = { .width = 9, .height = 21 }
 // Scissor mode prevents drawing outside of the specified bounding box
 static bool clay_tb_scissor_enabled = false;
 clay_tb_cell_bounding_box clay_tb_scissor_box;
-
 
 // -----------------------------------------------
 // -- Color buffer
@@ -511,7 +511,7 @@ static void clay_tb_resize_buffer(void)
         * clay_tb_color_buffer_max_dimensions.height;
     size_t new_size = (size_t)current_width * current_height;
     if (max_size < new_size) {
-        Clay_Color *tmp_clay = realloc(clay_tb_color_buffer_clay, sizeof(Clay_Color) * new_size);
+        Clay_Color *tmp_clay = tb_realloc(clay_tb_color_buffer_clay, sizeof(Clay_Color) * new_size);
         if (NULL == tmp_clay) {
             clay_tb_assert(false, "Reallocation failure for internal clay color buffer");
         }
@@ -825,7 +825,7 @@ void Clay_Termbox_Initialize(
     Clay_Termbox_Set_Cell_Pixel_Size(new_pixel_size.width, new_pixel_size.height);
 
     size_t size = (size_t)tb_width() * tb_height();
-    clay_tb_color_buffer_clay = malloc(sizeof(Clay_Color) * size);
+    clay_tb_color_buffer_clay = tb_malloc(sizeof(Clay_Color) * size);
     for (int i = 0; i < size; ++i) {
         clay_tb_color_buffer_clay[i] = (Clay_Color) { 0, 0, 0, 0 };
     }
@@ -837,7 +837,7 @@ void Clay_Termbox_Close(void)
         // Disable mouse hover support
         tb_sendf("\x1b[?%d;%dl", 1003, 1006);
 
-        free(clay_tb_color_buffer_clay);
+        tb_free(clay_tb_color_buffer_clay);
         tb_shutdown();
         clay_tb_initialized = false;
     }
