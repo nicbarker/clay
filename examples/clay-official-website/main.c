@@ -44,7 +44,7 @@ typedef struct {
 
 Arena frameArena = {};
 
-typedef struct {
+typedef struct d {
     Clay_String link;
     bool cursorPointer;
     bool disablePointerEvents;
@@ -66,7 +66,7 @@ Clay_String* FrameAllocateString(Clay_String string) {
 
 void LandingPageBlob(int index, int fontSize, Clay_Color color, Clay_String text, Clay_String imageURL) {
     CLAY({ .id = CLAY_IDI("HeroBlob", index), .layout = { .sizing = { CLAY_SIZING_GROW(.max = 480) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER} }, .border = { .color = color, .width = { 2, 2, 2, 2 }}, .cornerRadius = CLAY_CORNER_RADIUS(10) }) {
-        CLAY({ .id = CLAY_IDI("CheckImage", index), .layout = { .sizing = { CLAY_SIZING_FIXED(32) } }, .image = { .sourceDimensions = { 128, 128 }, .imageData = FrameAllocateString(imageURL) } }) {}
+        CLAY({ .id = CLAY_IDI("CheckImage", index), .layout = { .sizing = { CLAY_SIZING_FIXED(32) } }, .aspectRatio = { 1 }, .image = { .imageData = FrameAllocateString(imageURL) } }) {}
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({ .fontSize = fontSize, .fontId = FONT_ID_BODY_24, .textColor = color }));
     }
 }
@@ -156,7 +156,7 @@ void DeclarativeSyntaxPageDesktop() {
                 CLAY_TEXT(CLAY_STRING("Create your own library of re-usable components from UI primitives like text, images and rectangles."), CLAY_TEXT_CONFIG({ .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED }));
             }
             CLAY({ .id = CLAY_ID("SyntaxPageRightImage"), .layout = { .sizing = { CLAY_SIZING_PERCENT(0.50) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER} } }) {
-                CLAY({ .id = CLAY_ID("SyntaxPageRightImageInner"), .layout = { .sizing = { CLAY_SIZING_GROW(.max = 568) } }, .image = { .sourceDimensions = {1136, 1194}, .imageData = FrameAllocateString(CLAY_STRING("/clay/images/declarative.png")) } }) {}
+                CLAY({ .id = CLAY_ID("SyntaxPageRightImageInner"), .layout = { .sizing = { CLAY_SIZING_GROW(.max = 568) } }, .aspectRatio = { 1136.0 / 1194.0 }, .image = { .imageData = FrameAllocateString(CLAY_STRING("/clay/images/declarative.png")) } }) {}
             }
         }
     }
@@ -172,7 +172,7 @@ void DeclarativeSyntaxPageMobile() {
             CLAY_TEXT(CLAY_STRING("Create your own library of re-usable components from UI primitives like text, images and rectangles."), CLAY_TEXT_CONFIG({ .fontSize = 28, .fontId = FONT_ID_BODY_36, .textColor = COLOR_RED }));
         }
         CLAY({ .id = CLAY_ID("SyntaxPageRightImage"), .layout = { .sizing = { CLAY_SIZING_GROW(0) }, .childAlignment = {.x = CLAY_ALIGN_X_CENTER} } }) {
-            CLAY({ .id = CLAY_ID("SyntaxPageRightImageInner"), .layout = { .sizing = { CLAY_SIZING_GROW(.max = 568) } }, .image = { .sourceDimensions = {1136, 1194}, .imageData = FrameAllocateString(CLAY_STRING("/clay/images/declarative.png")) } }) {}
+            CLAY({ .id = CLAY_ID("SyntaxPageRightImageInner"), .layout = { .sizing = { CLAY_SIZING_GROW(.max = 568) } }, .aspectRatio = { 1136.0 / 1194.0 }, .image = { .imageData = FrameAllocateString(CLAY_STRING("/clay/images/declarative.png")) } }) {}
         }
     }
 }
@@ -323,7 +323,7 @@ void DebuggerPageDesktop() {
             CLAY_TEXT(CLAY_STRING("Press the \"d\" key to try it out now!"), CLAY_TEXT_CONFIG({ .fontSize = 32, .fontId = FONT_ID_TITLE_36, .textColor = COLOR_ORANGE }));
         }
         CLAY({ .id = CLAY_ID("DebuggerRightImageOuter"), .layout = { .sizing = { CLAY_SIZING_PERCENT(0.50) }, .childAlignment = {CLAY_ALIGN_X_CENTER} } }) {
-            CLAY({ .id = CLAY_ID("DebuggerPageRightImageInner"), .layout = { .sizing = { CLAY_SIZING_GROW(.max = 558) } }, .image = { .sourceDimensions = {1620, 1474}, .imageData = FrameAllocateString(CLAY_STRING("/clay/images/debugger.png")) } }) {}
+            CLAY({ .id = CLAY_ID("DebuggerPageRightImageInner"), .layout = { .sizing = { CLAY_SIZING_GROW(.max = 558) } }, .aspectRatio = { 1620.0 / 1474.0 }, .image = {.imageData = FrameAllocateString(CLAY_STRING("/clay/images/debugger.png")) } }) {}
         }
     }
 }
@@ -345,11 +345,18 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
             CLAY_TEXT(CLAY_STRING("Clay"), &headerTextConfig);
             CLAY({ .id = CLAY_ID("Spacer"), .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) } } }) {}
             if (!mobileScreen) {
-                CLAY({ .id = CLAY_ID("LinkExamplesOuter"), .layout = { .padding = {8, 8} }, .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples") }) }) {
-                    CLAY_TEXT(CLAY_STRING("Examples"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY({ .id = CLAY_ID("LinkExamplesOuter"), .layout = { .padding = {8, 8} } }) {
+                    CLAY_TEXT(CLAY_STRING("Examples"), CLAY_TEXT_CONFIG({
+                        .userData = FrameAllocateCustomData((CustomHTMLData) {
+                            .link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples")
+                        }),
+                        .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
                 }
-                CLAY({ .id = CLAY_ID("LinkDocsOuter"), .layout = { .padding = {8, 8} }, .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md") }) }) {
-                    CLAY_TEXT(CLAY_STRING("Docs"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY({ .id = CLAY_ID("LinkDocsOuter"), .layout = { .padding = {8, 8} } }) {
+                    CLAY_TEXT(CLAY_STRING("Docs"), CLAY_TEXT_CONFIG({
+                        .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/blob/main/README.md") }),
+                        .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} })
+                    );
                 }
             }
             CLAY({
@@ -357,9 +364,11 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
                 .backgroundColor = Clay_Hovered() ? COLOR_LIGHT_HOVER : COLOR_LIGHT,
                 .border = { .width = {2, 2, 2, 2}, .color = COLOR_RED },
                 .cornerRadius = CLAY_CORNER_RADIUS(10),
-                .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay/tree/main/examples") }),
+                .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://discord.gg/b4FTWkxdvT") }),
             }) {
-                CLAY_TEXT(CLAY_STRING("Discord"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY_TEXT(CLAY_STRING("Discord"), CLAY_TEXT_CONFIG({
+                    .userData = FrameAllocateCustomData((CustomHTMLData) { .disablePointerEvents = true }),
+                    .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
             }
             CLAY({
                 .layout = { .padding = {16, 16, 6, 6} },
@@ -368,7 +377,9 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
                 .cornerRadius = CLAY_CORNER_RADIUS(10),
                 .userData = FrameAllocateCustomData((CustomHTMLData) { .link = CLAY_STRING("https://github.com/nicbarker/clay") }),
             }) {
-                CLAY_TEXT(CLAY_STRING("Github"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
+                CLAY_TEXT(CLAY_STRING("Github"), CLAY_TEXT_CONFIG({
+                    .userData = FrameAllocateCustomData((CustomHTMLData) { .disablePointerEvents = true }),
+                    .fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {61, 26, 5, 255} }));
             }
         }
         Clay_LayoutConfig topBorderConfig = (Clay_LayoutConfig) { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(4) }};

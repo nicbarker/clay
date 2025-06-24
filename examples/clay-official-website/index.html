@@ -97,6 +97,7 @@
         {name: 'a', type: 'float' },
     ]};
     let stringDefinition = { type: 'struct', members: [
+        {name: 'isStaticallyAllocated', type: 'uint32_t'},
         {name: 'length', type: 'uint32_t' },
         {name: 'chars', type: 'uint32_t' },
     ]};
@@ -144,7 +145,6 @@
     let imageRenderDataDefinition = { type: 'struct', members: [
         { name: 'backgroundColor', ...colorDefinition },
         { name: 'cornerRadius', ...cornerRadiusDefinition },
-        { name: 'sourceDimensions', ...dimensionsDefinition },
         { name: 'imageData', type: 'uint32_t' },
     ]};
     let customRenderDataDefinition = { type: 'struct', members: [
@@ -158,7 +158,7 @@
         { name: 'width', ...borderWidthDefinition },
         { name: 'padding', type: 'uint16_t'}
     ]};
-    let scrollRenderDataDefinition = { type: 'struct', members: [
+    let clipRenderDataDefinition = { type: 'struct', members: [
         { name: 'horizontal', type: 'bool' },
         { name: 'vertical', type: 'bool' },
     ]};
@@ -166,9 +166,10 @@
         { name: 'link', ...stringDefinition },
         { name: 'cursorPointer', type: 'uint8_t' },
         { name: 'disablePointerEvents', type: 'uint8_t' },
+        { name: 'padding', type: 'uint16_t'}
     ]};
     let renderCommandDefinition = {
-        name: 'CLay_RenderCommand',
+        name: 'Clay_RenderCommand',
         type: 'struct',
         members: [
             { name: 'boundingBox', type: 'struct', members: [
@@ -183,7 +184,7 @@
                 { name: 'image', ...imageRenderDataDefinition },
                 { name: 'custom', ...customRenderDataDefinition },
                 { name: 'border', ...borderRenderDataDefinition },
-                { name: 'scroll', ...scrollRenderDataDefinition },
+                { name: 'clip', ...clipRenderDataDefinition },
             ]},
             { name: 'userData', type: 'uint32_t'},
             { name: 'id', type: 'uint32_t' },
@@ -380,7 +381,7 @@
         memoryDataView.setFloat32(instance.exports.__heap_base.value, window.innerWidth, true);
         memoryDataView.setFloat32(instance.exports.__heap_base.value + 4, window.innerHeight, true);
         instance.exports.Clay_Initialize(arenaAddress, instance.exports.__heap_base.value);
-        instance.exports.SetScratchMemory(arenaAddress, clayScratchSpaceAddress);
+        instance.exports.SetScratchMemory(clayScratchSpaceAddress);
         renderCommandSize = getStructTotalSize(renderCommandDefinition);
         renderLoop();
     }
@@ -425,10 +426,13 @@
             if (!elementCache[renderCommand.id.value]) {
                 let elementType = 'div';
                 switch (renderCommand.commandType.value & 0xff) {
+                    case CLAY_RENDER_COMMAND_TYPE_TEXT:
                     case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                        // if (readStructAtAddress(renderCommand.renderData.rectangle.value, rectangleRenderDataDefinition).link.length.value > 0) { TODO reimplement links
-                        //     elementType = 'a';
-                        // }
+                        if (renderCommand.userData.value !== 0) {
+                            if (readStructAtAddress(renderCommand.userData.value, customHTMLDataDefinition).link.length.value > 0) {
+                                elementType = 'a';
+                            }
+                        }
                         break;
                     }
                     case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
@@ -549,7 +553,6 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_TEXT): {
                     let config = renderCommand.renderData.text;
-                    let customData = readStructAtAddress(renderCommand.userData.value, customHTMLDataDefinition);
                     let configMemory = JSON.stringify(config);
                     let stringContents = new Uint8Array(memoryDataView.buffer.slice(config.stringContents.chars.value, config.stringContents.chars.value + config.stringContents.length.value));
                     if (configMemory !== elementData.previousMemoryConfig) {
@@ -559,7 +562,23 @@
                         element.style.color = `rgba(${textColor.r.value}, ${textColor.g.value}, ${textColor.b.value}, ${textColor.a.value})`;
                         element.style.fontFamily = fontsById[config.fontId.value];
                         element.style.fontSize = fontSize + 'px';
-                        element.style.pointerEvents = customData.disablePointerEvents.value ? 'none' : 'all';
+                        if (renderCommand.userData.value !== 0) {
+                            let customData = readStructAtAddress(renderCommand.userData.value, customHTMLDataDefinition);
+                            element.style.pointerEvents = customData.disablePointerEvents.value ? 'none' : 'all';
+                            let linkContents = customData.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(customData.link.chars.value, customData.link.chars.value + customData.link.length.value))) : 0;
+                            memoryDataView.setUint32(0, renderCommand.id.value, true);
+                            if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(0)) {
+                                window.location.href = linkContents;
+                            }
+                            if (linkContents.length > 0) {
+                                element.href = linkContents;
+                            }
+
+                            if (linkContents.length > 0 || customData.cursorPointer.value) {
+                                element.style.pointerEvents = 'all';
+                                element.style.cursor = 'pointer';
+                            }
+                        }
                         elementData.previousMemoryConfig = configMemory;
                     }
                     if (stringContents.length !== elementData.previousMemoryText.length || MemoryIsDifferent(stringContents, elementData.previousMemoryText, stringContents.length)) {
@@ -570,7 +589,7 @@
                 }
                 case (CLAY_RENDER_COMMAND_TYPE_SCISSOR_START): {
                     scissorStack.push({ nextAllocation: { x: renderCommand.boundingBox.x.value, y: renderCommand.boundingBox.y.value }, element, nextElementIndex: 0 });
-                    let config = renderCommand.renderData.scroll;
+                    let config = renderCommand.renderData.clip;
                     let configMemory = JSON.stringify(config);
                     if (configMemory === elementData.previousMemoryConfig) {
                         break;

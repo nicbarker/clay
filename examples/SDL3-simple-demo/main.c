@@ -32,6 +32,7 @@ static inline Clay_Dimensions SDL_MeasureText(Clay_StringSlice text, Clay_TextEl
     TTF_Font *font = fonts[config->fontId];
     int width, height;
 
+    TTF_SetFontSize(font, config->fontSize);
     if (!TTF_GetStringSize(font, text.chars, text.length, &width, &height)) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to measure text: %s", SDL_GetError());
     }
@@ -65,12 +66,9 @@ Clay_RenderCommandArray ClayImageSample_CreateLayout() {
             .layout = {
                 .sizing = layoutExpand
             },
+            .aspectRatio = { 23.0 / 42.0 },
             .image = {
                 .imageData = sample_image,
-                .sourceDimensions = {
-                    .width = 23,
-                    .height = 42
-                },
             }
         });
     }

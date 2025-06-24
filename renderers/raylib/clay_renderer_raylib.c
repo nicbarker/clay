@@ -87,6 +87,8 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
 
     float maxTextWidth = 0.0f;
     float lineTextWidth = 0;
+    int maxLineCharCount = 0;
+    int lineCharCount = 0;
 
     float textHeight = config->fontSize;
     Font* fonts = (Font*)userData;
@@ -99,11 +101,13 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
 
     float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
 
-    for (int i = 0; i < text.length; ++i)
+    for (int i = 0; i < text.length; ++i, lineCharCount++)
     {
         if (text.chars[i] == '\n') {
             maxTextWidth = fmax(maxTextWidth, lineTextWidth);
+            maxLineCharCount = CLAY__MAX(maxLineCharCount, lineCharCount);
             lineTextWidth = 0;
+            lineCharCount = 0;
             continue;
         }
         int index = text.chars[i] - 32;
@@ -112,8 +116,9 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
     }
 
     maxTextWidth = fmax(maxTextWidth, lineTextWidth);
+    maxLineCharCount = CLAY__MAX(maxLineCharCount, lineCharCount);
 
-    textSize.width = maxTextWidth * scaleFactor;
+    textSize.width = maxTextWidth * scaleFactor + (lineCharCount * config->letterSpacing);
     textSize.height = textHeight;
 
     return textSize;
@@ -145,7 +150,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
     for (int j = 0; j < renderCommands.length; j++)
     {
         Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
-        Clay_BoundingBox boundingBox = renderCommand->boundingBox;
+        Clay_BoundingBox boundingBox = {roundf(renderCommand->boundingBox.x), roundf(renderCommand->boundingBox.y), roundf(renderCommand->boundingBox.width), roundf(renderCommand->boundingBox.height)};
         switch (renderCommand->commandType)
         {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
@@ -174,11 +179,12 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 if (tintColor.r == 0 && tintColor.g == 0 && tintColor.b == 0 && tintColor.a == 0) {
                     tintColor = (Clay_Color) { 255, 255, 255, 255 };
                 }
-                DrawTextureEx(
+                DrawTexturePro(
                     imageTexture,
-                    (Vector2){boundingBox.x, boundingBox.y},
+                    (Rectangle) { 0, 0, imageTexture.width, imageTexture.height },
+                    (Rectangle){boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height},
+                    (Vector2) {},
                     0,
-                    boundingBox.width / (float)imageTexture.width,
                     CLAY_COLOR_TO_RAYLIB_COLOR(tintColor));
                 break;
             }
