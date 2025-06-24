@@ -557,6 +557,24 @@ typedef struct Clay_BorderElementConfig {
 
 CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);
 
+typedef struct {
+    Clay_BoundingBox boundingBox;
+} Clay_TransitionData;
+
+typedef enum {
+    CLAY_TRANSITION_STATE_ENTERING,
+    CLAY_TRANSITION_STATE_MOVING,
+    CLAY_TRANSITION_STATE_EXITING,
+} Clay_TransitionState;
+
+// Controls settings related to element borders.
+typedef struct Clay_TransitionElementConfig {
+    bool (*handler)(Clay_TransitionState transitionState, Clay_TransitionData *current, Clay_TransitionData *target, float deltaTime);
+    float deltaTime;
+} Clay_TransitionElementConfig;
+
+CLAY__WRAPPER_STRUCT(Clay_TransitionElementConfig);
+
 // Render Command Data -----------------------------
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_TEXT
@@ -768,6 +786,7 @@ typedef struct Clay_ElementDeclaration {
     Clay_ClipElementConfig clip;
     // Controls settings related to element borders, and will generate BORDER render commands.
     Clay_BorderElementConfig border;
+    struct Clay_TransitionElementConfig transitions;
     // A pointer that will be transparently passed through to resulting render commands.
     void *userData;
 } Clay_ElementDeclaration;
@@ -1081,6 +1100,7 @@ CLAY__ARRAY_DEFINE(Clay_FloatingElementConfig, Clay__FloatingElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_CustomElementConfig, Clay__CustomElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_ClipElementConfig, Clay__ClipElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_BorderElementConfig, Clay__BorderElementConfigArray)
+CLAY__ARRAY_DEFINE(Clay_TransitionElementConfig, Clay__TransitionElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_String, Clay__StringArray)
 CLAY__ARRAY_DEFINE(Clay_SharedElementConfig, Clay__SharedElementConfigArray)
 CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_RenderCommand, Clay_RenderCommandArray)
@@ -1095,6 +1115,7 @@ typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_TEXT,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
     CLAY__ELEMENT_CONFIG_TYPE_SHARED,
+    CLAY__ELEMENT_CONFIG_TYPE_TRANSITION,
 } Clay__ElementConfigType;
 
 typedef union {
@@ -1106,6 +1127,7 @@ typedef union {
     Clay_ClipElementConfig *clipElementConfig;
     Clay_BorderElementConfig *borderElementConfig;
     Clay_SharedElementConfig *sharedElementConfig;
+    Clay_TransitionElementConfig *transitionElementConfig;
 } Clay_ElementConfigUnion;
 
 typedef struct {
@@ -1269,6 +1291,7 @@ struct Clay_Context {
     Clay__ClipElementConfigArray clipElementConfigs;
     Clay__CustomElementConfigArray customElementConfigs;
     Clay__BorderElementConfigArray borderElementConfigs;
+    Clay__TransitionElementConfigArray transitionElementConfigs;
     Clay__SharedElementConfigArray sharedElementConfigs;
     // Misc Data Structures
     Clay__StringArray layoutElementIdStrings;
@@ -1333,6 +1356,7 @@ Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingEleme
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
 Clay_ClipElementConfig * Clay__StoreClipElementConfig(Clay_ClipElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ClipElementConfig_DEFAULT : Clay__ClipElementConfigArray_Add(&Clay_GetCurrentContext()->clipElementConfigs, config); }
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_BorderElementConfig_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, config); }
+Clay_TransitionElementConfig * Clay__StoreTransitionElementConfig(Clay_TransitionElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_TransitionElementConfig_DEFAULT : Clay__TransitionElementConfigArray_Add(&Clay_GetCurrentContext()->transitionElementConfigs, config); }
 Clay_SharedElementConfig * Clay__StoreSharedElementConfig(Clay_SharedElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_SharedElementConfig_DEFAULT : Clay__SharedElementConfigArray_Add(&Clay_GetCurrentContext()->sharedElementConfigs, config); }
 
 Clay_ElementConfig Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type) {
@@ -2174,6 +2198,9 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
     if (!Clay__MemCmp((char *)(&declaration->border.width), (char *)(&Clay__BorderWidth_DEFAULT), sizeof(Clay_BorderWidth))) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration->border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER);
     }
+    if (declaration->transitions.handler) {
+        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .transitionElementConfig = Clay__StoreTransitionElementConfig(declaration->transitions) }, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION);
+    }
 }
 
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
@@ -2199,6 +2226,7 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->clipElementConfigs = Clay__ClipElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->customElementConfigs = Clay__CustomElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->borderElementConfigs = Clay__BorderElementConfigArray_Allocate_Arena(maxElementCount, arena);
+    context->transitionElementConfigs = Clay__TransitionElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->sharedElementConfigs = Clay__SharedElementConfigArray_Allocate_Arena(maxElementCount, arena);
 
     context->layoutElementIdStrings = Clay__StringArray_Allocate_Arena(maxElementCount, arena);
@@ -2798,6 +2826,18 @@ void Clay__CalculateFinalLayout(void) {
 
                 Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(currentElement->id);
                 if (hashMapItem) {
+                    if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION)) {
+                        Clay_TransitionElementConfig *transitionElementConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION).transitionElementConfig;
+                        Clay_TransitionData current = {
+                            .boundingBox = hashMapItem->boundingBox,
+                        };
+                        Clay_TransitionData target = {
+                            .boundingBox = currentElementBoundingBox,
+                        };
+                        if (!Clay__MemCmp((char*)&current.boundingBox, (char*)&(Clay_BoundingBox){}, sizeof(Clay_BoundingBox))) {
+//                            transitionElementConfig->handler(&current, &target, transitionElementConfig->deltaTime);
+                        }
+                    }
                     hashMapItem->boundingBox = currentElementBoundingBox;
                 }
 
@@ -2845,6 +2885,7 @@ void Clay__CalculateFinalLayout(void) {
                         case CLAY__ELEMENT_CONFIG_TYPE_ASPECT:
                         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING:
                         case CLAY__ELEMENT_CONFIG_TYPE_SHARED:
+                        case CLAY__ELEMENT_CONFIG_TYPE_TRANSITION:
                         case CLAY__ELEMENT_CONFIG_TYPE_BORDER: {
                             shouldRender = false;
                             break;
