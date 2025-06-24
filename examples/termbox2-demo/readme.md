@@ -11,6 +11,7 @@ Keybinds:
 c/C - Cycle through color modes
 b/B - Cycle through border modes
 h/H - Cycle through border characters
+i/I - Cycle through image modes
 t/T - Toggle transparency
 d/D - Toggle debug mode
 q/Q - Quit
@@ -29,6 +30,16 @@ Configuration can be also be overriden by environment variables:
   - `ASCII`
   - `UNICODE`
   - `NONE`
+- `CLAY_TB_IMAGE_MODE`
+  - `DEFAULT`
+  - `PLACEHOLDER`
+  - `BG`
+  - `ASCII_FG`
+  - `ASCII`
+  - `UNICODE`
+  - `ASCII_FG_FAST`
+  - `ASCII_FAST`
+  - `UNICODE_FAST`
 - `CLAY_TB_TRANSPARENCY`
   - `1`
   - `0`

@@ -36,14 +36,11 @@
 #define TB_IMPL
 #include "termbox2.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
-// -------------------------------------------------------------------------------------------------
-// -- Data structures
-
-typedef struct {
-    unsigned char *data;
-    long size;
-} image;
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "stb_image_resize2.h"
 
 
 // -------------------------------------------------------------------------------------------------
@@ -54,94 +51,6 @@ bool end_loop = false;
 
 // If the debug tools should be displayed
 bool debugMode = false;
-
-
-// -------------------------------------------------------------------------------------------------
-// -- Internal utility functions
-
-/**
-   Load an image into memory as bytes
-
-   \param filename Filepath to image to be loaded
- */
-image load_image(const char *filename)
-{
-    image rv = { .data = NULL, .size = 0 };
-
-    if (NULL == filename) {
-        return rv;
-    }
-
-    FILE *image_file = NULL;
-
-    image_file = fopen(filename, "r");
-    if (NULL == image_file) {
-        fprintf(stderr, "Failed to open image %s: %s\n", filename, strerror(errno));
-        return rv;
-    }
-
-    int err = fseek(image_file, 0, SEEK_END);
-    if (-1 == err) {
-        fprintf(stderr, "Failed to seek image %s: %s\n", filename, strerror(errno));
-        goto done;
-    }
-
-    long image_size = ftell(image_file);
-    if (-1 == image_size) {
-        fprintf(stderr, "Failed to get filesize for image %s: %s\n", filename, strerror(errno));
-        goto done;
-    }
-    rewind(image_file);
-
-    unsigned char *image_data = malloc(image_size);
-    if (NULL == image_data) {
-        fprintf(stderr, "Failed to allocate memory for image %s: %s\n", filename, strerror(errno));
-        goto done;
-    }
-
-    size_t written = fread(image_data, image_size, 1, image_file);
-    if (1 != written) {
-        fprintf(stderr, "Failed to load image %s into memory: %s\n", filename, strerror(errno));
-        goto error_read;
-    }
-
-    rv.data = image_data;
-    rv.size = image_size;
-    goto done;
-
-error_read:
-    free(image_data);
-done:
-    fclose(image_file);
-    return rv;
-}
-
-/**
-   Free an image from memory
-
-   \param image Image to free
- */
-void free_image(image image)
-{
-    free(image.data);
-    image.data = NULL;
-    image.size = 0;
-}
-
-/**
-  Block until an event is received for termbox
- */
-void termbox_waitfor_event(void)
-{
-    int termbox_ttyfd, termbox_resizefd;
-    tb_get_fds(&termbox_ttyfd, &termbox_resizefd);
-    int nfds = CLAY__MAX(termbox_ttyfd, termbox_resizefd) + 1;
-    fd_set monitor_set;
-    FD_ZERO(&monitor_set);
-    FD_SET(termbox_ttyfd, &monitor_set);
-    FD_SET(termbox_resizefd, &monitor_set);
-    select(nfds, &monitor_set, NULL, NULL, NULL);
-}
 
 
 // -------------------------------------------------------------------------------------------------
@@ -166,7 +75,7 @@ void component_text_pair(const char *key, const char *value)
             .sizing = {
                 .width = {
                     .size.minMax = {
-                        .min = strlen("Border chars CLAY_TB_BORDER_CHARS_UNICODE") * Clay_Termbox_Cell_Width(),
+                        .min = strlen("Border chars CLAY_TB_IMAGE_MODE_UNICODE_FAST") * Clay_Termbox_Cell_Width(),
                     }
                 },
             }
@@ -247,7 +156,7 @@ void component_termbox_settings(void)
                     break;
                 }
                 default: {
-                    color_mode = "INVALID";
+                    border_mode = "INVALID";
                     break;
                 }
             }
@@ -274,6 +183,45 @@ void component_termbox_settings(void)
                     break;
                 }
             }
+            const char *image_mode = NULL;
+            switch (clay_tb_image_mode) {
+                case CLAY_TB_IMAGE_MODE_PLACEHOLDER: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_PLACEHOLDER";
+                    break;
+                }
+                case CLAY_TB_IMAGE_MODE_BG: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_BG";
+                    break;
+                }
+                case CLAY_TB_IMAGE_MODE_ASCII_FG: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_ASCII_FG";
+                    break;
+                }
+                case CLAY_TB_IMAGE_MODE_ASCII_FG_FAST: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_ASCII_FG_FAST";
+                    break;
+                }
+                case CLAY_TB_IMAGE_MODE_ASCII: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_ASCII";
+                    break;
+                }
+                case CLAY_TB_IMAGE_MODE_ASCII_FAST: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_ASCII_FAST";
+                    break;
+                }
+                case CLAY_TB_IMAGE_MODE_UNICODE: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_UNICODE";
+                    break;
+                }
+                case CLAY_TB_IMAGE_MODE_UNICODE_FAST: {
+                    image_mode = "CLAY_TB_IMAGE_MODE_UNICODE_FAST";
+                    break;
+                }
+                default: {
+                    image_mode = "INVALID";
+                    break;
+                }
+            }
             const char *transparency = NULL;
             if (clay_tb_transparency) {
                 transparency = "true";
@@ -287,6 +235,7 @@ void component_termbox_settings(void)
                 component_text_pair("Color mode", color_mode);
                 component_text_pair("Border mode", border_mode);
                 component_text_pair("Border chars", border_chars);
+                component_text_pair("Image mode", image_mode);
                 component_text_pair("Transparency", transparency);
             }
         }
@@ -448,6 +397,7 @@ void component_keybinds(void)
                 "  c/C - Cycle through color modes\n"
                 "  b/B - Cycle through border modes\n"
                 "  h/H - Cycle through border characters\n"
+                "  i/I - Cycle through image modes\n"
                 "  t/T - Toggle transparency\n"
                 "  d/D - Toggle debug mode\n"
                 "  q/Q - Quit\n"
@@ -457,19 +407,18 @@ void component_keybinds(void)
     }
 }
 
-void component_image(image image)
+void component_image(clay_tb_image *image, int width)
 {
     CLAY({
         .layout = {
             .sizing = {
-                .width = CLAY_SIZING_FIXED(200),
-                .height = CLAY_SIZING_FIXED(200),
+                .width = (0 == width) ? CLAY_SIZING_GROW() : CLAY_SIZING_FIXED(width),
             },
         },
         .image = {
-            .imageData = &image,
-            .sourceDimensions = { 512, 512 }
-        }
+            .imageData = image,
+        },
+        .aspectRatio = { 512.0 / 406.0 }
     }) { }
 }
 
@@ -477,7 +426,6 @@ void component_mouse_data(void)
 {
     CLAY({
         .layout = {
-            //.layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
             },
@@ -557,7 +505,7 @@ void component_bordered_text(void)
     }
 }
 
-Clay_RenderCommandArray CreateLayout(image image)
+Clay_RenderCommandArray CreateLayout(clay_tb_image *image1, clay_tb_image *image2)
 {
     Clay_BeginLayout();
     CLAY({
@@ -594,8 +542,8 @@ Clay_RenderCommandArray CreateLayout(image image)
             },
         }) {
             component_termbox_settings();
-            component_image(image);
-            component_image(image);
+            component_image(image1, 150);
+            component_image(image2, 0);
             component_mouse_data();
             component_bordered_text();
         }
@@ -627,7 +575,7 @@ void handle_termbox_events(void)
     // responsiveness (but will of course prevent other code from running on this thread while it's
     // waiting)
     struct tb_event evt;
-    int ms_to_wait = 100;
+    int ms_to_wait = 0;
     int err = tb_peek_event(&evt, ms_to_wait);
 
     switch (err) {
@@ -714,6 +662,23 @@ void handle_termbox_events(void)
                             Clay_Termbox_Set_Border_Chars(new_chars);
                             break;
                         }
+                        case 'i': {
+                            enum image_mode new_mode = clay_tb_image_mode - 1;
+                            new_mode = (CLAY_TB_IMAGE_MODE_DEFAULT < new_mode)
+                                ? new_mode
+                                : CLAY_TB_IMAGE_MODE_UNICODE_FAST;
+                            Clay_Termbox_Set_Image_Mode(new_mode);
+                            break;
+                        }
+                        case 'I': {
+                            enum image_mode new_mode = (clay_tb_image_mode + 1)
+                                % (CLAY_TB_IMAGE_MODE_UNICODE_FAST + 1);
+                            new_mode = (CLAY_TB_IMAGE_MODE_DEFAULT < new_mode)
+                                ? new_mode
+                                : CLAY_TB_IMAGE_MODE_PLACEHOLDER;
+                            Clay_Termbox_Set_Image_Mode(new_mode);
+                            break;
+                        }
                         case 't':
                         case 'T': {
                             Clay_Termbox_Set_Transparency(!clay_tb_transparency);
@@ -775,8 +740,10 @@ void handle_termbox_events(void)
 
 int main(void)
 {
-    image shark_image = load_image("resources/512px-Shark_antwerp_zoo.jpeg");
-    if (NULL == shark_image.data) { exit(1); }
+    clay_tb_image shark_image1 = Clay_Termbox_Image_Load_File("resources/512px-Shark_antwerp_zoo.jpeg");
+    clay_tb_image shark_image2 = Clay_Termbox_Image_Load_File("resources/512px-Shark_antwerp_zoo.jpeg");
+    if (NULL == shark_image1.pixel_data) { exit(1); }
+    if (NULL == shark_image2.pixel_data) { exit(1); }
 
     int num_elements = 3 * 8192;
     Clay_SetMaxElementCount(num_elements);
@@ -788,7 +755,7 @@ int main(void)
     Clay_Arena clay_arena = Clay_CreateArenaWithCapacityAndMemory(size, memory);
 
     Clay_Termbox_Initialize(
-        TB_OUTPUT_256, CLAY_TB_BORDER_MODE_DEFAULT, CLAY_TB_BORDER_CHARS_DEFAULT, false);
+        TB_OUTPUT_256, CLAY_TB_BORDER_MODE_DEFAULT, CLAY_TB_BORDER_CHARS_DEFAULT, CLAY_TB_IMAGE_MODE_DEFAULT, false);
 
     Clay_Initialize(clay_arena, (Clay_Dimensions) { Clay_Termbox_Width(), Clay_Termbox_Height() },
         (Clay_ErrorHandler) { handle_clay_errors, NULL });
@@ -796,18 +763,18 @@ int main(void)
     Clay_SetMeasureTextFunction(Clay_Termbox_MeasureText, NULL);
 
     // Initial render before waiting for events
-    Clay_RenderCommandArray commands = CreateLayout(shark_image);
+    Clay_RenderCommandArray commands = CreateLayout(&shark_image1, &shark_image2);
     Clay_Termbox_Render(commands);
     tb_present();
 
     while (!end_loop) {
         // Block until event is available. Optional, but reduces load since this demo is purely
         // synchronous to user input.
-        termbox_waitfor_event();
+        Clay_Termbox_Waitfor_Event();
 
         handle_termbox_events();
 
-        commands = CreateLayout(shark_image);
+        commands = CreateLayout(&shark_image1, &shark_image2);
 
         tb_clear();
         Clay_Termbox_Render(commands);
@@ -815,7 +782,8 @@ int main(void)
     }
 
     Clay_Termbox_Close();
-    free_image(shark_image);
+    Clay_Termbox_Image_Free(&shark_image1);
+    Clay_Termbox_Image_Free(&shark_image2);
     free(memory);
     return 0;
 }

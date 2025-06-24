@@ -25,9 +25,13 @@
 
 #include "../../clay.h"
 
+#include "image_character_masks.h"
+
 #define TB_OPT_ATTR_W 32 // Required for truecolor support
 #include "termbox2.h"
 
+#include "stb_image.h"
+#include "stb_image_resize2.h"
 
 // -------------------------------------------------------------------------------------------------
 // -- Data structures
@@ -48,7 +52,7 @@ typedef struct {
 typedef struct {
     Clay_Color clay;
     uintattr_t termbox;
-} color_pair;
+} clay_tb_color_pair;
 
 enum border_mode {
     CLAY_TB_BORDER_MODE_DEFAULT,
@@ -63,6 +67,45 @@ enum border_chars {
     CLAY_TB_BORDER_CHARS_BLANK,
     CLAY_TB_BORDER_CHARS_NONE,
 };
+
+enum image_mode {
+    CLAY_TB_IMAGE_MODE_DEFAULT,
+    CLAY_TB_IMAGE_MODE_PLACEHOLDER,
+    CLAY_TB_IMAGE_MODE_BG,
+    CLAY_TB_IMAGE_MODE_ASCII_FG,
+    CLAY_TB_IMAGE_MODE_ASCII_FG_FAST,
+    CLAY_TB_IMAGE_MODE_ASCII,
+    CLAY_TB_IMAGE_MODE_ASCII_FAST,
+    CLAY_TB_IMAGE_MODE_UNICODE,
+    CLAY_TB_IMAGE_MODE_UNICODE_FAST,
+};
+
+typedef struct {
+    // Stores information about image loaded from stb
+    int pixel_width, pixel_height;
+    unsigned char *pixel_data;
+
+    // Internal cached data from previous renders
+    struct {
+        enum image_mode last_image_mode;
+        int width, height;
+        size_t size_max;
+        uint32_t *characters;
+        Clay_Color *foreground;
+        Clay_Color *background;
+
+        // Data storing progress of partially complete image conversions that take multiple renders
+        struct clay_tb_partial_render {
+            bool in_progress;
+            unsigned char *resized_pixel_data;
+            int cursor_x, cursor_y;
+            int cursor_mask;
+            int min_difference_squared_sum;
+            int best_mask;
+            Clay_Color best_foreground, best_background;
+        } partial_render;
+    } internal;
+} clay_tb_image;
 
 // Truecolor is only enabled if TB_OPT_ATTR_W is set to 32 or 64. The default is 16, so it must be
 // defined to reference the constant
@@ -140,6 +183,49 @@ void Clay_Termbox_Set_Border_Mode(enum border_mode border_mode);
 void Clay_Termbox_Set_Border_Chars(enum border_chars border_chars);
 
 /**
+  Sets the method for drawing images
+
+  \param image_mode Method for adjusting border sizes to fit terminal cells
+                     - CLAY_TB_IMAGE_MODE_DEFAULT       - same as CLAY_TB_IMAGE_MODE_UNICODE
+                     - CLAY_TB_IMAGE_MODE_PLACEHOLDER   - Draw a placeholder pattern in place of
+                                                          images
+                     - CLAY_TB_IMAGE_MODE_BG            - Draw image by setting the background color
+                                                          for space characters
+                     - CLAY_TB_IMAGE_MODE_ASCII_FG      - Draw image by setting the foreground color
+                                                          for ascii characters
+                     - CLAY_TB_IMAGE_MODE_ASCII         - Draw image by setting the foreground and
+                                                          background colors for ascii characters
+                     - CLAY_TB_IMAGE_MODE_UNICODE       - Draw image by setting the foreground and
+                                                          background colors for unicode characters
+                     - CLAY_TB_IMAGE_MODE_ASCII_FG_FAST - Draw image by setting the foreground color
+                                                          for ascii characters. Checks fewer
+                                                          characters to draw faster
+                     - CLAY_TB_IMAGE_MODE_ASCII_FAST    - Draw image by setting the foreground and
+                                                          background colors for ascii characters.
+                                                          Checks fewer characters to draw faster
+                     - CLAY_TB_IMAGE_MODE_UNICODE_FAST  - Draw image by setting the foreground and
+                                                          background colors for unicode characters.
+                                                          Checks fewer characters to draw faster
+ */
+void Clay_Termbox_Set_Image_Mode(enum image_mode image_mode);
+
+/**
+  Fuel corresponds to the amount of time spent per render on drawing images. Increasing this has
+  the image render faster, but the program will be less responsive until it finishes
+
+  Cost to draw one cell (lengths of arrays in image_character_masks.h):
+  -  1 : CLAY_TB_IMAGE_MODE_BG
+  - 15 : CLAY_TB_IMAGE_MODE_UNICODE_FAST, CLAY_TB_IMAGE_MODE_ASCII_FAST,
+         CLAY_TB_IMAGE_MODE_ASCII_FG_FAST
+  - 52 : CLAY_TB_IMAGE_MODE_UNICODE
+  - 95 : CLAY_TB_IMAGE_MODE_ASCII, CLAY_TB_IMAGE_MODE_ASCII_FG
+
+  \param fuel_max       Maximum amount of fuel used per render (shared between all images)
+  \param fuel_per_image Maximum amount of fuel used per render per image
+ */
+void Clay_Termbox_Set_Image_Fuel(int fuel_max, int fuel_per_image);
+
+/**
   Enables or disables emulated transparency
 
   If the color mode is TB_OUTPUT_NORMAL or CLAY_TB_OUTPUT_NOCOLOR, transparency will not be enabled
@@ -179,6 +265,40 @@ static inline Clay_Dimensions Clay_Termbox_MeasureText(
     Clay_StringSlice text, Clay_TextElementConfig *config, void *userData);
 
 /**
+  Load an image from a file into a format usable with this renderer
+
+  Supports image formats from stb_image (JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)
+
+  Note that rendered characters are cached in the returned `clay_tb_image`. If the same image is
+  used in multiple places, load it a separate time for each use to reduce unecessary reprocessing
+  every render.
+
+  \param filename File to load image from
+ */
+clay_tb_image Clay_Termbox_Image_Load_File(const char *filename);
+
+/**
+  Load an image from memory into a format usable with this renderer
+
+  Supports image formats from stb_image (JPG, PNG, TGA, BMP, PSD, GIF, HDR, PIC)
+
+  Note that rendered characters are cached in the returned `clay_tb_image`. If the same image is
+  used in multiple places, load it a separate time for each use to reduce unecessary reprocessing
+  every render.
+
+  \param image Image to load. Should be the whole file copied into memory
+  \param size  Size of the image in bytes
+ */
+clay_tb_image Clay_Termbox_Image_Load_Memory(const void *image, int size);
+
+/**
+  Free an image
+
+  \param image Image to free
+ */
+void Clay_Termbox_Image_Free(clay_tb_image *image);
+
+/**
   Set up configuration, start termbox2, and allocate internal structures.
 
   Configuration can be overriden by environment variables:
@@ -195,6 +315,16 @@ static inline Clay_Dimensions Clay_Termbox_MeasureText(
     - UNICODE
     - BLANK
     - NONE
+  - CLAY_TB_IMAGE_MODE
+    - DEFAULT
+    - PLACEHOLDER
+    - BG
+    - ASCII_FG
+    - ASCII
+    - UNICODE
+    - ASCII_FG_FAST
+    - ASCII_FAST
+    - UNICODE_FAST
   - CLAY_TB_TRANSPARENCY
     - 1
     - 0
@@ -206,10 +336,11 @@ static inline Clay_Dimensions Clay_Termbox_MeasureText(
   \param color_mode   Termbox output mode as defined in termbox2.h, excluding truecolor
   \param border_mode  Method for adjusting border sizes to fit terminal cells
   \param border_chars Characters used for rendering borders
+  \param image_mode   Method for drawing images
   \param transparency Emulate transparency using background colors
  */
 void Clay_Termbox_Initialize(int color_mode, enum border_mode border_mode,
-    enum border_chars border_chars, bool transparency);
+    enum border_chars border_chars, enum image_mode image_mode, bool transparency);
 
 /**
  Stop termbox2 and release internal structures
@@ -223,6 +354,11 @@ void Clay_Termbox_Close(void);
  */
 void Clay_Termbox_Render(Clay_RenderCommandArray commands);
 
+/**
+  Convenience function to block until an event is received from termbox. If an image is only
+  partially rendered, this returns immediately.
+ */
+void Clay_Termbox_Waitfor_Event(void);
 
 
 // -------------------------------------------------------------------------------------------------
@@ -234,6 +370,7 @@ static int clay_tb_color_mode = TB_OUTPUT_NORMAL;
 static bool clay_tb_transparency = false;
 static enum border_mode clay_tb_border_mode = CLAY_TB_BORDER_MODE_DEFAULT;
 static enum border_chars clay_tb_border_chars = CLAY_TB_BORDER_CHARS_DEFAULT;
+static enum image_mode clay_tb_image_mode = CLAY_TB_IMAGE_MODE_DEFAULT;
 
 // Dimensions of a cell are specified in pixels
 // Default dimensions were measured from the default terminal on Debian 12:
@@ -246,6 +383,17 @@ static clay_tb_pixel_dimensions clay_tb_cell_size = { .width = 9, .height = 21 }
 static bool clay_tb_scissor_enabled = false;
 clay_tb_cell_bounding_box clay_tb_scissor_box;
 
+// Images may be drawn across multiple renders to improve responsiveness. The initial draw will be
+// approximate, then further partial draws will replace characters with more accurate ones
+static bool clay_tb_partial_image_drawn = false;
+
+
+// Maximum fuel used per render across all images
+static int clay_tb_image_fuel_max = 200 * 1024;
+// Maximum fuel used per render per image
+static int clay_tb_image_fuel_per_image = 100 * 1024;
+// Fuel used this render
+static int clay_tb_image_fuel_used = 0;
 // -----------------------------------------------
 // -- Color buffer
 
@@ -464,6 +612,25 @@ static inline clay_tb_cell_bounding_box cell_snap_bounding_box(Clay_BoundingBox 
 }
 
 /**
+  Snap pixel values from Clay to nearest cell values without considering x and y position when
+  calculating width/height.
+
+  Width/height ignores offset from x/y, so a box at x=(1.2 * cell_width) and
+  width=(1.4 * cell_width) is snapped to x=1 and width=1.
+
+  \param box Bounding box with pixel measurements to convert
+ */
+static inline clay_tb_cell_bounding_box cell_snap_pos_ind_bounding_box(Clay_BoundingBox box)
+{
+    return (clay_tb_cell_bounding_box) {
+        .x = clay_tb_roundf(box.x / clay_tb_cell_size.width),
+        .y = clay_tb_roundf(box.y / clay_tb_cell_size.height),
+        .width = clay_tb_roundf(box.width / clay_tb_cell_size.width),
+        .height = clay_tb_roundf(box.height / clay_tb_cell_size.height),
+    };
+}
+
+/**
   Get stored clay color for a position from the internal color buffer
 
   \param x X position of cell
@@ -607,6 +774,325 @@ static int clay_tb_set_cell(
     return -1;
 }
 
+/**
+  Convert a pixel-based image to a cell-based image of the specified width and height. Stores the
+  converted/resized result in the cache of the input image.
+
+  If the image has not changed size or image mode since the last convert it is returned unchanged
+
+  \param image  Image to convert/resize
+  \param width  Target width in cells for the converted image
+  \param height Target height in cells for the converted image
+ */
+bool clay_tb_image_convert(clay_tb_image *image, int width, int height)
+{
+    clay_tb_assert(NULL != image->pixel_data, "Image must be loaded");
+
+    bool image_unchanged = (width == image->internal.width && height == image->internal.height
+        && (clay_tb_image_mode == image->internal.last_image_mode));
+
+    if (image_unchanged && !image->internal.partial_render.in_progress) {
+        return true;
+    }
+    if (!image_unchanged) {
+        free(image->internal.partial_render.resized_pixel_data);
+        image->internal.partial_render = (struct clay_tb_partial_render) {
+            .in_progress = false,
+            .resized_pixel_data = NULL,
+            .cursor_x = 0,
+            .cursor_y = 0,
+            .cursor_mask = 0,
+            .min_difference_squared_sum = INT_MAX,
+            .best_mask = 0,
+            .best_foreground = { 0, 0, 0, 0 },
+            .best_background = { 0, 0, 0, 0 }
+        };
+    }
+
+    const size_t size = (size_t)width * height;
+
+    // Allocate/resize internal cache data
+    if (size > image->internal.size_max) {
+        uint32_t *tmp_characters = realloc(image->internal.characters, size * sizeof(uint32_t));
+        Clay_Color *tmp_foreground = realloc(image->internal.foreground, size * sizeof(Clay_Color));
+        Clay_Color *tmp_background = realloc(image->internal.background, size * sizeof(Clay_Color));
+
+        if (NULL == tmp_characters || NULL == tmp_foreground || NULL == tmp_background) {
+            image->internal.size_max = 0;
+            free(tmp_characters);
+            free(tmp_foreground);
+            free(tmp_background);
+            image->internal.characters = NULL;
+            image->internal.foreground = NULL;
+            image->internal.background = NULL;
+            return false;
+        }
+        image->internal.characters = tmp_characters;
+        image->internal.foreground = tmp_foreground;
+        image->internal.background = tmp_background;
+        image->internal.size_max = size;
+    }
+
+    image->internal.width = width;
+    image->internal.height = height;
+
+    // Resize image using the same width/height in cells, but with the pixel sizes of the character
+    // masks instead of the cell size. The pixel data for each character mask will be compared to
+    // the pixel data of a small section of the image under the mask. The closest mask to the image
+    // data is chosen as the character to draw.
+    const int character_mask_pixel_width = 6;
+    const int character_mask_pixel_height = 12;
+    const int pixel_width = width * character_mask_pixel_width;
+    const int pixel_height = height * character_mask_pixel_height;
+
+    unsigned char *resized_pixel_data;
+    if (image->internal.partial_render.in_progress) {
+        resized_pixel_data = image->internal.partial_render.resized_pixel_data;
+    } else {
+        resized_pixel_data = stbir_resize_uint8_linear(image->pixel_data, image->pixel_width,
+            image->pixel_height, 0, NULL, pixel_width, pixel_height, 0, STBIR_RGB);
+        image->internal.partial_render.resized_pixel_data = resized_pixel_data;
+    }
+
+    int num_character_masks = 1;
+    const clay_tb_character_mask *character_masks = NULL;
+    switch (clay_tb_image_mode) {
+        case CLAY_TB_IMAGE_MODE_BG: {
+            num_character_masks = 1;
+            character_masks = &clay_tb_image_shapes_ascii_fast[0];
+            break;
+        }
+        case CLAY_TB_IMAGE_MODE_ASCII:
+        case CLAY_TB_IMAGE_MODE_ASCII_FG: {
+            num_character_masks = CLAY_TB_IMAGE_SHAPES_ASCII_BEST_COUNT;
+            character_masks = &clay_tb_image_shapes_ascii_best[0];
+            break;
+        }
+        case CLAY_TB_IMAGE_MODE_UNICODE: {
+            num_character_masks = CLAY_TB_IMAGE_SHAPES_UNICODE_BEST_COUNT;
+            character_masks = &clay_tb_image_shapes_unicode_best[0];
+            break;
+        }
+        case CLAY_TB_IMAGE_MODE_ASCII_FAST:
+        case CLAY_TB_IMAGE_MODE_ASCII_FG_FAST: {
+            num_character_masks = CLAY_TB_IMAGE_SHAPES_ASCII_FAST_COUNT;
+            character_masks = &clay_tb_image_shapes_ascii_fast[0];
+            break;
+        }
+        case CLAY_TB_IMAGE_MODE_UNICODE_FAST: {
+            num_character_masks = CLAY_TB_IMAGE_SHAPES_UNICODE_FAST_COUNT;
+            character_masks = &clay_tb_image_shapes_unicode_fast[0];
+            break;
+        }
+    };
+
+    // The number of character masks to check before exiting the render for this step
+    // Used to improve responsiveness by splitting renders across multiple frames
+    const int fuel_amount_initial
+        = CLAY__MIN(clay_tb_image_fuel_per_image, clay_tb_image_fuel_max - clay_tb_image_fuel_used);
+    int fuel_remaining = fuel_amount_initial;
+    bool partial_character_render = false;
+
+    // Do a quick initial render to set the background
+    if (!image->internal.partial_render.in_progress) {
+        image->internal.last_image_mode = clay_tb_image_mode;
+        for (int y = image->internal.partial_render.cursor_y; y < height; ++y) {
+            for (int x = image->internal.partial_render.cursor_x; x < width; ++x) {
+                const int cell_top_left_pixel_x = x * character_mask_pixel_width;
+                const int cell_top_left_pixel_y = y * character_mask_pixel_height;
+                const int image_index = 3
+                    * (((cell_top_left_pixel_y + character_mask_pixel_height / 2) * pixel_width)
+                        + (cell_top_left_pixel_x + character_mask_pixel_width / 2));
+                Clay_Color pixel_color = {
+                    (float)resized_pixel_data[image_index],
+                    (float)resized_pixel_data[image_index + 1],
+                    (float)resized_pixel_data[image_index + 2],
+                };
+
+                const int cell_index = y * width + x;
+                image->internal.characters[cell_index] = '.';
+                image->internal.foreground[cell_index] = pixel_color;
+                image->internal.background[cell_index] = pixel_color;
+
+                fuel_remaining = CLAY__MAX(0, fuel_remaining - 1);
+            }
+        }
+    }
+
+    if (0 == fuel_remaining) {
+        image->internal.partial_render.in_progress = true;
+        clay_tb_partial_image_drawn = true;
+        goto done;
+    }
+
+    for (int y = image->internal.partial_render.cursor_y; y < height; ++y) {
+        for (int x = image->internal.partial_render.cursor_x; x < width; ++x) {
+            const int cell_top_left_pixel_x = x * character_mask_pixel_width;
+            const int cell_top_left_pixel_y = y * character_mask_pixel_height;
+
+            // For each possible cell character, use the mask to find the average color for the
+            // foreground ('1's) and background ('0's).
+            int min_difference_squared_sum
+                = image->internal.partial_render.min_difference_squared_sum;
+            int best_mask = image->internal.partial_render.best_mask;
+            Clay_Color best_foreground = image->internal.partial_render.best_foreground;
+            Clay_Color best_background = image->internal.partial_render.best_background;
+
+            for (int i = image->internal.partial_render.cursor_mask; i < num_character_masks; ++i) {
+                int color_avg_background_r = 0;
+                int color_avg_background_g = 0;
+                int color_avg_background_b = 0;
+                int color_avg_foreground_r = 0;
+                int color_avg_foreground_g = 0;
+                int color_avg_foreground_b = 0;
+                int foreground_count = 0;
+                int background_count = 0;
+
+                for (int cell_pixel_y = 0; cell_pixel_y < character_mask_pixel_height;
+                     ++cell_pixel_y) {
+                    for (int cell_pixel_x = 0; cell_pixel_x < character_mask_pixel_width;
+                         ++cell_pixel_x) {
+                        const int index = 3
+                            * (((cell_top_left_pixel_y + cell_pixel_y) * pixel_width)
+                                + (cell_top_left_pixel_x + cell_pixel_x));
+
+                        const int mask_index
+                            = (cell_pixel_y * character_mask_pixel_width) + cell_pixel_x;
+                        if (0 == character_masks[i].data[mask_index]) {
+                            if (CLAY_TB_IMAGE_MODE_ASCII_FG != clay_tb_image_mode
+                                && CLAY_TB_IMAGE_MODE_ASCII_FG_FAST != clay_tb_image_mode) {
+                                color_avg_background_r += resized_pixel_data[index];
+                                color_avg_background_g += resized_pixel_data[index + 1];
+                                color_avg_background_b += resized_pixel_data[index + 2];
+                                background_count += 1;
+                            }
+                        } else {
+                            color_avg_foreground_r += resized_pixel_data[index];
+                            color_avg_foreground_g += resized_pixel_data[index + 1];
+                            color_avg_foreground_b += resized_pixel_data[index + 2];
+                            foreground_count += 1;
+                        }
+                    }
+                }
+
+                if (CLAY_TB_IMAGE_MODE_ASCII_FG != clay_tb_image_mode
+                    && CLAY_TB_IMAGE_MODE_ASCII_FG_FAST != clay_tb_image_mode) {
+                    color_avg_background_r /= CLAY__MAX(1, background_count);
+                    color_avg_background_g /= CLAY__MAX(1, background_count);
+                    color_avg_background_b /= CLAY__MAX(1, background_count);
+                } else {
+                    color_avg_background_r = 0;
+                    color_avg_background_g = 0;
+                    color_avg_background_b = 0;
+                }
+
+                color_avg_foreground_r /= CLAY__MAX(1, foreground_count);
+                color_avg_foreground_g /= CLAY__MAX(1, foreground_count);
+                color_avg_foreground_b /= CLAY__MAX(1, foreground_count);
+
+                // Determine the difference between the mask with colors and the actual pixel data
+                int difference_squared_sum = 0;
+                for (int cell_pixel_y = 0; cell_pixel_y < character_mask_pixel_height;
+                     ++cell_pixel_y) {
+                    for (int cell_pixel_x = 0; cell_pixel_x < character_mask_pixel_width;
+                         ++cell_pixel_x) {
+                        const int index = 3
+                            * (((cell_top_left_pixel_y + cell_pixel_y) * pixel_width)
+                                + (cell_top_left_pixel_x + cell_pixel_x));
+                        int rdiff, gdiff, bdiff, adiff;
+
+                        const int mask_index
+                            = (cell_pixel_y * character_mask_pixel_width) + cell_pixel_x;
+                        if (0 == character_masks[i].data[mask_index]) {
+                            rdiff = (color_avg_background_r - resized_pixel_data[index]);
+                            gdiff = (color_avg_background_g - resized_pixel_data[index + 1]);
+                            bdiff = (color_avg_background_b - resized_pixel_data[index + 2]);
+                        } else {
+                            rdiff = (color_avg_foreground_r - resized_pixel_data[index]);
+                            gdiff = (color_avg_foreground_g - resized_pixel_data[index + 1]);
+                            bdiff = (color_avg_foreground_b - resized_pixel_data[index + 2]);
+                        }
+
+                        difference_squared_sum += (
+                            (rdiff * rdiff) +
+                            (gdiff * gdiff) +
+                            (bdiff * bdiff));
+                    }
+                }
+
+                // Choose the closest character mask to the image data
+                if (difference_squared_sum < min_difference_squared_sum) {
+                    min_difference_squared_sum = difference_squared_sum;
+                    best_mask = i;
+                    best_background = (Clay_Color) {
+                        .r = (float)color_avg_background_r,
+                        .g = (float)color_avg_background_g,
+                        .b = (float)color_avg_background_b,
+                        .a = 255
+                    };
+                    best_foreground = (Clay_Color) {
+                        .r = (float)color_avg_foreground_r,
+                        .g = (float)color_avg_foreground_g,
+                        .b = (float)color_avg_foreground_b,
+                        .a = 255
+                    };
+                }
+
+                fuel_remaining -= 1;
+                if (0 == fuel_remaining) {
+                    // Set progress for partial render
+                    image->internal.partial_render = (struct clay_tb_partial_render) {
+                        .in_progress = true,
+                        .resized_pixel_data = resized_pixel_data,
+                        .cursor_x = x,
+                        .cursor_y = y,
+                        .cursor_mask = i + 1,
+                        .min_difference_squared_sum = min_difference_squared_sum,
+                        .best_mask = best_mask,
+                        .best_foreground = best_foreground,
+                        .best_background = best_background
+                    };
+                    partial_character_render = true;
+                    clay_tb_partial_image_drawn = true;
+                    goto done;
+                }
+            }
+            image->internal.partial_render.cursor_mask = 0;
+
+            // Set data in cache for this character
+            const int index = y * width + x;
+            image->internal.characters[index] = character_masks[best_mask].character;
+            image->internal.foreground[index] = best_foreground;
+            image->internal.background[index] = best_background;
+
+            image->internal.partial_render = (struct clay_tb_partial_render) {
+                .in_progress = true,
+                .resized_pixel_data = resized_pixel_data,
+                .cursor_x = x + 1,
+                .cursor_y = y,
+                .cursor_mask = 0,
+                .min_difference_squared_sum = INT_MAX,
+                .best_mask = 0,
+                .best_foreground = { 0, 0, 0, 0 },
+                .best_background = { 0, 0, 0, 0 },
+            };
+            if (0 == fuel_remaining) {
+                clay_tb_partial_image_drawn = true;
+                goto done;
+            }
+        }
+        image->internal.partial_render.cursor_x = 0;
+    }
+    image->internal.partial_render.cursor_y = 0;
+    image->internal.partial_render.in_progress = false;
+    free(resized_pixel_data);
+    image->internal.partial_render.resized_pixel_data = NULL;
+
+done:
+    clay_tb_image_fuel_used += fuel_amount_initial - fuel_remaining;
+    return true;
+}
+
 
 // -------------------------------------------------------------------------------------------------
 // -- Public API implementation
@@ -661,6 +1147,26 @@ void Clay_Termbox_Set_Border_Chars(enum border_chars border_chars)
     } else {
         clay_tb_border_chars = border_chars;
     }
+}
+
+void Clay_Termbox_Set_Image_Mode(enum image_mode image_mode)
+{
+    clay_tb_assert(CLAY_TB_IMAGE_MODE_DEFAULT <= image_mode
+            && image_mode <= CLAY_TB_IMAGE_MODE_UNICODE_FAST,
+        "Image mode invalid (%d)", image_mode);
+    if (CLAY_TB_IMAGE_MODE_DEFAULT == image_mode) {
+        clay_tb_image_mode = CLAY_TB_IMAGE_MODE_UNICODE;
+    } else {
+        clay_tb_image_mode = image_mode;
+    }
+}
+
+void Clay_Termbox_Set_Image_Fuel(int fuel_max, int fuel_per_image)
+{
+    clay_tb_assert(0 < fuel_max && 0 < fuel_per_image,
+            "Fuel must be positive (%d, %d)", fuel_max, fuel_per_image);
+    clay_tb_image_fuel_max = fuel_max;
+    clay_tb_image_fuel_per_image = fuel_per_image;
 }
 
 void Clay_Termbox_Set_Transparency(bool transparency)
@@ -726,12 +1232,62 @@ static inline Clay_Dimensions Clay_Termbox_MeasureText(
     };
 }
 
-void Clay_Termbox_Initialize(
-    int color_mode, enum border_mode border_mode, enum border_chars border_chars, bool transparency)
+clay_tb_image Clay_Termbox_Image_Load_File(const char *filename)
+{
+    clay_tb_assert(NULL != filename, "Filename cannot be null");
+
+    clay_tb_image rv = { 0 };
+
+    FILE *image_file = NULL;
+
+    image_file = fopen(filename, "r");
+    if (NULL == image_file) {
+        fprintf(stderr, "Failed to open image %s: %s\n", filename, strerror(errno));
+        return rv;
+    }
+
+    int channels_in_file;
+    const int desired_color_channels = 3;
+    rv.pixel_data = stbi_load_from_file(
+        image_file, &rv.pixel_width, &rv.pixel_height, &channels_in_file, desired_color_channels);
+
+    fclose(image_file);
+
+    return rv;
+}
+
+clay_tb_image Clay_Termbox_Image_Load_Memory(const void *image, int size)
+{
+    clay_tb_assert(NULL != image, "Image cannot be null");
+    clay_tb_assert(0 < size, "Image size must be > 0");
+
+    clay_tb_image rv = { 0 };
+
+    int channels_in_file;
+    const int desired_color_channels = 3;
+    rv.pixel_data = stbi_load_from_memory(
+        image, size, &rv.pixel_width, &rv.pixel_height, &channels_in_file, desired_color_channels);
+
+    return rv;
+}
+
+void Clay_Termbox_Image_Free(clay_tb_image *image)
+{
+    free(image->pixel_data);
+    free(image->internal.partial_render.resized_pixel_data);
+    free(image->internal.characters);
+    free(image->internal.foreground);
+    free(image->internal.background);
+    *image = (clay_tb_image) { 0 };
+}
+
+void Clay_Termbox_Initialize(int color_mode, enum border_mode border_mode,
+    enum border_chars border_chars, enum image_mode image_mode, bool transparency)
 {
     int new_color_mode = color_mode;
     int new_border_mode = border_mode;
     int new_border_chars = border_chars;
+    int new_image_mode = image_mode;
     int new_transparency = transparency;
     clay_tb_pixel_dimensions new_pixel_size = clay_tb_cell_size;
 
@@ -766,6 +1322,29 @@ void Clay_Termbox_Initialize(
             new_border_chars = CLAY_TB_BORDER_CHARS_BLANK;
         } else if (0 == strcmp("NONE", env_border_chars)) {
             new_border_chars = CLAY_TB_BORDER_CHARS_NONE;
+        }
+    }
+
+    const char *env_image_mode = getenv("CLAY_TB_IMAGE_MODE");
+    if (NULL != env_image_mode) {
+        if (0 == strcmp("DEFAULT", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_DEFAULT;
+        } else if (0 == strcmp("PLACEHOLDER", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_PLACEHOLDER;
+        } else if (0 == strcmp("BG", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_BG;
+        } else if (0 == strcmp("ASCII_FG", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_ASCII_FG;
+        } else if (0 == strcmp("ASCII", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_ASCII;
+        } else if (0 == strcmp("UNICODE", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_UNICODE;
+        } else if (0 == strcmp("ASCII_FG_FAST", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_ASCII_FG_FAST;
+        } else if (0 == strcmp("ASCII_FAST", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_ASCII_FAST;
+        } else if (0 == strcmp("UNICODE_FAST", env_image_mode)) {
+            new_image_mode = CLAY_TB_IMAGE_MODE_UNICODE_FAST;
         }
     }
 
@@ -821,6 +1400,7 @@ void Clay_Termbox_Initialize(
     Clay_Termbox_Set_Color_Mode(new_color_mode);
     Clay_Termbox_Set_Border_Mode(new_border_mode);
     Clay_Termbox_Set_Border_Chars(new_border_chars);
+    Clay_Termbox_Set_Image_Mode(new_image_mode);
     Clay_Termbox_Set_Transparency(new_transparency);
     Clay_Termbox_Set_Cell_Pixel_Size(new_pixel_size.width, new_pixel_size.height);
 
@@ -848,6 +1428,9 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
     clay_tb_assert(clay_tb_initialized, "Clay_Termbox_Initialize must be run first");
 
     clay_tb_resize_buffer();
+    clay_tb_partial_image_drawn = false;
+    clay_tb_image_fuel_used = 0;
+
     for (int32_t i = 0; i < commands.length; ++i) {
         const Clay_RenderCommand *command = Clay_RenderCommandArray_Get(&commands, i);
         const clay_tb_cell_bounding_box cell_box = cell_snap_bounding_box(command->boundingBox);
@@ -1079,32 +1662,79 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
                     color_tb_bg = clay_tb_color_convert(color_bg);
                 }
 
-                const char *placeholder_text = "[Image]";
+                bool use_placeholder = true;
 
-                int i = 0;
-                unsigned long len = strlen(placeholder_text);
-                for (int y = box_begin_y; y < box_end_y; ++y) {
-                    float percent_y = (float)(y - box_begin_y) / (float)cell_box.height;
+                clay_tb_image *image = (clay_tb_image *)render_data.imageData;
 
-                    for (int x = box_begin_x; x < box_end_x; ++x) {
-                        char ch = ' ';
-                        if (i < len) {
-                            ch = placeholder_text[i++];
-                        }
+                if (!(CLAY_TB_IMAGE_MODE_PLACEHOLDER == clay_tb_image_mode
+                        || CLAY_TB_OUTPUT_NOCOLOR == clay_tb_color_mode)) {
+                    bool convert_success = (NULL != image)
+                        ? clay_tb_image_convert(image, cell_box.width, cell_box.height)
+                        : false;
+                    if (convert_success) {
+                        use_placeholder = false;
+                    }
+                }
 
-                        if (!color_specified) {
-                            // Use a placeholder pattern for the image
-                            float percent_x = (float)(cell_box.width - (x - box_begin_x))
-                                / (float)cell_box.width;
-                            if (percent_x > percent_y) {
-                                color_bg = (Clay_Color) { 0x94, 0xb4, 0xff, 0xff };
-                                color_tb_bg = clay_tb_color_convert(color_bg);
-                            } else {
-                                color_bg = (Clay_Color) { 0x3f, 0xcc, 0x45, 0xff };
-                                color_tb_bg = clay_tb_color_convert(color_bg);
+                if (!use_placeholder) {
+                    // Render image
+                    for (int y = box_begin_y; y < box_end_y; ++y) {
+                        int y_offset = y - cell_box.y;
+                        for (int x = box_begin_x; x < box_end_x; ++x) {
+                            int x_offset = x - cell_box.x;
+                            // Fetch cells from the image's cache
+                            if (!color_specified) {
+                                if (CLAY_TB_IMAGE_MODE_ASCII_FG == clay_tb_image_mode
+                                    || CLAY_TB_IMAGE_MODE_ASCII_FG_FAST == clay_tb_image_mode) {
+                                    color_bg = (Clay_Color) { 0, 0, 0, 0 };
+                                    color_tb_bg = TB_DEFAULT;
+                                } else {
+                                    color_bg
+                                        = image->internal
+                                              .background[y_offset * cell_box.width + x_offset];
+                                    color_tb_bg = clay_tb_color_convert(color_bg);
+                                }
                             }
+                            color_tb_fg = clay_tb_color_convert(
+                                image->internal.foreground[y_offset * cell_box.width + x_offset]);
+                            uint32_t ch
+                                = image->internal.characters[y_offset * cell_box.width + x_offset];
+                            if (CLAY_TB_IMAGE_MODE_BG == clay_tb_image_mode) {
+                                ch = ' ';
+                            }
+
+                            clay_tb_set_cell(x, y, ch, color_tb_fg, color_tb_bg, color_bg);
                         }
-                        clay_tb_set_cell(x, y, ch, color_tb_fg, color_tb_bg, color_bg);
+                    }
+                } else {
+                    // Render a placeholder pattern
+                    const char *placeholder_text = "[Image]";
+
+                    int i = 0;
+                    unsigned long len = strlen(placeholder_text);
+                    for (int y = box_begin_y; y < box_end_y; ++y) {
+                        float percent_y = (float)(y - box_begin_y) / (float)cell_box.height;
+
+                        for (int x = box_begin_x; x < box_end_x; ++x) {
+                            char ch = ' ';
+                            if (i < len) {
+                                ch = placeholder_text[i++];
+                            }
+
+                            if (!color_specified) {
+                                // Use a placeholder pattern for the image
+                                float percent_x = (float)(cell_box.width - (x - box_begin_x))
+                                    / (float)cell_box.width;
+                                if (percent_x > percent_y) {
+                                    color_bg = (Clay_Color) { 0x94, 0xb4, 0xff, 0xff };
+                                    color_tb_bg = clay_tb_color_convert(color_bg);
+                                } else {
+                                    color_bg = (Clay_Color) { 0x3f, 0xcc, 0x45, 0xff };
+                                    color_tb_bg = clay_tb_color_convert(color_bg);
+                                }
+                            }
+                            clay_tb_set_cell(x, y, ch, color_tb_fg, color_tb_bg, color_bg);
+                        }
                     }
                 }
                 break;
@@ -1128,4 +1758,19 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
             }
         }
     }
+}
+
+void Clay_Termbox_Waitfor_Event(void)
+{
+    if (clay_tb_partial_image_drawn) {
+        return;
+    }
+    int termbox_ttyfd, termbox_resizefd;
+    tb_get_fds(&termbox_ttyfd, &termbox_resizefd);
+    int nfds = CLAY__MAX(termbox_ttyfd, termbox_resizefd) + 1;
+    fd_set monitor_set;
+    FD_ZERO(&monitor_set);
+    FD_SET(termbox_ttyfd, &monitor_set);
+    FD_SET(termbox_resizefd, &monitor_set);
+    select(nfds, &monitor_set, NULL, NULL, NULL);
 }
