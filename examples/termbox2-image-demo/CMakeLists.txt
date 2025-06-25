@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(clay_examples_termbox2_image_demo C)
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
