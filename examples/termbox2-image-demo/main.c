@@ -295,6 +295,7 @@ void component_keybinds(void)
                 "Termbox2 renderer test\n"
                 "\n"
                 "Keybinds:\n"
+                "  up/down arrows - Change selected image\n"
                 "  c/C - Cycle through color modes\n"
                 "  b/B - Cycle through border modes\n"
                 "  h/H - Cycle through border characters\n"
