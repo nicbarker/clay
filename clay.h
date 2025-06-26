@@ -3615,7 +3615,11 @@ void Clay__RenderDebugView(void) {
                                     CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING("."), infoTextConfig);
                                     float frac = aspectRatioConfig->aspectRatio - (int)(aspectRatioConfig->aspectRatio);
-                                    CLAY_TEXT(Clay__IntToString(frac * 100), infoTextConfig);
+                                    frac *= 100;
+                                    if ((int)frac < 10) {
+                                        CLAY_TEXT(CLAY_STRING("0"), infoTextConfig);
+                                    }
+                                    CLAY_TEXT(Clay__IntToString(frac), infoTextConfig);
                                 }
                             }
                             break;
