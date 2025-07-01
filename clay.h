@@ -589,7 +589,7 @@ typedef struct {
 
 // Controls settings related to element borders.
 typedef struct Clay_TransitionElementConfig {
-    bool (*handler)(Clay_TransitionCallbackArguments properties);
+    bool (*handler)(Clay_TransitionCallbackArguments arguments);
     float duration;
     Clay_TransitionProperty properties;
 } Clay_TransitionElementConfig;

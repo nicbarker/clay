@@ -74,7 +74,7 @@ Clay_String* FrameAllocateString(Clay_String string) {
     return allocated;
 }
 
-bool EaseOut(Clay_TransitionCallbackArguments arguments) {
+bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
     float ratio = arguments.elapsedTime / arguments.duration;
     if (arguments.elapsedTime < arguments.duration) {
         float lerpAmount = (1 - powf(1 - ratio, 3.0f));
@@ -230,7 +230,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                         .cornerRadius = {12, 12, 12, 12},
                         .border = { darker, CLAY_BORDER_OUTSIDE(3) },
                         .transitions = {
-                            .handler = EaseOut,
+                            .handler = Clay_EaseOut,
                             .duration = 0.5,
                             .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX
                         }
