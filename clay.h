@@ -3633,7 +3633,16 @@ void Clay__RenderDebugView(void) {
                             CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoAspectRatioBody"), .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                                 CLAY_TEXT(CLAY_STRING("Aspect Ratio"), infoTitleConfig);
                                 // Aspect Ratio
-                                CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
+                                CLAY({ .id = CLAY_ID("Clay__DebugViewElementInfoAspectRatio") }) {
+                                    CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
+                                    CLAY_TEXT(CLAY_STRING("."), infoTextConfig);
+                                    float frac = aspectRatioConfig->aspectRatio - (int)(aspectRatioConfig->aspectRatio);
+                                    frac *= 100;
+                                    if ((int)frac < 10) {
+                                        CLAY_TEXT(CLAY_STRING("0"), infoTextConfig);
+                                    }
+                                    CLAY_TEXT(Clay__IntToString(frac), infoTextConfig);
+                                }
                             }
                             break;
                         }
