@@ -920,7 +920,7 @@ CLAY_DLL_EXPORT void Clay__ConfigureOpenElement(const Clay_ElementDeclaration co
 CLAY_DLL_EXPORT void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *config);
 CLAY_DLL_EXPORT void Clay__CloseElement(void);
 CLAY_DLL_EXPORT Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
-CLAY_DLL_EXPORT void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
+CLAY_DLL_EXPORT Clay_ElementId Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
 CLAY_DLL_EXPORT Clay_TextElementConfig *Clay__StoreTextElementConfig(Clay_TextElementConfig config);
 CLAY_DLL_EXPORT uint32_t Clay__GetParentElementId(void);
 
@@ -1981,11 +1981,11 @@ void Clay__OpenElement(void) {
     }
 }
 
-void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig) {
+Clay_ElementId Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig) {
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->layoutElements.length == context->layoutElements.capacity - 1 || context->booleanWarnings.maxElementsExceeded) {
         context->booleanWarnings.maxElementsExceeded = true;
-        return;
+        return Clay_ElementId_DEFAULT;
     }
     Clay_LayoutElement *parentElement = Clay__GetOpenLayoutElement();
 
@@ -2012,7 +2012,10 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
             .internalArray = Clay__ElementConfigArray_Add(&context->elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = CLAY__ELEMENT_CONFIG_TYPE_TEXT, .config = { .textElementConfig = textConfig }})
     };
     textElement->layoutConfig = &CLAY_LAYOUT_DEFAULT;
+
     parentElement->childrenOrTextContent.children.length++;
+
+    return elementId;
 }
 
 Clay_ElementId Clay__AttachId(Clay_ElementId elementId) {
