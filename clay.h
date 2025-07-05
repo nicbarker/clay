@@ -1141,6 +1141,7 @@ typedef struct {
         Clay__LayoutElementChildren children;
         Clay__TextElementData *textElementData;
     } childrenOrTextContent;
+    uint16_t floatingChildrenCount;
     Clay_Dimensions dimensions;
     Clay_Dimensions minDimensions;
     Clay_LayoutConfig *layoutConfig;
@@ -1776,7 +1777,8 @@ Clay_LayoutElementHashMapItem *Clay__GetHashMapItem(uint32_t id) {
 Clay_ElementId Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayoutElement) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay_LayoutElement *parentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 2));
-    Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
+    uint32_t offset = parentElement->childrenOrTextContent.children.length + parentElement->floatingChildrenCount;
+    Clay_ElementId elementId = Clay__HashNumber(offset, parentElement->id);
     openLayoutElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, openLayoutElement);
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
@@ -1917,9 +1919,15 @@ void Clay__CloseElement(void) {
 
     // Close the currently open element
     int32_t closingElementIndex = Clay__int32_tArray_RemoveSwapback(&context->openLayoutElementStack, (int)context->openLayoutElementStack.length - 1);
+
+    // Get the currently open parent
     openLayoutElement = Clay__GetOpenLayoutElement();
 
-    if (!elementIsFloating && context->openLayoutElementStack.length > 1) {
+    if (context->openLayoutElementStack.length > 1) {
+        if(elementIsFloating) {
+            openLayoutElement->floatingChildrenCount++;
+            return;
+        }
         openLayoutElement->childrenOrTextContent.children.length++;
         Clay__int32_tArray_Add(&context->layoutElementChildrenBuffer, closingElementIndex);
     }
@@ -4410,7 +4418,7 @@ void Clay_ResetMeasureTextCache(void) {
     context->measureTextHashMap.length = 0;
     context->measuredWords.length = 0;
     context->measuredWordsFreeList.length = 0;
-    
+
     for (int32_t i = 0; i < context->measureTextHashMap.capacity; ++i) {
         context->measureTextHashMap.internalArray[i] = 0;
     }
@@ -4444,3 +4452,4 @@ freely, subject to the following restrictions:
     3. This notice may not be removed or altered from any source
     distribution.
 */
+
