@@ -186,7 +186,7 @@ FloatingElementConfig :: struct {
 	attachment:         FloatingAttachPoints,
 	pointerCaptureMode: PointerCaptureMode,
 	attachTo:           FloatingAttachToElement,
-	clipTo: 			FloatingClipToElement,
+	clipTo:             FloatingClipToElement,
 }
 
 TextRenderData :: struct {
@@ -342,7 +342,7 @@ ElementDeclaration :: struct {
 	layout:          LayoutConfig,
 	backgroundColor: Color,
 	cornerRadius:    CornerRadius,
-	aspectRatio: 	 AspectRatioElementConfig,
+	aspectRatio:     AspectRatioElementConfig,
 	image:           ImageElementConfig,
 	floating:        FloatingElementConfig,
 	custom:          CustomElementConfig,
@@ -460,11 +460,11 @@ CornerRadiusAll :: proc(radius: f32) -> CornerRadius {
 	return CornerRadius{radius, radius, radius, radius}
 }
 
-SizingFit :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
+SizingFit :: proc(sizeMinMax: SizingConstraintsMinMax = {}) -> SizingAxis {
 	return SizingAxis{type = SizingType.Fit, constraints = {sizeMinMax = sizeMinMax}}
 }
 
-SizingGrow :: proc(sizeMinMax: SizingConstraintsMinMax) -> SizingAxis {
+SizingGrow :: proc(sizeMinMax: SizingConstraintsMinMax = {}) -> SizingAxis {
 	return SizingAxis{type = SizingType.Grow, constraints = {sizeMinMax = sizeMinMax}}
 }
 
