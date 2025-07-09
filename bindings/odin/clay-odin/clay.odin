@@ -430,7 +430,7 @@ UI :: proc() -> proc (config: ElementDeclaration) -> bool {
 	return ConfigureOpenElement
 }
 
-Text :: proc($text: string, config: ^TextElementConfig) {
+Text :: proc(text: string, config: ^TextElementConfig) {
 	wrapped := MakeString(text)
 	wrapped.isStaticallyAllocated = true
 	_OpenTextElement(wrapped, config)
