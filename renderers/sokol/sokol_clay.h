@@ -284,7 +284,7 @@ void sclay_render(Clay_RenderCommandArray renderCommands, sclay_font_t *fonts) {
     sgl_disable_texture();
     sgl_push_pipeline();
     sgl_load_pipeline(_sclay.pip);
-    for (uint32_t i = 0; i < renderCommands.length; i++) {
+    for (int32_t i = 0; i < renderCommands.length; i++) {
         Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, i);
         Clay_BoundingBox bbox = renderCommand->boundingBox;
         switch (renderCommand->commandType) {
