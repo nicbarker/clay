@@ -413,7 +413,8 @@ foreign Clay {
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
 foreign Clay {
 	_ConfigureOpenElement :: proc(config: ElementDeclaration) ---
-	_HashString :: proc(key: String, offset: u32, seed: u32) -> ElementId ---
+	_HashString :: proc(key: String, seed: u32) -> ElementId ---
+	_HashStringWithOffset :: proc(key: String, index: u32, seed: u32) -> ElementId ---
 	_OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
 	_StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
 	_GetParentElementId :: proc() -> u32 ---
@@ -481,9 +482,9 @@ MakeString :: proc(label: string) -> String {
 }
 
 ID :: proc(label: string, index: u32 = 0) -> ElementId {
-	return _HashString(MakeString(label), index, 0)
+	return _HashString(MakeString(label), 0)
 }
 
 ID_LOCAL :: proc(label: string, index: u32 = 0) -> ElementId {
-	return _HashString(MakeString(label), index, _GetParentElementId())
+	return _HashStringWithOffset(MakeString(label), index, _GetParentElementId())
 }

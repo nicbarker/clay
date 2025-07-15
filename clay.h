@@ -73,24 +73,24 @@
 #define CLAY_SIZING_PERCENT(percentOfParent) (CLAY__INIT(Clay_SizingAxis) { .size = { .percent = (percentOfParent) }, .type = CLAY__SIZING_TYPE_PERCENT })
 
 // Note: If a compile error led you here, you might be trying to use CLAY_ID with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SID instead.
-#define CLAY_ID(label) CLAY_IDI(label, 0)
+#define CLAY_ID(label) CLAY_SID(CLAY_STRING(label))
 
-#define CLAY_SID(label) CLAY_SIDI(label, 0)
+#define CLAY_SID(label) Clay__HashString(label, 0)
 
 // Note: If a compile error led you here, you might be trying to use CLAY_IDI with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SIDI instead.
 #define CLAY_IDI(label, index) CLAY_SIDI(CLAY_STRING(label), index)
 
-#define CLAY_SIDI(label, index) Clay__HashString(label, index, 0)
+#define CLAY_SIDI(label, index) Clay__HashStringWithOffset(label, index, 0)
 
 // Note: If a compile error led you here, you might be trying to use CLAY_ID_LOCAL with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SID_LOCAL instead.
-#define CLAY_ID_LOCAL(label) CLAY_IDI_LOCAL(label, 0)
+#define CLAY_ID_LOCAL(label) CLAY_SID_LOCAL(CLAY_STRING(label))
 
-#define CLAY_SID_LOCAL(label) CLAY_SIDI_LOCAL(label, 0)
+#define CLAY_SID_LOCAL(label, index) Clay__HashString(label, Clay__GetParentElementId())
 
 // Note: If a compile error led you here, you might be trying to use CLAY_IDI_LOCAL with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SIDI_LOCAL instead.
 #define CLAY_IDI_LOCAL(label, index) CLAY_SIDI_LOCAL(CLAY_STRING(label), index)
 
-#define CLAY_SIDI_LOCAL(label, index) Clay__HashString(label, index, Clay__GetParentElementId())
+#define CLAY_SIDI_LOCAL(label, index) Clay__HashStringWithOffset(label, index, Clay__GetParentElementId())
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
@@ -919,7 +919,8 @@ CLAY_DLL_EXPORT void Clay__OpenElement(void);
 CLAY_DLL_EXPORT void Clay__ConfigureOpenElement(const Clay_ElementDeclaration config);
 CLAY_DLL_EXPORT void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *config);
 CLAY_DLL_EXPORT void Clay__CloseElement(void);
-CLAY_DLL_EXPORT Clay_ElementId Clay__HashString(Clay_String key, uint32_t offset, uint32_t seed);
+CLAY_DLL_EXPORT Clay_ElementId Clay__HashString(Clay_String key, uint32_t seed);
+CLAY_DLL_EXPORT Clay_ElementId Clay__HashStringWithOffset(Clay_String key, uint32_t offset, uint32_t seed);
 CLAY_DLL_EXPORT void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig);
 CLAY_DLL_EXPORT Clay_TextElementConfig *Clay__StoreTextElementConfig(Clay_TextElementConfig config);
 CLAY_DLL_EXPORT uint32_t Clay__GetParentElementId(void);
@@ -1360,7 +1361,22 @@ Clay_ElementId Clay__HashNumber(const uint32_t offset, const uint32_t seed) {
     return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = offset, .baseId = seed, .stringId = CLAY__STRING_DEFAULT }; // Reserve the hash result of zero as "null id"
 }
 
-Clay_ElementId Clay__HashString(Clay_String key, const uint32_t offset, const uint32_t seed) {
+Clay_ElementId Clay__HashString(Clay_String key, const uint32_t seed) {
+    uint32_t hash = seed;
+
+    for (int32_t i = 0; i < key.length; i++) {
+        hash += key.chars[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = 0, .baseId = hash + 1, .stringId = key }; // Reserve the hash result of zero as "null id"
+}
+
+Clay_ElementId Clay__HashStringWithOffset(Clay_String key, const uint32_t offset, const uint32_t seed) {
     uint32_t hash = 0;
     uint32_t base = seed;
 
@@ -2093,10 +2109,10 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
                     clipElementId = Clay__int32_tArray_GetValue(&context->layoutElementClipElementIds, (int32_t)(parentItem->layoutElement - context->layoutElements.internalArray));
                 }
             } else if (declaration->floating.attachTo == CLAY_ATTACH_TO_ROOT) {
-                floatingConfig.parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0, 0).id;
+                floatingConfig.parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id;
             }
             if (!openLayoutElementId.id) {
-                openLayoutElementId = Clay__HashString(CLAY_STRING("Clay__FloatingContainer"), context->layoutElementTreeRoots.length, 0);
+                openLayoutElementId = Clay__HashStringWithOffset(CLAY_STRING("Clay__FloatingContainer"), context->layoutElementTreeRoots.length, 0);
             }
             if (declaration->floating.clipTo == CLAY_CLIP_TO_NONE) {
                 clipElementId = 0;
@@ -3300,7 +3316,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
     }
 
     if (context->pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        Clay_ElementId collapseButtonId = Clay__HashString(CLAY_STRING("Clay__DebugView_CollapseElement"), 0, 0);
+        Clay_ElementId collapseButtonId = Clay__HashString(CLAY_STRING("Clay__DebugView_CollapseElement"), 0);
         for (int32_t i = (int)context->pointerOverIds.length - 1; i >= 0; i--) {
             Clay_ElementId *elementId = Clay_ElementIdArray_Get(&context->pointerOverIds, i);
             if (elementId->baseId == collapseButtonId.baseId) {
@@ -3403,7 +3419,7 @@ void HandleDebugViewCloseButtonInteraction(Clay_ElementId elementId, Clay_Pointe
 
 void Clay__RenderDebugView(void) {
     Clay_Context* context = Clay_GetCurrentContext();
-    Clay_ElementId closeButtonId = Clay__HashString(CLAY_STRING("Clay__DebugViewTopHeaderCloseButtonOuter"), 0, 0);
+    Clay_ElementId closeButtonId = Clay__HashString(CLAY_STRING("Clay__DebugViewTopHeaderCloseButtonOuter"), 0);
     if (context->pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         for (int32_t i = 0; i < context->pointerOverIds.length; ++i) {
             Clay_ElementId *elementId = Clay_ElementIdArray_Get(&context->pointerOverIds, i);
@@ -3418,7 +3434,7 @@ void Clay__RenderDebugView(void) {
     uint32_t initialElementsLength = context->layoutElements.length;
     Clay_TextElementConfig *infoTextConfig = CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE });
     Clay_TextElementConfig *infoTitleConfig = CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16, .wrapMode = CLAY_TEXT_WRAP_NONE });
-    Clay_ElementId scrollId = Clay__HashString(CLAY_STRING("Clay__DebugViewOuterScrollPane"), 0, 0);
+    Clay_ElementId scrollId = Clay__HashString(CLAY_STRING("Clay__DebugViewOuterScrollPane"), 0);
     float scrollYOffset = 0;
     bool pointerInDebugView = context->pointerInfo.position.y < context->layoutDimensions.height - 300;
     for (int32_t i = 0; i < context->scrollContainerDatas.length; ++i) {
@@ -3461,7 +3477,7 @@ void Clay__RenderDebugView(void) {
         CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(1)} }, .backgroundColor = CLAY__DEBUGVIEW_COLOR_3 } ) {}
         CLAY({ .id = scrollId, .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .clip = { .horizontal = true, .vertical = true, .childOffset = Clay_GetScrollOffset() } }) {
             CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .layoutDirection = CLAY_TOP_TO_BOTTOM }, .backgroundColor = ((initialElementsLength + initialRootsLength) & 1) == 0 ? CLAY__DEBUGVIEW_COLOR_2 : CLAY__DEBUGVIEW_COLOR_1 }) {
-                Clay_ElementId panelContentsId = Clay__HashString(CLAY_STRING("Clay__DebugViewPaneOuter"), 0, 0);
+                Clay_ElementId panelContentsId = Clay__HashString(CLAY_STRING("Clay__DebugViewPaneOuter"), 0);
                 // Element list
                 CLAY({ .id = panelContentsId, .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)} }, .floating = { .zIndex = 32766, .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH, .attachTo = CLAY_ATTACH_TO_PARENT, .clipTo = CLAY_CLIP_TO_ATTACHED_PARENT } }) {
                     CLAY({ .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = { CLAY__DEBUGVIEW_OUTER_PADDING, CLAY__DEBUGVIEW_OUTER_PADDING, 0, 0 }, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
@@ -4245,12 +4261,12 @@ Clay_RenderCommandArray Clay_EndLayout(void) {
 
 CLAY_WASM_EXPORT("Clay_GetElementId")
 Clay_ElementId Clay_GetElementId(Clay_String idString) {
-    return Clay__HashString(idString, 0, 0);
+    return Clay__HashString(idString, 0);
 }
 
 CLAY_WASM_EXPORT("Clay_GetElementIdWithIndex")
 Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index) {
-    return Clay__HashString(idString, index, 0);
+    return Clay__HashStringWithOffset(idString, index, 0);
 }
 
 bool Clay_Hovered(void) {
