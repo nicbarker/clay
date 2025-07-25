@@ -870,6 +870,7 @@ CLAY_DLL_EXPORT Clay_ElementData Clay_GetElementData(Clay_ElementId id);
 // Returns true if the pointer position provided by Clay_SetPointerState is within the current element's bounding box.
 // Works during element declaration, e.g. CLAY({ .backgroundColor = Clay_Hovered() ? BLUE : RED });
 CLAY_DLL_EXPORT bool Clay_Hovered(void);
+CLAY_DLL_EXPORT Clay_PointerDataInteractionState Clay_Interaction(void);
 // Bind a callback that will be called when the pointer position provided by Clay_SetPointerState is within the current element's bounding box.
 // - onHoverFunction is a function pointer to a user defined function.
 // - userData is a pointer that will be transparently passed through when the onHoverFunction is called.
@@ -4235,6 +4236,24 @@ bool Clay_Hovered(void) {
         }
     }
     return false;
+}
+
+Clay_PointerDataInteractionState Clay_Interaction(void) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (context->booleanWarnings.maxElementsExceeded) {
+        return CLAY_POINTER_DATA_RELEASED;
+    }
+    Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
+    // If the element has no id attached at this point, we need to generate one
+    if (openLayoutElement->id == 0) {
+        Clay__GenerateIdForAnonymousElement(openLayoutElement);
+    }
+    for (int32_t i = 0; i < context->pointerOverIds.length; ++i) {
+        if (Clay_ElementIdArray_Get(&context->pointerOverIds, i)->id == openLayoutElement->id) {
+            return context->pointerInfo.state;
+        }
+    }
+    return CLAY_POINTER_DATA_RELEASED;
 }
 
 void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData), intptr_t userData) {
