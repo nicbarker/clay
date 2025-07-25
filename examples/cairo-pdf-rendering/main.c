@@ -88,7 +88,7 @@ void Layout() {
                         .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER }},
                         .border = { .color = PRIMARY, .width = 2, 2, 2, 2 }, .cornerRadius = 10
                     }) {
-						CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }, .image = { .sourceDimensions = { 32, 32 }, .imageData = "resources/check.png" }});
+						CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }, .image = { .imageData = "resources/check.png" }});
 					}
 				}
 			}
