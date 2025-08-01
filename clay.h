@@ -512,6 +512,7 @@ CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
 typedef struct Clay_CustomElementConfig {
     // A transparent pointer through which you can pass custom data to the renderer.
     // Generates CUSTOM render commands.
+    uint32_t customCommandId;
     void* customData;
 } Clay_CustomElementConfig;
 
@@ -598,6 +599,8 @@ typedef struct Clay_CustomRenderData {
     // Controls the "radius", or corner rounding of this custom element.
     // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
+
+    uint32_t customCommandId;
     // A pointer transparently passed through from the original element definition.
     void* customData;
 } Clay_CustomRenderData;
@@ -2919,6 +2922,7 @@ void Clay__CalculateFinalLayout(void) {
                                     .backgroundColor = sharedConfig->backgroundColor,
                                     .cornerRadius = sharedConfig->cornerRadius,
                                     .customData = elementConfig->config.customElementConfig->customData,
+                                    .customCommandId = elementConfig->config.customElementConfig->customCommandId
                                 }
                             };
                             emitRectangle = false;
