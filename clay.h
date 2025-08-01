@@ -512,8 +512,10 @@ CLAY__WRAPPER_STRUCT(Clay_FloatingElementConfig);
 typedef struct Clay_CustomElementConfig {
     // A transparent pointer through which you can pass custom data to the renderer.
     // Generates CUSTOM render commands.
-    uint32_t customCommandId;
     void* customData;
+
+    // An integer Dd value to help identify the custom data element during the rendering stage.
+    uint32_t customCommandId;
 } Clay_CustomElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_CustomElementConfig);
@@ -600,9 +602,10 @@ typedef struct Clay_CustomRenderData {
     // The rounding is determined by drawing a circle inset into the element corner by (radius, radius) pixels.
     Clay_CornerRadius cornerRadius;
 
-    uint32_t customCommandId;
     // A pointer transparently passed through from the original element definition.
     void* customData;
+    // An id value transparently passed through from the original element definition.
+    uint32_t customCommandId;
 } Clay_CustomRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
