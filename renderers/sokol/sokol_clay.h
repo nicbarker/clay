@@ -227,13 +227,26 @@ Clay_Dimensions sclay_measure_text(Clay_StringSlice text, Clay_TextElementConfig
     sclay_font_t *fonts = (sclay_font_t *)userData;
     if(!fonts) return (Clay_Dimensions){ 0 };
     fonsSetFont(_sclay.fonts, fonts[config->fontId]);
-    fonsSetSize(_sclay.fonts, config->fontSize);
-    fonsSetSpacing(_sclay.fonts, config->letterSpacing);
+    fonsSetSize(_sclay.fonts, config->fontSize * _sclay.dpi_scale);
+    fonsSetSpacing(_sclay.fonts, config->letterSpacing * _sclay.dpi_scale);
+    switch (config->textAlignment) {
+        case CLAY_TEXT_ALIGN_LEFT:
+            fonsSetAlign(_sclay.fonts, FONS_ALIGN_LEFT | FONS_ALIGN_TOP);
+            break;
+        case CLAY_TEXT_ALIGN_CENTER:
+            fonsSetAlign(_sclay.fonts, FONS_ALIGN_CENTER | FONS_ALIGN_TOP);
+            break;
+        case CLAY_TEXT_ALIGN_RIGHT:
+            fonsSetAlign(_sclay.fonts, FONS_ALIGN_RIGHT | FONS_ALIGN_TOP);
+            break;
+        default:
+            fonsSetAlign(_sclay.fonts, FONS_ALIGN_LEFT | FONS_ALIGN_TOP);
+    }
     float ascent, descent, lineh;
     fonsVertMetrics(_sclay.fonts, &ascent, &descent, &lineh);
     return (Clay_Dimensions) {
-        .width = fonsTextBounds(_sclay.fonts, 0, 0, text.chars, text.chars + text.length, NULL),
-        .height = ascent - descent
+        .width = fonsTextBounds(_sclay.fonts, 0, 0, text.chars, text.chars + text.length, NULL) / _sclay.dpi_scale,
+        .height = (ascent - descent) / _sclay.dpi_scale
     };
 }
 
@@ -366,6 +379,19 @@ void sclay_render(Clay_RenderCommandArray renderCommands, sclay_font_t *fonts) {
                         config->textColor.a);
                 fonsSetColor(_sclay.fonts, color);
                 fonsSetSpacing(_sclay.fonts, config->letterSpacing * _sclay.dpi_scale);
+                switch (config->textAlignment) {
+                    case CLAY_TEXT_ALIGN_LEFT:
+                        fonsSetAlign(_sclay.fonts, FONS_ALIGN_LEFT | FONS_ALIGN_TOP);
+                        break;
+                    case CLAY_TEXT_ALIGN_CENTER:
+                        fonsSetAlign(_sclay.fonts, FONS_ALIGN_CENTER | FONS_ALIGN_TOP);
+                        break;
+                    case CLAY_TEXT_ALIGN_RIGHT:
+                        fonsSetAlign(_sclay.fonts, FONS_ALIGN_RIGHT | FONS_ALIGN_TOP);
+                        break;
+                    default:
+                        fonsSetAlign(_sclay.fonts, FONS_ALIGN_LEFT | FONS_ALIGN_TOP);
+                }
                 fonsSetAlign(_sclay.fonts, FONS_ALIGN_LEFT | FONS_ALIGN_TOP);
                 fonsSetSize(_sclay.fonts, config->fontSize * _sclay.dpi_scale);
                 sgl_matrix_mode_modelview();
