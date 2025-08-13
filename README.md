@@ -1,4 +1,4 @@
-# Clay
+# Clay, A UI Layout Library
 **_Clay_** (short for **C Layout**) is a high performance 2D UI layout library.
 
 ### Major Features
@@ -179,7 +179,7 @@ For help starting out or to discuss clay, considering joining [the discord serve
     - [Clay_GetElementData](#clay_getelementdata)
     - [Clay_GetElementId](#clay_getelementid)
   - [Element Macros](#element-macros)
-    - [CLAY](#clay-uppercase)
+    - [CLAY](#clay)
     - [CLAY_ID](#clay_id)
     - [CLAY_IDI](#clay_idi)
   - [Data Structures & Defs](#data-structures--definitions)
@@ -771,7 +771,6 @@ Returns a [Clay_ElementId](#clay_elementid) for the provided id string, used for
 
 ## Element Macros
 
-<a name="clay-uppercase"></a>
 ### CLAY()
 **Usage**
 
