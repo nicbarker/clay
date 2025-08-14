@@ -1,4 +1,4 @@
-# Clay
+# Clay, A UI Layout Library
 **_Clay_** (short for **C Layout**) is a high performance 2D UI layout library.
 
 ### Major Features
