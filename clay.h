@@ -566,8 +566,6 @@ typedef struct Clay_TextRenderData {
     uint16_t letterSpacing;
     // The height of the bounding box for this line of text.
     uint16_t lineHeight;
-    // Specifies the alignment of the text within its container.
-    Clay_TextAlignment textAlignment;
 } Clay_TextRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
@@ -2900,7 +2898,6 @@ void Clay__CalculateFinalLayout(void) {
                                         .fontSize = textElementConfig->fontSize,
                                         .letterSpacing = textElementConfig->letterSpacing,
                                         .lineHeight = textElementConfig->lineHeight,
-                                        .textAlignment = textElementConfig->textAlignment,
                                     }},
                                     .userData = textElementConfig->userData,
                                     .id = Clay__HashNumber(lineIndex, currentElement->id).id,
