@@ -91,6 +91,15 @@
         Unfortunately Clay does not currently provide feedback on whether a mouse
         click was handled or not.
 
+    --- if you want to use images with clay, you should pass a pointer to a
+        sclay_image to the CLAY macro, like this:
+                CLAY({
+                   ...
+                   .image = { .imageData = &(sclay_image){ .image = img, .sampler = 0 } },
+                })
+        Using 0 as a sampler uses the sokol default sampler with linear interpolation.
+        The image should be created using sg_make_image from sokol_gfx.
+
     --- finally, on application shutdown, call
 
             sclay_shutdown()
@@ -100,6 +109,12 @@
 #endif
 
 typedef int sclay_font_t;
+
+typedef struct sclay_image {
+    sg_image image;
+    sg_sampler sampler;
+} sclay_image;
+
 
 void sclay_setup();
 void sclay_shutdown();
@@ -246,6 +261,15 @@ static void _draw_rect(float x, float y, float w, float h){
     sgl_v2f(x+w, y+h);
 }
 
+static void _draw_rect_textured(float x, float y, float w, float h){
+    sgl_v2f_t2f(x, y, 0.f, 0.f);
+    sgl_v2f_t2f(x, y, 0.f, 0.f);
+    sgl_v2f_t2f(x+w, y, 1.f, 0.f);
+    sgl_v2f_t2f(x, y+h, 0.f, 1.f);
+    sgl_v2f_t2f(x+w, y+h, 1.f, 1.f);
+    sgl_v2f_t2f(x+w, y+h, 1.f, 1.f);
+}
+
 static float _SIN[16] = {
     0.000000f, 0.104528f, 0.207912f, 0.309017f,
     0.406737f, 0.500000f, 0.587785f, 0.669131f,
@@ -389,7 +413,77 @@ void sclay_render(Clay_RenderCommandArray renderCommands, sclay_font_t *fonts) {
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-                //TODO
+                Clay_ImageRenderData *config = &renderCommand->renderData.image;
+                sclay_image* img = (sclay_image*)config->imageData;
+
+                sgl_c4f(config->backgroundColor.r / 255.0f,
+                        config->backgroundColor.g / 255.0f,
+                        config->backgroundColor.b / 255.0f,
+                        config->backgroundColor.a / 255.0f);
+
+                Clay_CornerRadius r = config->cornerRadius;
+
+                sgl_enable_texture();
+                sgl_texture(img->image, img->sampler);
+
+                sgl_begin_triangle_strip();
+                if(r.topLeft > 0 || r.topRight > 0){
+                    _draw_corner(bbox.x, bbox.y, -r.topLeft, -r.topLeft);
+                    _draw_corner(bbox.x+bbox.width, bbox.y, r.topRight, -r.topRight);
+                    _draw_rect_textured(bbox.x+r.topLeft, bbox.y,
+                               bbox.width-r.topLeft-r.topRight, CLAY__MAX(r.topLeft, r.topRight));
+                }
+                if(r.bottomLeft > 0 || r.bottomRight > 0){
+                    _draw_corner(bbox.x, bbox.y+bbox.height, -r.bottomLeft, r.bottomLeft);
+                    _draw_corner(bbox.x+bbox.width, bbox.y+bbox.height, r.bottomRight, r.bottomRight);
+                    _draw_rect_textured(bbox.x+r.bottomLeft,
+                               bbox.y+bbox.height-CLAY__MAX(r.bottomLeft, r.bottomRight),
+                               bbox.width-r.bottomLeft-r.bottomRight, CLAY__MAX(r.bottomLeft, r.bottomRight));
+                }
+                if(r.topLeft < r.bottomLeft){
+                    if(r.topLeft < r.topRight){
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.topLeft, bbox.height-r.topLeft-r.bottomLeft);
+                        _draw_rect_textured(bbox.x+r.topLeft, bbox.y+r.topRight,
+                                   r.bottomLeft-r.topLeft, bbox.height-r.topRight-r.bottomLeft);
+                    } else {
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.bottomLeft, bbox.height-r.topLeft-r.bottomLeft);
+                    }
+                } else {
+                    if(r.bottomLeft < r.bottomRight){
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.bottomLeft, bbox.height-r.topLeft-r.bottomLeft);
+                        _draw_rect_textured(bbox.x+r.bottomLeft, bbox.y+r.topLeft,
+                                   r.topLeft-r.bottomLeft, bbox.height-r.topLeft-r.bottomRight);
+                    } else {
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.topLeft, bbox.height-r.topLeft-r.bottomLeft);
+                    }
+                }
+                if(r.topRight < r.bottomRight){
+                    if(r.topRight < r.topLeft){
+                        _draw_rect_textured(bbox.x+bbox.width-r.bottomRight, bbox.y+r.topLeft,
+                                   r.bottomRight-r.topRight, bbox.height-r.topLeft-r.bottomRight);
+                        _draw_rect_textured(bbox.x+bbox.width-r.topRight, bbox.y+r.topRight,
+                                   r.topRight, bbox.height-r.topRight-r.bottomRight);
+                    } else {
+                        _draw_rect_textured(bbox.x+bbox.width-r.bottomRight, bbox.y+r.topRight,
+                                   r.bottomRight, bbox.height-r.topRight-r.bottomRight);
+                    }
+                } else {
+                    if(r.bottomRight < r.bottomLeft){
+                        _draw_rect_textured(bbox.x+bbox.width-r.topRight, bbox.y+r.topRight,
+                                   r.topRight-r.bottomRight, bbox.height-r.topRight-r.bottomLeft);
+                        _draw_rect_textured(bbox.x+bbox.width-r.bottomRight, bbox.y+r.topRight,
+                                   r.bottomRight, bbox.height-r.topRight-r.bottomRight);
+                    } else {
+                        _draw_rect_textured(bbox.x+bbox.width-r.topRight, bbox.y+r.topRight,
+                                   r.topRight, bbox.height-r.topRight-r.bottomRight);
+                    }
+                }
+                _draw_rect_textured(bbox.x+CLAY__MAX(r.topLeft, r.bottomLeft),
+                           bbox.y+CLAY__MAX(r.topLeft, r.topRight),
+                           bbox.width-CLAY__MAX(r.topLeft, r.bottomLeft)-CLAY__MAX(r.topRight, r.bottomRight),
+                           bbox.height-CLAY__MAX(r.topLeft, r.topRight)-CLAY__MAX(r.bottomLeft, r.bottomRight));
+                sgl_end();
+                sgl_disable_texture();
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {
