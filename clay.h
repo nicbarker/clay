@@ -4109,7 +4109,6 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
             Clay__ScrollContainerDataInternalArray_RemoveSwapback(&context->scrollContainerDatas, i);
             continue;
         }
-        scrollData->openThisFrame = false;
         Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(scrollData->elementId);
         // Element isn't rendered this frame but scroll offset has been retained
         if (!hashMapItem) {
@@ -4117,6 +4116,7 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
             continue;
         }
 
+        scrollData->openThisFrame = false;
         // Touch / click is released
         if (!isPointerActive && scrollData->pointerScrollActive) {
             float xDiff = scrollData->scrollPosition.x - scrollData->scrollOrigin.x;
