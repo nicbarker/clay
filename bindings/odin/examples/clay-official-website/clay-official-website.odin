@@ -446,11 +446,11 @@ createLayout :: proc(lerpValue: f32) -> clay.ClayArray(clay.RenderCommand) {
                 clay.Text("Github", clay.TextConfig({fontId = FONT_ID_BODY_24, fontSize = 24, textColor = {61, 26, 5, 255}}))
             }
         }
-        if clay.UI()({ id = clay.ID("TopBorder1"), layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_5 } ) {}
-        if clay.UI()({ id = clay.ID("TopBorder2"), layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_4 } ) {}
-        if clay.UI()({ id = clay.ID("TopBorder3"), layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_3 } ) {}
-        if clay.UI()({ id = clay.ID("TopBorder4"), layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_2 } ) {}
-        if clay.UI()({ id = clay.ID("TopBorder5"), layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_1 } ) {}
+        if clay.UI(clay.ID("TopBorder1"))({ layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_5 } ) {}
+        if clay.UI(clay.ID("TopBorder2"))({ layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_4 } ) {}
+        if clay.UI(clay.ID("TopBorder3"))({ layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_3 } ) {}
+        if clay.UI(clay.ID("TopBorder4"))({ layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_2 } ) {}
+        if clay.UI(clay.ID("TopBorder5"))({ layout = { sizing = { clay.SizingGrow(), clay.SizingFixed(4) } }, backgroundColor = COLOR_TOP_BORDER_1 } ) {}
         if clay.UI()({
             id = clay.ID("ScrollContainerBackgroundRectangle"),
             clip = { vertical = true, childOffset = clay.GetScrollOffset() },
