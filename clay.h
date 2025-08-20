@@ -85,7 +85,7 @@
 // Note: If a compile error led you here, you might be trying to use CLAY_ID_LOCAL with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SID_LOCAL instead.
 #define CLAY_ID_LOCAL(label) CLAY_SID_LOCAL(CLAY_STRING(label))
 
-#define CLAY_SID_LOCAL(label, index) Clay__HashString(label, Clay__GetParentElementId())
+#define CLAY_SID_LOCAL(label) Clay__HashString(label, Clay__GetParentElementId())
 
 // Note: If a compile error led you here, you might be trying to use CLAY_IDI_LOCAL with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SIDI_LOCAL instead.
 #define CLAY_IDI_LOCAL(label, index) CLAY_SIDI_LOCAL(CLAY_STRING(label), index)
