@@ -102,7 +102,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
     Clay_Color contentBackgroundColor = { 90, 90, 90, 255 };
 
     // Build UI here
-    CLAY({ .id = CLAY_ID("OuterContainer"),
+    CLAY_WITHID(CLAY_ID("OuterContainer"), {
         .backgroundColor = {43, 41, 51, 255 },
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -112,7 +112,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
         }
     }) {
         // Child elements go inside braces
-        CLAY({ .id = CLAY_ID("HeaderBar"),
+        CLAY_WITHID(CLAY_ID("HeaderBar"), {
             .layout = {
                 .sizing = {
                     .height = CLAY_SIZING_FIXED(60),
@@ -128,7 +128,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
             .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
             // Header buttons go here
-            CLAY({ .id = CLAY_ID("FileButton"),
+            CLAY_WITHID(CLAY_ID("FileButton"), {
                 .layout = { .padding = { 16, 16, 8, 8 }},
                 .backgroundColor = {140, 140, 140, 255 },
                 .cornerRadius = CLAY_CORNER_RADIUS(5)
@@ -145,7 +145,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                     Clay_PointerOver(Clay_GetElementId(CLAY_STRING("FileMenu")));
 
                 if (fileMenuVisible) { // Below has been changed slightly to fix the small bug where the menu would dismiss when mousing over the top gap
-                    CLAY({ .id = CLAY_ID("FileMenu"),
+                    CLAY_WITHID(CLAY_ID("FileMenu"), {
                         .floating = {
                             .attachTo = CLAY_ATTACH_TO_PARENT,
                             .attachPoints = {
@@ -181,12 +181,10 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
             RenderHeaderButton(CLAY_STRING("Support"));
         }
 
-        CLAY({
-            .id = CLAY_ID("LowerContent"),
+        CLAY_WITHID(CLAY_ID("LowerContent"), {
             .layout = { .sizing = layoutExpand, .childGap = 16 }
         }) {
-            CLAY({
-                .id = CLAY_ID("Sidebar"),
+            CLAY_WITHID(CLAY_ID("Sidebar"), {
                 .backgroundColor = contentBackgroundColor,
                 .layout = {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -233,7 +231,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                 }
             }
 
-            CLAY({ .id = CLAY_ID("MainContent"),
+            CLAY_WITHID(CLAY_ID("MainContent"), {
                 .backgroundColor = contentBackgroundColor,
                 .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
                 .layout = {

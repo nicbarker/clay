@@ -426,7 +426,7 @@ ConfigureOpenElement :: proc(config: ElementDeclaration) -> bool {
 }
 
 @(deferred_none = _CloseElement)
-UI :: proc() -> proc (config: ElementDeclaration) -> bool {
+UI :: proc(id: ElementId = {}) -> proc (config: ElementDeclaration) -> bool {
 	_OpenElement()
 	return ConfigureOpenElement
 }
