@@ -793,6 +793,8 @@ typedef CLAY_PACKED_ENUM {
     CLAY_ERROR_TYPE_PERCENTAGE_OVER_1,
     // Clay encountered an internal error. It would be wonderful if you could report this so we can fix it!
     CLAY_ERROR_TYPE_INTERNAL_ERROR,
+    // Clay__OpenElement was called more times than Clay__CloseElement, so there were still remaining open elements when the layout ended.
+    CLAY_ERROR_TYPE_UNBALANCED_OPEN_CLOSE,
 } Clay_ErrorType;
 
 // Data to identify the error that clay has encountered.
@@ -1822,6 +1824,10 @@ void Clay__CloseElement(void) {
     }
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     Clay_LayoutConfig *layoutConfig = openLayoutElement->layoutConfig;
+    if (!layoutConfig) {
+        openLayoutElement->layoutConfig = &Clay_LayoutConfig_DEFAULT;
+        layoutConfig = &Clay_LayoutConfig_DEFAULT;
+    }
     bool elementHasClipHorizontal = false;
     bool elementHasClipVertical = false;
     for (int32_t i = 0; i < openLayoutElement->elementConfigs.length; i++) {
@@ -4247,9 +4253,14 @@ Clay_RenderCommandArray Clay_EndLayout(void) {
             .renderData = { .text = { .stringContents = CLAY__INIT(Clay_StringSlice) { .length = message.length, .chars = message.chars, .baseChars = message.chars }, .textColor = {255, 0, 0, 255}, .fontSize = 16 } },
             .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT
         });
-    } else {
-        Clay__CalculateFinalLayout();
     }
+    if (context->openLayoutElementStack.length > 1) {
+        context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+                .errorType = CLAY_ERROR_TYPE_UNBALANCED_OPEN_CLOSE,
+                .errorText = CLAY_STRING("There were still open layout elements when EndLayout was called. This results from an unequal number of calls to Clay__OpenElement and Clay__CloseElement."),
+                .userData = context->errorHandler.userData });
+    }
+    Clay__CalculateFinalLayout();
     return context->renderCommands;
 }
 
