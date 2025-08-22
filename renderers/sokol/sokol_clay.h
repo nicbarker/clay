@@ -113,6 +113,9 @@ typedef int sclay_font_t;
 typedef struct sclay_image {
     sg_image image;
     sg_sampler sampler;
+    struct {
+        float u0, v0, u1, v1;
+    } uv;
 } sclay_image;
 
 
@@ -261,13 +264,13 @@ static void _draw_rect(float x, float y, float w, float h){
     sgl_v2f(x+w, y+h);
 }
 
-static void _draw_rect_textured(float x, float y, float w, float h){
-    sgl_v2f_t2f(x, y, 0.f, 0.f);
-    sgl_v2f_t2f(x, y, 0.f, 0.f);
-    sgl_v2f_t2f(x+w, y, 1.f, 0.f);
-    sgl_v2f_t2f(x, y+h, 0.f, 1.f);
-    sgl_v2f_t2f(x+w, y+h, 1.f, 1.f);
-    sgl_v2f_t2f(x+w, y+h, 1.f, 1.f);
+static void _draw_rect_textured(float x, float y, float w, float h, float u0, float v0, float u1, float v1){
+    sgl_v2f_t2f(x, y, u0, v0);
+    sgl_v2f_t2f(x, y, u0, v0);
+    sgl_v2f_t2f(x+w, y, u1, v0);
+    sgl_v2f_t2f(x, y+h, u0, v1);
+    sgl_v2f_t2f(x+w, y+h, u1, v1);
+    sgl_v2f_t2f(x+w, y+h, u1, v1);
 }
 
 static float _SIN[16] = {
@@ -287,6 +290,23 @@ static void _draw_corner(float x, float y, float rx, float ry){
         sgl_v2f(x+(rx*_SIN[15-i]), y+(ry*_SIN[i]));
     }
     sgl_v2f(x+(rx*_SIN[0]), y+(ry*_SIN[15]));
+}
+
+static void _draw_corner_textured(float x, float y, float rx, float ry, float bx, float by, float bw, float bh, float u0, float v0, float u1, float v1) {
+    x -= rx;
+    y -= ry;
+#define MAP_U(x) (u0+(((x)-bx)/bw)*(u1-u0))
+#define MAP_V(y) (v0+(((y)-by)/bh)*(v1-v0))
+    sgl_v2f_t2f(x, y, MAP_U(x), MAP_V(y));
+    for(int i = 0; i < 16; ++i){
+        sgl_v2f_t2f(x, y, MAP_U(x), MAP_V(y));
+        float px = x+(rx*_SIN[15-i]);
+        float py = y+(ry*_SIN[i]);
+        sgl_v2f_t2f(px, py, MAP_U(px), MAP_V(py));
+    }
+    sgl_v2f_t2f(x+(rx*_SIN[0]), y+(ry*_SIN[15]), MAP_U(x+(rx*_SIN[0])), MAP_V(y+(ry*_SIN[15])));
+#undef MAP_U
+#undef MAP_V
 }
 
 /* rx,ry = radius   ix,iy = inner radius */
@@ -415,11 +435,26 @@ void sclay_render(Clay_RenderCommandArray renderCommands, sclay_font_t *fonts) {
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
                 Clay_ImageRenderData *config = &renderCommand->renderData.image;
                 sclay_image* img = (sclay_image*)config->imageData;
+                // by default, u1 and v1 are 1. if we pass 0.
+                // note, we are modifying a copy !
+                float u0 = img->uv.u0;
+                float v0 = img->uv.v0;
+                float u1 = img->uv.u1;
+                float v1 = img->uv.v1;
+                if (u1 == 0.f) {
+                    u1 = 1.f;
+                }
+                if (v1 == 0.f) {
+                    v1 = 1.f;
+                }
 
-                sgl_c4f(config->backgroundColor.r / 255.0f,
-                        config->backgroundColor.g / 255.0f,
-                        config->backgroundColor.b / 255.0f,
-                        config->backgroundColor.a / 255.0f);
+                int untinted = config->backgroundColor.r == 0 && config->backgroundColor.g == 0 && config->backgroundColor.b == 0 && config->backgroundColor.a == 0;
+                float cr = untinted ? 1.f : (config->backgroundColor.r / 255.0f);
+                float gr = untinted ? 1.f : (config->backgroundColor.g / 255.0f);
+                float br = untinted ? 1.f : (config->backgroundColor.b / 255.0f);
+                float ar = untinted ? 1.f : (config->backgroundColor.a / 255.0f);
+
+                sgl_c4f(cr, gr, br, ar);
 
                 Clay_CornerRadius r = config->cornerRadius;
 
@@ -428,60 +463,76 @@ void sclay_render(Clay_RenderCommandArray renderCommands, sclay_font_t *fonts) {
 
                 sgl_begin_triangle_strip();
                 if(r.topLeft > 0 || r.topRight > 0){
-                    _draw_corner(bbox.x, bbox.y, -r.topLeft, -r.topLeft);
-                    _draw_corner(bbox.x+bbox.width, bbox.y, r.topRight, -r.topRight);
+                    _draw_corner_textured(bbox.x, bbox.y, -r.topLeft, -r.topLeft, bbox.x, bbox.y, bbox.width, bbox.height, u0, v0, u1, v1);
+                    _draw_corner_textured(bbox.x+bbox.width, bbox.y, r.topRight, -r.topRight, bbox.x, bbox.y, bbox.width, bbox.height, u0, v0, u1, v1);
                     _draw_rect_textured(bbox.x+r.topLeft, bbox.y,
-                               bbox.width-r.topLeft-r.topRight, CLAY__MAX(r.topLeft, r.topRight));
+                               bbox.width-r.topLeft-r.topRight, CLAY__MAX(r.topLeft, r.topRight),
+                               u0 + (r.topLeft/bbox.width)*(u1-u0), v0, u1 - (r.topRight/bbox.width)*(u1-u0), v0 + (CLAY__MAX(r.topLeft, r.topRight)/bbox.height)*(v1-v0));
                 }
                 if(r.bottomLeft > 0 || r.bottomRight > 0){
-                    _draw_corner(bbox.x, bbox.y+bbox.height, -r.bottomLeft, r.bottomLeft);
-                    _draw_corner(bbox.x+bbox.width, bbox.y+bbox.height, r.bottomRight, r.bottomRight);
+                    _draw_corner_textured(bbox.x, bbox.y+bbox.height, -r.bottomLeft, r.bottomLeft, bbox.x, bbox.y, bbox.width, bbox.height, u0, v0, u1, v1);
+                    _draw_corner_textured(bbox.x+bbox.width, bbox.y+bbox.height, r.bottomRight, r.bottomRight, bbox.x, bbox.y, bbox.width, bbox.height, u0, v0, u1, v1);
                     _draw_rect_textured(bbox.x+r.bottomLeft,
                                bbox.y+bbox.height-CLAY__MAX(r.bottomLeft, r.bottomRight),
-                               bbox.width-r.bottomLeft-r.bottomRight, CLAY__MAX(r.bottomLeft, r.bottomRight));
+                               bbox.width-r.bottomLeft-r.bottomRight, CLAY__MAX(r.bottomLeft, r.bottomRight),
+                               u0 + (r.bottomLeft/bbox.width)*(u1-u0), v1 - (CLAY__MAX(r.bottomLeft, r.bottomRight)/bbox.height)*(v1-v0), u1 - (r.bottomRight/bbox.width)*(u1-u0), v1);
                 }
                 if(r.topLeft < r.bottomLeft){
                     if(r.topLeft < r.topRight){
-                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.topLeft, bbox.height-r.topLeft-r.bottomLeft);
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.topLeft, bbox.height-r.topLeft-r.bottomLeft,
+                                u0, v0 + (r.topLeft/bbox.height)*(v1-v0), u0 + (r.topLeft/bbox.width)*(u1-u0), v1 - (r.bottomLeft/bbox.height)*(v1-v0));
                         _draw_rect_textured(bbox.x+r.topLeft, bbox.y+r.topRight,
-                                   r.bottomLeft-r.topLeft, bbox.height-r.topRight-r.bottomLeft);
+                               r.bottomLeft-r.topLeft, bbox.height-r.topRight-r.bottomLeft,
+                               u0 + (r.topLeft/bbox.width)*(u1-u0), v0 + (r.topRight/bbox.height)*(v1-v0), u0 + (r.topLeft/bbox.width)*(u1-u0), v1 - (r.bottomLeft/bbox.height)*(v1-v0));
                     } else {
-                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.bottomLeft, bbox.height-r.topLeft-r.bottomLeft);
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.bottomLeft, bbox.height-r.topLeft-r.bottomLeft,
+                                u0, v0 + (r.topLeft/bbox.height)*(v1-v0), u0 + (r.bottomLeft/bbox.width)*(u1-u0), v1 - (r.bottomLeft/bbox.height)*(v1-v0));
                     }
                 } else {
                     if(r.bottomLeft < r.bottomRight){
-                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.bottomLeft, bbox.height-r.topLeft-r.bottomLeft);
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.bottomLeft, bbox.height-r.topLeft-r.bottomLeft,
+                               u0, v0 + (r.topLeft/bbox.height)*(v1-v0), u0 + (r.bottomLeft/bbox.width)*(u1-u0), v1 - (r.bottomLeft/bbox.height)*(v1-v0));
                         _draw_rect_textured(bbox.x+r.bottomLeft, bbox.y+r.topLeft,
-                                   r.topLeft-r.bottomLeft, bbox.height-r.topLeft-r.bottomRight);
+                                   r.topLeft-r.bottomLeft, bbox.height-r.topLeft-r.bottomRight,
+                                   u0 + (r.bottomLeft/bbox.width)*(u1-u0), v0 + (r.topLeft/bbox.height)*(v1-v0), u0 + (r.topLeft/bbox.width)*(u1-u0), v1 - (r.bottomRight/bbox.height)*(v1-v0));
                     } else {
-                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.topLeft, bbox.height-r.topLeft-r.bottomLeft);
+                        _draw_rect_textured(bbox.x, bbox.y+r.topLeft, r.topLeft, bbox.height-r.topLeft-r.bottomLeft,
+                                u0, v0 + (r.topLeft/bbox.height)*(v1-v0), u0 + (r.topLeft/bbox.width)*(u1-u0), v1 - (r.bottomLeft/bbox.height)*(v1-v0));
                     }
                 }
                 if(r.topRight < r.bottomRight){
                     if(r.topRight < r.topLeft){
                         _draw_rect_textured(bbox.x+bbox.width-r.bottomRight, bbox.y+r.topLeft,
-                                   r.bottomRight-r.topRight, bbox.height-r.topLeft-r.bottomRight);
+                                   r.bottomRight-r.topRight, bbox.height-r.topLeft-r.bottomRight,
+                                   u1 - (r.bottomRight/bbox.width)*(u1-u0), v0 + (r.topLeft/bbox.height)*(v1-v0), u1 - (r.topRight/bbox.width)*(u1-u0), v1 - (r.bottomRight/bbox.height)*(v1-v0));
                         _draw_rect_textured(bbox.x+bbox.width-r.topRight, bbox.y+r.topRight,
-                                   r.topRight, bbox.height-r.topRight-r.bottomRight);
+                                   r.topRight, bbox.height-r.topRight-r.bottomRight,
+                                   u1 - (r.topRight/bbox.width)*(u1-u0), v0 + (r.topRight/bbox.height)*(v1-v0), u1, v1 - (r.bottomRight/bbox.height)*(v1-v0));
                     } else {
                         _draw_rect_textured(bbox.x+bbox.width-r.bottomRight, bbox.y+r.topRight,
-                                   r.bottomRight, bbox.height-r.topRight-r.bottomRight);
+                                   r.bottomRight, bbox.height-r.topRight-r.bottomRight,
+                                   u1 - (r.bottomRight/bbox.width)*(u1-u0), v0 + (r.topRight/bbox.height)*(v1-v0), u1, v1 - (r.bottomRight/bbox.height)*(v1-v0));
                     }
                 } else {
                     if(r.bottomRight < r.bottomLeft){
                         _draw_rect_textured(bbox.x+bbox.width-r.topRight, bbox.y+r.topRight,
-                                   r.topRight-r.bottomRight, bbox.height-r.topRight-r.bottomLeft);
+                                   r.topRight-r.bottomRight, bbox.height-r.topRight-r.bottomLeft,
+                                   u1 - (r.topRight/bbox.width)*(u1-u0), v0 + (r.topRight/bbox.height)*(v1-v0), u1 - (r.bottomRight/bbox.width)*(u1-u0), v1 - (r.bottomLeft/bbox.height)*(v1-v0));
                         _draw_rect_textured(bbox.x+bbox.width-r.bottomRight, bbox.y+r.topRight,
-                                   r.bottomRight, bbox.height-r.topRight-r.bottomRight);
+                                   r.bottomRight, bbox.height-r.topRight-r.bottomRight,
+                                   u1 - (r.bottomRight/bbox.width)*(u1-u0), v0 + (r.topRight/bbox.height)*(v1-v0), u1, v1 - (r.bottomRight/bbox.height)*(v1-v0));
                     } else {
                         _draw_rect_textured(bbox.x+bbox.width-r.topRight, bbox.y+r.topRight,
-                                   r.topRight, bbox.height-r.topRight-r.bottomRight);
+                                   r.topRight, bbox.height-r.topRight-r.bottomRight,
+                                   u1 - (r.topRight/bbox.width)*(u1-u0), v0 + (r.topRight/bbox.height)*(v1-v0), u1, v1 - (r.bottomRight/bbox.height)*(v1-v0));
                     }
                 }
                 _draw_rect_textured(bbox.x+CLAY__MAX(r.topLeft, r.bottomLeft),
                            bbox.y+CLAY__MAX(r.topLeft, r.topRight),
                            bbox.width-CLAY__MAX(r.topLeft, r.bottomLeft)-CLAY__MAX(r.topRight, r.bottomRight),
-                           bbox.height-CLAY__MAX(r.topLeft, r.topRight)-CLAY__MAX(r.bottomLeft, r.bottomRight));
+                           bbox.height-CLAY__MAX(r.topLeft, r.topRight)-CLAY__MAX(r.bottomLeft, r.bottomRight),
+                           u0+CLAY__MAX(r.topLeft,r.bottomLeft)/bbox.width*(u1-u0), v0+CLAY__MAX(r.topLeft,r.topRight)/bbox.height*(v1-v0),
+                           u1-CLAY__MAX(r.topRight,r.bottomRight)/bbox.width*(u1-u0), v1-CLAY__MAX(r.bottomLeft,r.bottomRight)/bbox.height*(v1-v0));
                 sgl_end();
                 sgl_disable_texture();
                 break;
