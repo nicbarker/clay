@@ -206,4 +206,4 @@ draw_rect :: proc(x, y, w, h: f32, color: clay.Color) {
 @(private = "file")
 draw_rect_rounded :: proc(x,y,w,h: f32, radius: f32, color: clay.Color){
     rl.DrawRectangleRounded({x,y,w,h},radius,8,clay_color_to_rl_color(color))
-} 
+}
