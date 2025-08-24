@@ -21,9 +21,17 @@ measure_text :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfi
 
     font := raylib_fonts[config.fontId].font
 
-    for i in 0 ..< text.length {
-        glyph_index := text.chars[i] - 32
+    byte_index := 0
+    for byte_index < int(text.length) {
+        // handle utf-8 codepoints
+        codepoint_bytes: i32 = 0
+        codepoint := raylib.GetCodepoint(
+            transmute(cstring)&text.chars[byte_index],
+            &codepoint_bytes,
+        )
+        byte_index += int(codepoint_bytes)
 
+        glyph_index := raylib.GetGlyphIndex(fontToUse, codepoint)
         glyph := font.glyphs[glyph_index]
 
         if glyph.advanceX != 0 {
