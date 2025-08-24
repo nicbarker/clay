@@ -2588,7 +2588,7 @@ Clay_BoundingBox Clay__ClipBoundingBox(Clay_BoundingBox outer, Clay_BoundingBox 
         0
     );
 
-    return (Clay_BoundingBox) {
+    return CLAY__INIT(Clay_BoundingBox) {
         .x = x,
         .y = y,
         .width = width,
@@ -3204,9 +3204,9 @@ void Clay__CalculateFinalLayout(void) {
                             context->scissorDataStack.length - 1
                         );
                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                            .boundingBox = prevScissorData.boundingBox,
                             .id = prevScissorData.id,
                             .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-                            .boundingBox = prevScissorData.boundingBox,
                         });
                     }
                 }
