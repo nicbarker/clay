@@ -95,7 +95,7 @@
         sclay_image to the CLAY macro, like this:
                 CLAY({
                    ...
-                   .image = { .imageData = &(sclay_image){ .image = img, .sampler = 0 } },
+                   .image = { .imageData = &(sclay_image){ .view = view, .sampler = 0 } },
                 })
         Using 0 as a sampler uses the sokol default sampler with linear interpolation.
         The image should be created using sg_make_image from sokol_gfx.
@@ -111,7 +111,7 @@
 typedef int sclay_font_t;
 
 typedef struct sclay_image {
-    sg_image image;
+    sg_view view;
     sg_sampler sampler;
     struct {
         float u0, v0, u1, v1;
@@ -459,7 +459,7 @@ void sclay_render(Clay_RenderCommandArray renderCommands, sclay_font_t *fonts) {
                 Clay_CornerRadius r = config->cornerRadius;
 
                 sgl_enable_texture();
-                sgl_texture(img->image, img->sampler);
+                sgl_texture(img->view, img->sampler);
 
                 sgl_begin_triangle_strip();
                 if(r.topLeft > 0 || r.topRight > 0){
