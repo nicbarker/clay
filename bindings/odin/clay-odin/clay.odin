@@ -338,7 +338,6 @@ ClayArray :: struct($type: typeid) {
 }
 
 ElementDeclaration :: struct {
-	id:              ElementId,
 	layout:          LayoutConfig,
 	backgroundColor: Color,
 	cornerRadius:    CornerRadius,
