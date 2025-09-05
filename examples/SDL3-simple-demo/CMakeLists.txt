@@ -20,7 +20,6 @@ FetchContent_Declare(
 )
 message(STATUS "Using SDL via FetchContent")
 FetchContent_MakeAvailable(SDL)
-set_property(DIRECTORY "${sdl_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 # Download SDL_ttf
 FetchContent_Declare(
@@ -32,7 +31,6 @@ FetchContent_Declare(
 )
 message(STATUS "Using SDL_ttf via FetchContent")
 FetchContent_MakeAvailable(SDL_ttf)
-set_property(DIRECTORY "${sdl_ttf_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 # Download SDL_image
 FetchContent_Declare(
@@ -44,7 +42,6 @@ FetchContent_Declare(
 )
 message(STATUS "Using SDL_image via FetchContent")
 FetchContent_MakeAvailable(SDL_image)
-set_property(DIRECTORY "${SDL_image_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 # Example executable
 add_executable(${PROJECT_NAME} main.c)
