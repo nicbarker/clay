@@ -482,7 +482,7 @@ MakeString :: proc(label: string) -> String {
 }
 
 ID :: proc(label: string, index: u32 = 0) -> ElementId {
-	return _HashString(MakeString(label), 0)
+	return _HashString(MakeString(label), index)
 }
 
 ID_LOCAL :: proc(label: string, index: u32 = 0) -> ElementId {
