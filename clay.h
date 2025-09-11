@@ -1221,6 +1221,13 @@ typedef struct {
 
 CLAY__ARRAY_DEFINE(Clay__LayoutElementTreeRoot, Clay__LayoutElementTreeRootArray)
 
+typedef struct Clay__ScissorData {
+    Clay_BoundingBox boundingBox;
+    uint32_t id;
+} Clay__ScissorData;
+
+CLAY__ARRAY_DEFINE(Clay__ScissorData, Clay__ScissorDataArray)
+
 struct Clay_Context {
     int32_t maxElementCount;
     int32_t maxMeasureTextCacheWordCount;
@@ -1276,6 +1283,7 @@ struct Clay_Context {
     Clay__MeasuredWordArray measuredWords;
     Clay__int32_tArray measuredWordsFreeList;
     Clay__int32_tArray openClipElementStack;
+    Clay__ScissorDataArray scissorDataStack;
     Clay_ElementIdArray pointerOverIds;
     Clay__ScrollContainerDataInternalArray scrollContainerDatas;
     Clay__boolArray treeNodeVisited;
@@ -2201,6 +2209,7 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->treeNodeVisited = Clay__boolArray_Allocate_Arena(maxElementCount, arena);
     context->treeNodeVisited.length = context->treeNodeVisited.capacity; // This array is accessed directly rather than behaving as a list
     context->openClipElementStack = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
+    context->scissorDataStack = Clay__ScissorDataArray_Allocate_Arena(maxElementCount, arena);
     context->reusableElementIndexBuffer = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->layoutElementClipElementIds = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->dynamicStringData = Clay__charArray_Allocate_Arena(maxElementCount, arena);
@@ -2513,6 +2522,27 @@ bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
            (boundingBox->y > (float)context->layoutDimensions.height) ||
            (boundingBox->x + boundingBox->width < 0) ||
            (boundingBox->y + boundingBox->height < 0);
+}
+
+Clay_BoundingBox Clay__ClipBoundingBox(Clay_BoundingBox outer, Clay_BoundingBox inner) {
+    float x = CLAY__MAX(outer.x, inner.x);
+    float y = CLAY__MAX(outer.y, inner.y);
+
+    float width = CLAY__MAX(
+        CLAY__MIN(outer.x + outer.width, inner.x + inner.width) - x,
+        0
+    );
+    float height = CLAY__MAX(
+        CLAY__MIN(outer.y + outer.height, inner.y + inner.height) - y,
+        0
+    );
+
+    return (Clay_BoundingBox) {
+        .x = x,
+        .y = y,
+        .width = width,
+        .height = height,
+    };
 }
 
 void Clay__CalculateFinalLayout(void) {
@@ -2851,6 +2881,26 @@ void Clay__CalculateFinalLayout(void) {
                                     .vertical = elementConfig->config.clipElementConfig->vertical,
                                 }
                             };
+
+                            if (!offscreen) {
+                                Clay_BoundingBox scissorBoundingBox = renderCommand.boundingBox;
+                                if (context->scissorDataStack.length > 0) {
+                                    scissorBoundingBox = Clay__ClipBoundingBox(
+                                        Clay__ScissorDataArray_GetValue(
+                                            &context->scissorDataStack,
+                                            context->scissorDataStack.length - 1
+                                        ).boundingBox,
+                                        scissorBoundingBox
+                                    );
+                                }
+                                Clay__ScissorData scissorData = {
+                                    .boundingBox = scissorBoundingBox,
+                                    .id = renderCommand.id,
+                                };
+                                Clay__ScissorDataArray_Add(&context->scissorDataStack, scissorData);
+                                renderCommand.boundingBox = scissorBoundingBox;
+                            }
+
                             break;
                         }
                         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
@@ -2995,7 +3045,8 @@ void Clay__CalculateFinalLayout(void) {
                 bool closeClipElement = false;
                 Clay_ClipElementConfig *clipConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_CLIP).clipElementConfig;
                 if (clipConfig) {
-                    closeClipElement = true;
+                    Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
+                    closeClipElement = !Clay__ElementIsOffscreen(&currentElementData->boundingBox);
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
                         if (mapping->layoutElement == currentElement) {
@@ -3073,6 +3124,18 @@ void Clay__CalculateFinalLayout(void) {
                         .id = Clay__HashNumber(currentElement->id, rootElement->childrenOrTextContent.children.length + 11).id,
                         .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
                     });
+                    context->scissorDataStack.length--;
+                    if (context->scissorDataStack.length > 0) {
+                        Clay__ScissorData prevScissorData = Clay__ScissorDataArray_GetValue(
+                            &context->scissorDataStack,
+                            context->scissorDataStack.length - 1
+                        );
+                        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                            .id = prevScissorData.id,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
+                            .boundingBox = prevScissorData.boundingBox,
+                        });
+                    }
                 }
 
                 dfsBuffer.length--;
