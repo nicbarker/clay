@@ -4365,7 +4365,7 @@ bool Clay_IsClipped(Clay_ElementId id) {
         return false;
     }
 
-    const auto clipElementId =
+    const int32_t clipElementId =
         Clay__int32_tArray_GetValue(&context->openClipElementStack, context->openClipElementStack.length - 1);
     if (clipElementId == 0)
         return false;
