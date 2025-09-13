@@ -884,6 +884,8 @@ CLAY_DLL_EXPORT Clay_ElementIdArray Clay_GetPointerOverIds(void);
 // An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
 CLAY_DLL_EXPORT Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id);
+// Returns whether the element with the provided ID is clipped by a clip region
+CLAY_DLL_EXPORT bool Clay_IsClipped(Clay_ElementId id);
 // Binds a callback function that Clay will call to determine the dimensions of a given string slice.
 // - measureTextFunction is a user provided function that adheres to the interface Clay_Dimensions (Clay_StringSlice text, Clay_TextElementConfig *config, void *userData);
 // - userData is a pointer that will be transparently passed through when the measureTextFunction is called.
@@ -1707,6 +1709,28 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
 
 bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_BoundingBox rect) {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
+}
+
+bool Clay__RectIsOutsideRect(Clay_BoundingBox rectA, Clay_BoundingBox rectB) {
+    // Compute the edges of both rectangles
+    const float leftA   = rectA.x;
+    const float rightA  = rectA.x + rectA.width;
+    const float topA    = rectA.y;
+    const float bottomA = rectA.y + rectA.height;
+
+    const float leftB   = rectB.x;
+    const float rightB  = rectB.x + rectB.width;
+    const float topB    = rectB.y;
+    const float bottomB = rectB.y + rectB.height;
+
+    // Check if 'a' is completely outside 'b'
+    if (rightA <= leftB)   return true; // a is left of b
+    if (leftA >= rightB)   return true; // a is right of b
+    if (bottomA <= topB)   return true; // a is above b
+    if (topA >= bottomB)   return true; // a is below b
+
+    // Otherwise, they overlap (so not completely outside)
+    return false;
 }
 
 Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Clay_LayoutElement* layoutElement, uint32_t idAlias) {
@@ -4332,6 +4356,27 @@ Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id) {
         }
     }
     return CLAY__INIT(Clay_ScrollContainerData) CLAY__DEFAULT_STRUCT;
+}
+
+CLAY_WASM_EXPORT("Clay_GetScrollContainerData")
+bool Clay_IsClipped(Clay_ElementId id) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (context->openClipElementStack.length == 0) {
+        return false;
+    }
+
+    const auto clipElementId =
+        Clay__int32_tArray_GetValue(&context->openClipElementStack, context->openClipElementStack.length - 1);
+    if (clipElementId == 0)
+        return false;
+
+    const Clay_LayoutElementHashMapItem *clipItem = Clay__GetHashMapItem(clipElementId);
+    const Clay_ElementData elementData = Clay_GetElementData(id);
+    if (Clay__RectIsOutsideRect(elementData.boundingBox, clipItem->boundingBox)) {
+        return true;
+    }
+
+    return false;
 }
 
 CLAY_WASM_EXPORT("Clay_GetElementData")
