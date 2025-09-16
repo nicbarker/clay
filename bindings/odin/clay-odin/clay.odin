@@ -338,7 +338,6 @@ ClayArray :: struct($type: typeid) {
 }
 
 ElementDeclaration :: struct {
-	id:              ElementId,
 	layout:          LayoutConfig,
 	backgroundColor: Color,
 	cornerRadius:    CornerRadius,
@@ -378,6 +377,7 @@ Context :: struct {} // opaque structure, only use as a pointer
 @(link_prefix = "Clay_", default_calling_convention = "c")
 foreign Clay {
 	_OpenElement :: proc() ---
+	_OpenElementWithId :: proc(id: ElementId) ---
 	_CloseElement :: proc() ---
 	MinMemorySize :: proc() -> u32 ---
 	CreateArenaWithCapacityAndMemory :: proc(capacity: c.size_t, offset: [^]u8) -> Arena ---
@@ -426,10 +426,18 @@ ConfigureOpenElement :: proc(config: ElementDeclaration) -> bool {
 }
 
 @(deferred_none = _CloseElement)
-UI :: proc() -> proc (config: ElementDeclaration) -> bool {
+UI_WithId :: proc(id: ElementId) -> proc (config: ElementDeclaration) -> bool {
+	_OpenElementWithId(id)
+	return ConfigureOpenElement
+}
+
+@(deferred_none = _CloseElement)
+UI_AutoId :: proc() -> proc (config: ElementDeclaration) -> bool {
 	_OpenElement()
 	return ConfigureOpenElement
 }
+
+UI :: proc{UI_WithId, UI_AutoId};
 
 Text :: proc($text: string, config: ^TextElementConfig) {
 	wrapped := MakeString(text)

@@ -53,7 +53,7 @@ Clay_RenderCommandArray ClayImageSample_CreateLayout() {
         .height = CLAY_SIZING_GROW(0)
     };
 
-    CLAY({ .id = CLAY_ID("OuterContainer"),
+    CLAY(CLAY_ID("OuterContainer"), {
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = layoutExpand,
@@ -61,8 +61,7 @@ Clay_RenderCommandArray ClayImageSample_CreateLayout() {
             .childGap = 16
         }
     }) {
-        CLAY({
-            .id = CLAY_ID("SampleImage"),
+        CLAY(CLAY_ID("SampleImage"), {
             .layout = {
                 .sizing = layoutExpand
             },
