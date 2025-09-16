@@ -33,7 +33,7 @@ Clay_RenderCommandArray CornerRadiusTest(){
         .width = CLAY_SIZING_GROW(0),
         .height = CLAY_SIZING_GROW(0)
     };
-    CLAY({ .id = CLAY_ID("OuterContainer"),
+    CLAY(CLAY_ID("OuterContainer"), {
         .backgroundColor = {43, 41, 51, 255},
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -43,7 +43,7 @@ Clay_RenderCommandArray CornerRadiusTest(){
         }
     }) {
         for(int i = 0; i < 6; ++i){
-            CLAY({ .id = CLAY_IDI("Row", i),
+            CLAY(CLAY_IDI("Row", i), {
                 .layout = {
                     .layoutDirection = CLAY_LEFT_TO_RIGHT,
                     .sizing = layoutExpand,
@@ -52,7 +52,7 @@ Clay_RenderCommandArray CornerRadiusTest(){
                 }
             }) {
                 for(int j = 0; j < 6; ++j){
-                    CLAY({ .id = CLAY_IDI("Tile", i*6+j),
+                    CLAY(CLAY_IDI("Tile", i*6+j), {
                         .backgroundColor = {120, 140, 255, 128},
                         .cornerRadius = {(i%3)*15, (j%3)*15, (i/2)*15, (j/2)*15},
                         .border = {

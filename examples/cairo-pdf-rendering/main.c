@@ -40,12 +40,12 @@ void Layout() {
 	static Clay_Color BACKGROUND = { 0xF4, 0xEB, 0xE6, 255 };
 	static Clay_Color ACCENT = { 0xFA, 0xE0, 0xD4, 255 };
 
-	CLAY({
+	CLAY_AUTO_ID({
         .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
 		.layoutDirection = CLAY_TOP_TO_BOTTOM },
 		.backgroundColor = BACKGROUND
     }) {
-		CLAY({ .id = CLAY_ID("PageMargins"), .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+		CLAY(CLAY_ID("PageMargins"), { .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
              .padding = { 70, 70, 50, 50 }, // Some nice looking page margins
              .layoutDirection = CLAY_TOP_TO_BOTTOM,
              .childGap = 10}
@@ -54,9 +54,9 @@ void Layout() {
 			CLAY_TEXT(CLAY_STRING("Features Overview"), CLAY_TEXT_CONFIG({ .fontId = FONT_CALLISTOGA, .textColor = PRIMARY, .fontSize = 24 }));
 
 			// Feature Box
-			CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }, .childGap = 10 }}) {
-				CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }}, .backgroundColor = ACCENT, .cornerRadius = CLAY_CORNER_RADIUS(12) }) {
-					CLAY({ .layout = {.padding = CLAY_PADDING_ALL(20), .childGap = 4, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
+			CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }, .childGap = 10 }}) {
+				CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }}, .backgroundColor = ACCENT, .cornerRadius = CLAY_CORNER_RADIUS(12) }) {
+					CLAY_AUTO_ID({ .layout = {.padding = CLAY_PADDING_ALL(20), .childGap = 4, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
 						CLAY_TEXT(CLAY_STRING("- High performance"),
 								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
 						CLAY_TEXT(CLAY_STRING("- Declarative syntax"),
@@ -69,7 +69,7 @@ void Layout() {
 								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
 					}
 				}
-				CLAY({
+				CLAY_AUTO_ID({
                     .layout = {
                         .sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
                         .padding = CLAY_PADDING_ALL(10),
@@ -81,23 +81,23 @@ void Layout() {
                     .cornerRadius = CLAY_CORNER_RADIUS(8)
                 }) {
 					// Profile picture
-					CLAY({ .layout = {
+					CLAY_AUTO_ID({ .layout = {
                         .sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
                         .padding = { 30, 30, 0, 0 },
                         .layoutDirection = CLAY_TOP_TO_BOTTOM,
                         .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER }},
                         .border = { .color = PRIMARY, .width = 2, 2, 2, 2 }, .cornerRadius = 10
                     }) {
-						CLAY({ .layout = { .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }, .image = { .imageData = "resources/check.png" }});
+						CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }, .image = { .imageData = "resources/check.png" }});
 					}
 				}
 			}
 
-			CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(16) } }});
+			CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(16) } }});
 
-			CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) }, .childGap = 10, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
+			CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) }, .childGap = 10, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
 				CLAY_TEXT(CLAY_STRING("Cairo"), CLAY_TEXT_CONFIG({ .fontId = FONT_CALLISTOGA, .fontSize = 24, .textColor = PRIMARY }));
-				CLAY({ .layout = { .padding = CLAY_PADDING_ALL(10) }, .backgroundColor = ACCENT, .cornerRadius = 10 }) {
+				CLAY_AUTO_ID({ .layout = { .padding = CLAY_PADDING_ALL(10) }, .backgroundColor = ACCENT, .cornerRadius = 10 }) {
 					CLAY_TEXT(CLAY_STRING("Officiis quia quia qui inventore ratione voluptas et. Quidem sunt unde similique. Qui est et exercitationem cumque harum illum. Numquam placeat aliquid quo voluptatem. "
 										  "Deleniti saepe nihil exercitationem nemo illo. Consequatur beatae repellat provident similique. Provident qui exercitationem deserunt sapiente. Quam qui dolor corporis odit. "
 										  "Assumenda corrupti sunt culpa pariatur. Vero sit ut minima. In est consequatur minus et cum sint illum aperiam. Qui ipsa quas nisi omnis aut quia nobis. "

@@ -70,7 +70,7 @@ void component_text_pair(const char *key, const char *value)
     };
     Clay_TextElementConfig *textconfig =
         CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } });
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = {
@@ -82,7 +82,7 @@ void component_text_pair(const char *key, const char *value)
         },
     }) {
         CLAY_TEXT(keytext, textconfig);
-        CLAY({ .layout = { .sizing = CLAY_SIZING_GROW(1) } }) { }
+        CLAY_AUTO_ID({ .layout = { .sizing = CLAY_SIZING_GROW(1) } }) { }
         CLAY_TEXT(valtext, textconfig);
     }
 
@@ -90,7 +90,7 @@ void component_text_pair(const char *key, const char *value)
 
 void component_termbox_settings(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .floating = {
             .attachTo = CLAY_ATTACH_TO_PARENT,
             .zIndex = 1,
@@ -98,7 +98,7 @@ void component_termbox_settings(void)
             .offset = { 0, 0 }
         },
     }) {
-        CLAY({
+        CLAY_AUTO_ID({
                 .layout = {
                     .sizing = CLAY_SIZING_FIT(),
                     .padding = {
@@ -229,7 +229,7 @@ void component_termbox_settings(void)
                 transparency = "false";
             }
 
-            CLAY({
+            CLAY_AUTO_ID({
                 .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM },
             }) {
                 component_text_pair("Color mode", color_mode);
@@ -244,7 +244,7 @@ void component_termbox_settings(void)
 
 void component_color_palette(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .childGap = 16,
             .padding = {
@@ -261,7 +261,7 @@ void component_color_palette(void)
         .backgroundColor = { 0x7f, 0x7f, 0x7f, 0xff }
     }) {
         for (int type = 0; type < 2; ++type) {
-            CLAY({
+            CLAY_AUTO_ID({
                 .layout ={
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     .sizing = CLAY_SIZING_FIT(),
@@ -269,21 +269,21 @@ void component_color_palette(void)
                 },
             }) {
                 for (float ri = 0; ri < 4; ri += 1) {
-                    CLAY({
+                    CLAY_AUTO_ID({
                         .layout ={
                             .sizing = CLAY_SIZING_FIT(),
                             .childGap = Clay_Termbox_Cell_Width()
                         },
                     }) {
                         for (float r = ri * 0x44; r < (ri + 1) * 0x44; r += 0x22) {
-                            CLAY({
+                            CLAY_AUTO_ID({
                                 .layout ={
                                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                                     .sizing = CLAY_SIZING_FIT(),
                                 },
                             }) {
                                 for (float g = 0; g < 0xff; g += 0x22) {
-                                    CLAY({
+                                    CLAY_AUTO_ID({
                                         .layout ={
                                             .sizing = CLAY_SIZING_FIT(),
                                         },
@@ -298,12 +298,12 @@ void component_color_palette(void)
                                                 }
                                             };
                                             if (0 == type) {
-                                                CLAY({
+                                                CLAY_AUTO_ID({
                                                     .layout = layout,
                                                     .backgroundColor = color
                                                 }) {}
                                             } else if (1 == type) {
-                                                CLAY({
+                                                CLAY_AUTO_ID({
                                                     .layout = layout,
                                                 }) {
                                                     CLAY_TEXT(CLAY_STRING("#"), CLAY_TEXT_CONFIG({ .textColor = color }));
@@ -323,7 +323,7 @@ void component_color_palette(void)
 
 void component_unicode_text(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = CLAY_SIZING_FIT(),
             .padding = {
@@ -377,7 +377,7 @@ void component_unicode_text(void)
 
 void component_keybinds(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = CLAY_SIZING_FIT(),
             .padding = {
@@ -409,7 +409,7 @@ void component_keybinds(void)
 
 void component_image(clay_tb_image *image, int width)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = (0 == width) ? CLAY_SIZING_GROW() : CLAY_SIZING_FIXED(width),
@@ -424,7 +424,7 @@ void component_image(clay_tb_image *image, int width)
 
 void component_mouse_data(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
@@ -446,7 +446,7 @@ void component_mouse_data(void)
         v = (255 < v) ? 255 : v;
         Clay_Color color = (Clay_Color) { v, v, v, 0xff };
 
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = layout,
             .backgroundColor = color
         }) {}
@@ -457,7 +457,7 @@ void component_mouse_data(void)
         color = (Clay_Color) { v, v, v, 0xff };
 
 
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = layout,
             .backgroundColor = color
         }) {}
@@ -467,7 +467,7 @@ void component_mouse_data(void)
 
 void component_bordered_text(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = {
@@ -478,25 +478,25 @@ void component_bordered_text(void)
         },
         .backgroundColor = { 0x24, 0x55, 0x34, 0xff },
     }) {
-        CLAY({
+        CLAY_AUTO_ID({
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0xaa, 0x00, 0x00, 0xff } },
         }) {
             CLAY_TEXT(
                 CLAY_STRING("Test"), CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } }));
         }
-        CLAY({
+        CLAY_AUTO_ID({
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0x00, 0xaa, 0x00, 0xff } },
         }) {
             CLAY_TEXT(CLAY_STRING("of the border width"),
                 CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } }));
         }
-        CLAY({
+        CLAY_AUTO_ID({
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0x00, 0x00, 0xaa, 0xff } },
         }) {
             CLAY_TEXT(CLAY_STRING("and overlap for multiple lines\nof text"),
                 CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } }));
         }
-        CLAY({
+        CLAY_AUTO_ID({
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0x00, 0x00, 0xaa, 0xff } },
         }) {
             CLAY_TEXT(CLAY_STRING("this text\nis long enough\nto display all\n borders\naround it"),
@@ -508,7 +508,7 @@ void component_bordered_text(void)
 Clay_RenderCommandArray CreateLayout(clay_tb_image *image1, clay_tb_image *image2)
 {
     Clay_BeginLayout();
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
@@ -522,7 +522,7 @@ Clay_RenderCommandArray CreateLayout(clay_tb_image *image1, clay_tb_image *image
         },
         .backgroundColor = { 0x24, 0x24, 0x24, 0xff }
     }) {
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = {
                 .childAlignment = {
                     .x = CLAY_ALIGN_X_RIGHT,
@@ -534,7 +534,7 @@ Clay_RenderCommandArray CreateLayout(clay_tb_image *image1, clay_tb_image *image
             component_keybinds();
             component_unicode_text();
         }
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = {
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 .childGap = 32,

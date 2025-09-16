@@ -18,7 +18,7 @@ Clay_Color COLOR_WHITE = { 255, 255, 255, 255 };
 Clay_Color COLOR_BLACK = { 0, 0, 0, 255 };
 
 void RenderHeaderButton(Clay_String text) {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = { .padding = { 8, 8, 4, 4 } },
         .backgroundColor = COLOR_BLACK,
         .cornerRadius = CLAY_CORNER_RADIUS(4)
@@ -212,8 +212,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
     };
 
     // Build UI here
-    CLAY({
-        .id = CLAY_ID("OuterContainer"),
+    CLAY(CLAY_ID("OuterContainer"), {
         .backgroundColor = COLOR_WHITE,
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -223,8 +222,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
          }
     }) {
         // Child elements go inside braces
-        CLAY({
-            .id = CLAY_ID("HeaderBar"),
+        CLAY(CLAY_ID("HeaderBar"), {
             .layout = {
                 .sizing = {
                     .height = CLAY_SIZING_FIXED(30),
@@ -235,8 +233,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
             },
         }) {
             // Header buttons go here
-            CLAY({
-                .id = CLAY_ID("FileButton"),
+            CLAY(CLAY_ID("FileButton"), {
                 .layout = {
                     .padding = { 8, 8, 4, 4 }
                 },
@@ -252,18 +249,16 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
                 );
             }
             RenderHeaderButton(CLAY_STRING("Edit"));
-            CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0) } } }) {}
+            CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0) } } }) {}
             RenderHeaderButton(CLAY_STRING("Upload"));
             RenderHeaderButton(CLAY_STRING("Media"));
             RenderHeaderButton(CLAY_STRING("Support"));
         }
 
-        CLAY({
-            .id = CLAY_ID("LowerContent"),
+        CLAY(CLAY_ID("LowerContent"), {
             .layout = { .sizing = layoutExpand, .childGap = 8 },
         }) {
-            CLAY({
-                .id = CLAY_ID("Sidebar"),
+            CLAY(CLAY_ID("Sidebar"), {
                 .border = contentBorders,
                 .cornerRadius = CLAY_CORNER_RADIUS(4),
                 .layout = {
@@ -284,7 +279,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
                     };
 
                     if (i == selectedDocumentIndex) {
-                        CLAY({
+                        CLAY_AUTO_ID({
                             .layout = sidebarButtonLayout,
                             .backgroundColor = COLOR_BLACK,
                             .cornerRadius = CLAY_CORNER_RADIUS(4)
@@ -298,7 +293,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
                             );
                         }
                     } else {
-                        CLAY({
+                        CLAY_AUTO_ID({
                             .layout = sidebarButtonLayout,
                             .backgroundColor = (Clay_Color){ 0, 0, 0, Clay_Hovered() ? 120 : 0 },
                             .cornerRadius = CLAY_CORNER_RADIUS(4),
@@ -316,8 +311,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
                 }
             }
 
-            CLAY({
-                .id = CLAY_ID("MainContent"),
+            CLAY(CLAY_ID("MainContent"), {
                 .border = contentBorders,
                 .cornerRadius = CLAY_CORNER_RADIUS(4),
                 .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
@@ -329,7 +323,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
                 }
             }) {
                 Document selectedDocument = documents.documents[selectedDocumentIndex];
-                CLAY({
+                CLAY_AUTO_ID({
                     .layout = {
                         .layoutDirection = CLAY_LEFT_TO_RIGHT,
                         .childGap = 4,
@@ -340,7 +334,7 @@ Clay_RenderCommandArray ClayVideoDemoPlaydate_CreateLayout(int selectedDocumentI
                         selectedDocument.title,
                         CLAY_TEXT_CONFIG({ .fontId = FONT_ID_BODY, .textColor = COLOR_BLACK })
                     );
-                    CLAY({
+                    CLAY_AUTO_ID({
                         .layout = {
                             .sizing = {
                                 .width = CLAY_SIZING_FIXED(32),

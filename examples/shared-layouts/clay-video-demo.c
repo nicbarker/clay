@@ -5,7 +5,7 @@ const int FONT_ID_BODY_16 = 0;
 Clay_Color COLOR_WHITE = { 255, 255, 255, 255};
 
 void RenderHeaderButton(Clay_String text) {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = { .padding = { 16, 16, 8, 8 }},
         .backgroundColor = { 140, 140, 140, 255 },
         .cornerRadius = CLAY_CORNER_RADIUS(5)
@@ -19,7 +19,7 @@ void RenderHeaderButton(Clay_String text) {
 }
 
 void RenderDropdownMenuItem(Clay_String text) {
-    CLAY({.layout = { .padding = CLAY_PADDING_ALL(16)}}) {
+    CLAY_AUTO_ID({.layout = { .padding = CLAY_PADDING_ALL(16)}}) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
@@ -102,7 +102,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
     Clay_Color contentBackgroundColor = { 90, 90, 90, 255 };
 
     // Build UI here
-    CLAY_WITHID(CLAY_ID("OuterContainer"), {
+    CLAY(CLAY_ID("OuterContainer"), {
         .backgroundColor = {43, 41, 51, 255 },
         .layout = {
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -112,7 +112,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
         }
     }) {
         // Child elements go inside braces
-        CLAY_WITHID(CLAY_ID("HeaderBar"), {
+        CLAY(CLAY_ID("HeaderBar"), {
             .layout = {
                 .sizing = {
                     .height = CLAY_SIZING_FIXED(60),
@@ -128,7 +128,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
             .cornerRadius = CLAY_CORNER_RADIUS(8)
         }) {
             // Header buttons go here
-            CLAY_WITHID(CLAY_ID("FileButton"), {
+            CLAY(CLAY_ID("FileButton"), {
                 .layout = { .padding = { 16, 16, 8, 8 }},
                 .backgroundColor = {140, 140, 140, 255 },
                 .cornerRadius = CLAY_CORNER_RADIUS(5)
@@ -145,7 +145,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                     Clay_PointerOver(Clay_GetElementId(CLAY_STRING("FileMenu")));
 
                 if (fileMenuVisible) { // Below has been changed slightly to fix the small bug where the menu would dismiss when mousing over the top gap
-                    CLAY_WITHID(CLAY_ID("FileMenu"), {
+                    CLAY(CLAY_ID("FileMenu"), {
                         .floating = {
                             .attachTo = CLAY_ATTACH_TO_PARENT,
                             .attachPoints = {
@@ -156,7 +156,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                             .padding = {0, 0, 8, 8 }
                         }
                     }) {
-                        CLAY({
+                        CLAY_AUTO_ID({
                             .layout = {
                                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
                                 .sizing = {
@@ -175,16 +175,16 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                 }
             }
             RenderHeaderButton(CLAY_STRING("Edit"));
-            CLAY({ .layout = { .sizing = { CLAY_SIZING_GROW(0) }}}) {}
+            CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0) }}}) {}
             RenderHeaderButton(CLAY_STRING("Upload"));
             RenderHeaderButton(CLAY_STRING("Media"));
             RenderHeaderButton(CLAY_STRING("Support"));
         }
 
-        CLAY_WITHID(CLAY_ID("LowerContent"), {
+        CLAY(CLAY_ID("LowerContent"), {
             .layout = { .sizing = layoutExpand, .childGap = 16 }
         }) {
-            CLAY_WITHID(CLAY_ID("Sidebar"), {
+            CLAY(CLAY_ID("Sidebar"), {
                 .backgroundColor = contentBackgroundColor,
                 .layout = {
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
@@ -204,7 +204,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                     };
 
                     if (i == data->selectedDocumentIndex) {
-                        CLAY({
+                        CLAY_AUTO_ID({
                             .layout = sidebarButtonLayout,
                             .backgroundColor = {120, 120, 120, 255 },
                             .cornerRadius = CLAY_CORNER_RADIUS(8)
@@ -219,7 +219,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                         SidebarClickData *clickData = (SidebarClickData *)(data->frameArena.memory + data->frameArena.offset);
                         *clickData = (SidebarClickData) { .requestedDocumentIndex = i, .selectedDocumentIndex = &data->selectedDocumentIndex };
                         data->frameArena.offset += sizeof(SidebarClickData);
-                        CLAY({ .layout = sidebarButtonLayout, .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 }, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
+                        CLAY_AUTO_ID({ .layout = sidebarButtonLayout, .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 }, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
                             Clay_OnHover(HandleSidebarInteraction, (intptr_t)clickData);
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
                                 .fontId = FONT_ID_BODY_16,
@@ -231,7 +231,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                 }
             }
 
-            CLAY_WITHID(CLAY_ID("MainContent"), {
+            CLAY(CLAY_ID("MainContent"), {
                 .backgroundColor = contentBackgroundColor,
                 .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
                 .layout = {
