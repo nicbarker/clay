@@ -3551,7 +3551,7 @@ void Clay__RenderDebugView(void) {
                     }
                     // .padding
                     CLAY_TEXT(CLAY_STRING("Padding"), infoTitleConfig);
-                    CLAY(CLAY_ID("Clay__DebugViewElementInfoPadding"), { }) {
+                    CLAY(CLAY_ID("Clay__DebugViewElementInfoPadding"), CLAY__DEFAULT_STRUCT) {
                         CLAY_TEXT(CLAY_STRING("{ left: "), infoTextConfig);
                         CLAY_TEXT(Clay__IntToString(layoutConfig->padding.left), infoTextConfig);
                         CLAY_TEXT(CLAY_STRING(", right: "), infoTextConfig);
@@ -3647,7 +3647,7 @@ void Clay__RenderDebugView(void) {
                             CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatioBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                                 CLAY_TEXT(CLAY_STRING("Aspect Ratio"), infoTitleConfig);
                                 // Aspect Ratio
-                                CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatio"), { }) {
+                                CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatio"), CLAY__DEFAULT_STRUCT) {
                                     CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
                                     CLAY_TEXT(CLAY_STRING("."), infoTextConfig);
                                     float frac = aspectRatioConfig->aspectRatio - (int)(aspectRatioConfig->aspectRatio);
