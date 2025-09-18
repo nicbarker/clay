@@ -4,10 +4,17 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <SDL3_image/SDL_image.h>
 
-typedef struct {
+struct Clay_SDL3RendererData;
+typedef void SDL_Clay_RenderCustomCommand(
+        struct Clay_SDL3RendererData *rendererData,
+        Clay_RenderCommand *rcommand,
+        const SDL_FRect view);
+
+typedef struct Clay_SDL3RendererData {
     SDL_Renderer *renderer;
     TTF_TextEngine *textEngine;
     TTF_Font **fonts;
+    SDL_Clay_RenderCustomCommand *custom_handler;
 } Clay_SDL3RendererData;
 
 /* Global for convenience. Even in 4K this is enough for smooth curves (low radius or rect size coupled with
@@ -255,6 +262,13 @@ static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Cla
                 SDL_Texture *texture = (SDL_Texture *)rcmd->renderData.image.imageData;
                 const SDL_FRect dest = { rect.x, rect.y, rect.w, rect.h };
                 SDL_RenderTexture(rendererData->renderer, texture, NULL, &dest);
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
+                rendererData->custom_handler(
+                     rendererData,
+                     rcmd,
+                     rect);
                 break;
             }
             default:
