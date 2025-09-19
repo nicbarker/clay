@@ -113,7 +113,7 @@ void component_text_pair(const char *key, const char *value)
     };
     Clay_TextElementConfig *textconfig =
         CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } });
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = {
@@ -125,7 +125,7 @@ void component_text_pair(const char *key, const char *value)
         },
     }) {
         CLAY_TEXT(keytext, textconfig);
-        CLAY({ .layout = { .sizing = CLAY_SIZING_GROW(1) } }) { }
+        CLAY_AUTO_ID({ .layout = { .sizing = CLAY_SIZING_GROW(1) } }) { }
         CLAY_TEXT(valtext, textconfig);
     }
 
@@ -133,7 +133,7 @@ void component_text_pair(const char *key, const char *value)
 
 void component_termbox_settings(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
             .layout = {
                 .sizing = CLAY_SIZING_FIT(),
                 .padding = {
@@ -264,7 +264,7 @@ void component_termbox_settings(void)
             transparency = "false";
         }
 
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM },
         }) {
             component_text_pair("Color mode", color_mode);
@@ -278,7 +278,7 @@ void component_termbox_settings(void)
 
 void component_keybinds(void)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = CLAY_SIZING_FIT(),
             .padding = {
@@ -311,7 +311,7 @@ void component_keybinds(void)
 
 void component_image(img_group *img_pair)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
@@ -326,7 +326,7 @@ void component_image(img_group *img_pair)
         },
         .backgroundColor = { 0x24, 0x24, 0x24, 0xff }
     }) {
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = {
                 .sizing = {
                     .width = CLAY_SIZING_GROW(),
@@ -343,7 +343,7 @@ void component_image(img_group *img_pair)
 
 void component_image_small(img_group **img_pairs, int count, int selected_index)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_PERCENT(0.25),
@@ -356,7 +356,7 @@ void component_image_small(img_group **img_pairs, int count, int selected_index)
             },
         },
     }) {
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = {
                 .sizing = {
                     .width = CLAY_SIZING_PERCENT(0.7),
@@ -367,7 +367,7 @@ void component_image_small(img_group **img_pairs, int count, int selected_index)
             },
             .aspectRatio = { (float)img_pairs[selected_index]->width / img_pairs[selected_index]->height }
         }) { }
-        CLAY({
+        CLAY_AUTO_ID({
             .layout = {
                 .sizing = {
                     .width = CLAY_SIZING_GROW(),
@@ -384,7 +384,7 @@ void component_image_small(img_group **img_pairs, int count, int selected_index)
 
 void component_thumbnails(img_group **img_pairs, int count, int selected_index)
 {
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_PERCENT(0.1),
@@ -407,7 +407,7 @@ void component_thumbnails(img_group **img_pairs, int count, int selected_index)
                     .width = CLAY_BORDER_OUTSIDE(0),
                 };
             }
-            CLAY({
+            CLAY_AUTO_ID({
                 .layout = {
                     .sizing = {
                         .width = CLAY_SIZING_GROW(),
@@ -428,7 +428,7 @@ const int thumbnail_count = 5;
 Clay_RenderCommandArray CreateLayout(struct img_group **imgs)
 {
     Clay_BeginLayout();
-    CLAY({
+    CLAY_AUTO_ID({
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
