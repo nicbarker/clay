@@ -437,7 +437,7 @@ UI_AutoId :: proc() -> proc (config: ElementDeclaration) -> bool {
 	return ConfigureOpenElement
 }
 
-UI :: proc{UI_WithId, UI_AutoId};
+UI :: proc{UI_WithId, UI_AutoId}
 
 Text :: proc($text: string, config: ^TextElementConfig) {
 	wrapped := MakeString(text)
