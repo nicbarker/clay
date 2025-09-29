@@ -90,7 +90,7 @@ void component_text_pair(const char *key, const char *value)
 
 void component_termbox_settings(void)
 {
-    CLAY_AUTO_ID({
+    CLAY(CLAY_ID("Termbox Settings"), {
         .floating = {
             .attachTo = CLAY_ATTACH_TO_PARENT,
             .zIndex = 1,
