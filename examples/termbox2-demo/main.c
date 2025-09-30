@@ -509,13 +509,18 @@ Clay_RenderCommandArray CreateLayout(clay_tb_image *image1, clay_tb_image *image
 {
     Clay_BeginLayout();
     CLAY_AUTO_ID({
+        .clip = {
+            .vertical = false,
+            .horizontal = true,
+            .childOffset = Clay_GetScrollOffset(),
+        },
         .layout = {
             .sizing = {
                 .width = CLAY_SIZING_GROW(),
                 .height = CLAY_SIZING_GROW()
             },
             .childAlignment = {
-                .x = CLAY_ALIGN_X_CENTER,
+                .x = CLAY_ALIGN_X_LEFT,
                 .y = CLAY_ALIGN_Y_CENTER
             },
             .childGap = 64
@@ -714,12 +719,12 @@ void handle_termbox_events(void)
                             break;
                         }
                         case TB_KEY_MOUSE_WHEEL_UP: {
-                            Clay_Vector2 scrollDelta = { 0, 1 * Clay_Termbox_Cell_Height() };
+                            Clay_Vector2 scrollDelta = { 0.5 * Clay_Termbox_Cell_Width(), 0 };
                             Clay_UpdateScrollContainers(false, scrollDelta, 1);
                             break;
                         }
                         case TB_KEY_MOUSE_WHEEL_DOWN: {
-                            Clay_Vector2 scrollDelta = { 0, -1 * Clay_Termbox_Cell_Height() };
+                            Clay_Vector2 scrollDelta = { -0.5 * Clay_Termbox_Cell_Width(), 0 };
                             Clay_UpdateScrollContainers(false, scrollDelta, 1);
                             break;
                         }
