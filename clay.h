@@ -1141,12 +1141,12 @@ typedef struct {
         Clay__LayoutElementChildren children;
         Clay__TextElementData *textElementData;
     } childrenOrTextContent;
-    uint16_t floatingChildrenCount;
     Clay_Dimensions dimensions;
     Clay_Dimensions minDimensions;
     Clay_LayoutConfig *layoutConfig;
     Clay__ElementConfigArraySlice elementConfigs;
     uint32_t id;
+    uint16_t floatingChildrenCount;
 } Clay_LayoutElement;
 
 CLAY__ARRAY_DEFINE(Clay_LayoutElement, Clay_LayoutElementArray)
