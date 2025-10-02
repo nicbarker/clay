@@ -1,0 +1,4 @@
+Odin doesn't directly package SDL, so on Windows, you'll want to copy `SDL3.dll` and `SDL3_ttf.dll` into this directory. On Linux and Mac, you should install SDL3 via your package manager
+
+## Running on Windows
+In an embdedded termninal, missing dependencies will fail silently on Windows, so if you have any unexplainable crashes, make sure the DLLs are in your current working directory (the path you run the command from). It's easiest to just copy them next to this file, and run from here as well.
