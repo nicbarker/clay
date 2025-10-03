@@ -439,7 +439,12 @@ UI_AutoId :: proc() -> proc (config: ElementDeclaration) -> bool {
 
 UI :: proc{UI_WithId, UI_AutoId};
 
-Text :: proc($text: string, config: ^TextElementConfig) {
+Text :: proc {
+	TextStatic,
+	TextDynamic,
+}
+
+TextStatic :: proc($text: string, config: ^TextElementConfig) {
 	wrapped := MakeString(text)
 	wrapped.isStaticallyAllocated = true
 	_OpenTextElement(wrapped, config)
