@@ -1616,6 +1616,20 @@ void Clay_Termbox_Render(Clay_RenderCommandArray commands)
 
                 Clay_StringSlice *text = &render_data.stringContents;
                 int32_t i = 0;
+
+                // culling text characters that are outside of the layout
+                int h_clip = 0 - cell_box.x;
+                while(h_clip > 0 && i < text->length){
+                    uint32_t ch = ' ';
+                    int codepoint_length = tb_utf8_char_to_unicode(&ch, text->chars + i);
+                    if (0 > codepoint_length) {
+                        clay_tb_assert(false, "Invalid utf8");
+                    }
+                    i += codepoint_length;
+                    h_clip -= 1;
+                }
+
+                // printing the rest of the characters
                 for (int y = box_begin_y; y < box_end_y; ++y) {
                     for (int x = box_begin_x; x < box_end_x;) {
                         uint32_t ch = ' ';
