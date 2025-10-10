@@ -15,5 +15,5 @@ mkdir -p build/clay                                                       \
 -Wl,--initial-memory=6553600                                              \
 -o build/clay/index.wasm                                                  \
 main.c                                                                    \
-&& cp index.html build/clay/index.html && cp -r fonts/ build/clay/fonts   \
-&& cp index.html build/clay/index.html && cp -r images/ build/clay/images
+&& cp index.html build/index.html && cp -r fonts/ build/clay/fonts   \
+&& cp -r images/ build/clay/images
