@@ -10,7 +10,7 @@ import "vendor:sdl3/ttf"
 
 App_State :: struct {
     window:       ^sdl.Window,
-    rendererData: Clay_SDL3RendererData,
+    rendererData: Clay_SDL_Render_Data,
 }
 
 state: App_State
@@ -22,7 +22,7 @@ errorHandler :: proc "c" (errorData: clay.ErrorData) {
 }
 
 load_font :: proc(data: []byte, size: f32, id: u16, fonts: ^[dynamic]^ttf.Font) {
-    font_stream := sdl.IOFromConstMem(raw_data(ROBOTO), uint(len(ROBOTO)))
+    font_stream := sdl.IOFromConstMem(raw_data(data), uint(len(data)))
     font := ttf.OpenFontIO(font_stream, true, size * 2)
     assign_at(fonts, int(id), font)
 }
@@ -38,7 +38,7 @@ measure_text :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfi
         sdl.LogError(i32(sdl.LogCategory.ERROR), "Failed to measure text: %s", sdl.GetError())
     }
 
-    return clay.Dimensions{f32(width), f32(height)}
+    return {f32(width), f32(height)}
 }
 // Load at compile time, directly into the binary
 ROBOTO := #load("./Roboto-Regular.ttf")
@@ -58,9 +58,9 @@ main :: proc() {
 
     state.window = window
     state.rendererData.renderer = renderer
-    state.rendererData.textEngine = ttf.CreateRendererTextEngine(renderer)
+    state.rendererData.text_engine = ttf.CreateRendererTextEngine(renderer)
 
-    minMemorySize := (uint)(clay.MinMemorySize())
+    minMemorySize := uint(clay.MinMemorySize())
     arena: clay.Arena = clay.CreateArenaWithCapacityAndMemory(minMemorySize, make([^]u8, minMemorySize))
     clay.Initialize(arena, {1280, 720}, {handler = errorHandler})
     clay.SetMeasureTextFunction(measure_text, &state.rendererData.fonts)
@@ -78,12 +78,10 @@ main :: proc() {
     window_width, window_height: i32
 
     for !done {
-        defer free_all(context.temp_allocator)
-
         scrollDelta: clay.Vector2
 
-        for (sdl.PollEvent(&event)) {
-            if (event.type == .QUIT) {
+        for sdl.PollEvent(&event) {
+            if event.type == .QUIT {
                 done = true
             } else if event.type == .MOUSE_WHEEL {
                 scrollDelta.x = event.wheel.x
@@ -99,10 +97,8 @@ main :: proc() {
 
         clay.SetLayoutDimensions({width = f32(window_width), height = f32(window_height)})
 
-		mouseX: f32 = 0
-		mouseY: f32 = 0
-		mouseState := sdl.GetMouseState(&mouseX, &mouseY)
-		mousePosition := (clay.Vector2){mouseX, mouseY}
+		mousePosition : clay.Vector2
+		mouseState := sdl.GetMouseState(&mousePosition.x, &mousePosition.y)
 		clay.SetPointerState(mousePosition, .LEFT in mouseState)
 
 		clay.UpdateScrollContainers(false, scrollDelta, f32(deltaTime))
@@ -112,7 +108,7 @@ main :: proc() {
 
 		sdl.SetRenderDrawColor(renderer, 0, 0, 0, 255)
 		sdl.RenderClear(renderer)
-		sdl_Clay_RenderClayCommands(&state.rendererData, &commands)
+		sdl_render_clay_commands(&state.rendererData, &commands)
 
 		sdl.RenderPresent(renderer)
     }

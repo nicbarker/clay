@@ -100,7 +100,7 @@ video_demo_layout :: proc(data: ^Video_Demo_Data) -> clay.ClayArray(clay.RenderC
         // Child elements go inside braces
         if clay.UI(clay.ID("HeaderBar"))(
         {
-            layout = {sizing = {height = clay.SizingFixed(60), width = clay.SizingFixed(0)}, padding = {16, 16, 0, 0}, childGap = 16, childAlignment = {y = .Center}},
+            layout = {sizing = {height = clay.SizingFixed(60), width = clay.SizingGrow()}, padding = {16, 16, 0, 0}, childGap = 16, childAlignment = {y = .Center}},
             backgroundColor = contentBackgroundColor,
             cornerRadius = clay.CornerRadiusAll(8),
         },
@@ -154,7 +154,7 @@ video_demo_layout :: proc(data: ^Video_Demo_Data) -> clay.ClayArray(clay.RenderC
                             clay.TextDynamic(document.title, clay.TextConfig({fontId = VIDEO_DEMO_FONT_ID_BODY, fontSize = 20, textColor = {255, 255, 255, 255}}))
                         }
                     } else {
-                        clickData := new_clone((Sidebar_Click_Data) {
+                        clickData := new_clone(Sidebar_Click_Data {
                             requestedDocumentIndex = i,
                             selectedDocumentIndex = &data.selectedDocumentIndex,
                         }, context.temp_allocator)
