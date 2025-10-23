@@ -18,7 +18,10 @@ clay_color_to_rl_color :: proc(color: clay.Color) -> rl.Color {
 
 raylib_fonts := [dynamic]Raylib_Font{}
 
-measure_text :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {
+// Alias for compatibility, default to ascii support
+measure_text :: measure_text_ascii
+
+measure_text_unicode :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {
     // Needed for grapheme_count
     context = runtime.default_context()
     
@@ -30,6 +33,7 @@ measure_text :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfi
     // This function seems somewhat expensive, if you notice performance issues, you could assume
     // - 1 codepoint per visual character (no grapheme clusters), where you can get the length from the loop
     // - 1 byte per visual character (ascii), where you can get the length with `text.length`
+    // see `measure_text_ascii`
     grapheme_count, _, _ := utf8.grapheme_count(text_str)
 
 	for letter, byte_idx in text_str {
@@ -51,6 +55,35 @@ measure_text :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfi
     //   but that seems to be one letterSpacing too small
     //   maybe that's a raylib bug, maybe that's Clay?
 	total_spacing := f32(grapheme_count) * f32(config.letterSpacing)
+
+	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
+}
+
+measure_text_ascii :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {    
+	line_width: f32 = 0
+    
+	font := raylib_fonts[config.fontId].font
+	text_str := string(text.chars[:text.length])
+
+	for i in 0..<len(text_str) {
+		glyph_index := text_str[i] - 32
+
+        glyph := font.glyphs[glyph_index]
+
+		if glyph.advanceX != 0 {
+			line_width += f32(glyph.advanceX)
+		} else {
+			line_width += font.recs[glyph_index].width + f32(font.glyphs[glyph_index].offsetX)
+		}
+	}
+
+	scaleFactor := f32(config.fontSize) / f32(font.baseSize)
+
+    // Note: 
+    //   I'd expect this to be `len(text_str) - 1`, 
+    //   but that seems to be one letterSpacing too small
+    //   maybe that's a raylib bug, maybe that's Clay?
+	total_spacing := f32(len(text_str)) * f32(config.letterSpacing)
 
 	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
 }
