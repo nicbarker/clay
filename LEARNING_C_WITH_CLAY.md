@@ -4,17 +4,28 @@
 1. [Introduction to C and Clay](#introduction)
 2. [Chapter 1: C Basics - Your First Program](#chapter-1)
 3. [Chapter 2: Variables and Data Types](#chapter-2)
-4. [Chapter 3: Functions](#chapter-3)
-5. [Chapter 4: Pointers - The Heart of C](#chapter-4)
-6. [Chapter 5: Structs and Typedef](#chapter-5)
-7. [Chapter 6: Arrays and Memory](#chapter-6)
-8. [Chapter 7: Preprocessor and Macros](#chapter-7)
-9. [Chapter 8: Advanced Macros and Metaprogramming](#chapter-8)
-10. [Chapter 9: Memory Management](#chapter-9)
-11. [Chapter 10: Header Files and Project Organization](#chapter-10)
-12. [Chapter 11: Enums and Unions](#chapter-11)
-13. [Chapter 12: Function Pointers and Callbacks](#chapter-12)
-14. [Chapter 13: Building Complete Programs](#chapter-13)
+4. [Chapter 3: Operators](#chapter-3)
+5. [Chapter 4: Control Flow](#chapter-4)
+6. [Chapter 5: Loops](#chapter-5)
+7. [Chapter 6: Functions](#chapter-6)
+8. [Chapter 7: Pointers - The Heart of C](#chapter-7)
+9. [Chapter 8: Structs and Typedef](#chapter-8)
+10. [Chapter 9: Arrays and Memory](#chapter-9)
+11. [Chapter 10: Strings](#chapter-10)
+12. [Chapter 11: Type Casting and Qualifiers](#chapter-11)
+13. [Chapter 12: Storage Classes and Scope](#chapter-12)
+14. [Chapter 13: Recursion](#chapter-13)
+15. [Chapter 14: Bit Manipulation](#chapter-14)
+16. [Chapter 15: Preprocessor and Macros](#chapter-15)
+17. [Chapter 16: Advanced Macros and Metaprogramming](#chapter-16)
+18. [Chapter 17: Memory Management](#chapter-17)
+19. [Chapter 18: Header Files and Project Organization](#chapter-18)
+20. [Chapter 19: Enums and Unions](#chapter-19)
+21. [Chapter 20: Function Pointers and Callbacks](#chapter-20)
+22. [Chapter 21: Standard Library Basics](#chapter-21)
+23. [Chapter 22: File I/O](#chapter-22)
+24. [Chapter 23: Command-Line Arguments](#chapter-23)
+25. [Chapter 24: Building Complete Programs](#chapter-24)
 
 ---
 
@@ -219,7 +230,809 @@ const Clay_Color CLAY_COLOR_BLACK = {0, 0, 0, 255};
 
 ---
 
-## Chapter 3: Functions {#chapter-3}
+## Chapter 3: Operators {#chapter-3}
+
+### 3.1 Arithmetic Operators
+
+Basic math operations:
+
+```c
+int main(void) {
+    int a = 10, b = 3;
+
+    int sum = a + b;         // 13 (addition)
+    int diff = a - b;        // 7 (subtraction)
+    int product = a * b;     // 30 (multiplication)
+    int quotient = a / b;    // 3 (integer division)
+    int remainder = a % b;   // 1 (modulo/remainder)
+
+    // Floating-point division
+    float result = 10.0f / 3.0f;  // 3.333...
+
+    return 0;
+}
+```
+
+### 3.2 Increment and Decrement
+
+```c
+int main(void) {
+    int x = 5;
+
+    // Post-increment (use then increment)
+    int a = x++;  // a = 5, x = 6
+
+    // Pre-increment (increment then use)
+    int b = ++x;  // x = 7, b = 7
+
+    // Post-decrement
+    int c = x--;  // c = 7, x = 6
+
+    // Pre-decrement
+    int d = --x;  // x = 5, d = 5
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+// Pre-increment used for index management
+Clay__currentContext->layoutElements.length++;
+
+// Post-increment to get current then move
+element = array->internalArray[index++];
+```
+
+### 3.3 Relational Operators
+
+Compare values:
+
+```c
+int main(void) {
+    int a = 10, b = 20;
+
+    int equal = (a == b);        // 0 (false)
+    int notEqual = (a != b);     // 1 (true)
+    int less = (a < b);          // 1 (true)
+    int lessOrEqual = (a <= b);  // 1 (true)
+    int greater = (a > b);       // 0 (false)
+    int greaterOrEqual = (a >= b); // 0 (false)
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+static inline float Clay__Max(float a, float b) {
+    return a > b ? a : b;  // Using > operator
+}
+
+if (config->type == CLAY_SIZING_TYPE_FIXED) {
+    // Using == operator
+}
+```
+
+### 3.4 Logical Operators
+
+Boolean logic:
+
+```c
+int main(void) {
+    int a = 1, b = 0;  // 1 = true, 0 = false
+
+    int andResult = a && b;  // 0 (both must be true)
+    int orResult = a || b;   // 1 (at least one true)
+    int notResult = !a;      // 0 (logical NOT)
+
+    // Short-circuit evaluation
+    if (ptr != NULL && *ptr > 0) {
+        // Safe: *ptr only evaluated if ptr != NULL
+    }
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+if (element->layoutConfig &&
+    element->layoutConfig->sizing.width.type == CLAY_SIZING_TYPE_GROW) {
+    // Short-circuit: second condition only checked if first is true
+}
+```
+
+### 3.5 Bitwise Operators
+
+Work on individual bits:
+
+```c
+int main(void) {
+    unsigned int a = 5;   // 0101 in binary
+    unsigned int b = 3;   // 0011 in binary
+
+    unsigned int and = a & b;   // 0001 = 1 (AND)
+    unsigned int or = a | b;    // 0111 = 7 (OR)
+    unsigned int xor = a ^ b;   // 0110 = 6 (XOR)
+    unsigned int not = ~a;      // 1010 (NOT, inverts all bits)
+
+    // Bit shifts
+    unsigned int leftShift = a << 1;   // 1010 = 10 (multiply by 2)
+    unsigned int rightShift = a >> 1;  // 0010 = 2 (divide by 2)
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+// Bit flags for corner radius
+typedef enum {
+    CLAY_CORNER_RADIUS_TOP_LEFT = 1 << 0,      // 0001
+    CLAY_CORNER_RADIUS_TOP_RIGHT = 1 << 1,     // 0010
+    CLAY_CORNER_RADIUS_BOTTOM_LEFT = 1 << 2,   // 0100
+    CLAY_CORNER_RADIUS_BOTTOM_RIGHT = 1 << 3   // 1000
+} Clay_CornerRadiusSet;
+
+// Combine flags with OR
+int flags = CLAY_CORNER_RADIUS_TOP_LEFT | CLAY_CORNER_RADIUS_TOP_RIGHT;
+
+// Check if flag is set with AND
+if (flags & CLAY_CORNER_RADIUS_TOP_LEFT) {
+    // Top left corner has radius
+}
+```
+
+### 3.6 Assignment Operators
+
+```c
+int main(void) {
+    int x = 10;
+
+    x += 5;   // x = x + 5  (15)
+    x -= 3;   // x = x - 3  (12)
+    x *= 2;   // x = x * 2  (24)
+    x /= 4;   // x = x / 4  (6)
+    x %= 4;   // x = x % 4  (2)
+
+    // Bitwise compound assignments
+    x &= 3;   // x = x & 3
+    x |= 4;   // x = x | 4
+    x ^= 1;   // x = x ^ 1
+    x <<= 1;  // x = x << 1
+    x >>= 1;  // x = x >> 1
+
+    return 0;
+}
+```
+
+### 3.7 Ternary Operator
+
+Compact if-else:
+
+```c
+int main(void) {
+    int a = 10, b = 20;
+
+    // condition ? value_if_true : value_if_false
+    int max = (a > b) ? a : b;
+
+    // Equivalent to:
+    int max2;
+    if (a > b) {
+        max2 = a;
+    } else {
+        max2 = b;
+    }
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+static inline float Clay__Min(float a, float b) {
+    return a < b ? a : b;  // Ternary operator
+}
+
+// Nested ternary (less readable)
+int result = (x > 0) ? 1 : (x < 0) ? -1 : 0;
+```
+
+### 3.8 sizeof Operator
+
+Get size of type or variable:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    printf("int: %zu bytes\n", sizeof(int));
+    printf("float: %zu bytes\n", sizeof(float));
+    printf("double: %zu bytes\n", sizeof(double));
+    printf("char: %zu bytes\n", sizeof(char));
+    printf("pointer: %zu bytes\n", sizeof(void*));
+
+    int arr[10];
+    printf("array: %zu bytes\n", sizeof(arr));  // 40 bytes (10 * 4)
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+// Get size of struct
+size_t size = sizeof(Clay_LayoutElement);
+
+// Allocate memory
+void *mem = malloc(count * sizeof(Clay_RenderCommand));
+
+// Calculate array length
+int length = sizeof(array) / sizeof(array[0]);
+```
+
+### 3.9 Comma Operator
+
+Evaluate multiple expressions:
+
+```c
+int main(void) {
+    int a, b, c;
+
+    // Comma operator: evaluates left to right, returns rightmost
+    a = (b = 5, c = 10, b + c);  // a = 15
+
+    // Common in for loops
+    for (int i = 0, j = 10; i < j; i++, j--) {
+        // i increments, j decrements
+    }
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+// Used in macro for-loop trick
+#define CLAY(...) \
+    for ( \
+        CLAY__ELEMENT_DEFINITION_LATCH = ( \
+            Clay__OpenElement(),              /* First */ \
+            Clay__ConfigureOpenElement(...),  /* Second */ \
+            0                                 /* Result */ \
+        ); \
+        /* ... */ \
+    )
+```
+
+### 3.10 Operator Precedence
+
+Order of evaluation (high to low):
+
+```c
+int main(void) {
+    // Precedence matters!
+    int x = 2 + 3 * 4;      // 14, not 20 (* before +)
+    int y = (2 + 3) * 4;    // 20 (parentheses first)
+
+    // Common precedence
+    // 1. () [] -> .
+    // 2. ! ~ ++ -- + - * & sizeof
+    // 3. * / %
+    // 4. + -
+    // 5. << >>
+    // 6. < <= > >=
+    // 7. == !=
+    // 8. &
+    // 9. ^
+    // 10. |
+    // 11. &&
+    // 12. ||
+    // 13. ?:
+    // 14. = += -= etc.
+    // 15. ,
+
+    return 0;
+}
+```
+
+**Tip**: When in doubt, use parentheses for clarity!
+
+### 3.11 Key Concepts Learned
+- ✅ Arithmetic operators (+, -, *, /, %)
+- ✅ Increment/decrement (++, --)
+- ✅ Relational operators (==, !=, <, >, <=, >=)
+- ✅ Logical operators (&&, ||, !)
+- ✅ Bitwise operators (&, |, ^, ~, <<, >>)
+- ✅ Assignment operators (=, +=, -=, etc.)
+- ✅ Ternary operator (?:)
+- ✅ sizeof operator
+- ✅ Operator precedence
+
+---
+
+## Chapter 4: Control Flow {#chapter-4}
+
+### 4.1 if Statement
+
+Basic conditional execution:
+
+```c
+int main(void) {
+    int age = 18;
+
+    if (age >= 18) {
+        printf("Adult\n");
+    }
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+if (layoutElement->layoutConfig) {
+    // Process layout config
+}
+
+if (element == NULL) {
+    return;  // Early return
+}
+```
+
+### 4.2 if-else Statement
+
+```c
+int main(void) {
+    int score = 75;
+
+    if (score >= 60) {
+        printf("Pass\n");
+    } else {
+        printf("Fail\n");
+    }
+
+    return 0;
+}
+```
+
+### 4.3 else-if Chains
+
+```c
+int main(void) {
+    int grade = 85;
+
+    if (grade >= 90) {
+        printf("A\n");
+    } else if (grade >= 80) {
+        printf("B\n");
+    } else if (grade >= 70) {
+        printf("C\n");
+    } else if (grade >= 60) {
+        printf("D\n");
+    } else {
+        printf("F\n");
+    }
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+if (config->type == CLAY_SIZING_TYPE_FIT) {
+    // Handle FIT sizing
+} else if (config->type == CLAY_SIZING_TYPE_GROW) {
+    // Handle GROW sizing
+} else if (config->type == CLAY_SIZING_TYPE_FIXED) {
+    // Handle FIXED sizing
+}
+```
+
+### 4.4 Nested if Statements
+
+```c
+int main(void) {
+    int age = 25;
+    int hasLicense = 1;
+
+    if (age >= 18) {
+        if (hasLicense) {
+            printf("Can drive\n");
+        } else {
+            printf("Need license\n");
+        }
+    } else {
+        printf("Too young\n");
+    }
+
+    return 0;
+}
+```
+
+### 4.5 switch Statement
+
+Multiple conditions based on value:
+
+```c
+int main(void) {
+    int day = 3;
+
+    switch (day) {
+        case 1:
+            printf("Monday\n");
+            break;
+        case 2:
+            printf("Tuesday\n");
+            break;
+        case 3:
+            printf("Wednesday\n");
+            break;
+        case 4:
+            printf("Thursday\n");
+            break;
+        case 5:
+            printf("Friday\n");
+            break;
+        case 6:
+        case 7:
+            printf("Weekend\n");
+            break;
+        default:
+            printf("Invalid day\n");
+            break;
+    }
+
+    return 0;
+}
+```
+
+**Important**: `break` is required to exit switch, otherwise execution "falls through"!
+
+**Clay Example** (from clay.h):
+```c
+switch (commandType) {
+    case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
+        // Render rectangle
+        break;
+    }
+    case CLAY_RENDER_COMMAND_TYPE_TEXT: {
+        // Render text
+        break;
+    }
+    case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
+        // Render image
+        break;
+    }
+    default: {
+        // Unknown command
+        break;
+    }
+}
+```
+
+### 4.6 Fall-through in switch
+
+Intentional fall-through can be useful:
+
+```c
+int main(void) {
+    char ch = 'a';
+
+    switch (ch) {
+        case 'a':
+        case 'e':
+        case 'i':
+        case 'o':
+        case 'u':
+            printf("Vowel\n");
+            break;
+        default:
+            printf("Consonant\n");
+            break;
+    }
+
+    return 0;
+}
+```
+
+### 4.7 goto Statement
+
+Jump to a label (use sparingly):
+
+```c
+int main(void) {
+    int error = processData();
+
+    if (error) {
+        goto cleanup;
+    }
+
+    error = processMoreData();
+
+    if (error) {
+        goto cleanup;
+    }
+
+    return 0;
+
+cleanup:
+    freeResources();
+    return 1;
+}
+```
+
+**When goto is acceptable:**
+- Error handling with cleanup
+- Breaking out of nested loops
+- State machines
+
+**Clay doesn't use goto** - demonstrates clean error handling without it!
+
+### 4.8 Key Concepts Learned
+- ✅ if, else, else-if statements
+- ✅ Nested conditionals
+- ✅ switch-case statements
+- ✅ break in switch
+- ✅ Fall-through behavior
+- ✅ goto statement (use carefully)
+
+---
+
+## Chapter 5: Loops {#chapter-5}
+
+### 5.1 while Loop
+
+Repeat while condition is true:
+
+```c
+int main(void) {
+    int count = 0;
+
+    while (count < 5) {
+        printf("%d\n", count);
+        count++;
+    }
+    // Output: 0 1 2 3 4
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+while (currentElement != NULL) {
+    // Process element
+    currentElement = currentElement->next;
+}
+```
+
+### 5.2 do-while Loop
+
+Execute at least once, then check condition:
+
+```c
+int main(void) {
+    int count = 0;
+
+    do {
+        printf("%d\n", count);
+        count++;
+    } while (count < 5);
+    // Output: 0 1 2 3 4
+
+    // Even runs once if condition is false
+    int x = 10;
+    do {
+        printf("Runs once\n");
+    } while (x < 5);  // False, but body already executed
+
+    return 0;
+}
+```
+
+### 5.3 for Loop
+
+Most common loop for counting:
+
+```c
+int main(void) {
+    // for (initialization; condition; increment)
+    for (int i = 0; i < 5; i++) {
+        printf("%d\n", i);
+    }
+    // Output: 0 1 2 3 4
+
+    // Multiple variables
+    for (int i = 0, j = 10; i < j; i++, j--) {
+        printf("i=%d, j=%d\n", i, j);
+    }
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+for (int i = 0; i < elementCount; i++) {
+    Clay_LayoutElement *element = &elements[i];
+    // Process element
+}
+
+// Iterate backwards
+for (int i = array->length - 1; i >= 0; i--) {
+    // Process in reverse
+}
+```
+
+### 5.4 break Statement
+
+Exit loop early:
+
+```c
+int main(void) {
+    for (int i = 0; i < 10; i++) {
+        if (i == 5) {
+            break;  // Exit loop when i is 5
+        }
+        printf("%d\n", i);
+    }
+    // Output: 0 1 2 3 4
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+for (int i = 0; i < maxIterations; i++) {
+    if (found) {
+        break;  // Stop searching
+    }
+    // Continue searching...
+}
+```
+
+### 5.5 continue Statement
+
+Skip to next iteration:
+
+```c
+int main(void) {
+    for (int i = 0; i < 10; i++) {
+        if (i % 2 == 0) {
+            continue;  // Skip even numbers
+        }
+        printf("%d\n", i);
+    }
+    // Output: 1 3 5 7 9 (odd numbers only)
+
+    return 0;
+}
+```
+
+### 5.6 Nested Loops
+
+Loops inside loops:
+
+```c
+int main(void) {
+    // Print multiplication table
+    for (int i = 1; i <= 5; i++) {
+        for (int j = 1; j <= 5; j++) {
+            printf("%3d ", i * j);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
+```
+
+**Clay Example** (from clay.h):
+```c
+// Iterate through 2D structure
+for (int row = 0; row < rows; row++) {
+    for (int col = 0; col < cols; col++) {
+        Clay_LayoutElement *cell = GetCell(row, col);
+        // Process cell
+    }
+}
+```
+
+### 5.7 Breaking from Nested Loops
+
+```c
+int main(void) {
+    int found = 0;
+
+    for (int i = 0; i < 10 && !found; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (i * j == 42) {
+                found = 1;
+                break;  // Only breaks inner loop
+            }
+        }
+    }
+
+    // Alternative with goto (acceptable here)
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (i * j == 42) {
+                goto found_it;  // Breaks both loops
+            }
+        }
+    }
+found_it:
+    printf("Found it!\n");
+
+    return 0;
+}
+```
+
+### 5.8 Infinite Loops
+
+```c
+int main(void) {
+    // Infinite loop - use break to exit
+    while (1) {  // or for(;;) or while(true)
+        int input = getInput();
+        if (input == -1) {
+            break;
+        }
+        processInput(input);
+    }
+
+    return 0;
+}
+```
+
+### 5.9 Loop Patterns
+
+**Count up:**
+```c
+for (int i = 0; i < n; i++) { }
+```
+
+**Count down:**
+```c
+for (int i = n - 1; i >= 0; i--) { }
+```
+
+**Step by 2:**
+```c
+for (int i = 0; i < n; i += 2) { }
+```
+
+**Iterate array:**
+```c
+for (int i = 0; i < arraySize; i++) {
+    printf("%d\n", array[i]);
+}
+```
+
+**Iterate with pointer:**
+```c
+for (int *p = array; p < array + arraySize; p++) {
+    printf("%d\n", *p);
+}
+```
+
+### 5.10 Key Concepts Learned
+- ✅ while loops
+- ✅ do-while loops
+- ✅ for loops
+- ✅ break statement
+- ✅ continue statement
+- ✅ Nested loops
+- ✅ Infinite loops
+- ✅ Common loop patterns
+
+---
+
+## Chapter 6: Functions {#chapter-6}
 
 ### 3.1 Function Basics
 
