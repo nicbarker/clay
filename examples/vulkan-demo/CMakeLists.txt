@@ -8,14 +8,21 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
 # GLFW is used only for window creation and Vulkan surface management in this demo.
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY "https://github.com/glfw/glfw.git"
-    GIT_TAG "3.4"
-    GIT_PROGRESS TRUE
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(glfw)
+# When other examples are enabled (e.g., raylib), GLFW may already be present via
+# their dependencies. Guarding the population prevents duplicate target errors
+# (CMP0002) while still reusing the existing GLFW target when available.
+if(NOT TARGET glfw)
+    FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY "https://github.com/glfw/glfw.git"
+        GIT_TAG "3.4"
+        GIT_PROGRESS TRUE
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(glfw)
+else()
+    message(STATUS "Reusing existing GLFW target for Vulkan demo")
+endif()
 
 find_package(Vulkan REQUIRED)
 
