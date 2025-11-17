@@ -179,8 +179,10 @@ static void ClayVulkan_DrawBorder(ClayVulkanRenderer* renderer, const Clay_Rende
 static void ClayVulkan_DrawImage(ClayVulkanRenderer* renderer, const Clay_RenderCommand* command, VkCommandBuffer commandBuffer)
 {
     ClayVulkanTexture* l_Texture = ClayVulkan_GetTexture(&renderer->m_ResourceCache, command->id);
-    if (!l_Texture || !l_Texture->m_DescriptorSet) {
-        return; // Caller must populate descriptor sets before rendering.
+    if (!l_Texture || !l_Texture->m_DescriptorSet || !l_Texture->m_ImageView || !l_Texture->m_Sampler)
+    {
+        // Ensure descriptor sets are prepared before binding; application is responsible for keeping resources live.
+        return;
     }
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->m_ImagePipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->m_PipelineLayout, 0, 1, &l_Texture->m_DescriptorSet, 0, NULL);

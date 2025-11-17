@@ -17,9 +17,10 @@
 #include <vector>
 
 #define CLAY_IMPLEMENTATION
-extern "C" {
-#include "../../clay.h"
-#include "../../renderers/vulkan/clay_renderer_vulkan.c"
+extern "C" 
+{
+    #include "../../clay.h"
+    #include "../../renderers/vulkan/clay_renderer_vulkan.c"
 }
 
 namespace
@@ -87,6 +88,12 @@ private:
     VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
     VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
     VkFence m_InFlightFence = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
+    VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
+    VkPipeline m_RectPipeline = VK_NULL_HANDLE;
+    VkPipeline m_TextPipeline = VK_NULL_HANDLE;
+    VkPipeline m_ImagePipeline = VK_NULL_HANDLE;
+    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 
     // Clay renderer bindings
     ClayVulkanRenderer m_ClayRenderer{};
@@ -116,6 +123,9 @@ private:
         CreateSwapchain();
         CreateImageViews();
         CreateRenderPass();
+        CreateDescriptorSetLayout();
+        CreatePipelineLayout();
+        CreatePipelines();
         CreateFramebuffers();
         CreateCommandPool();
         AllocateCommandBuffers();
@@ -134,9 +144,9 @@ private:
 
         Clay_Initialize(m_ClayArena, l_LayoutDimensions, Clay_ErrorHandler{ 0 });
 
-        Clay_VulkanRenderer_Init(&m_ClayRenderer, m_Device, m_RenderPass, VK_NULL_HANDLE);
-        Clay_VulkanRenderer_SetPipelines(&m_ClayRenderer, VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE);
-        // TODO: Plug descriptor pool + layout management for textures/fonts instead of placeholder pipeline handles.
+        Clay_VulkanRenderer_Init(&m_ClayRenderer, m_Device, m_RenderPass, m_PipelineLayout);
+        Clay_VulkanRenderer_SetPipelines(&m_ClayRenderer, m_RectPipeline, m_TextPipeline, m_ImagePipeline);
+        // Descriptor pool and layouts have been created; future improvements can allocate texture/font descriptors per frame.
         Clay_VulkanRenderer_RegisterTextMeasure(&m_ClayRenderer);
     }
 
@@ -171,6 +181,31 @@ private:
         vkDestroyFence(m_Device, m_InFlightFence, nullptr);
         vkDestroySemaphore(m_Device, m_RenderFinishedSemaphore, nullptr);
         vkDestroySemaphore(m_Device, m_ImageAvailableSemaphore, nullptr);
+
+        if (m_RectPipeline != VK_NULL_HANDLE)
+        {
+            vkDestroyPipeline(m_Device, m_RectPipeline, nullptr);
+        }
+        if (m_TextPipeline != VK_NULL_HANDLE)
+        {
+            vkDestroyPipeline(m_Device, m_TextPipeline, nullptr);
+        }
+        if (m_ImagePipeline != VK_NULL_HANDLE)
+        {
+            vkDestroyPipeline(m_Device, m_ImagePipeline, nullptr);
+        }
+        if (m_PipelineLayout != VK_NULL_HANDLE)
+        {
+            vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+        }
+        if (m_DescriptorSetLayout != VK_NULL_HANDLE)
+        {
+            vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
+        }
+        if (m_DescriptorPool != VK_NULL_HANDLE)
+        {
+            vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
+        }
 
         for (VkFramebuffer l_Framebuffer : m_SwapchainFramebuffers)
         {
@@ -218,6 +253,291 @@ private:
         {
             throw std::runtime_error("Failed to create Vulkan instance; see Vulkan SDK setup guidance.");
         }
+    }
+
+    VkShaderModule CreateShaderModule(const std::vector<uint32_t>& code)
+    {
+        VkShaderModuleCreateInfo l_CreateInfo{};
+        l_CreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        l_CreateInfo.codeSize = code.size() * sizeof(uint32_t);
+        l_CreateInfo.pCode = code.data();
+
+        VkShaderModule l_ShaderModule = VK_NULL_HANDLE;
+        if (vkCreateShaderModule(m_Device, &l_CreateInfo, nullptr, &l_ShaderModule) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create shader module; see Vulkan SDK validation output.");
+        }
+
+        return l_ShaderModule;
+    }
+
+    void CreateDescriptorSetLayout()
+    {
+        // Texture sampling uses a single combined image sampler bound at set 0, binding 0.
+        VkDescriptorSetLayoutBinding l_SamplerBinding{};
+        l_SamplerBinding.binding = 0;
+        l_SamplerBinding.descriptorCount = 1;
+        l_SamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        l_SamplerBinding.pImmutableSamplers = nullptr;
+        l_SamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+        VkDescriptorSetLayoutCreateInfo l_LayoutInfo{};
+        l_LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        l_LayoutInfo.bindingCount = 1;
+        l_LayoutInfo.pBindings = &l_SamplerBinding;
+
+        if (vkCreateDescriptorSetLayout(m_Device, &l_LayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create descriptor set layout for images");
+        }
+
+        // Keep a small descriptor pool ready for sample textures; real integrations should grow this pool.
+        VkDescriptorPoolSize l_PoolSize{};
+        l_PoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        l_PoolSize.descriptorCount = 8;
+
+        VkDescriptorPoolCreateInfo l_PoolInfo{};
+        l_PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        l_PoolInfo.poolSizeCount = 1;
+        l_PoolInfo.pPoolSizes = &l_PoolSize;
+        l_PoolInfo.maxSets = 8;
+
+        if (vkCreateDescriptorPool(m_Device, &l_PoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create descriptor pool for textures");
+        }
+    }
+
+    void CreatePipelineLayout()
+    {
+        VkPipelineLayoutCreateInfo l_PipelineLayoutInfo{};
+        l_PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        l_PipelineLayoutInfo.setLayoutCount = 1;
+        l_PipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
+
+        if (vkCreatePipelineLayout(m_Device, &l_PipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create pipeline layout");
+        }
+    }
+
+    void CreatePipelines()
+    {
+        // Embedded SPIR-V shaders keep the demo self contained; see Vulkan SDK docs for shader compilation guidance.
+        static const std::array<uint32_t, 346> s_RectVertSpv = {
+            0x7230203,0x10000,0x8000b,0x32,0x0,0x20011,0x1,0x6000b,
+            0x1,0x4c534c47,0x6474732e,0x3035342e,0x0,0x3000e,0x0,0x1,
+            0x8000f,0x0,0x4,0x6e69616d,0x0,0xd,0x1b,0x29,
+            0x30003,0x2,0x1c2,0x40005,0x4,0x6e69616d,0x0,0x60005,
+            0xb,0x505f6c67,0x65567265,0x78657472,0x0,0x60006,0xb,0x0,
+            0x505f6c67,0x7469736f,0x6e6f69,0x70006,0xb,0x1,0x505f6c67,0x746e696f,
+            0x657a6953,0x0,0x70006,0xb,0x2,0x435f6c67,0x4470696c,0x61747369,
+            0x65636e,0x70006,0xb,0x3,0x435f6c67,0x446c6c75,0x61747369,0x65636e,
+            0x30005,0xd,0x0,0x60005,0x1b,0x565f6c67,0x65747265,0x646e4978,
+            0x7865,0x50005,0x1e,0x65646e69,0x6c626178,0x65,0x40005,0x29,
+            0x5574756f,0x56,0x50005,0x2f,0x65646e69,0x6c626178,0x65,0x30047,
+            0xb,0x2,0x50048,0xb,0x0,0xb,0x0,0x50048,
+            0xb,0x1,0xb,0x1,0x50048,0xb,0x2,0xb,
+            0x3,0x50048,0xb,0x3,0xb,0x4,0x40047,0x1b,
+            0xb,0x2a,0x40047,0x29,0x1e,0x0,0x20013,0x2,
+            0x30021,0x3,0x2,0x30016,0x6,0x20,0x40017,0x7,
+            0x6,0x4,0x40015,0x8,0x20,0x0,0x4002b,0x8,
+            0x9,0x1,0x4001c,0xa,0x6,0x9,0x6001e,0xb,
+            0x7,0x6,0xa,0xa,0x40020,0xc,0x3,0xb,
+            0x4003b,0xc,0xd,0x3,0x40015,0xe,0x20,0x1,
+            0x4002b,0xe,0xf,0x0,0x40017,0x10,0x6,0x2,
+            0x4002b,0x8,0x11,0x6,0x4001c,0x12,0x10,0x11,
+            0x4002b,0x6,0x13,0xbf800000,0x5002c,0x10,0x14,0x13,
+            0x13,0x4002b,0x6,0x15,0x3f800000,0x5002c,0x10,0x16,
+            0x15,0x13,0x5002c,0x10,0x17,0x15,0x15,0x5002c,
+            0x10,0x18,0x13,0x15,0x9002c,0x12,0x19,0x14,
+            0x16,0x17,0x14,0x17,0x18,0x40020,0x1a,0x1,
+            0xe,0x4003b,0x1a,0x1b,0x1,0x40020,0x1d,0x7,
+            0x12,0x40020,0x1f,0x7,0x10,0x4002b,0x6,0x22,
+            0x0,0x40020,0x26,0x3,0x7,0x40020,0x28,0x3,
+            0x10,0x4003b,0x28,0x29,0x3,0x5002c,0x10,0x2a,
+            0x22,0x22,0x5002c,0x10,0x2b,0x15,0x22,0x5002c,
+            0x10,0x2c,0x22,0x15,0x9002c,0x12,0x2d,0x2a,
+            0x2b,0x17,0x2a,0x17,0x2c,0x50036,0x2,0x4,
+            0x0,0x3,0x200f8,0x5,0x4003b,0x1d,0x1e,0x7,
+            0x4003b,0x1d,0x2f,0x7,0x4003d,0xe,0x1c,0x1b,
+            0x3003e,0x1e,0x19,0x50041,0x1f,0x20,0x1e,0x1c,
+            0x4003d,0x10,0x21,0x20,0x50051,0x6,0x23,0x21,
+            0x0,0x50051,0x6,0x24,0x21,0x1,0x70050,0x7,
+            0x25,0x23,0x24,0x22,0x15,0x50041,0x26,0x27,
+            0xd,0xf,0x3003e,0x27,0x25,0x4003d,0xe,0x2e,
+            0x1b,0x3003e,0x2f,0x2d,0x50041,0x1f,0x30,0x2f,
+            0x2e,0x4003d,0x10,0x31,0x30,0x3003e,0x29,0x31,
+            0x100fd,0x10038,
+        };
+        static const std::array<uint32_t, 123> s_ColorFragSpv = {
+            0x7230203,0x10000,0x8000b,0x13,0x0,0x20011,0x1,0x6000b,
+            0x1,0x4c534c47,0x6474732e,0x3035342e,0x0,0x3000e,0x0,0x1,
+            0x7000f,0x4,0x4,0x6e69616d,0x0,0x9,0xc,0x30010,
+            0x4,0x7,0x30003,0x2,0x1c2,0x40005,0x4,0x6e69616d,
+            0x0,0x50005,0x9,0x4374756f,0x726f6c6f,0x0,0x40005,0xc,
+            0x56556e69,0x0,0x40047,0x9,0x1e,0x0,0x40047,0xc,
+            0x1e,0x0,0x20013,0x2,0x30021,0x3,0x2,0x30016,
+            0x6,0x20,0x40017,0x7,0x6,0x4,0x40020,0x8,
+            0x3,0x7,0x4003b,0x8,0x9,0x3,0x40017,0xa,
+            0x6,0x2,0x40020,0xb,0x1,0xa,0x4003b,0xb,
+            0xc,0x1,0x4002b,0x6,0xe,0x3f000000,0x4002b,0x6,
+            0xf,0x3f800000,0x50036,0x2,0x4,0x0,0x3,0x200f8,
+            0x5,0x4003d,0xa,0xd,0xc,0x50051,0x6,0x10,
+            0xd,0x0,0x50051,0x6,0x11,0xd,0x1,0x70050,
+            0x7,0x12,0x10,0x11,0xe,0xf,0x3003e,0x9,
+            0x12,0x100fd,0x10038,
+        };
+        static const std::array<uint32_t, 140> s_ImageFragSpv = {
+            0x7230203,0x10000,0x8000b,0x14,0x0,0x20011,0x1,0x6000b,
+            0x1,0x4c534c47,0x6474732e,0x3035342e,0x0,0x3000e,0x0,0x1,
+            0x7000f,0x4,0x4,0x6e69616d,0x0,0x9,0x11,0x30010,
+            0x4,0x7,0x30003,0x2,0x1c2,0x40005,0x4,0x6e69616d,
+            0x0,0x50005,0x9,0x4374756f,0x726f6c6f,0x0,0x50005,0xd,
+            0x78655475,0x65727574,0x0,0x40005,0x11,0x56556e69,0x0,0x40047,
+            0x9,0x1e,0x0,0x40047,0xd,0x21,0x0,0x40047,
+            0xd,0x22,0x0,0x40047,0x11,0x1e,0x0,0x20013,
+            0x2,0x30021,0x3,0x2,0x30016,0x6,0x20,0x40017,
+            0x7,0x6,0x4,0x40020,0x8,0x3,0x7,0x4003b,
+            0x8,0x9,0x3,0x90019,0xa,0x6,0x1,0x0,
+            0x0,0x0,0x1,0x0,0x3001b,0xb,0xa,0x40020,
+            0xc,0x0,0xb,0x4003b,0xc,0xd,0x0,0x40017,
+            0xf,0x6,0x2,0x40020,0x10,0x1,0xf,0x4003b,
+            0x10,0x11,0x1,0x50036,0x2,0x4,0x0,0x3,
+            0x200f8,0x5,0x4003d,0xb,0xe,0xd,0x4003d,0xf,
+            0x12,0x11,0x50057,0x7,0x13,0xe,0x12,0x3003e,
+            0x9,0x13,0x100fd,0x10038,
+        };
+
+        const std::vector<uint32_t> l_VertCode(s_RectVertSpv.begin(), s_RectVertSpv.end());
+        const std::vector<uint32_t> l_ColorFragCode(s_ColorFragSpv.begin(), s_ColorFragSpv.end());
+        const std::vector<uint32_t> l_ImageFragCode(s_ImageFragSpv.begin(), s_ImageFragSpv.end());
+
+        VkShaderModule l_VertShaderModule = CreateShaderModule(l_VertCode);
+        VkShaderModule l_ColorFragShaderModule = CreateShaderModule(l_ColorFragCode);
+        VkShaderModule l_ImageFragShaderModule = CreateShaderModule(l_ImageFragCode);
+
+        VkPipelineShaderStageCreateInfo l_VertStageInfo{};
+        l_VertStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        l_VertStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        l_VertStageInfo.module = l_VertShaderModule;
+        l_VertStageInfo.pName = "main";
+
+        VkPipelineShaderStageCreateInfo l_ColorFragStage{};
+        l_ColorFragStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        l_ColorFragStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        l_ColorFragStage.module = l_ColorFragShaderModule;
+        l_ColorFragStage.pName = "main";
+
+        VkPipelineShaderStageCreateInfo l_ImageFragStage{};
+        l_ImageFragStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        l_ImageFragStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        l_ImageFragStage.module = l_ImageFragShaderModule;
+        l_ImageFragStage.pName = "main";
+
+        VkPipelineShaderStageCreateInfo l_ColorStages[] = { l_VertStageInfo, l_ColorFragStage };
+        VkPipelineShaderStageCreateInfo l_ImageStages[] = { l_VertStageInfo, l_ImageFragStage };
+
+        VkPipelineVertexInputStateCreateInfo l_VertexInputInfo{};
+        l_VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+        VkPipelineInputAssemblyStateCreateInfo l_InputAssembly{};
+        l_InputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        l_InputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        l_InputAssembly.primitiveRestartEnable = VK_FALSE;
+
+        VkViewport l_Viewport{};
+        l_Viewport.x = 0.0f;
+        l_Viewport.y = 0.0f;
+        l_Viewport.width = static_cast<float>(m_SwapchainExtent.width);
+        l_Viewport.height = static_cast<float>(m_SwapchainExtent.height);
+        l_Viewport.minDepth = 0.0f;
+        l_Viewport.maxDepth = 1.0f;
+
+        VkRect2D l_Scissor{};
+        l_Scissor.offset = { 0, 0 };
+        l_Scissor.extent = m_SwapchainExtent;
+
+        VkPipelineViewportStateCreateInfo l_ViewportState{};
+        l_ViewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        l_ViewportState.viewportCount = 1;
+        l_ViewportState.pViewports = &l_Viewport;
+        l_ViewportState.scissorCount = 1;
+        l_ViewportState.pScissors = &l_Scissor;
+
+        VkPipelineRasterizationStateCreateInfo l_Rasterizer{};
+        l_Rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        l_Rasterizer.depthClampEnable = VK_FALSE;
+        l_Rasterizer.rasterizerDiscardEnable = VK_FALSE;
+        l_Rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+        l_Rasterizer.lineWidth = 1.0f;
+        l_Rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+        l_Rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        l_Rasterizer.depthBiasEnable = VK_FALSE;
+
+        VkPipelineMultisampleStateCreateInfo l_Multisampling{};
+        l_Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        l_Multisampling.sampleShadingEnable = VK_FALSE;
+        l_Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+        VkPipelineColorBlendAttachmentState l_ColorBlendAttachment{};
+        l_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        l_ColorBlendAttachment.blendEnable = VK_TRUE;
+        l_ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        l_ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        l_ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        l_ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        l_ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        l_ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+        VkPipelineColorBlendStateCreateInfo l_ColorBlending{};
+        l_ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        l_ColorBlending.logicOpEnable = VK_FALSE;
+        l_ColorBlending.attachmentCount = 1;
+        l_ColorBlending.pAttachments = &l_ColorBlendAttachment;
+
+        std::vector<VkDynamicState> l_DynamicStates = { VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_VIEWPORT };
+        VkPipelineDynamicStateCreateInfo l_DynamicState{};
+        l_DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        l_DynamicState.dynamicStateCount = static_cast<uint32_t>(l_DynamicStates.size());
+        l_DynamicState.pDynamicStates = l_DynamicStates.data();
+
+        VkGraphicsPipelineCreateInfo l_PipelineInfo{};
+        l_PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        l_PipelineInfo.pVertexInputState = &l_VertexInputInfo;
+        l_PipelineInfo.pInputAssemblyState = &l_InputAssembly;
+        l_PipelineInfo.pViewportState = &l_ViewportState;
+        l_PipelineInfo.pRasterizationState = &l_Rasterizer;
+        l_PipelineInfo.pMultisampleState = &l_Multisampling;
+        l_PipelineInfo.pColorBlendState = &l_ColorBlending;
+        l_PipelineInfo.pDynamicState = &l_DynamicState;
+        l_PipelineInfo.layout = m_PipelineLayout;
+        l_PipelineInfo.renderPass = m_RenderPass;
+        l_PipelineInfo.subpass = 0;
+
+        l_PipelineInfo.stageCount = 2;
+        l_PipelineInfo.pStages = l_ColorStages;
+        if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &l_PipelineInfo, nullptr, &m_RectPipeline) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create rectangle pipeline");
+        }
+
+        l_PipelineInfo.pStages = l_ImageStages;
+        if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &l_PipelineInfo, nullptr, &m_ImagePipeline) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create image pipeline");
+        }
+
+        // Text rendering can reuse the color fragment shader for now; future work can swap in a signed-distance-field shader.
+        l_PipelineInfo.pStages = l_ColorStages;
+        if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &l_PipelineInfo, nullptr, &m_TextPipeline) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create text pipeline");
+        }
+
+        vkDestroyShaderModule(m_Device, l_VertShaderModule, nullptr);
+        vkDestroyShaderModule(m_Device, l_ColorFragShaderModule, nullptr);
+        vkDestroyShaderModule(m_Device, l_ImageFragShaderModule, nullptr);
     }
 
     void CreateSurface()
@@ -546,9 +866,25 @@ private:
         l_RenderPassInfo.clearValueCount = 1;
         l_RenderPassInfo.pClearValues = &l_ClearColor;
 
+        VkViewport l_Viewport{};
+        l_Viewport.x = 0.0f;
+        l_Viewport.y = 0.0f;
+        l_Viewport.width = static_cast<float>(m_SwapchainExtent.width);
+        l_Viewport.height = static_cast<float>(m_SwapchainExtent.height);
+        l_Viewport.minDepth = 0.0f;
+        l_Viewport.maxDepth = 1.0f;
+
+        VkRect2D l_Scissor{};
+        l_Scissor.offset = { 0, 0 };
+        l_Scissor.extent = m_SwapchainExtent;
+
         vkCmdBeginRenderPass(commandBuffer, &l_RenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        // Clay renderer translates render commands into Vulkan draw calls. Pipelines are left as TODOs.
+        // Set dynamic state expected by the pipelines before Clay emits draw calls.
+        vkCmdSetViewport(commandBuffer, 0, 1, &l_Viewport);
+        vkCmdSetScissor(commandBuffer, 0, 1, &l_Scissor);
+
+        // Clay renderer translates render commands into Vulkan draw calls using the pipelines prepared during initialization.
         Clay_Vulkan_Render(&m_ClayRenderer, renderCommands, commandBuffer);
 
         vkCmdEndRenderPass(commandBuffer);
