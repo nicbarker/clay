@@ -117,7 +117,12 @@ static Clay_Dimensions ClayVulkan_MeasureText(Clay_StringSlice text, Clay_TextEl
     float l_Height = (float)config->lineHeight;
     (void)l_Font; // In a real integration, sample glyph advances from l_Font->m_FontUserData.
     
-    return (Clay_Dimensions) { l_Width, l_Height };
+    // MSVC doesn't support C99 compound literals in C mode; build the return value explicitly for portability.
+    Clay_Dimensions l_Dimensions = { 0 };
+    l_Dimensions.width = l_Width;
+    l_Dimensions.height = l_Height;
+
+    return l_Dimensions;
 }
 
 // Scissor management ---------------------------------------------------------

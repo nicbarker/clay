@@ -126,7 +126,13 @@ private:
     {
         uint64_t l_TotalMemorySize = Clay_MinMemorySize();
         m_ClayArena = Clay_CreateArenaWithCapacityAndMemory(l_TotalMemorySize, malloc(l_TotalMemorySize));
-        Clay_Initialize(m_ClayArena, (Clay_Dimensions) { static_cast<float>(m_SwapchainExtent.width), static_cast<float>(m_SwapchainExtent.height) }, (Clay_ErrorHandler) { 0 });
+        
+        // Build the layout dimensions explicitly to keep MSVC happy with aggregate initialization rules.
+        Clay_Dimensions l_LayoutDimensions{};
+        l_LayoutDimensions.width = static_cast<float>(m_SwapchainExtent.width);
+        l_LayoutDimensions.height = static_cast<float>(m_SwapchainExtent.height);
+
+        Clay_Initialize(m_ClayArena, l_LayoutDimensions, Clay_ErrorHandler{ 0 });
 
         Clay_VulkanRenderer_Init(&m_ClayRenderer, m_Device, m_RenderPass, VK_NULL_HANDLE);
         Clay_VulkanRenderer_SetPipelines(&m_ClayRenderer, VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE);
@@ -145,7 +151,11 @@ private:
             glfwGetFramebufferSize(m_Window, &l_Width, &l_Height);
             m_SwapchainExtent.width = static_cast<uint32_t>(l_Width);
             m_SwapchainExtent.height = static_cast<uint32_t>(l_Height);
-            Clay_SetLayoutDimensions((Clay_Dimensions) { static_cast<float>(l_Width), static_cast<float>(l_Height) });
+            
+            Clay_Dimensions l_LayoutDimensions{};
+            l_LayoutDimensions.width = static_cast<float>(l_Width);
+            l_LayoutDimensions.height = static_cast<float>(l_Height);
+            Clay_SetLayoutDimensions(l_LayoutDimensions);
 
             Clay_RenderCommandArray l_Commands = CreateLayout();
             DrawFrame(l_Commands);
@@ -181,7 +191,8 @@ private:
         glfwDestroyWindow(m_Window);
         glfwTerminate();
 
-        Clay_FreeArena(m_ClayArena);
+        // Clay_Arena owns memory allocated with malloc above; release the backing allocation explicitly.
+        free(m_ClayArena.memory);
     }
 
     void CreateInstance()
@@ -552,40 +563,98 @@ private:
     {
         Clay_BeginLayout();
 
-        Clay_Sizing l_Expand = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) };
+        // Shared sizing config to expand containers along both axes.
+        Clay_Sizing l_Expand{};
+        l_Expand.width = CLAY_SIZING_GROW(0);
+        l_Expand.height = CLAY_SIZING_GROW(0);
 
+        // Root container stacks children vertically and adds generous padding.
         CLAY(CLAY_ID("Root"), {
-            .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                .sizing = l_Expand, .childGap = 12, .padding = CLAY_PADDING_ALL(12) }, .backgroundColor = (Clay_Color){ 18, 18, 20, 255 }
+            .layout = {
+                .sizing = l_Expand,
+                .padding = CLAY_PADDING_ALL(12),
+                .childGap = 12,
+                .childAlignment = {.x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_TOP },
+                .layoutDirection = CLAY_TOP_TO_BOTTOM
+            },
+            .backgroundColor = { 18, 18, 20, 255 }
             })
         {
+            // Header keeps children centered and reserves a fixed height.
             CLAY(CLAY_ID("Header"), {
-                .layout = { .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(64) }, .childAlignment = CLAY_ALIGN_CENTER
-                }, .backgroundColor = (Clay_Color){ 32, 64, 96, 255 }, .text = { .text = CLAY_STRING("Clay Vulkan Demo"),
-                    .fontId = 0, .fontSize = 28, .textColor = (Clay_Color){ 245, 245, 245, 255 } }
-                });
-
-            CLAY(CLAY_ID("Body"), {
-                .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT, .sizing = l_Expand, .childGap = 10 }
+                .layout = {
+                    .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(64) },
+                    .padding = CLAY_PADDING_ALL(0),
+                    .childGap = 0,
+                    .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER },
+                    .layoutDirection = CLAY_LEFT_TO_RIGHT
+                },
+                .backgroundColor = { 32, 64, 96, 255 }
                 })
             {
+                // Keep designated fields in declaration order for MSVC aggregate compatibility.
+                Clay_TextElementConfig* l_HeaderTextConfig = CLAY_TEXT_CONFIG({
+                    .userData = nullptr,
+                    .textColor = { 245, 245, 245, 255 },
+                    .fontId = 0,
+                    .fontSize = 28
+                    });
+                CLAY_TEXT(CLAY_STRING("Clay Vulkan Demo"), l_HeaderTextConfig);
+            }
+
+            // Body splits the space horizontally into a sidebar and viewport.
+            CLAY(CLAY_ID("Body"), {
+                .layout = {
+                    .sizing = l_Expand,
+                    .padding = CLAY_PADDING_ALL(0),
+                    .childGap = 10,
+                    .childAlignment = {.x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_TOP },
+                    .layoutDirection = CLAY_LEFT_TO_RIGHT
+                }
+                })
+            {
+                // Sidebar lists current wiring status.
                 CLAY(CLAY_ID("Sidebar"), {
-                    .layout = { .sizing = {.width = CLAY_SIZING_FIXED(240), .height = CLAY_SIZING_GROW(0) },
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM, .childGap = 8 }, .backgroundColor = (Clay_Color){ 40, 40, 44, 255 }, .padding = CLAY_PADDING_ALL(10) 
+                    .layout = {
+                        .sizing = {.width = CLAY_SIZING_FIXED(240), .height = CLAY_SIZING_GROW(0) },
+                        .padding = CLAY_PADDING_ALL(10),
+                        .childGap = 8,
+                        .childAlignment = {.x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_TOP },
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM
+                    },
+                    .backgroundColor = { 40, 40, 44, 255 }
                     })
                 {
-                    CLAY(CLAY_ID("Stats"), { .layout = {.sizing = l_Expand },
-                        .text = { .text = CLAY_STRING("Swapchain + Clay wiring ready.\nTODO: upload fonts and textures."),
-                            .fontId = 0, .fontSize = 20, .textColor = (Clay_Color){ 200, 220, 255, 255 } }
+                    // Keep designated fields in declaration order for MSVC aggregate compatibility.
+                    Clay_TextElementConfig* l_StatusTextConfig = CLAY_TEXT_CONFIG({
+                        .userData = nullptr,
+                        .textColor = { 200, 220, 255, 255 },
+                        .fontId = 0,
+                        .fontSize = 20
                         });
+                    CLAY_TEXT(CLAY_STRING("Swapchain + Clay wiring ready.\nTODO: upload fonts and textures."), l_StatusTextConfig);
                 }
 
-                CLAY(CLAY_ID("Viewport"), { .layout = {.sizing = l_Expand }, .backgroundColor = (Clay_Color){ 28, 28, 32, 255 } })
+                // Viewport stands in for rendered content.
+                CLAY(CLAY_ID("Viewport"), {
+                    .layout = {
+                        .sizing = l_Expand,
+                        .padding = CLAY_PADDING_ALL(0),
+                        .childGap = 0,
+                        .childAlignment = {.x = CLAY_ALIGN_X_LEFT, .y = CLAY_ALIGN_Y_TOP },
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM
+                    },
+                    .backgroundColor = { 28, 28, 32, 255 }
+                    })
                 {
-                    CLAY(CLAY_ID("Content"), { .layout = {.sizing = l_Expand },
-                        .text = { .text = CLAY_STRING("Render scene would appear here."),
-                            .fontId = 0, .fontSize = 22, .textColor = (Clay_Color){ 240, 240, 240, 255 } }
+                    // Keep designated fields in declaration order for MSVC aggregate compatibility.
+                    Clay_TextElementConfig* l_ContentTextConfig = CLAY_TEXT_CONFIG({
+                        .userData = nullptr,
+                        .textColor = { 240, 240, 240, 255 },
+                        .fontId = 0,
+                        .fontSize = 22
                         });
+                    CLAY_TEXT(CLAY_STRING("Render scene would appear here."), l_ContentTextConfig);
                 }
             }
         }
