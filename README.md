@@ -126,6 +126,86 @@ The above example, rendered correctly will look something like the following:
 
 ![Clay Example](https://github.com/user-attachments/assets/1928c6d4-ada9-4a4c-a3d1-44fe9b23b3bd)
 
+### Visual Studio 2022 / MSVC build configuration
+
+The current README did not spell out how to set up Clay with Visual Studio 2022, so the following steps target MSVC users building a single `CLAY_IMPLEMENTATION` translation unit alongside a Vulkan renderer. These steps also leave room for future improvements such as better swapchain-resize handling and validation tightening.
+
+- **Language standard & warning level:**
+  - Set the **C Language Standard** to **ISO C17** (`/std:c17`) in *Configuration Properties → C/C++ → Language*. Clay is plain C, but C++20 projects can include the generated object because the C translation unit is compiled separately.
+  - Use **Warning Level** `/W4` (or `/Wall` when validating new integrations) and treat warnings as errors for the Clay translation unit to catch integration issues early.
+  - Keep `CLAY_IMPLEMENTATION` defined in exactly one `.c` file to avoid multiple-definition linker errors; all other translation units should include `clay.h` without the define.
+- **Vulkan SDK include/lib setup (LunarG):**
+  - Install the [LunarG Vulkan SDK](https://vulkan.lunarg.com/doc/sdk) and ensure the `VULKAN_SDK` environment variable is set by the installer.
+  - Add `$(VULKAN_SDK)\Include` to *Configuration Properties → C/C++ → General → Additional Include Directories*.
+  - Add `$(VULKAN_SDK)\Lib` to *Configuration Properties → Linker → General → Additional Library Directories* and link against `vulkan-1.lib` (plus any allocator / shader utility libs you use).
+  - When mixing with ImGui backends, keep the [ImGui wiki guidelines](https://github.com/ocornut/imgui/wiki) handy for sampler, descriptor, and swapchain best practices.
+
+**Minimal MSVC-friendly Vulkan loop (C17) showing Clay command mapping and scissor stack for scrolling**
+
+```C
+// This translation unit should be compiled with /std:c17 and /W4 using MSVC in Visual Studio 2022.
+// The snippet iterates Clay_RenderCommandArray, maps commands to Vulkan pipelines, and maintains a scissor stack for scroll regions.
+static void RenderClayCommands(VkCommandBuffer l_CommandBuffer, Clay_RenderCommandArray l_RenderCommands) {
+    VkPipeline l_RectPipeline = /* created elsewhere */ VK_NULL_HANDLE;
+    VkPipeline l_TextPipeline = /* created elsewhere */ VK_NULL_HANDLE;
+    VkRect2D l_ScissorStack[8] = {0};
+    int32_t l_ScissorDepth = 0;
+
+    for (int32_t l_CommandIndex = 0; l_CommandIndex < l_RenderCommands.length; ++l_CommandIndex) {
+        Clay_RenderCommand *l_Command = &l_RenderCommands.internalArray[l_CommandIndex];
+
+        switch (l_Command->commandType) {
+            case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
+                // Push the scrollable clip rect to keep nested scroll areas isolated.
+                VkRect2D l_NewScissor = {
+                    .offset = { (int32_t)l_Command->boundingBox.x, (int32_t)l_Command->boundingBox.y },
+                    .extent = { (uint32_t)l_Command->boundingBox.width, (uint32_t)l_Command->boundingBox.height }
+                };
+                if (l_ScissorDepth < (int32_t)(sizeof l_ScissorStack / sizeof l_ScissorStack[0])) {
+                    l_ScissorStack[l_ScissorDepth++] = l_NewScissor;
+                    vkCmdSetScissor(l_CommandBuffer, 0, 1, &l_NewScissor);
+                }
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
+                // Pop the scissor so parents resume drawing without child clips.
+                if (l_ScissorDepth > 0) {
+                    --l_ScissorDepth;
+                    if (l_ScissorDepth > 0) {
+                        vkCmdSetScissor(l_CommandBuffer, 0, 1, &l_ScissorStack[l_ScissorDepth - 1]);
+                    }
+                }
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
+                // Map to a color-pass pipeline and draw the quad for this UI rect.
+                vkCmdBindPipeline(l_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, l_RectPipeline);
+                // ...bind vertex buffers and push constants for l_Command->renderData.rectangle.backgroundColor
+                // ...issue vkCmdDraw to render the rectangle
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_TEXT: {
+                // Select the text pipeline; glyph atlas binding follows ImGui-style descriptor usage.
+                vkCmdBindPipeline(l_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, l_TextPipeline);
+                // ...bind font atlas descriptors, set per-draw uniforms, and vkCmdDrawIndexed for glyphs
+                break;
+            }
+            default: {
+                // Additional Clay command types (images, borders, custom) can be routed here.
+                break;
+            }
+        }
+    }
+}
+```
+
+**Troubleshooting and future enhancements**
+
+- If scissor clipping appears inverted, verify that the swapchain surface transform is accounted for before setting `VkRect2D`.
+- MSVC link errors referencing `CLAY_IMPLEMENTATION` usually mean more than one translation unit defined the macro; keep it in a single `.c` file.
+- Vulkan validation warnings about descriptor lifetimes often stem from text pipelines; cross-check against the [ImGui wiki recommendations](https://github.com/ocornut/imgui/wiki).
+- Consider adding a resize strategy that rebuilds pipelines only when swapchain formats change (future enhancement), and batch multiple Clay rectangles into shared vertex buffers to reduce draw calls.
+
 In summary, the general order of steps is:
 
 1. [Clay_SetLayoutDimensions(dimensions)](#clay_setlayoutdimensions)	
