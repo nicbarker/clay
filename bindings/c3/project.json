@@ -1,0 +1,33 @@
+{
+  "langrev": "1",
+  "authors":  [ "Jefferey Schlueter <jefferey.l.schlueter@gmail.com>" ],
+  "version": "0.1.0",
+  "dependency-search-paths":  [ "lib" ],
+  "targets": {
+
+    // TODO: found out how to stop this from outputting a .lib and .pdb in addition to the .exe (they don't do anything)
+    "video-example": {
+      "output": "build/video-example/",
+      "c-sources": [ "c-lang/source/clay.c" ],
+      "cflags": "-DCLAY_IMPLEMENTATION",        // makes the clay source actually define things
+      "type": "executable",
+      "dependencies":  [ "raylib55" ],
+      "sources": [ "source/clay.c3", "source/clay-raylib-renderer.c3", "examples/video-example.c3" ],
+      // "link-libc": false,            // TODO; leads to duplicate definitions (eg math_nolibc)
+      // "use-stdlib": false,           // TODO: leads to ZString being undefined -> then missing main @main_to_void_main
+      // "features": ["NO_STDLIB"]
+    },
+    
+    // TODO: figure out why creating static/dynamic libraries with C sources doesn't work (emits no errors just crashes out and dumps an empty clay-win.h into the project dir)
+    // "clay-win": {
+    //   "output": "build/clay.c3l/windows-x64",
+    //   "c-sources": [ "c-lang/source/clay.c" ],
+    //   "sources": [ "source/clay.c3" ],
+    //   "type": "static-lib"
+    // },
+    // build args with no C references
+    //../c3c.exe --link-libc=no --use-stdlib=no -o clay --template static-lib --output-dir build/clay.c3l/windows-x64 --print-linking --print-output -vvv static-lib source/clay-slim.c3
+  },
+  "cc": "gcc",
+  "cpu": "generic",
+}
