@@ -104,11 +104,11 @@ void component_text_pair(const char *key, const char *value)
     size_t keylen = strlen(key);
     size_t vallen = strlen(value);
     Clay_String keytext = (Clay_String) {
-        .length = keylen,
+        .length = (int32_t)keylen,
         .chars = key,
     };
     Clay_String valtext = (Clay_String) {
-        .length = vallen,
+        .length = (int32_t)vallen,
         .chars = value,
     };
     Clay_TextElementConfig *textconfig =
@@ -117,15 +117,17 @@ void component_text_pair(const char *key, const char *value)
         .layout = {
             .sizing = {
                 .width = {
-                    .size.minMax = {
-                        .min = strlen("Border chars CLAY_TB_IMAGE_MODE_UNICODE_FAST") * Clay_Termbox_Cell_Width(),
+                    .size = {
+                        .minMax = {
+                            .min = strlen("Border chars CLAY_TB_IMAGE_MODE_UNICODE_FAST") * Clay_Termbox_Cell_Width(),
+                        }
                     }
                 },
             }
         },
     }) {
         CLAY_TEXT(keytext, textconfig);
-        CLAY_AUTO_ID({ .layout = { .sizing = CLAY_SIZING_GROW(1) } }) { }
+        CLAY_AUTO_ID({ .layout = { .sizing = {CLAY_SIZING_GROW(1)} } }) { }
         CLAY_TEXT(valtext, textconfig);
     }
 
@@ -135,19 +137,19 @@ void component_termbox_settings(void)
 {
     CLAY_AUTO_ID({
             .layout = {
-                .sizing = CLAY_SIZING_FIT(),
+                .sizing = {CLAY_SIZING_FIT()},
                 .padding = {
-                    6 * Clay_Termbox_Cell_Width(),
-                    6 * Clay_Termbox_Cell_Width(),
-                    2 * Clay_Termbox_Cell_Height(),
-                    2 * Clay_Termbox_Cell_Height(),
+                    (uint16_t)(6 * Clay_Termbox_Cell_Width()),
+                    (uint16_t)(6 * Clay_Termbox_Cell_Width()),
+                    (uint16_t)(2 * Clay_Termbox_Cell_Height()),
+                    (uint16_t)(2 * Clay_Termbox_Cell_Height()),
                 }
             },
+            .backgroundColor = { 0x7f, 0x00, 0x00, 0x7f },
             .border = {
+                .color = { 0x00, 0x00, 0x00, 0xff },
                 .width = CLAY_BORDER_ALL(1),
-                .color = { 0x00, 0x00, 0x00, 0xff }
             },
-            .backgroundColor = { 0x7f, 0x00, 0x00, 0x7f }
     }) {
         const char *color_mode = NULL;
         switch (clay_tb_color_mode) {
@@ -280,12 +282,12 @@ void component_keybinds(void)
 {
     CLAY_AUTO_ID({
         .layout = {
-            .sizing = CLAY_SIZING_FIT(),
+            .sizing = {CLAY_SIZING_FIT()},
             .padding = {
-                4 * Clay_Termbox_Cell_Width(),
-                4 * Clay_Termbox_Cell_Width(),
-                2 * Clay_Termbox_Cell_Height(),
-                2 * Clay_Termbox_Cell_Height(),
+                (uint16_t)(4 * Clay_Termbox_Cell_Width()),
+                (uint16_t)(4 * Clay_Termbox_Cell_Width()),
+                (uint16_t)(2 * Clay_Termbox_Cell_Height()),
+                (uint16_t)(2 * Clay_Termbox_Cell_Height()),
             }
         },
         .backgroundColor = { 0x00, 0x7f, 0x7f, 0xff }
@@ -317,12 +319,12 @@ void component_image(img_group *img_pair)
                 .width = CLAY_SIZING_GROW(),
                 .height = CLAY_SIZING_GROW()
             },
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            .childGap = (uint16_t)(1 * Clay_Termbox_Cell_Height()),
             .childAlignment = {
                 .x = CLAY_ALIGN_X_CENTER,
                 .y = CLAY_ALIGN_Y_CENTER
             },
-            .childGap = 1 * Clay_Termbox_Cell_Height()
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
         .backgroundColor = { 0x24, 0x24, 0x24, 0xff }
     }) {
@@ -332,10 +334,10 @@ void component_image(img_group *img_pair)
                     .width = CLAY_SIZING_GROW(),
                 },
             },
+            .aspectRatio = { (float)img_pair->width / img_pair->height },
             .image = {
                 .imageData = &img_pair->image,
             },
-            .aspectRatio = { (float)img_pair->width / img_pair->height }
         }) { }
         component_keybinds();
     }
@@ -348,12 +350,12 @@ void component_image_small(img_group **img_pairs, int count, int selected_index)
             .sizing = {
                 .width = CLAY_SIZING_PERCENT(0.25),
             },
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .childGap = 20,
             .childAlignment = {
                 .x = CLAY_ALIGN_X_CENTER,
                 .y = CLAY_ALIGN_Y_CENTER
             },
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
         },
     }) {
         CLAY_AUTO_ID({
@@ -362,10 +364,10 @@ void component_image_small(img_group **img_pairs, int count, int selected_index)
                     .width = CLAY_SIZING_PERCENT(0.7),
                 },
             },
+            .aspectRatio = { (float)img_pairs[selected_index]->width / img_pairs[selected_index]->height },
             .image = {
                 .imageData = &img_pairs[selected_index]->image_1,
             },
-            .aspectRatio = { (float)img_pairs[selected_index]->width / img_pairs[selected_index]->height }
         }) { }
         CLAY_AUTO_ID({
             .layout = {
@@ -373,10 +375,10 @@ void component_image_small(img_group **img_pairs, int count, int selected_index)
                     .width = CLAY_SIZING_GROW(),
                 },
             },
+            .aspectRatio = { (float)img_pairs[selected_index]->width / img_pairs[selected_index]->height },
             .image = {
                 .imageData = &img_pairs[selected_index]->image_2,
             },
-            .aspectRatio = { (float)img_pairs[selected_index]->width / img_pairs[selected_index]->height }
         }) { }
         component_termbox_settings();
     }
@@ -390,8 +392,8 @@ void component_thumbnails(img_group **img_pairs, int count, int selected_index)
                 .width = CLAY_SIZING_PERCENT(0.1),
                 .height = CLAY_SIZING_GROW()
             },
+            .childGap = 20,
             .layoutDirection = CLAY_TOP_TO_BOTTOM,
-            .childGap = 20
         },
         .backgroundColor = { 0x42, 0x42, 0x42, 0xff }
     }) {
@@ -399,8 +401,8 @@ void component_thumbnails(img_group **img_pairs, int count, int selected_index)
             Clay_BorderElementConfig border;
             if (i == selected_index) {
                 border = (Clay_BorderElementConfig) {
+                    .color = { 0x00, 0x30, 0xc0, 0x8f },
                     .width =CLAY_BORDER_OUTSIDE(10),
-                    .color = { 0x00, 0x30, 0xc0, 0x8f }
                 };
             } else {
                 border = (Clay_BorderElementConfig) {
@@ -413,11 +415,11 @@ void component_thumbnails(img_group **img_pairs, int count, int selected_index)
                         .width = CLAY_SIZING_GROW(),
                     },
                 },
-                .border = border,
+                .aspectRatio = { (float)img_pairs[i]->width / img_pairs[i]->height },
                 .image = {
                     .imageData = &img_pairs[i]->thumbnail,
                 },
-                .aspectRatio = { (float)img_pairs[i]->width / img_pairs[i]->height }
+                .border = border,
             }) { }
         }
     }
@@ -434,11 +436,11 @@ Clay_RenderCommandArray CreateLayout(struct img_group **imgs)
                 .width = CLAY_SIZING_GROW(),
                 .height = CLAY_SIZING_GROW()
             },
+            .childGap = 64,
             .childAlignment = {
                 .x = CLAY_ALIGN_X_LEFT,
                 .y = CLAY_ALIGN_Y_CENTER
             },
-            .childGap = 64
         },
         .backgroundColor = { 0x24, 0x24, 0x24, 0xff }
     }) {

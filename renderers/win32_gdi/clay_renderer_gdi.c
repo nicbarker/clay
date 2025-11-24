@@ -111,7 +111,7 @@ static inline Clay_Color ColorBlend(Clay_Color base, Clay_Color overlay, float f
     // Avoid division by zero and fully transparent cases
     if (out_a <= 0.0f)
     {
-        return (Clay_Color) { .a = 0, .r = 0, .g = 0, .b = 0 };
+        return (Clay_Color) {.r = 0, .g = 0, .b = 0, .a = 0 };
     }
 
     blended.r = (overlay.r * overlay_a + base.r * base_a * (1.0f - overlay_a)) / out_a;
@@ -214,7 +214,7 @@ static void CreateHDCSubstitute(HDCSubstitute* phdcs, HDC hdcSrc, PRECT prc)
     }
 
     // Select the DIB section into the memory DC
-    phdcs->hbmMemPrev = SelectObject(phdcs->hdcMem, phdcs->hbmMem);
+    phdcs->hbmMemPrev = (HBITMAP)SelectObject(phdcs->hdcMem, phdcs->hbmMem);
 
     // Copy the content of the target DC to the memory DC
     BitBlt(phdcs->hdcMem, 0, 0, phdcs->size.cx, phdcs->size.cy, hdcSrc, prc->left, prc->top, SRCCOPY);
@@ -329,7 +329,7 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands, HFONT*
 
             uint16_t font_id = renderCommand->renderData.text.fontId;
             HFONT hFont = fonts[font_id];
-            HFONT hPrevFont = SelectObject(renderer_hdcMem, hFont);
+            HFONT hPrevFont = (HFONT)SelectObject(renderer_hdcMem, hFont);
 
             // Actually draw text
             DrawTextA(renderer_hdcMem, renderCommand->renderData.text.stringContents.chars,
@@ -438,7 +438,7 @@ void Clay_Win32_Render(HWND hwnd, Clay_RenderCommandArray renderCommands, HFONT*
             HPEN bottomPen = CreatePen(PS_SOLID, brd.width.bottom, RGB(brd.color.r, brd.color.g, brd.color.b));
             HPEN rightPen = CreatePen(PS_SOLID, brd.width.right, RGB(brd.color.r, brd.color.g, brd.color.b));
 
-            HPEN oldPen = SelectObject(renderer_hdcMem, topPen);
+            HPEN oldPen = (HPEN)SelectObject(renderer_hdcMem, topPen);
 
             if (brd.cornerRadius.topLeft == 0)
             {
@@ -536,7 +536,7 @@ static inline Clay_Dimensions Clay_Win32_MeasureText(Clay_StringSlice text, Clay
 
             if (hTempDC != NULL)
             {
-                HFONT hPrevFont = SelectObject(hTempDC, hFont);
+                HFONT hPrevFont = (HFONT)SelectObject(hTempDC, hFont);
 
                 SIZE size;
                 GetTextExtentPoint32(hTempDC, text.chars, text.length, &size);
