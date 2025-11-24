@@ -47,35 +47,35 @@ void Layout() {
     }) {
 		CLAY(CLAY_ID("PageMargins"), { .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
              .padding = { 70, 70, 50, 50 }, // Some nice looking page margins
-             .layoutDirection = CLAY_TOP_TO_BOTTOM,
-             .childGap = 10}
+             .childGap = 10,
+             .layoutDirection = CLAY_TOP_TO_BOTTOM}
         }) {
 			// Section Title
-			CLAY_TEXT(CLAY_STRING("Features Overview"), CLAY_TEXT_CONFIG({ .fontId = FONT_CALLISTOGA, .textColor = PRIMARY, .fontSize = 24 }));
+			CLAY_TEXT(CLAY_STRING("Features Overview"), CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontId = FONT_CALLISTOGA, .fontSize = 24 }));
 
 			// Feature Box
 			CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }, .childGap = 10 }}) {
 				CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0) }}, .backgroundColor = ACCENT, .cornerRadius = CLAY_CORNER_RADIUS(12) }) {
 					CLAY_AUTO_ID({ .layout = {.padding = CLAY_PADDING_ALL(20), .childGap = 4, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
 						CLAY_TEXT(CLAY_STRING("- High performance"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontId = FONT_QUICKSAND, .fontSize = 14 }));
 						CLAY_TEXT(CLAY_STRING("- Declarative syntax"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontId = FONT_QUICKSAND, .fontSize = 14 }));
 						CLAY_TEXT(CLAY_STRING("- Flexbox-style responsive layout"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontId = FONT_QUICKSAND, .fontSize = 14 }));
 						CLAY_TEXT(CLAY_STRING("- Single .h file for C/C++"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontId = FONT_QUICKSAND, .fontSize = 14 }));
 						CLAY_TEXT(CLAY_STRING("- And now with cairo!"),
-								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontSize = 14, .fontId = FONT_QUICKSAND }));
+								  CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontId = FONT_QUICKSAND, .fontSize = 14 }));
 					}
 				}
 				CLAY_AUTO_ID({
                     .layout = {
                         .sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
                         .padding = CLAY_PADDING_ALL(10),
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                        .childGap = 4,
                         .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
-                        .childGap = 4
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
                     },
                     .backgroundColor = ACCENT,
                     .cornerRadius = CLAY_CORNER_RADIUS(8)
@@ -84,9 +84,10 @@ void Layout() {
 					CLAY_AUTO_ID({ .layout = {
                         .sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_GROW(0)},
                         .padding = { 30, 30, 0, 0 },
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                        .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER }},
-                        .border = { .color = PRIMARY, .width = 2, 2, 2, 2 }, .cornerRadius = 10
+                        .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM},
+                        .cornerRadius = {10},
+                        .border = { .color = PRIMARY, .width = {2, 2, 2, 2} }
                     }) {
 						CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_FIXED(32), CLAY_SIZING_FIXED(32) } }, .image = { .imageData = "resources/check.png" }});
 					}
@@ -96,13 +97,13 @@ void Layout() {
 			CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(16) } }});
 
 			CLAY_AUTO_ID({ .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) }, .childGap = 10, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
-				CLAY_TEXT(CLAY_STRING("Cairo"), CLAY_TEXT_CONFIG({ .fontId = FONT_CALLISTOGA, .fontSize = 24, .textColor = PRIMARY }));
-				CLAY_AUTO_ID({ .layout = { .padding = CLAY_PADDING_ALL(10) }, .backgroundColor = ACCENT, .cornerRadius = 10 }) {
+				CLAY_TEXT(CLAY_STRING("Cairo"), CLAY_TEXT_CONFIG({ .textColor = PRIMARY,.fontId = FONT_CALLISTOGA, .fontSize = 24 }));
+				CLAY_AUTO_ID({ .layout = { .padding = CLAY_PADDING_ALL(10) }, .backgroundColor = ACCENT, .cornerRadius = {10} }) {
 					CLAY_TEXT(CLAY_STRING("Officiis quia quia qui inventore ratione voluptas et. Quidem sunt unde similique. Qui est et exercitationem cumque harum illum. Numquam placeat aliquid quo voluptatem. "
 										  "Deleniti saepe nihil exercitationem nemo illo. Consequatur beatae repellat provident similique. Provident qui exercitationem deserunt sapiente. Quam qui dolor corporis odit. "
 										  "Assumenda corrupti sunt culpa pariatur. Vero sit ut minima. In est consequatur minus et cum sint illum aperiam. Qui ipsa quas nisi omnis aut quia nobis. "
 										  "Corporis deserunt eum mollitia modi rerum voluptas. Expedita non ab esse. Sit voluptates eos voluptatem labore aspernatur quia eum. Modi cumque atque non. Sunt officiis corrupti neque ut inventore excepturi rem minima. Possimus sed soluta qui ea aut ipsum laborum fugit. "
-										  "Voluptate eum consectetur non. Quo autem voluptate soluta atque dolorum maxime. Officiis inventore omnis eveniet beatae ipsa optio. Unde voluptatum ut autem quia sit sit et. Ut inventore qui quia totam consequatur. Sit ea consequatur omnis rerum nulla aspernatur deleniti."), CLAY_TEXT_CONFIG({ .fontId = FONT_QUICKSAND, .fontSize = 16, .textColor = PRIMARY, .lineHeight = 16 }));
+										  "Voluptate eum consectetur non. Quo autem voluptate soluta atque dolorum maxime. Officiis inventore omnis eveniet beatae ipsa optio. Unde voluptatum ut autem quia sit sit et. Ut inventore qui quia totam consequatur. Sit ea consequatur omnis rerum nulla aspernatur deleniti."), CLAY_TEXT_CONFIG({ .textColor = PRIMARY, .fontId = FONT_QUICKSAND, .fontSize = 16, .lineHeight = 16 }));
 				}
 			}
 		}
@@ -138,9 +139,9 @@ int main(void) {
 	Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
 
 	// We initialize Clay with the same size
-	Clay_Initialize(clayMemory, (Clay_Dimensions) { width, height }, (Clay_ErrorHandler) { HandleClayErrors });
+	Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)width, (float)height }, (Clay_ErrorHandler) { HandleClayErrors });
 
-    char** fonts = (char*[]) {
+    const char* fonts[2] = {
         "Callistoga",
         "Quicksand Semibold"
     };
@@ -168,4 +169,3 @@ int main(void) {
 	cairo_destroy(cr);
 	return 0;
 }
-

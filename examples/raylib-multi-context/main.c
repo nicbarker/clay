@@ -12,8 +12,8 @@ Clay_RenderCommandArray CreateLayout(Clay_Context* context, ClayVideoDemo_Data *
     Clay_SetDebugModeEnabled(true);
     // Run once per frame
     Clay_SetLayoutDimensions((Clay_Dimensions) {
-            .width = GetScreenWidth(),
-            .height = GetScreenHeight() / 2
+            .width = (float)GetScreenWidth(),
+            .height = (float)GetScreenHeight() / 2
     });
     Vector2 mousePosition = GetMousePosition();
     mousePosition.y -= data->yOffset;
@@ -48,22 +48,22 @@ int main(void) {
 
     Clay_Arena clayMemoryTop = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Context *clayContextTop = Clay_Initialize(clayMemoryTop, (Clay_Dimensions) {
-       .width = GetScreenWidth(),
-       .height = GetScreenHeight() / 2
+       .width = (float)GetScreenWidth(),
+       .height = (float)GetScreenHeight() / 2
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
     ClayVideoDemo_Data dataTop = ClayVideoDemo_Initialize();
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
     Clay_Arena clayMemoryBottom = Clay_CreateArenaWithCapacityAndMemory(clayRequiredMemory, malloc(clayRequiredMemory));
     Clay_Context *clayContextBottom = Clay_Initialize(clayMemoryBottom, (Clay_Dimensions) {
-            .width = GetScreenWidth(),
-            .height = GetScreenHeight() / 2
+            .width = (float)GetScreenWidth(),
+            .height = (float)GetScreenHeight() / 2
     }, (Clay_ErrorHandler) { HandleClayErrors }); // This final argument is new since the video was published
     ClayVideoDemo_Data dataBottom = ClayVideoDemo_Initialize();
     Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
     while (!WindowShouldClose()) {
-        dataBottom.yOffset = GetScreenHeight() / 2;
+        dataBottom.yOffset = (float)GetScreenHeight() / 2;
         Clay_RenderCommandArray renderCommandsTop = CreateLayout(clayContextTop, &dataTop);
         Clay_RenderCommandArray renderCommandsBottom = CreateLayout(clayContextBottom, &dataBottom);
         BeginDrawing();

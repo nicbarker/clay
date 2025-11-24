@@ -1,5 +1,5 @@
 // Copyright (c) 2024 Justin Andreas Lacoste (@27justin)
-//
+// 
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the
 // use of this software.
@@ -95,7 +95,7 @@ static inline Clay_Dimensions Clay_Cairo_MeasureText(Clay_StringSlice str, Clay_
 	}
 
 	// Ensure string is null-terminated for Cairo
-    Clay_String toTerminate = (Clay_String){ .chars = str.chars, .length = str.length, .isStaticallyAllocated = false };
+    Clay_String toTerminate = (Clay_String){ .isStaticallyAllocated = false, .length = str.length, .chars = str.chars };
 	char *text = Clay_Cairo__NullTerminate(&toTerminate);
 	char *font_family = fonts[config->fontId];
 

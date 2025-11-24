@@ -55,10 +55,10 @@ Clay_RenderCommandArray ClayImageSample_CreateLayout() {
 
     CLAY(CLAY_ID("OuterContainer"), {
         .layout = {
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = layoutExpand,
             .padding = CLAY_PADDING_ALL(16),
-            .childGap = 16
+            .childGap = 16,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
         }
     }) {
         CLAY(CLAY_ID("SampleImage"), {

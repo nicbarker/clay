@@ -64,7 +64,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             zDelta = zDelta * .012;
         }
 
-        Clay_UpdateScrollContainers(true, (Clay_Vector2){.x = 0, .y = zDelta}, dt);
+        Clay_UpdateScrollContainers(true, (Clay_Vector2){.x = 0, .y = (float)zDelta}, dt);
 
         InvalidateRect(hwnd, NULL, false); // force a wm_paint event
         break;
@@ -79,7 +79,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         short mouseY = GET_Y_LPARAM(lParam);
         short mouseButtons = LOWORD(wParam);
 
-        Clay_SetPointerState((Clay_Vector2){mouseX, mouseY}, mouseButtons & 0b01);
+        Clay_SetPointerState((Clay_Vector2){(float)mouseX, (float)mouseY}, mouseButtons & 0b01);
 
         InvalidateRect(hwnd, NULL, false); // force a wm_paint event
         break;
@@ -91,7 +91,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         RECT r = {0};
         if (GetClientRect(hwnd, &r))
         {
-            Clay_Dimensions dim = (Clay_Dimensions){.height = r.bottom - r.top, .width = r.right - r.left};
+            Clay_Dimensions dim = (Clay_Dimensions){.width = (float)r.right - r.left, .height = (float)r.bottom - r.top};
             Clay_SetLayoutDimensions(dim);
         }
 
@@ -113,7 +113,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         }
 
-        printf("Key Pressed: %d\r\n", wParam);
+        printf("Key Pressed: %llu\r\n", wParam);
         InvalidateRect(hwnd, NULL, false); // force a wm_paint event
         break;
 

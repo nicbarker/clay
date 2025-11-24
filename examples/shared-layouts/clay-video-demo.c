@@ -11,9 +11,9 @@ void RenderHeaderButton(Clay_String text) {
         .cornerRadius = CLAY_CORNER_RADIUS(5)
     }) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
+            .textColor = { 255, 255, 255, 255 },
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
-            .textColor = { 255, 255, 255, 255 }
         }));
     }
 }
@@ -21,9 +21,9 @@ void RenderHeaderButton(Clay_String text) {
 void RenderDropdownMenuItem(Clay_String text) {
     CLAY_AUTO_ID({.layout = { .padding = CLAY_PADDING_ALL(16)}}) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG({
+            .textColor = { 255, 255, 255, 255 },
             .fontId = FONT_ID_BODY_16,
             .fontSize = 16,
-            .textColor = { 255, 255, 255, 255 }
         }));
     }
 }
@@ -41,8 +41,8 @@ typedef struct {
 Document documentsRaw[5];
 
 DocumentArray documents = {
+    .documents = documentsRaw,
     .length = 5,
-    .documents = documentsRaw
 };
 
 typedef struct {
@@ -103,20 +103,20 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
 
     // Build UI here
     CLAY(CLAY_ID("OuterContainer"), {
-        .backgroundColor = {43, 41, 51, 255 },
         .layout = {
-            .layoutDirection = CLAY_TOP_TO_BOTTOM,
             .sizing = layoutExpand,
             .padding = CLAY_PADDING_ALL(16),
-            .childGap = 16
-        }
+            .childGap = 16,
+            .layoutDirection = CLAY_TOP_TO_BOTTOM,
+        },
+        .backgroundColor = {43, 41, 51, 255 },
     }) {
         // Child elements go inside braces
         CLAY(CLAY_ID("HeaderBar"), {
             .layout = {
                 .sizing = {
+                    .width = CLAY_SIZING_GROW(0),
                     .height = CLAY_SIZING_FIXED(60),
-                    .width = CLAY_SIZING_GROW(0)
                 },
                 .padding = { 16, 16, 0, 0 },
                 .childGap = 16,
@@ -134,9 +134,9 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                 .cornerRadius = CLAY_CORNER_RADIUS(5)
             }) {
                 CLAY_TEXT(CLAY_STRING("File"), CLAY_TEXT_CONFIG({
+                    .textColor = { 255, 255, 255, 255 },
                     .fontId = FONT_ID_BODY_16,
                     .fontSize = 16,
-                    .textColor = { 255, 255, 255, 255 }
                 }));
 
                 bool fileMenuVisible =
@@ -146,22 +146,22 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
 
                 if (fileMenuVisible) { // Below has been changed slightly to fix the small bug where the menu would dismiss when mousing over the top gap
                     CLAY(CLAY_ID("FileMenu"), {
+                        .layout = {
+                            .padding = {0, 0, 8, 8 }
+                        },
                         .floating = {
-                            .attachTo = CLAY_ATTACH_TO_PARENT,
                             .attachPoints = {
                                 .parent = CLAY_ATTACH_POINT_LEFT_BOTTOM
                             },
+                            .attachTo = CLAY_ATTACH_TO_PARENT,
                         },
-                        .layout = {
-                            .padding = {0, 0, 8, 8 }
-                        }
                     }) {
                         CLAY_AUTO_ID({
                             .layout = {
-                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
                                 .sizing = {
                                         .width = CLAY_SIZING_FIXED(200)
                                 },
+                                .layoutDirection = CLAY_TOP_TO_BOTTOM,
                             },
                             .backgroundColor = {40, 40, 40, 255 },
                             .cornerRadius = CLAY_CORNER_RADIUS(8)
@@ -185,16 +185,16 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
             .layout = { .sizing = layoutExpand, .childGap = 16 }
         }) {
             CLAY(CLAY_ID("Sidebar"), {
-                .backgroundColor = contentBackgroundColor,
                 .layout = {
-                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    .padding = CLAY_PADDING_ALL(16),
-                    .childGap = 8,
                     .sizing = {
                         .width = CLAY_SIZING_FIXED(250),
                         .height = CLAY_SIZING_GROW(0)
-                    }
-                }
+                    },
+                    .padding = CLAY_PADDING_ALL(16),
+                    .childGap = 8,
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                },
+                .backgroundColor = contentBackgroundColor,
             }) {
                 for (int i = 0; i < documents.length; i++) {
                     Document document = documents.documents[i];
@@ -210,21 +210,21 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
                             .cornerRadius = CLAY_CORNER_RADIUS(8)
                         }) {
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
+                                .textColor = { 255, 255, 255, 255 },
                                 .fontId = FONT_ID_BODY_16,
                                 .fontSize = 20,
-                                .textColor = { 255, 255, 255, 255 }
                             }));
                         }
                     } else {
                         SidebarClickData *clickData = (SidebarClickData *)(data->frameArena.memory + data->frameArena.offset);
                         *clickData = (SidebarClickData) { .requestedDocumentIndex = i, .selectedDocumentIndex = &data->selectedDocumentIndex };
                         data->frameArena.offset += sizeof(SidebarClickData);
-                        CLAY_AUTO_ID({ .layout = sidebarButtonLayout, .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120 : 0 }, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
+                        CLAY_AUTO_ID({ .layout = sidebarButtonLayout, .backgroundColor = (Clay_Color) { 120, 120, 120, Clay_Hovered() ? 120.0f : 0.0f }, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
                             Clay_OnHover(HandleSidebarInteraction, (intptr_t)clickData);
                             CLAY_TEXT(document.title, CLAY_TEXT_CONFIG({
+                                .textColor = { 255, 255, 255, 255 },
                                 .fontId = FONT_ID_BODY_16,
                                 .fontSize = 20,
-                                .textColor = { 255, 255, 255, 255 }
                             }));
                         }
                     }
@@ -232,25 +232,25 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
             }
 
             CLAY(CLAY_ID("MainContent"), {
+                .layout = {
+                    .sizing = layoutExpand,
+                    .padding = CLAY_PADDING_ALL(16),
+                    .childGap = 16,
+                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
+                },
                 .backgroundColor = contentBackgroundColor,
                 .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() },
-                .layout = {
-                    .layoutDirection = CLAY_TOP_TO_BOTTOM,
-                    .childGap = 16,
-                    .padding = CLAY_PADDING_ALL(16),
-                    .sizing = layoutExpand
-                }
             }) {
                 Document selectedDocument = documents.documents[data->selectedDocumentIndex];
                 CLAY_TEXT(selectedDocument.title, CLAY_TEXT_CONFIG({
+                    .textColor = COLOR_WHITE,
                     .fontId = FONT_ID_BODY_16,
                     .fontSize = 24,
-                    .textColor = COLOR_WHITE
                 }));
                 CLAY_TEXT(selectedDocument.contents, CLAY_TEXT_CONFIG({
+                    .textColor = COLOR_WHITE,
                     .fontId = FONT_ID_BODY_16,
                     .fontSize = 24,
-                    .textColor = COLOR_WHITE
                 }));
             }
         }
