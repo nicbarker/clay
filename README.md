@@ -308,7 +308,7 @@ CLAY(CLAY_ID("Button"), { .backgroundColor = Clay_Hovered() ? COLOR_BLUE : COLOR
 The function `void Clay_OnHover()` allows you to attach a function pointer to the currently open element, which will be called if the mouse / pointer is over the element.
 
 ```C
-void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, intptr_t userData) {
+void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerInfo, void *userData) {
     ButtonData *buttonData = (ButtonData *)userData;
     // Pointer state allows you to detect mouse down / hold / release
     if (pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
@@ -714,12 +714,12 @@ Called **during** layout declaration, and returns `true` if the pointer position
 
 ### Clay_OnHover
 
-`void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData), intptr_t userData)`
+`void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData), void *userData)`
 
 Called **during** layout declaration, this function allows you to attach a function pointer to the currently open element that will be called once per layout if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the currently open element. See [Clay_PointerData](#clay_pointerdata) for more information on the `pointerData` argument.
 
 ```C
-void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
+void HandleButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData) {
     ButtonData *buttonData = (ButtonData *)userData;
     // Pointer state allows you to detect mouse down / hold / release
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
