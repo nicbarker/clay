@@ -202,7 +202,7 @@ CLAY(CLAY_ID("parent"), { .layout = { .padding = CLAY_PADDING_ALL(8) } }) {
     // Child element 1
     CLAY_TEXT(CLAY_STRING("Hello World"), CLAY_TEXT_CONFIG({ .fontSize = 16 }));
     // Child element 2 with red background
-    CLAY((CLAY_ID("child"), { .backgroundColor = COLOR_RED }) {
+    CLAY(CLAY_ID("child"), { .backgroundColor = COLOR_RED }) {
         // etc
     }
 }
