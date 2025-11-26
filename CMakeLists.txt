@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.25)
 project(clay)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-option(CLAY_INCLUDE_ALL_EXAMPLES "Build all examples" ON)
+option(CLAY_INCLUDE_ALL_EXAMPLES "Build all examples" OFF)
 option(CLAY_INCLUDE_DEMOS "Build video demo and website" OFF)
 option(CLAY_INCLUDE_CPP_EXAMPLE "Build C++ example" OFF)
 option(CLAY_INCLUDE_RAYLIB_EXAMPLES "Build raylib examples" OFF)
@@ -12,6 +12,7 @@ option(CLAY_INCLUDE_SDL3_EXAMPLES "Build SDL 3 examples" OFF)
 option(CLAY_INCLUDE_WIN32_GDI_EXAMPLES "Build Win32 GDI examples" OFF)
 option(CLAY_INCLUDE_SOKOL_EXAMPLES "Build Sokol examples" OFF)
 option(CLAY_INCLUDE_PLAYDATE_EXAMPLES "Build Playdate examples" OFF)
+option(CLAY_INCLUDE_VULAKN_EXAMPLES "Build Vulkan examples" ON)
 
 message(STATUS "CLAY_INCLUDE_DEMOS: ${CLAY_INCLUDE_DEMOS}")
 
@@ -43,6 +44,9 @@ endif()
 if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_SOKOL_EXAMPLES)
   add_subdirectory("examples/sokol-video-demo")
   add_subdirectory("examples/sokol-corner-radius")
+endif()
+if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_VULAKN_EXAMPLES)
+  add_subdirectory("examples/vulkan-demo")
 endif()
 
 # Playdate example not included in ALL because users need to install the playdate SDK first which requires a license agreement
