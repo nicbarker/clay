@@ -587,12 +587,19 @@ typedef struct {
     Clay_TransitionProperty properties;
 } Clay_TransitionCallbackArguments;
 
-// Controls settings related to element borders.
+// Controls settings related to transitions
 typedef struct Clay_TransitionElementConfig {
     bool (*handler)(Clay_TransitionCallbackArguments arguments);
     float duration;
     Clay_TransitionProperty properties;
 } Clay_TransitionElementConfig;
+
+// Controls settings related to element borders.
+typedef struct Clay_TransitionElementConfigs {
+    Clay_TransitionElementConfig enter;
+    Clay_TransitionElementConfig move;
+    Clay_TransitionElementConfig exit;
+} Clay_TransitionElementConfigs;
 
 CLAY__WRAPPER_STRUCT(Clay_TransitionElementConfig);
 
@@ -807,7 +814,7 @@ typedef struct Clay_ElementDeclaration {
     Clay_ClipElementConfig clip;
     // Controls settings related to element borders, and will generate BORDER render commands.
     Clay_BorderElementConfig border;
-    struct Clay_TransitionElementConfig transitions;
+    Clay_TransitionElementConfigs transitions;
     // A pointer that will be transparently passed through to resulting render commands.
     void *userData;
 } Clay_ElementDeclaration;
@@ -1121,7 +1128,7 @@ CLAY__ARRAY_DEFINE(Clay_FloatingElementConfig, Clay__FloatingElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_CustomElementConfig, Clay__CustomElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_ClipElementConfig, Clay__ClipElementConfigArray)
 CLAY__ARRAY_DEFINE(Clay_BorderElementConfig, Clay__BorderElementConfigArray)
-CLAY__ARRAY_DEFINE(Clay_TransitionElementConfig, Clay__TransitionElementConfigArray)
+CLAY__ARRAY_DEFINE(Clay_TransitionElementConfigs, Clay__TransitionElementConfigsArray)
 CLAY__ARRAY_DEFINE(Clay_String, Clay__StringArray)
 CLAY__ARRAY_DEFINE(Clay_SharedElementConfig, Clay__SharedElementConfigArray)
 CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_RenderCommand, Clay_RenderCommandArray)
@@ -1148,7 +1155,7 @@ typedef union {
     Clay_ClipElementConfig *clipElementConfig;
     Clay_BorderElementConfig *borderElementConfig;
     Clay_SharedElementConfig *sharedElementConfig;
-    Clay_TransitionElementConfig *transitionElementConfig;
+    Clay_TransitionElementConfigs *transitionElementConfig;
 } Clay_ElementConfigUnion;
 
 typedef struct {
@@ -1179,7 +1186,7 @@ typedef struct {
     uint16_t length;
 } Clay__LayoutElementChildren;
 
-typedef struct {
+typedef struct Clay_LayoutElement {
     union {
         Clay__LayoutElementChildren children;
         Clay__TextElementData *textElementData;
@@ -1324,7 +1331,7 @@ struct Clay_Context {
     Clay__ClipElementConfigArray clipElementConfigs;
     Clay__CustomElementConfigArray customElementConfigs;
     Clay__BorderElementConfigArray borderElementConfigs;
-    Clay__TransitionElementConfigArray transitionElementConfigs;
+    Clay__TransitionElementConfigsArray transitionElementConfigs;
     Clay__SharedElementConfigArray sharedElementConfigs;
     // Misc Data Structures
     Clay__StringArray layoutElementIdStrings;
@@ -1390,7 +1397,7 @@ Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingEleme
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
 Clay_ClipElementConfig * Clay__StoreClipElementConfig(Clay_ClipElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ClipElementConfig_DEFAULT : Clay__ClipElementConfigArray_Add(&Clay_GetCurrentContext()->clipElementConfigs, config); }
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_BorderElementConfig_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, config); }
-Clay_TransitionElementConfig * Clay__StoreTransitionElementConfig(Clay_TransitionElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_TransitionElementConfig_DEFAULT : Clay__TransitionElementConfigArray_Add(&Clay_GetCurrentContext()->transitionElementConfigs, config); }
+Clay_TransitionElementConfigs * Clay__StoreTransitionElementConfig(Clay_TransitionElementConfigs config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_TransitionElementConfigs_DEFAULT : Clay__TransitionElementConfigsArray_Add(&Clay_GetCurrentContext()->transitionElementConfigs, config); }
 Clay_SharedElementConfig * Clay__StoreSharedElementConfig(Clay_SharedElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_SharedElementConfig_DEFAULT : Clay__SharedElementConfigArray_Add(&Clay_GetCurrentContext()->sharedElementConfigs, config); }
 
 Clay_ElementConfig Clay__AttachElementConfig(Clay_ElementConfigUnion config, Clay__ElementConfigType type) {
@@ -2232,7 +2239,7 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
     if (!Clay__MemCmp((char *)(&declaration->border.width), (char *)(&Clay__BorderWidth_DEFAULT), sizeof(Clay_BorderWidth))) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration->border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER);
     }
-    if (declaration->transitions.handler) {
+    if (declaration->transitions.enter.handler || declaration->transitions.move.handler || declaration->transitions.exit.handler) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .transitionElementConfig = Clay__StoreTransitionElementConfig(declaration->transitions) }, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION);
         // Retrieve or create cached data to track scroll position across frames
         Clay__TransitionDataInternal *transitionData = CLAY__NULL;
@@ -2274,7 +2281,7 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->clipElementConfigs = Clay__ClipElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->customElementConfigs = Clay__CustomElementConfigArray_Allocate_Arena(maxElementCount, arena);
     context->borderElementConfigs = Clay__BorderElementConfigArray_Allocate_Arena(maxElementCount, arena);
-    context->transitionElementConfigs = Clay__TransitionElementConfigArray_Allocate_Arena(maxElementCount, arena);
+    context->transitionElementConfigs = Clay__TransitionElementConfigsArray_Allocate_Arena(maxElementCount, arena);
     context->sharedElementConfigs = Clay__SharedElementConfigArray_Allocate_Arena(maxElementCount, arena);
 
     context->layoutElementIdStrings = Clay__StringArray_Allocate_Arena(maxElementCount, arena);
@@ -2901,7 +2908,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                 Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(currentElement->id);
                 if (hashMapItem) {
                     if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION)) {
-                        Clay_TransitionElementConfig *transitionElementConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION).transitionElementConfig;
+                        Clay_TransitionElementConfigs *transitionElementConfigs = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION).transitionElementConfig;
                         // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
                         for (int32_t i = 0; i < context->transitionDatas.length; i++) {
                             Clay__TransitionDataInternal *transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
@@ -2916,28 +2923,35 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                     }
                                 }
                                 if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
-                                    if (Clay__ShouldTransition(&transitionData->targetState, &targetTransitionData)) {
-                                        transitionData->elapsedTime = 0;
-                                        transitionData->initialState = currentTransitionData;
-                                        transitionData->targetState = targetTransitionData;
+                                    Clay_TransitionElementConfig currentConfig;
+                                    switch (transitionData->state) {
+                                        case CLAY_TRANSITION_STATE_ENTERING: currentConfig = transitionElementConfigs->enter; break;
+                                        case CLAY_TRANSITION_STATE_TRANSITIONING: currentConfig = transitionElementConfigs->move; break;
+                                        case CLAY_TRANSITION_STATE_EXITING: currentConfig = transitionElementConfigs->exit; break;
                                     }
-                                    bool transitionComplete = transitionElementConfig->handler((Clay_TransitionCallbackArguments) {
-                                        transitionData->state,
-                                        transitionData->initialState,
-                                        &currentTransitionData,
-                                        targetTransitionData,
-                                        transitionData->elapsedTime,
-                                        transitionElementConfig->duration,
-                                        transitionElementConfig->properties
-                                    });
-                                    scrollOffset.x += currentTransitionData.boundingBox.x - currentElementBoundingBox.x;
-                                    scrollOffset.y += currentTransitionData.boundingBox.y - currentElementBoundingBox.y;
+
+                                    bool transitionComplete = true;
+                                    if (currentConfig.handler) {
+                                        transitionComplete = currentConfig.handler((Clay_TransitionCallbackArguments) {
+                                            transitionData->state,
+                                            transitionData->initialState,
+                                            &currentTransitionData,
+                                            targetTransitionData,
+                                            transitionData->elapsedTime,
+                                            currentConfig.duration,
+                                            currentConfig.properties
+                                        });
+                                        scrollOffset.x += currentTransitionData.boundingBox.x - currentElementBoundingBox.x;
+                                        scrollOffset.y += currentTransitionData.boundingBox.y - currentElementBoundingBox.y;
+                                    }
+
                                     if (!transitionComplete) {
                                         Clay__UpdateElementWithTransitionData(&currentElementBoundingBox, currentElement, &currentTransitionData);
                                         currentElementBoundingBox = currentTransitionData.boundingBox;
                                         transitionData->elapsedTime += deltaTime;
                                         transitionData->currentState = currentTransitionData;
                                     } else {
+                                        // TODO delete exiting transitions here
                                         transitionData->state = CLAY_TRANSITION_STATE_IDLE;
                                         transitionData->initialState = targetTransitionData;
                                         transitionData->currentState = targetTransitionData;
@@ -4381,6 +4395,17 @@ void Clay_BeginLayout(void) {
     Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) { .layoutElementIndex = 0 });
 }
 
+CLAY_WASM_EXPORT("Clay_BeginLayout")
+void Clay_CleanupExitTransitions(void) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    for (int i = 0; i < context->transitionDatas.length; ++i) {
+        Clay__TransitionDataInternal *data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
+        if (data->state == CLAY_TRANSITION_STATE_EXITING) {
+            // Copy the entire nested layout
+        }
+    }
+}
+
 CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
@@ -4404,6 +4429,17 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
             .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT
         });
     } else {
+        for (int i = 0; i < context->transitionDatas.length; ++i) {
+            Clay__TransitionDataInternal *data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
+            if (data->state != CLAY_TRANSITION_STATE_EXITING) {
+                if (Clay__GetHashMapItem(data->elementId)->generation < context->generation) {
+                    data->state = CLAY_TRANSITION_STATE_EXITING;
+                    data->elapsedTime = 0;
+                    data->initialState = data->currentState;
+                    data->targetState = data->currentState;
+                }
+            }
+        }
         Clay__CalculateFinalLayout(deltaTime);
     }
     if (context->openLayoutElementStack.length > 1) {
@@ -4412,7 +4448,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                 .errorText = CLAY_STRING("There were still open layout elements when EndLayout was called. This results from an unequal number of calls to Clay__OpenElement and Clay__CloseElement."),
                 .userData = context->errorHandler.userData });
     }
-    Clay__CalculateFinalLayout();
+    Clay__CalculateFinalLayout(0);
     return context->renderCommands;
 }
 

@@ -28,7 +28,7 @@ Clay_ElementDeclaration HeaderButtonStyle(bool hovered) {
 
 // Examples of re-usable "Components"
 void RenderHeaderButton(Clay_String text) {
-    CLAY(HeaderButtonStyle(Clay_Hovered())) {
+    CLAY_AUTO_ID(HeaderButtonStyle(Clay_Hovered())) {
         CLAY_TEXT(text, CLAY_TEXT_CONFIG(headerTextConfig));
     }
 }
@@ -37,7 +37,7 @@ Clay_LayoutConfig dropdownTextItemLayout = { .padding = {8, 8, 4, 4} };
 Clay_TextElementConfig dropdownTextElementConfig = { .fontSize = 24, .textColor = {255,255,255,255} };
 
 void RenderDropdownTextItem(int index) {
-    CLAY({ .layout = dropdownTextItemLayout, .backgroundColor = {180, 180, 180, 255} }) {
+    CLAY_AUTO_ID({ .layout = dropdownTextItemLayout, .backgroundColor = {180, 180, 180, 255} }) {
         CLAY_TEXT(CLAY_STRING("I'm a text field in a scroll container."), &dropdownTextElementConfig);
     }
 }
@@ -181,9 +181,9 @@ void HandleCellButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
 Clay_RenderCommandArray CreateLayout(void) {
     frameArena.offset = 0;
     Clay_BeginLayout();
-    CLAY({ .id = CLAY_ID("OuterContainer"), .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .padding = { 16, 16, 16, 16 }, .childGap = 12 }, .backgroundColor = cWHITE }) {
-        CLAY({ .layout.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(60) }, .layout.padding.left = 16, .layout.childGap = 16, .layout.childAlignment.y = CLAY_ALIGN_Y_CENTER, .cornerRadius = { 12, 12, 12, 12 }, .backgroundColor = {174, 143, 204, 255 } }) {
-            CLAY({
+    CLAY(CLAY_ID("OuterContainer"), { .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .padding = { 16, 16, 16, 16 }, .childGap = 12 }, .backgroundColor = cWHITE }) {
+        CLAY_AUTO_ID({ .layout.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(60) }, .layout.padding.left = 16, .layout.childGap = 16, .layout.childAlignment.y = CLAY_ALIGN_Y_CENTER, .cornerRadius = { 12, 12, 12, 12 }, .backgroundColor = {174, 143, 204, 255 } }) {
+            CLAY_AUTO_ID({
                 .backgroundColor = Clay_Hovered() ? (Clay_Color){ 154, 123, 184, 255 } : (Clay_Color){ },
                 .layout.padding = { 16, 16, 8, 8 },
                 .cornerRadius = CLAY_CORNER_RADIUS(6),
@@ -192,8 +192,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                 Clay_OnHover(HandleRandomiseButtonInteraction, 0);
                 CLAY_TEXT(CLAY_STRING("Randomise"), CLAY_TEXT_CONFIG({ .fontSize = 20, .textColor = cWHITE }));
             }
-            CLAY({
-                .id = CLAY_ID("bluebutton"),
+            CLAY(CLAY_ID("bluebutton"), {
                 .backgroundColor = Clay_Hovered() ? (Clay_Color){ 154, 123, 184, 255 } : (Clay_Color){ },
                 .layout.padding = { 16, 16, 8, 8 },
                 .cornerRadius = CLAY_CORNER_RADIUS(6),
@@ -202,18 +201,18 @@ Clay_RenderCommandArray CreateLayout(void) {
                 Clay_OnHover(HandleBlueButtonInteraction, 0);
                 CLAY_TEXT(CLAY_STRING("Blue"), CLAY_TEXT_CONFIG({ .fontSize = 20, .textColor = cWHITE }));
             }
-            CLAY({
-                     .backgroundColor = Clay_Hovered() ? (Clay_Color){ 154, 123, 184, 255 } : (Clay_Color){ },
-                     .layout.padding = { 16, 16, 8, 8 },
-                     .cornerRadius = CLAY_CORNER_RADIUS(6),
-                     .border = { .color = cWHITE, .width = CLAY_BORDER_OUTSIDE(2) },
-                 }) {
+            CLAY_AUTO_ID({
+                .backgroundColor = Clay_Hovered() ? (Clay_Color){ 154, 123, 184, 255 } : (Clay_Color){ },
+                .layout.padding = { 16, 16, 8, 8 },
+                .cornerRadius = CLAY_CORNER_RADIUS(6),
+                .border = { .color = cWHITE, .width = CLAY_BORDER_OUTSIDE(2) },
+            }) {
                 Clay_OnHover(HandlePinkButtonInteraction, 0);
                 CLAY_TEXT(CLAY_STRING("Pink"), CLAY_TEXT_CONFIG({ .fontSize = 20, .textColor = cWHITE }));
             }
         }
         for (int i = 0; i < 5; i++) {
-            CLAY({ .layout.childGap = 12, .layout.sizing = GG }) {
+            CLAY(CLAY_IDI("row", i), { .layout.childGap = 12, .layout.sizing = GG }) {
                 for (int j = 0; j < 6; j++) {
                     int index = i * 6 + j;
                     if (index >= cellCount) {
@@ -222,17 +221,16 @@ Clay_RenderCommandArray CreateLayout(void) {
                     Clay_Color boxColor = colors[index].color;
                     Clay_Color darker = { boxColor.r * 0.9, boxColor.g * 0.9, boxColor.b * 0.9, 255 };
                     Clay_Color darkerStill = { boxColor.r * 0.7, boxColor.g * 0.7, boxColor.b * 0.7, 255 };
-                    CLAY({
-                        .id = CLAY_IDI("box", colors[index].id),
+                    CLAY(CLAY_IDI("box", colors[index].id), {
                         .layout.sizing = GG,
                         .layout.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
                         .backgroundColor = Clay_Hovered() ? darkerStill : boxColor,
                         .cornerRadius = {12, 12, 12, 12},
                         .border = { darker, CLAY_BORDER_OUTSIDE(3) },
-                        .transitions = {
+                        .transitions.move = {
                             .handler = Clay_EaseOut,
                             .duration = 0.5,
-                            .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX
+                            .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
                         }
                     }) {
                         Clay_OnHover(HandleCellButtonInteraction, index);
@@ -281,13 +279,13 @@ void UpdateDrawFrame(Font* fonts)
         scrollbarData.mouseDown = false;
     }
 
-    if (IsMouseButtonDown(0) && !scrollbarData.mouseDown && Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0, 0))) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay__HashString(CLAY_STRING("MainContent"), 0, 0));
+    if (IsMouseButtonDown(0) && !scrollbarData.mouseDown && Clay_PointerOver(Clay__HashString(CLAY_STRING("ScrollBar"), 0))) {
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay__HashString(CLAY_STRING("MainContent"), 0));
         scrollbarData.clickOrigin = mousePosition;
         scrollbarData.positionOrigin = *scrollContainerData.scrollPosition;
         scrollbarData.mouseDown = true;
     } else if (scrollbarData.mouseDown) {
-        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay__HashString(CLAY_STRING("MainContent"), 0, 0));
+        Clay_ScrollContainerData scrollContainerData = Clay_GetScrollContainerData(Clay__HashString(CLAY_STRING("MainContent"), 0));
         if (scrollContainerData.contentDimensions.height > 0) {
             Clay_Vector2 ratio = (Clay_Vector2) {
                 scrollContainerData.contentDimensions.width / scrollContainerData.scrollContainerDimensions.width,

@@ -139,7 +139,7 @@ Clay_RenderCommandArray CreateLayout(void) {
             }
         }
     }
-    return Clay_EndLayout();
+    return Clay_EndLayout(GetFrameTime());
 }
 
 typedef struct
