@@ -837,6 +837,9 @@ CLAY_DLL_EXPORT Clay_Arena Clay_CreateArenaWithCapacityAndMemory(size_t capacity
 // Sets the state of the "pointer" (i.e. the mouse or touch) in Clay's internal data. Used for detecting and responding to mouse events in the debug view,
 // as well as for Clay_Hovered() and scroll element handling.
 CLAY_DLL_EXPORT void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
+// Gets the state of the "pointer". This will return the position provided by `Clay_SetPointerState` 
+// and the frame pressed state.
+CLAY_DLL_EXPORT Clay_PointerData Clay_GetPointerState();
 // Initialize Clay's internal arena and setup required data before layout can begin. Only needs to be called once.
 // - arena can be created using Clay_CreateArenaWithCapacityAndMemory()
 // - layoutDimensions are the initial bounding dimensions of the layout (i.e. the screen width and height for a full screen layout)
@@ -4035,6 +4038,12 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
         }
     }
+}
+
+CLAY_WASM_EXPORT("Clay_GetPointerState")
+Clay_PointerData Clay_GetPointerState() {
+    Clay_Context* context = Clay_GetCurrentContext();
+    return context->pointerInfo;
 }
 
 CLAY_WASM_EXPORT("Clay_Initialize")
