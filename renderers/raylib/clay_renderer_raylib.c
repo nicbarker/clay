@@ -181,7 +181,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 }
                 DrawTexturePro(
                     imageTexture,
-                    CLAY__INIT(Rectangle) { 0, 0, imageTexture.width, imageTexture.height },
+                    CLAY__INIT(Rectangle) { 0, 0, (float)imageTexture.width, (float)imageTexture.height },
                     CLAY__INIT(Rectangle){boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height},
                     CLAY__INIT(Vector2) {},
                     0,
