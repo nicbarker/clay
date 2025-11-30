@@ -2785,7 +2785,7 @@ void Clay__CalculateFinalLayout(void) {
                     // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-                        if (mapping->layoutElement == currentElement) {
+                        if (mapping->elementId == currentElement->id) {
                             scrollContainerData = mapping;
                             mapping->boundingBox = currentElementBoundingBox;
                             scrollOffset = clipConfig->childOffset;
@@ -3005,7 +3005,7 @@ void Clay__CalculateFinalLayout(void) {
                     closeClipElement = true;
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-                        if (mapping->layoutElement == currentElement) {
+                        if (mapping->elementId == currentElement->id) {
                             scrollOffset = clipConfig->childOffset;
                             if (context->externalScrollHandlingEnabled) {
                                 scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
@@ -4091,7 +4091,7 @@ Clay_Vector2 Clay_GetScrollOffset(void) {
     }
     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-        if (mapping->layoutElement == openLayoutElement) {
+        if (mapping->elementId == openLayoutElement->id) {
             return mapping->scrollPosition;
         }
     }
