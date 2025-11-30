@@ -3547,7 +3547,7 @@ void Clay__RenderDebugView(void) {
                     // .layoutDirection
                     CLAY_TEXT(CLAY_STRING("Layout Direction"), infoTitleConfig);
                     Clay_LayoutConfig *layoutConfig = selectedItem->layoutElement->layoutConfig;
-                    CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("LEFT_TO_RIGHT") : CLAY_STRING("RIGHT_TO_LEFT"), infoTextConfig);
+                    CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT ? CLAY_STRING("LEFT_TO_RIGHT") : CLAY_STRING("RIGHT_TO_LEFT"), infoTextConfig);
                     // .sizing
                     CLAY_TEXT(CLAY_STRING("Sizing"), infoTitleConfig);
                     CLAY({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
