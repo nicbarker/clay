@@ -1,0 +1,4 @@
+.build
+.vscode
+raylib/
+.DS_Store

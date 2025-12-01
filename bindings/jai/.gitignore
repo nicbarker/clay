@@ -1,0 +1,5 @@
+.build/
+main.exe
+main.pdb
+main.rdi
+main
