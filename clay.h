@@ -869,6 +869,8 @@ CLAY_DLL_EXPORT Clay_ElementId Clay_GetElementId(Clay_String idString);
 // - index is used to avoid constructing dynamic ID strings in loops.
 // Generally only used for dynamic strings when CLAY_IDI("stringLiteral", index) can't be used.
 CLAY_DLL_EXPORT Clay_ElementId Clay_GetElementIdWithIndex(Clay_String idString, uint32_t index);
+// Returns the ID of the currently open layout element.
+CLAY_DLL_EXPORT Clay_ElementId Clay_GetCurrentElementId(void);
 // Returns layout data such as the final calculated bounding box for an element with a given ID.
 // The returned Clay_ElementData contains a `found` bool that will be true if an element with the provided ID was found.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
@@ -4071,6 +4073,17 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
 CLAY_WASM_EXPORT("Clay_GetCurrentContext")
 Clay_Context* Clay_GetCurrentContext(void) {
     return Clay__currentContext;
+}
+
+CLAY_WASM_EXPORT("Clay_GetCurrentElementId")
+Clay_ElementId Clay_GetCurrentElementId(void) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (context->openLayoutElementStack.length == 0) {
+        // Return a default or invalid ElementId if no element is open
+        return CLAY__INIT(Clay_ElementId) CLAY__DEFAULT_STRUCT;
+    }
+    Clay_LayoutElement* currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1));
+    return CLAY__INIT(Clay_ElementId) { .id = currentElement->id };
 }
 
 CLAY_WASM_EXPORT("Clay_SetCurrentContext")
