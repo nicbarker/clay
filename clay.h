@@ -271,6 +271,8 @@ typedef CLAY_PACKED_ENUM {
     CLAY_LEFT_TO_RIGHT,
     // Lays out child elements from top to bottom with increasing y.
     CLAY_TOP_TO_BOTTOM,
+    // Lays out child elements from right to left with decreasing x.
+    CLAY_RIGHT_TO_LEFT,
 } Clay_LayoutDirection;
 
 // Controls the alignment along the x axis (horizontal) of child elements.
@@ -1842,7 +1844,7 @@ void Clay__CloseElement(void) {
 
     // Attach children to the current open element
     openLayoutElement->childrenOrTextContent.children.elements = &context->layoutElementChildren.internalArray[context->layoutElementChildren.length];
-    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT || layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT) {
         openLayoutElement->dimensions.width = leftRightPadding;
         openLayoutElement->minDimensions.width = leftRightPadding;
         for (int32_t i = 0; i < openLayoutElement->childrenOrTextContent.children.length; i++) {
@@ -2301,7 +2303,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis) {
             float parentSize = xAxis ? parent->dimensions.width : parent->dimensions.height;
             float parentPadding = (float)(xAxis ? (parent->layoutConfig->padding.left + parent->layoutConfig->padding.right) : (parent->layoutConfig->padding.top + parent->layoutConfig->padding.bottom));
             float innerContentSize = 0, totalPaddingAndChildGaps = parentPadding;
-            bool sizingAlongAxis = (xAxis && parentStyleConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) || (!xAxis && parentStyleConfig->layoutDirection == CLAY_TOP_TO_BOTTOM);
+            bool sizingAlongAxis = (xAxis && (parentStyleConfig->layoutDirection == CLAY_LEFT_TO_RIGHT || parentStyleConfig->layoutDirection == CLAY_RIGHT_TO_LEFT)) || (!xAxis && parentStyleConfig->layoutDirection == CLAY_TOP_TO_BOTTOM);
             resizableContainerBuffer.length = 0;
             float parentChildGap = parentStyleConfig->childGap;
 
@@ -2625,7 +2627,7 @@ void Clay__CalculateFinalLayout(void) {
 
         // DFS node has been visited, this is on the way back up to the root
         Clay_LayoutConfig *layoutConfig = currentElement->layoutConfig;
-        if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+        if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT || layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT) {
             // Resize any parent containers that have grown in height along their non layout axis
             for (int32_t j = 0; j < currentElement->childrenOrTextContent.children.length; ++j) {
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[j]);
@@ -2754,7 +2756,9 @@ void Clay__CalculateFinalLayout(void) {
                 });
             }
         }
-        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = { .x = (float)rootElement->layoutConfig->padding.left, .y = (float)rootElement->layoutConfig->padding.top } });
+
+        float nextChildXOffset = rootElement->layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT ? rootElement->dimensions.width - (float)rootElement->layoutConfig->padding.right : (float)rootElement->layoutConfig->padding.left;
+        Clay__LayoutElementTreeNodeArray_Add(&dfsBuffer, CLAY__INIT(Clay__LayoutElementTreeNode) { .layoutElement = rootElement, .position = rootPosition, .nextChildOffset = { .x = nextChildXOffset, .y = (float)rootElement->layoutConfig->padding.top } });
 
         context->treeNodeVisited.internalArray[0] = false;
         while (dfsBuffer.length > 0) {
@@ -2960,7 +2964,7 @@ void Clay__CalculateFinalLayout(void) {
                 // Setup initial on-axis alignment
                 if (!Clay__ElementHasConfig(currentElementTreeNode->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_TEXT)) {
                     Clay_Dimensions contentSize = {0,0};
-                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT || layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT) {
                         for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
                             Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                             contentSize.width += childElement->dimensions.width;
@@ -2973,7 +2977,7 @@ void Clay__CalculateFinalLayout(void) {
                             case CLAY_ALIGN_X_CENTER: extraSpace /= 2; break;
                             default: break;
                         }
-                        currentElementTreeNode->nextChildOffset.x += extraSpace;
+                        currentElementTreeNode->nextChildOffset.x += layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT ? extraSpace : -extraSpace;
                         extraSpace = CLAY__MAX(0, extraSpace);
                     } else {
                         for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
@@ -3038,7 +3042,7 @@ void Clay__CalculateFinalLayout(void) {
                         if (borderConfig->width.betweenChildren > 0 && borderConfig->color.a > 0) {
                             float halfGap = layoutConfig->childGap / 2;
                             Clay_Vector2 borderOffset = { (float)layoutConfig->padding.left - halfGap, (float)layoutConfig->padding.top - halfGap };
-                            if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+                            if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT || layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT) {
                                 for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
                                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                                     if (i > 0) {
@@ -3092,7 +3096,7 @@ void Clay__CalculateFinalLayout(void) {
                 for (int32_t i = 0; i < currentElement->childrenOrTextContent.children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->childrenOrTextContent.children.elements[i]);
                     // Alignment along non layout axis
-                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT || layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT) {
                         currentElementTreeNode->nextChildOffset.y = currentElement->layoutConfig->padding.top;
                         float whiteSpaceAroundChild = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - childElement->dimensions.height;
                         switch (layoutConfig->childAlignment.y) {
@@ -3110,23 +3114,26 @@ void Clay__CalculateFinalLayout(void) {
                         }
                     }
 
+                    float childRTLOffset = layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT ? -childElement->dimensions.width : 0;
                     Clay_Vector2 childPosition = {
-                        currentElementTreeNode->position.x + currentElementTreeNode->nextChildOffset.x + scrollOffset.x,
+                        currentElementTreeNode->position.x + currentElementTreeNode->nextChildOffset.x + scrollOffset.x + childRTLOffset,
                         currentElementTreeNode->position.y + currentElementTreeNode->nextChildOffset.y + scrollOffset.y,
                     };
 
                     // DFS buffer elements need to be added in reverse because stack traversal happens backwards
                     uint32_t newNodeIndex = dfsBuffer.length - 1 - i;
+                    float nextChildXOffset = childElement->layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT ? childElement->dimensions.width - (float)childElement->layoutConfig->padding.right : (float)childElement->layoutConfig->padding.left;
                     dfsBuffer.internalArray[newNodeIndex] = CLAY__INIT(Clay__LayoutElementTreeNode) {
                         .layoutElement = childElement,
                         .position = { childPosition.x, childPosition.y },
-                        .nextChildOffset = { .x = (float)childElement->layoutConfig->padding.left, .y = (float)childElement->layoutConfig->padding.top },
+                        .nextChildOffset = { .x = nextChildXOffset , .y = (float)childElement->layoutConfig->padding.top },
                     };
                     context->treeNodeVisited.internalArray[newNodeIndex] = false;
 
                     // Update parent offsets
-                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-                        currentElementTreeNode->nextChildOffset.x += childElement->dimensions.width + (float)layoutConfig->childGap;
+                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT || layoutConfig->layoutDirection == CLAY_RIGHT_TO_LEFT) {
+                        float childOffsetAmount = childElement->dimensions.width + (float)layoutConfig->childGap;
+                        currentElementTreeNode->nextChildOffset.x += layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT ? childOffsetAmount : -childOffsetAmount;
                     } else {
                         currentElementTreeNode->nextChildOffset.y += childElement->dimensions.height + (float)layoutConfig->childGap;
                     }
@@ -3546,7 +3553,7 @@ void Clay__RenderDebugView(void) {
                     // .layoutDirection
                     CLAY_TEXT(CLAY_STRING("Layout Direction"), infoTitleConfig);
                     Clay_LayoutConfig *layoutConfig = selectedItem->layoutElement->layoutConfig;
-                    CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : CLAY_STRING("LEFT_TO_RIGHT"), infoTextConfig);
+                    CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT ? CLAY_STRING("LEFT_TO_RIGHT") : CLAY_STRING("RIGHT_TO_LEFT"), infoTextConfig);
                     // .sizing
                     CLAY_TEXT(CLAY_STRING("Sizing"), infoTitleConfig);
                     CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
