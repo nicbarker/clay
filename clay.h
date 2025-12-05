@@ -53,6 +53,7 @@
 
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define CLAY__INC_IF_ZERO(h) (h + (h == 0))
 
 #define CLAY_TEXT_CONFIG(...) Clay__StoreTextElementConfig(CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__))
 
@@ -1365,7 +1366,7 @@ Clay_ElementId Clay__HashNumber(const uint32_t offset, const uint32_t seed) {
     hash += (hash << 3);
     hash ^= (hash >> 11);
     hash += (hash << 15);
-    return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = offset, .baseId = seed, .stringId = CLAY__STRING_DEFAULT }; // Reserve the hash result of zero as "null id"
+    return CLAY__INIT(Clay_ElementId) { .id = CLAY__INC_IF_ZERO(hash), .offset = offset, .baseId = seed, .stringId = CLAY__STRING_DEFAULT }; // Reserve the hash result of zero as "null id"
 }
 
 Clay_ElementId Clay__HashString(Clay_String key, const uint32_t seed) {
@@ -1380,7 +1381,7 @@ Clay_ElementId Clay__HashString(Clay_String key, const uint32_t seed) {
     hash += (hash << 3);
     hash ^= (hash >> 11);
     hash += (hash << 15);
-    return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = 0, .baseId = hash + 1, .stringId = key }; // Reserve the hash result of zero as "null id"
+    return CLAY__INIT(Clay_ElementId) { .id = CLAY__INC_IF_ZERO(hash), .offset = 0, .baseId = CLAY__INC_IF_ZERO(hash), .stringId = key }; // Reserve the hash result of zero as "null id"
 }
 
 Clay_ElementId Clay__HashStringWithOffset(Clay_String key, const uint32_t offset, const uint32_t seed) {
@@ -1403,7 +1404,7 @@ Clay_ElementId Clay__HashStringWithOffset(Clay_String key, const uint32_t offset
     base ^= (base >> 11);
     hash += (hash << 15);
     base += (base << 15);
-    return CLAY__INIT(Clay_ElementId) { .id = hash + 1, .offset = offset, .baseId = base + 1, .stringId = key }; // Reserve the hash result of zero as "null id"
+    return CLAY__INIT(Clay_ElementId) { .id = CLAY__INC_IF_ZERO(hash), .offset = offset, .baseId = base + 1, .stringId = key }; // Reserve the hash result of zero as "null id"
 }
 
 #if !defined(CLAY_DISABLE_SIMD) && (defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64))
@@ -1554,7 +1555,7 @@ uint32_t Clay__HashStringContentsWithConfig(Clay_String *text, Clay_TextElementC
     hash += (hash << 3);
     hash ^= (hash >> 11);
     hash += (hash << 15);
-    return hash + 1; // Reserve the hash result of zero as "null id"
+    return CLAY__INC_IF_ZERO(hash); // Reserve the hash result of zero as "null id"
 }
 
 Clay__MeasuredWord *Clay__AddMeasuredWord(Clay__MeasuredWord word, Clay__MeasuredWord *previousWord) {
