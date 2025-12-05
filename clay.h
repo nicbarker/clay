@@ -4064,7 +4064,6 @@ Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions
         context->measureTextHashMap.internalArray[i] = 0;
     }
     context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
-    context->layoutDimensions = layoutDimensions;
     return context;
 }
 
