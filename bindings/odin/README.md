@@ -21,7 +21,7 @@ CLAY({ .id = CLAY_ID("Outer"), .layout = { .padding = CLAY_PADDING_ALL(16) } }) 
 
 ```Odin
 // Odin form of element macros
-if clay.UI()({ id = clay.ID("Outer"), layout = { padding = clay.PaddingAll(16) }}) {
+if clay.UI(clay.ID("Outer"))({ layout = { padding = clay.PaddingAll(16) }}) {
     // Child elements here
 }
 ```
