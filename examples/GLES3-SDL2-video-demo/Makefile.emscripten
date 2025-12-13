@@ -1,0 +1,33 @@
+# vim: set tabstop=4 shiftwidth=4 expandtab noexpandtab:
+
+#
+# PROGRAM COMPONENTS
+# 
+
+CXX = emcc
+
+CXXFLAGS = -std=c99
+CXXFLAGS += -O0
+CXXFLAGS += -I../..
+CXXFLAGS += -I./build/_deps/stb-src
+
+LDLIBS += -s USE_ZLIB=1
+LDLIBS += -s USE_SDL=2
+LDLIBS += -s FULL_ES2=1 -s USE_WEBGL2=1
+LDLIBS += -s ALLOW_MEMORY_GROWTH=1 -s GL_UNSAFE_OPTS=0
+LDLIBS += -s STACK_SIZE=2048kb
+LDLIBS += -s EXPORTED_FUNCTIONS=['_main']
+LDLIBS += -s ASSERTIONS=1 -s SAFE_HEAP=1
+LDLIBS += --preload-file $(PWD)/resources/Roboto-Regular.ttf@resources/Roboto-Regular.ttf
+
+main:
+	mkdir -p build/emscripten
+	time $(CXX) $(CXXFLAGS) \
+		$(PWD)/main.c \
+	    $(LDLIBS) -o build/emscripten/index.html 
+
+test:
+	make -f Makefile.emscripten main \
+		&& (cd build/emscripten && python3 -mhttp.server)
+	
+.PHONY: main 

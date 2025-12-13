@@ -1,0 +1,29 @@
+# vim: set tabstop=4 shiftwidth=4 expandtab noexpandtab:
+
+CXX = clang
+
+CXXFLAGS = -std=c99
+CXXFLAGS += -g -O0 -fno-omit-frame-pointer
+CXXFLAGS += -ferror-limit=1
+CXXFLAGS += -I../..
+CXXFLAGS += -I./build/_deps/stb-src
+CXXFLAGS += -DGL_SILENCE_DEPRECATION
+
+# GLFW (Homebrew)
+CXXFLAGS += -I$(shell brew --prefix glfw)/include
+LDLIBS   += -L$(shell brew --prefix glfw)/lib -lglfw
+
+
+# macOS system frameworks (OpenGL needs these)
+LDLIBS += -framework OpenGL
+LDLIBS += -framework Cocoa
+LDLIBS += -framework IOKit
+LDLIBS += -framework CoreVideo
+
+main:
+	mkdir -p build
+
+	time $(CXX) $(CXXFLAGS) \
+		$(PWD)/main.c \
+		$(LDLIBS) \
+		-o build/website-demo-macos-glfw
