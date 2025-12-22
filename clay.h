@@ -2052,7 +2052,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig *textConfig)
 
     Clay__int32_tArray_Add(&context->layoutElementChildrenBuffer, context->layoutElements.length - 1);
     Clay__MeasureTextCacheItem *textMeasured = Clay__MeasureTextCached(&text, textConfig);
-    Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length, parentElement->id);
+    Clay_ElementId elementId = Clay__HashNumber(parentElement->childrenOrTextContent.children.length + parentElement->floatingChildrenCount, parentElement->id);
     textElement->id = elementId.id;
     Clay__AddHashMapItem(elementId, textElement);
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
