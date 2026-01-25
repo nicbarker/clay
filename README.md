@@ -494,6 +494,7 @@ Clay has also been implemented in other languages:
 - [`glay`](https://github.com/soypat/glay) - Go line-by-line rewrite with readability as main goal.
 - [`totallygamerjet/clay`](https://github.com/totallygamerjet/clay) - Port using `cxgo`, a C to Go transpiler.
 - [`goclay`](https://github.com/igadmg/goclay) - Go line-by-line rewrite closely matching the reference.
+- [`clay4j`](https://github.com/Lauriichan/clay4j) - A Java rewrite covering most features.
 
 ### Debug Tools
 
