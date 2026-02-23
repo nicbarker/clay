@@ -1147,7 +1147,6 @@ typedef CLAY_PACKED_ENUM {
 } Clay__ElementConfigType;
 
 typedef union {
-    Clay_CustomElementConfig *customElementConfig;
     Clay_ClipElementConfig *clipElementConfig;
     Clay_BorderElementConfig *borderElementConfig;
     Clay_SharedElementConfig *sharedElementConfig;
@@ -1325,9 +1324,7 @@ struct Clay_Context {
     Clay__int32_tArray layoutElementClipElementIds;
     // Configs
     Clay__ElementConfigArray elementConfigs;
-    Clay__FloatingElementConfigArray floatingElementConfigs;
     Clay__ClipElementConfigArray clipElementConfigs;
-    Clay__CustomElementConfigArray customElementConfigs;
     Clay__BorderElementConfigArray borderElementConfigs;
     Clay__TransitionElementConfigsArray transitionElementConfigs;
     Clay__SharedElementConfigArray sharedElementConfigs;
@@ -1387,8 +1384,6 @@ uint32_t Clay__GetParentElementId(void) {
     return Clay__GetOpenLayoutElement()->id;
 }
 
-Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_FloatingElementConfig_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, config); }
-Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
 Clay_ClipElementConfig * Clay__StoreClipElementConfig(Clay_ClipElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ClipElementConfig_DEFAULT : Clay__ClipElementConfigArray_Add(&Clay_GetCurrentContext()->clipElementConfigs, config); }
 Clay_BorderElementConfig * Clay__StoreBorderElementConfig(Clay_BorderElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_BorderElementConfig_DEFAULT : Clay__BorderElementConfigArray_Add(&Clay_GetCurrentContext()->borderElementConfigs, config); }
 Clay_TransitionElementConfigs * Clay__StoreTransitionElementConfig(Clay_TransitionElementConfigs config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_TransitionElementConfigs_DEFAULT : Clay__TransitionElementConfigsArray_Add(&Clay_GetCurrentContext()->transitionElementConfigs, config); }
@@ -2188,9 +2183,6 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
             });
         }
     }
-    if (declaration->custom.customData) {
-        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .customElementConfig = Clay__StoreCustomElementConfig(declaration->custom) }, CLAY__ELEMENT_CONFIG_TYPE_CUSTOM);
-    }
 
     if (declaration->clip.horizontal | declaration->clip.vertical) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .clipElementConfig = Clay__StoreClipElementConfig(declaration->clip) }, CLAY__ELEMENT_CONFIG_TYPE_CLIP);
@@ -2250,9 +2242,7 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->warnings = Clay__WarningArray_Allocate_Arena(100, arena);
 
     context->elementConfigs = Clay__ElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
-    context->floatingElementConfigs = Clay__FloatingElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
     context->clipElementConfigs = Clay__ClipElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
-    context->customElementConfigs = Clay__CustomElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
     context->borderElementConfigs = Clay__BorderElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
     context->transitionElementConfigs = Clay__TransitionElementConfigsArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
     context->sharedElementConfigs = Clay__SharedElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
@@ -2985,19 +2975,19 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                             offset /= 2;
                         }
                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
-                                .renderData = { .text = {
-                                        .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->childrenOrTextContent.textElementData->text.chars },
-                                        .textColor = textElementConfig->textColor,
-                                        .fontId = textElementConfig->fontId,
-                                        .fontSize = textElementConfig->fontSize,
-                                        .letterSpacing = textElementConfig->letterSpacing,
-                                        .lineHeight = textElementConfig->lineHeight,
-                                }},
-                                .userData = textElementConfig->userData,
-                                .id = Clay__HashNumber(lineIndex, currentElement->id).id,
-                                .zIndex = root->zIndex,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
+                            .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
+                            .renderData = { .text = {
+                                .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->childrenOrTextContent.textElementData->text.chars },
+                                .textColor = textElementConfig->textColor,
+                                .fontId = textElementConfig->fontId,
+                                .fontSize = textElementConfig->fontSize,
+                                .letterSpacing = textElementConfig->letterSpacing,
+                                .lineHeight = textElementConfig->lineHeight,
+                            }},
+                            .userData = textElementConfig->userData,
+                            .id = Clay__HashNumber(lineIndex, currentElement->id).id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
                         });
                         yPosition += finalLineHeight;
 
@@ -3018,6 +3008,24 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                         .backgroundColor = sharedConfig->backgroundColor,
                                         .cornerRadius = sharedConfig->cornerRadius,
                                         .imageData = currentElement->config.image.imageData,
+                                    }
+                                }
+                            };
+                            Clay__AddRenderCommand(renderCommand);
+                        }
+                    }
+                    if (currentElement->config.custom.customData) {
+                        if (!offscreen) {
+                            Clay_RenderCommand renderCommand = {
+                                .boundingBox = currentElementBoundingBox,
+                                .userData = sharedConfig->userData,
+                                .id = currentElement->id,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
+                                .renderData = CLAY__INIT(Clay_RenderData) {
+                                    .custom = {
+                                        .backgroundColor = sharedConfig->backgroundColor,
+                                        .cornerRadius = sharedConfig->cornerRadius,
+                                        .customData = currentElement->config.custom.customData,
                                     }
                                 }
                             };
@@ -3049,18 +3057,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                                 .vertical = elementConfig->config.clipElementConfig->vertical,
                                         }
                                 };
-                                break;
-                            }
-                            case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: {
-                                renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM;
-                                renderCommand.renderData = CLAY__INIT(Clay_RenderData) {
-                                        .custom = {
-                                                .backgroundColor = sharedConfig->backgroundColor,
-                                                .cornerRadius = sharedConfig->cornerRadius,
-                                                .customData = elementConfig->config.customElementConfig->customData,
-                                        }
-                                };
-                                emitRectangle = false;
                                 break;
                             }
                             default: break;
