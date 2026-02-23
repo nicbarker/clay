@@ -75,6 +75,9 @@ Clay_String* FrameAllocateString(Clay_String string) {
 }
 
 bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
+    if (arguments.transitionState == CLAY_TRANSITION_STATE_EXITING) {
+        int x = 5;
+    }
     float ratio = arguments.elapsedTime / arguments.duration;
     if (arguments.elapsedTime < arguments.duration) {
         float lerpAmount = (1 - powf(1 - ratio, 3.0f));
@@ -139,13 +142,13 @@ void shuffle(SortableBox *array, size_t n) {
     }
 }
 
-void HandleRandomiseButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
+void HandleRandomiseButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData) {
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         shuffle(colors, cellCount);
     }
 }
 
-void HandlePinkButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
+void HandlePinkButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData) {
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         for (int i = 0; i < cellCount; i++) {
             int index = colors[i].id;
@@ -157,7 +160,7 @@ void HandlePinkButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
     }
 }
 
-void HandleBlueButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
+void HandleBlueButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData) {
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
         for (int i = 0; i < cellCount; i++) {
             int index = colors[i].id;
@@ -169,9 +172,9 @@ void HandleBlueButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
     }
 }
 
-void HandleCellButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, intptr_t userData) {
+void HandleCellButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData) {
     if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-        for (int i = userData; i < cellCount; i++) {
+        for (int i = (uintptr_t)userData; i < cellCount; i++) {
             colors[i] = colors[i + 1];
         }
         cellCount = CLAY__MAX(cellCount - 1, 0);
@@ -227,13 +230,20 @@ Clay_RenderCommandArray CreateLayout(void) {
                         .backgroundColor = Clay_Hovered() ? darkerStill : boxColor,
                         .cornerRadius = {12, 12, 12, 12},
                         .border = { darker, CLAY_BORDER_OUTSIDE(3) },
-                        .transitions.move = {
-                            .handler = Clay_EaseOut,
-                            .duration = 0.5,
-                            .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
+                        .transitions = {
+                            .move = {
+                                .handler = Clay_EaseOut,
+                                .duration = 0.5,
+                                .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
+                            },
+                            .exit = {
+                                .handler = Clay_EaseOut,
+                                .duration = 0.5,
+                                .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR,
+                            }
                         }
                     }) {
-                        Clay_OnHover(HandleCellButtonInteraction, index);
+                        Clay_OnHover(HandleCellButtonInteraction, (void*)index);
                         char *idString = (char *)(frameArena.memory + frameArena.offset);
                         snprintf(idString, 3, "%02d", colors[index].id);
                         frameArena.offset += 2;
@@ -332,7 +342,7 @@ void HandleClayErrors(Clay_ErrorData errorData) {
 int main(void) {
     uint64_t totalMemorySize = Clay_MinMemorySize();
     Clay_Arena clayMemory = Clay_CreateArenaWithCapacityAndMemory(totalMemorySize, malloc(totalMemorySize));
-    Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors, 0 });
+    Clay_Context *context = Clay_Initialize(clayMemory, (Clay_Dimensions) { (float)GetScreenWidth(), (float)GetScreenHeight() }, (Clay_ErrorHandler) { HandleClayErrors, 0 });
     Clay_Raylib_Initialize(1024, 768, "Clay - Raylib Renderer Example", FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
     profilePicture = LoadTexture("resources/profile-picture.png");
 
