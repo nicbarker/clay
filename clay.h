@@ -1142,14 +1142,12 @@ typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_BORDER,
     CLAY__ELEMENT_CONFIG_TYPE_FLOATING,
     CLAY__ELEMENT_CONFIG_TYPE_CLIP,
-    CLAY__ELEMENT_CONFIG_TYPE_IMAGE,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
     CLAY__ELEMENT_CONFIG_TYPE_SHARED,
     CLAY__ELEMENT_CONFIG_TYPE_TRANSITION,
 } Clay__ElementConfigType;
 
 typedef union {
-    Clay_ImageElementConfig *imageElementConfig;
     Clay_FloatingElementConfig *floatingElementConfig;
     Clay_CustomElementConfig *customElementConfig;
     Clay_ClipElementConfig *clipElementConfig;
@@ -1329,8 +1327,6 @@ struct Clay_Context {
     Clay__int32_tArray layoutElementClipElementIds;
     // Configs
     Clay__ElementConfigArray elementConfigs;
-    Clay__AspectRatioElementConfigArray aspectRatioElementConfigs;
-    Clay__ImageElementConfigArray imageElementConfigs;
     Clay__FloatingElementConfigArray floatingElementConfigs;
     Clay__ClipElementConfigArray clipElementConfigs;
     Clay__CustomElementConfigArray customElementConfigs;
@@ -1393,7 +1389,6 @@ uint32_t Clay__GetParentElementId(void) {
     return Clay__GetOpenLayoutElement()->id;
 }
 
-Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ImageElementConfig_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, config); }
 Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_FloatingElementConfig_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, config); }
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
 Clay_ClipElementConfig * Clay__StoreClipElementConfig(Clay_ClipElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ClipElementConfig_DEFAULT : Clay__ClipElementConfigArray_Add(&Clay_GetCurrentContext()->clipElementConfigs, config); }
@@ -2149,9 +2144,6 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
             Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
         }
     }
-    if (declaration->image.imageData) {
-        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(declaration->image) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE);
-    }
     if (declaration->aspectRatio.aspectRatio > 0) {
         Clay__int32_tArray_Add(&context->aspectRatioElementIndexes, context->layoutElements.length - 1);
     }
@@ -2257,8 +2249,6 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->warnings = Clay__WarningArray_Allocate_Arena(100, arena);
 
     context->elementConfigs = Clay__ElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
-    context->aspectRatioElementConfigs = Clay__AspectRatioElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
-    context->imageElementConfigs = Clay__ImageElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
     context->floatingElementConfigs = Clay__FloatingElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
     context->clipElementConfigs = Clay__ClipElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
     context->customElementConfigs = Clay__CustomElementConfigArray_Allocate_Arena_InitialLength(maxElementCount, transitionOutTotalCount, arena);
@@ -2972,6 +2962,8 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                     sharedConfig = &Clay_SharedElementConfig_DEFAULT;
                 }
 
+                bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
+
                 if (currentElement->isTextElement) {
                     Clay_TextElementConfig *textElementConfig = &currentElement->textConfig;
                     float naturalLineHeight = currentElement->childrenOrTextContent.textElementData->preferredDimensions.height;
@@ -3013,6 +3005,24 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                         }
                     }
                 } else {
+                    if (currentElement->config.image.imageData) {
+                        if (!offscreen) {
+                            Clay_RenderCommand renderCommand = {
+                                .boundingBox = currentElementBoundingBox,
+                                .userData = sharedConfig->userData,
+                                .id = currentElement->id,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
+                                .renderData = {
+                                    .image = {
+                                        .backgroundColor = sharedConfig->backgroundColor,
+                                        .cornerRadius = sharedConfig->cornerRadius,
+                                        .imageData = currentElement->config.image.imageData,
+                                    }
+                                }
+                            };
+                            Clay__AddRenderCommand(renderCommand);
+                        }
+                    }
                     for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
                         Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, sortedConfigIndexes[elementConfigIndex]);
                         Clay_RenderCommand renderCommand = {
@@ -3021,7 +3031,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                 .id = currentElement->id,
                         };
 
-                        bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
                         // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                         bool shouldRender = !offscreen;
                         switch (elementConfig->type) {
@@ -3040,18 +3049,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                                 .vertical = elementConfig->config.clipElementConfig->vertical,
                                         }
                                 };
-                                break;
-                            }
-                            case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
-                                renderCommand.commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE;
-                                renderCommand.renderData = CLAY__INIT(Clay_RenderData) {
-                                        .image = {
-                                                .backgroundColor = sharedConfig->backgroundColor,
-                                                .cornerRadius = sharedConfig->cornerRadius,
-                                                .imageData = elementConfig->config.imageElementConfig->imageData,
-                                        }
-                                };
-                                emitRectangle = false;
                                 break;
                             }
                             case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: {
@@ -3304,7 +3301,7 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
         case CLAY__ELEMENT_CONFIG_TYPE_SHARED: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Shared"), {243,134,48,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Aspect"), {101,149,194,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
+//        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_CLIP: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Scroll"), {242, 196, 90, 255} };
         case CLAY__ELEMENT_CONFIG_TYPE_BORDER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Border"), {108, 91, 123, 255} };
@@ -3787,6 +3784,18 @@ void Clay__RenderDebugView(void) {
                         }
                     }
                 }
+                if (selectedItem->layoutElement->config.image.imageData) {
+                    Clay_ImageElementConfig *imageConfig = &selectedItem->layoutElement->config.image;
+                    Clay_AspectRatioElementConfig aspectConfig = { 1 };
+                    if (selectedItem->layoutElement->config.aspectRatio.aspectRatio > 0) {
+                        aspectConfig = selectedItem->layoutElement->config.aspectRatio;
+                    }
+                    CLAY(CLAY_ID("Clay__DebugViewElementInfoImageBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
+                        // Image Preview
+                        CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
+                        CLAY_AUTO_ID({ .layout = { .sizing = { .width = CLAY_SIZING_GROW(64, 128), .height = CLAY_SIZING_GROW(64, 128) }}, .aspectRatio = aspectConfig, .image = *imageConfig }) {}
+                    }
+                }
                 for (int32_t elementConfigIndex = 0; elementConfigIndex < selectedItem->layoutElement->elementConfigs.length; ++elementConfigIndex) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&selectedItem->layoutElement->elementConfigs, elementConfigIndex);
                     Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, elementConfig->type);
@@ -3800,19 +3809,6 @@ void Clay__RenderDebugView(void) {
                                 // .cornerRadius
                                 CLAY_TEXT(CLAY_STRING("Corner Radius"), infoTitleConfig);
                                 Clay__RenderDebugViewCornerRadius(sharedConfig->cornerRadius, infoTextConfig);
-                            }
-                            break;
-                        }
-                        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
-                            Clay_ImageElementConfig *imageConfig = elementConfig->config.imageElementConfig;
-                            Clay_AspectRatioElementConfig aspectConfig = { 1 };
-                            if (selectedItem->layoutElement->config.aspectRatio.aspectRatio > 0) {
-                                aspectConfig = selectedItem->layoutElement->config.aspectRatio;
-                            }
-                            CLAY(CLAY_ID("Clay__DebugViewElementInfoImageBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
-                                // Image Preview
-                                CLAY_TEXT(CLAY_STRING("Preview"), infoTitleConfig);
-                                CLAY_AUTO_ID({ .layout = { .sizing = { .width = CLAY_SIZING_GROW(64, 128), .height = CLAY_SIZING_GROW(64, 128) }}, .aspectRatio = aspectConfig, .image = *imageConfig }) {}
                             }
                             break;
                         }
