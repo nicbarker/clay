@@ -1139,14 +1139,12 @@ CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_RenderCommand, Clay_RenderCommandArray)
 
 typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_NONE,
-    CLAY__ELEMENT_CONFIG_TYPE_BORDER,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
     CLAY__ELEMENT_CONFIG_TYPE_SHARED,
     CLAY__ELEMENT_CONFIG_TYPE_TRANSITION,
 } Clay__ElementConfigType;
 
 typedef union {
-    Clay_BorderElementConfig *borderElementConfig;
     Clay_SharedElementConfig *sharedElementConfig;
     Clay_TransitionElementConfigs *transitionElementConfig;
 } Clay_ElementConfigUnion;
@@ -1394,6 +1392,10 @@ Clay_ElementConfig Clay__AttachElementConfig(Clay_ElementConfigUnion config, Cla
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     openLayoutElement->elementConfigs.length++;
     return *Clay__ElementConfigArray_Add(&context->elementConfigs, CLAY__INIT(Clay_ElementConfig) { .type = type, .config = config });
+}
+
+bool Clay__BorderHasAnyWidth(Clay_BorderElementConfig* borderConfig) {
+    return borderConfig->width.betweenChildren > 0 || borderConfig->width.left > 0 || borderConfig->width.right > 0 || borderConfig->width.top > 0 || borderConfig->width.bottom > 0;
 }
 
 Clay_ElementConfigUnion Clay__FindElementConfigWithType(Clay_LayoutElement *element, Clay__ElementConfigType type) {
@@ -2187,9 +2189,6 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
         if (context->externalScrollHandlingEnabled) {
             scrollOffset->scrollPosition = Clay__QueryScrollOffset(scrollOffset->elementId, context->queryScrollOffsetUserData);
         }
-    }
-    if (!Clay__MemCmp((char *)(&declaration->border.width), (char *)(&Clay__BorderWidth_DEFAULT), sizeof(Clay_BorderWidth))) {
-        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .borderElementConfig = Clay__StoreBorderElementConfig(declaration->border) }, CLAY__ELEMENT_CONFIG_TYPE_BORDER);
     }
     if (declaration->transitions.enter.handler || declaration->transitions.move.handler || declaration->transitions.exit.handler) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .transitionElementConfig = Clay__StoreTransitionElementConfig(declaration->transitions) }, CLAY__ELEMENT_CONFIG_TYPE_TRANSITION);
@@ -3029,8 +3028,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                         bool shouldRender = !offscreen;
                         switch (elementConfig->type) {
                             case CLAY__ELEMENT_CONFIG_TYPE_SHARED:
-                            case CLAY__ELEMENT_CONFIG_TYPE_TRANSITION:
-                            case CLAY__ELEMENT_CONFIG_TYPE_BORDER: {
+                            case CLAY__ELEMENT_CONFIG_TYPE_TRANSITION: {
                                 shouldRender = false;
                                 break;
                             }
@@ -3119,14 +3117,14 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                     }
                 }
 
-                if (Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER)) {
+                if (Clay__BorderHasAnyWidth(&currentElement->config.border)) {
                     Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
                     Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
 
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                     if (!Clay__ElementIsOffscreen(&currentElementBoundingBox)) {
                         Clay_SharedElementConfig *sharedConfig = Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SHARED) ? Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SHARED).sharedElementConfig : &Clay_SharedElementConfig_DEFAULT;
-                        Clay_BorderElementConfig *borderConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_BORDER).borderElementConfig;
+                        Clay_BorderElementConfig *borderConfig = &currentElement->config.border;
                         Clay_RenderCommand renderCommand = {
                                 .boundingBox = currentElementBoundingBox,
                                 .renderData = { .border = {
@@ -3274,7 +3272,7 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
 //        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_CLIP: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Scroll"), {242, 196, 90, 255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_BORDER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Border"), {108, 91, 123, 255} };
+//        case CLAY__ELEMENT_CONFIG_TYPE_BORDER: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Border"), {108, 91, 123, 255} };
         case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Custom"), {11,72,107,255} };
         default: break;
     }
@@ -3877,6 +3875,26 @@ void Clay__RenderDebugView(void) {
                         CLAY_TEXT(clipConfig->horizontal ? CLAY_STRING("true") : CLAY_STRING("false") , infoTextConfig);
                     }
                 }
+                Clay_BorderElementConfig *borderConfig = &selectedItem->layoutElement->config.border;
+                if (Clay__BorderHasAnyWidth(borderConfig)) {
+                    CLAY(CLAY_ID("Clay__DebugViewElementInfoBorderBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
+                        CLAY_TEXT(CLAY_STRING("Border Widths"), infoTitleConfig);
+                        CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
+                            CLAY_TEXT(CLAY_STRING("{ left: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(borderConfig->width.left), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(", right: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(borderConfig->width.right), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(", top: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(borderConfig->width.top), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(", bottom: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(borderConfig->width.bottom), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
+                        }
+                        // .textColor
+                        CLAY_TEXT(CLAY_STRING("Border Color"), infoTitleConfig);
+                        Clay__RenderDebugViewColor(borderConfig->color, infoTextConfig);
+                    }
+                }
                 for (int32_t elementConfigIndex = 0; elementConfigIndex < selectedItem->layoutElement->elementConfigs.length; ++elementConfigIndex) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&selectedItem->layoutElement->elementConfigs, elementConfigIndex);
                     Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, elementConfig->type);
@@ -3890,27 +3908,6 @@ void Clay__RenderDebugView(void) {
                                 // .cornerRadius
                                 CLAY_TEXT(CLAY_STRING("Corner Radius"), infoTitleConfig);
                                 Clay__RenderDebugViewCornerRadius(sharedConfig->cornerRadius, infoTextConfig);
-                            }
-                            break;
-                        }
-                        case CLAY__ELEMENT_CONFIG_TYPE_BORDER: {
-                            Clay_BorderElementConfig *borderConfig = elementConfig->config.borderElementConfig;
-                            CLAY(CLAY_ID("Clay__DebugViewElementInfoBorderBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
-                                CLAY_TEXT(CLAY_STRING("Border Widths"), infoTitleConfig);
-                                CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
-                                    CLAY_TEXT(CLAY_STRING("{ left: "), infoTextConfig);
-                                    CLAY_TEXT(Clay__IntToString(borderConfig->width.left), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING(", right: "), infoTextConfig);
-                                    CLAY_TEXT(Clay__IntToString(borderConfig->width.right), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING(", top: "), infoTextConfig);
-                                    CLAY_TEXT(Clay__IntToString(borderConfig->width.top), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING(", bottom: "), infoTextConfig);
-                                    CLAY_TEXT(Clay__IntToString(borderConfig->width.bottom), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
-                                }
-                                // .textColor
-                                CLAY_TEXT(CLAY_STRING("Border Color"), infoTitleConfig);
-                                Clay__RenderDebugViewColor(borderConfig->color, infoTextConfig);
                             }
                             break;
                         }
