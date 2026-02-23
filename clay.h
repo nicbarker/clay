@@ -976,7 +976,6 @@ CLAY_DLL_EXPORT void Clay__CloseElement(void);
 CLAY_DLL_EXPORT Clay_ElementId Clay__HashString(Clay_String key, uint32_t seed);
 CLAY_DLL_EXPORT Clay_ElementId Clay__HashStringWithOffset(Clay_String key, uint32_t offset, uint32_t seed);
 CLAY_DLL_EXPORT void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig textConfig);
-CLAY_DLL_EXPORT Clay_TextElementConfig *Clay__StoreTextElementConfig(Clay_TextElementConfig config);
 CLAY_DLL_EXPORT uint32_t Clay__GetParentElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
@@ -1143,7 +1142,6 @@ typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_BORDER,
     CLAY__ELEMENT_CONFIG_TYPE_FLOATING,
     CLAY__ELEMENT_CONFIG_TYPE_CLIP,
-    CLAY__ELEMENT_CONFIG_TYPE_ASPECT,
     CLAY__ELEMENT_CONFIG_TYPE_IMAGE,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
     CLAY__ELEMENT_CONFIG_TYPE_SHARED,
@@ -1151,7 +1149,6 @@ typedef CLAY_PACKED_ENUM {
 } Clay__ElementConfigType;
 
 typedef union {
-    Clay_AspectRatioElementConfig *aspectRatioElementConfig;
     Clay_ImageElementConfig *imageElementConfig;
     Clay_FloatingElementConfig *floatingElementConfig;
     Clay_CustomElementConfig *customElementConfig;
@@ -1396,7 +1393,6 @@ uint32_t Clay__GetParentElementId(void) {
     return Clay__GetOpenLayoutElement()->id;
 }
 
-Clay_AspectRatioElementConfig * Clay__StoreAspectRatioElementConfig(Clay_AspectRatioElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_AspectRatioElementConfig_DEFAULT : Clay__AspectRatioElementConfigArray_Add(&Clay_GetCurrentContext()->aspectRatioElementConfigs, config); }
 Clay_ImageElementConfig * Clay__StoreImageElementConfig(Clay_ImageElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_ImageElementConfig_DEFAULT : Clay__ImageElementConfigArray_Add(&Clay_GetCurrentContext()->imageElementConfigs, config); }
 Clay_FloatingElementConfig * Clay__StoreFloatingElementConfig(Clay_FloatingElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_FloatingElementConfig_DEFAULT : Clay__FloatingElementConfigArray_Add(&Clay_GetCurrentContext()->floatingElementConfigs, config); }
 Clay_CustomElementConfig * Clay__StoreCustomElementConfig(Clay_CustomElementConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &Clay_CustomElementConfig_DEFAULT : Clay__CustomElementConfigArray_Add(&Clay_GetCurrentContext()->customElementConfigs, config); }
@@ -1864,19 +1860,11 @@ Clay_ElementId Clay__GenerateIdForAnonymousElement(Clay_LayoutElement *openLayou
 }
 
 void Clay__UpdateAspectRatioBox(Clay_LayoutElement *layoutElement) {
-    for (int32_t j = 0; j < layoutElement->elementConfigs.length; j++) {
-        Clay_ElementConfig *config = Clay__ElementConfigArraySlice_Get(&layoutElement->elementConfigs, j);
-        if (config->type == CLAY__ELEMENT_CONFIG_TYPE_ASPECT) {
-            Clay_AspectRatioElementConfig *aspectConfig = config->config.aspectRatioElementConfig;
-            if (aspectConfig->aspectRatio == 0) {
-                break;
-            }
-            if (layoutElement->dimensions.width == 0 && layoutElement->dimensions.height != 0) {
-                layoutElement->dimensions.width = layoutElement->dimensions.height * aspectConfig->aspectRatio;
-            } else if (layoutElement->dimensions.width != 0 && layoutElement->dimensions.height == 0) {
-                layoutElement->dimensions.height = layoutElement->dimensions.width * (1 / aspectConfig->aspectRatio);
-            }
-            break;
+    if (layoutElement->config.aspectRatio.aspectRatio != 0) {
+        if (layoutElement->dimensions.width == 0 && layoutElement->dimensions.height != 0) {
+            layoutElement->dimensions.width = layoutElement->dimensions.height * layoutElement->config.aspectRatio.aspectRatio;
+        } else if (layoutElement->dimensions.width != 0 && layoutElement->dimensions.height == 0) {
+            layoutElement->dimensions.height = layoutElement->dimensions.width * (1 / layoutElement->config.aspectRatio.aspectRatio);
         }
     }
 }
@@ -2165,7 +2153,6 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
         Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .imageElementConfig = Clay__StoreImageElementConfig(declaration->image) }, CLAY__ELEMENT_CONFIG_TYPE_IMAGE);
     }
     if (declaration->aspectRatio.aspectRatio > 0) {
-        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .aspectRatioElementConfig = Clay__StoreAspectRatioElementConfig(declaration->aspectRatio) }, CLAY__ELEMENT_CONFIG_TYPE_ASPECT);
         Clay__int32_tArray_Add(&context->aspectRatioElementIndexes, context->layoutElements.length - 1);
     }
     if (declaration->floating.attachTo != CLAY_ATTACH_TO_NONE) {
@@ -2693,8 +2680,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
     // Scale vertical heights according to aspect ratio
     for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
         Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
-        Clay_AspectRatioElementConfig *config = Clay__FindElementConfigWithType(aspectElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
-        aspectElement->dimensions.height = (1 / config->aspectRatio) * aspectElement->dimensions.width;
+        aspectElement->dimensions.height = (1 / aspectElement->config.aspectRatio.aspectRatio) * aspectElement->dimensions.width;
         aspectElement->config.layout.sizing.height.size.minMax.max = aspectElement->dimensions.height;
     }
 
@@ -2752,8 +2738,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
     // Scale horizontal widths according to aspect ratio
     for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
         Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
-        Clay_AspectRatioElementConfig *config = Clay__FindElementConfigWithType(aspectElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
-        aspectElement->dimensions.width = config->aspectRatio * aspectElement->dimensions.height;
+        aspectElement->dimensions.width = aspectElement->config.aspectRatio.aspectRatio * aspectElement->dimensions.height;
     }
 
     // Sort tree roots by z-index
@@ -3040,7 +3025,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                         // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                         bool shouldRender = !offscreen;
                         switch (elementConfig->type) {
-                            case CLAY__ELEMENT_CONFIG_TYPE_ASPECT:
                             case CLAY__ELEMENT_CONFIG_TYPE_FLOATING:
                             case CLAY__ELEMENT_CONFIG_TYPE_SHARED:
                             case CLAY__ELEMENT_CONFIG_TYPE_TRANSITION:
@@ -3319,7 +3303,7 @@ Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Cla
     switch (type) {
         case CLAY__ELEMENT_CONFIG_TYPE_SHARED: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Shared"), {243,134,48,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
-        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Aspect"), {101,149,194,255} };
+//        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Aspect"), {101,149,194,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_FLOATING: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Floating"), {250,105,0,255} };
         case CLAY__ELEMENT_CONFIG_TYPE_CLIP: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) {CLAY_STRING("Scroll"), {242, 196, 90, 255} };
@@ -3786,6 +3770,23 @@ void Clay__RenderDebugView(void) {
                         Clay__RenderDebugViewColor(textConfig->textColor, infoTextConfig);
                     }
                 }
+                if (selectedItem->layoutElement->config.aspectRatio.aspectRatio > 0) {
+                    Clay_AspectRatioElementConfig *aspectRatioConfig = &selectedItem->layoutElement->config.aspectRatio;
+                    CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatioBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
+                        CLAY_TEXT(CLAY_STRING("Aspect Ratio"), infoTitleConfig);
+                        // Aspect Ratio
+                        CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatio"), { }) {
+                            CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING("."), infoTextConfig);
+                            float frac = aspectRatioConfig->aspectRatio - (int)(aspectRatioConfig->aspectRatio);
+                            frac *= 100;
+                            if ((int)frac < 10) {
+                                CLAY_TEXT(CLAY_STRING("0"), infoTextConfig);
+                            }
+                            CLAY_TEXT(Clay__IntToString(frac), infoTextConfig);
+                        }
+                    }
+                }
                 for (int32_t elementConfigIndex = 0; elementConfigIndex < selectedItem->layoutElement->elementConfigs.length; ++elementConfigIndex) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&selectedItem->layoutElement->elementConfigs, elementConfigIndex);
                     Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, elementConfig->type);
@@ -3802,29 +3803,11 @@ void Clay__RenderDebugView(void) {
                             }
                             break;
                         }
-                        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: {
-                            Clay_AspectRatioElementConfig *aspectRatioConfig = elementConfig->config.aspectRatioElementConfig;
-                            CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatioBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
-                                CLAY_TEXT(CLAY_STRING("Aspect Ratio"), infoTitleConfig);
-                                // Aspect Ratio
-                                CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatio"), { }) {
-                                    CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
-                                    CLAY_TEXT(CLAY_STRING("."), infoTextConfig);
-                                    float frac = aspectRatioConfig->aspectRatio - (int)(aspectRatioConfig->aspectRatio);
-                                    frac *= 100;
-                                    if ((int)frac < 10) {
-                                        CLAY_TEXT(CLAY_STRING("0"), infoTextConfig);
-                                    }
-                                    CLAY_TEXT(Clay__IntToString(frac), infoTextConfig);
-                                }
-                            }
-                            break;
-                        }
                         case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: {
                             Clay_ImageElementConfig *imageConfig = elementConfig->config.imageElementConfig;
                             Clay_AspectRatioElementConfig aspectConfig = { 1 };
-                            if (Clay__ElementHasConfig(selectedItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT)) {
-                                aspectConfig = *Clay__FindElementConfigWithType(selectedItem->layoutElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT).aspectRatioElementConfig;
+                            if (selectedItem->layoutElement->config.aspectRatio.aspectRatio > 0) {
+                                aspectConfig = selectedItem->layoutElement->config.aspectRatio;
                             }
                             CLAY(CLAY_ID("Clay__DebugViewElementInfoImageBody"), { .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
                                 // Image Preview
