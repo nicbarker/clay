@@ -1140,12 +1140,10 @@ CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_RenderCommand, Clay_RenderCommandArray)
 typedef CLAY_PACKED_ENUM {
     CLAY__ELEMENT_CONFIG_TYPE_NONE,
     CLAY__ELEMENT_CONFIG_TYPE_CUSTOM,
-    CLAY__ELEMENT_CONFIG_TYPE_SHARED,
     CLAY__ELEMENT_CONFIG_TYPE_TRANSITION,
 } Clay__ElementConfigType;
 
 typedef union {
-    Clay_SharedElementConfig *sharedElementConfig;
     Clay_TransitionElementConfigs *transitionElementConfig;
 } Clay_ElementConfigUnion;
 
@@ -2107,27 +2105,6 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
     }
 
     openLayoutElement->elementConfigs.internalArray = &context->elementConfigs.internalArray[context->elementConfigs.length];
-    Clay_SharedElementConfig *sharedConfig = NULL;
-    if (declaration->backgroundColor.a > 0) {
-        sharedConfig = Clay__StoreSharedElementConfig(CLAY__INIT(Clay_SharedElementConfig) { .backgroundColor = declaration->backgroundColor });
-        Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
-    }
-    if (!Clay__MemCmp((char *)(&declaration->cornerRadius), (char *)(&Clay__CornerRadius_DEFAULT), sizeof(Clay_CornerRadius))) {
-        if (sharedConfig) {
-            sharedConfig->cornerRadius = declaration->cornerRadius;
-        } else {
-            sharedConfig = Clay__StoreSharedElementConfig(CLAY__INIT(Clay_SharedElementConfig) { .cornerRadius = declaration->cornerRadius });
-            Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
-        }
-    }
-    if (declaration->userData != 0) {
-        if (sharedConfig) {
-            sharedConfig->userData = declaration->userData;
-        } else {
-            sharedConfig = Clay__StoreSharedElementConfig(CLAY__INIT(Clay_SharedElementConfig) { .userData = declaration->userData });
-            Clay__AttachElementConfig(CLAY__INIT(Clay_ElementConfigUnion) { .sharedElementConfig = sharedConfig }, CLAY__ELEMENT_CONFIG_TYPE_SHARED);
-        }
-    }
     if (declaration->aspectRatio.aspectRatio > 0) {
         Clay__int32_tArray_Add(&context->aspectRatioElementIndexes, context->layoutElements.length - 1);
     }
@@ -2552,10 +2529,9 @@ bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
 }
 
 Clay_TransitionData Clay__CreateTransitionDataForElement(Clay_BoundingBox *boundingBox, Clay_LayoutElement* layoutElement) {
-    Clay_SharedElementConfig *shared = Clay__FindElementConfigWithType(layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SHARED).sharedElementConfig;
     Clay_TransitionData transitionData = {
         .boundingBox = *boundingBox,
-        .backgroundColor = shared ? shared->backgroundColor : (Clay_Color) {}
+        .backgroundColor = layoutElement->config.backgroundColor
     };
     return transitionData;
 }
@@ -2571,9 +2547,8 @@ bool Clay__ShouldTransition(Clay_TransitionData *current, Clay_TransitionData *t
 }
 
 void Clay__UpdateElementWithTransitionData(Clay_BoundingBox *boundingBox, Clay_LayoutElement* layoutElement, Clay_TransitionData* data) {
-    Clay_SharedElementConfig *shared = Clay__FindElementConfigWithType(layoutElement, CLAY__ELEMENT_CONFIG_TYPE_SHARED).sharedElementConfig;
     *boundingBox = data->boundingBox;
-    shared->backgroundColor = data->backgroundColor;
+    layoutElement->config.backgroundColor = data->backgroundColor;
 }
 
 void Clay__CalculateFinalLayout(float deltaTime) {
@@ -2914,16 +2889,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                 }
 
                 bool emitRectangle = false;
-                // Create the render commands for this element
-                Clay_SharedElementConfig *sharedConfig = Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SHARED).sharedElementConfig;
-                if (sharedConfig && sharedConfig->backgroundColor.a > 0) {
-                   emitRectangle = true;
-                }
-                else if (!sharedConfig) {
-                    emitRectangle = false;
-                    sharedConfig = &Clay_SharedElementConfig_DEFAULT;
-                }
-
                 bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
 
                 if (currentElement->isTextElement) {
@@ -2968,66 +2933,80 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                     }
                 } else if (!offscreen) {
                     if (currentElement->config.image.imageData) {
-                        if (!offscreen) {
-                            Clay_RenderCommand renderCommand = {
-                                .boundingBox = currentElementBoundingBox,
-                                .userData = sharedConfig->userData,
-                                .id = currentElement->id,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
-                                .renderData = {
-                                    .image = {
-                                        .backgroundColor = sharedConfig->backgroundColor,
-                                        .cornerRadius = sharedConfig->cornerRadius,
-                                        .imageData = currentElement->config.image.imageData,
-                                    }
+                        Clay_RenderCommand renderCommand = {
+                            .boundingBox = currentElementBoundingBox,
+                            .renderData = {
+                                .image = {
+                                    .backgroundColor = currentElement->config.backgroundColor,
+                                    .cornerRadius = currentElement->config.cornerRadius,
+                                    .imageData = currentElement->config.image.imageData,
                                 }
-                            };
-                            Clay__AddRenderCommand(renderCommand);
-                        }
+                            },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
                     }
                     if (currentElement->config.custom.customData) {
                         Clay_RenderCommand renderCommand = {
                             .boundingBox = currentElementBoundingBox,
-                            .userData = sharedConfig->userData,
-                            .id = currentElement->id,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
-                            .renderData = CLAY__INIT(Clay_RenderData) {
+                            .renderData = {
                                 .custom = {
-                                    .backgroundColor = sharedConfig->backgroundColor,
-                                    .cornerRadius = sharedConfig->cornerRadius,
+                                    .backgroundColor = currentElement->config.backgroundColor,
+                                    .cornerRadius = currentElement->config.cornerRadius,
                                     .customData = currentElement->config.custom.customData,
                                 }
-                            }
+                            },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
                         };
                         Clay__AddRenderCommand(renderCommand);
                     }
                     if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
                         Clay_RenderCommand renderCommand = {
                             .boundingBox = currentElementBoundingBox,
-                            .userData = sharedConfig->userData,
+                            .renderData = {
+                                    .clip = {
+                                            .horizontal = currentElement->config.clip.horizontal,
+                                            .vertical = currentElement->config.clip.vertical,
+                                    }
+                            },
+                            .userData = currentElement->config.userData,
                             .id = currentElement->id,
+                            .zIndex = root->zIndex,
                             .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-                            .renderData = CLAY__INIT(Clay_RenderData) {
-                                .clip = {
-                                    .horizontal = currentElement->config.clip.horizontal,
-                                    .vertical = currentElement->config.clip.vertical,
-                                }
-                            }
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                    }
+                    if (currentElement->config.backgroundColor.a > 0) {
+                        Clay_RenderCommand renderCommand = {
+                            .boundingBox = currentElementBoundingBox,
+                            .renderData = { .rectangle = {
+                                .backgroundColor = currentElement->config.backgroundColor,
+                                .cornerRadius = currentElement->config.cornerRadius,
+                            } },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                         };
                         Clay__AddRenderCommand(renderCommand);
                     }
                     for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
                         Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, sortedConfigIndexes[elementConfigIndex]);
                         Clay_RenderCommand renderCommand = {
-                                .boundingBox = currentElementBoundingBox,
-                                .userData = sharedConfig->userData,
-                                .id = currentElement->id,
+                            .boundingBox = currentElementBoundingBox,
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
                         };
 
                         // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                         bool shouldRender = !offscreen;
                         switch (elementConfig->type) {
-                            case CLAY__ELEMENT_CONFIG_TYPE_SHARED:
                             case CLAY__ELEMENT_CONFIG_TYPE_TRANSITION: {
                                 shouldRender = false;
                                 break;
@@ -3043,20 +3022,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                             // be on screen, even if this element isn't. That depends on this element and it's children being laid out correctly (even if they are entirely off screen)
                         }
                     }
-                }
-
-                if (emitRectangle) {
-                    Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                        .boundingBox = currentElementBoundingBox,
-                        .renderData = { .rectangle = {
-                                .backgroundColor = sharedConfig->backgroundColor,
-                                .cornerRadius = sharedConfig->cornerRadius,
-                        }},
-                        .userData = sharedConfig->userData,
-                        .id = currentElement->id,
-                        .zIndex = root->zIndex,
-                        .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-                    });
                 }
 
                 // Setup initial on-axis alignment
@@ -3123,16 +3088,15 @@ void Clay__CalculateFinalLayout(float deltaTime) {
 
                     // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
                     if (!Clay__ElementIsOffscreen(&currentElementBoundingBox)) {
-                        Clay_SharedElementConfig *sharedConfig = Clay__ElementHasConfig(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SHARED) ? Clay__FindElementConfigWithType(currentElement, CLAY__ELEMENT_CONFIG_TYPE_SHARED).sharedElementConfig : &Clay_SharedElementConfig_DEFAULT;
                         Clay_BorderElementConfig *borderConfig = &currentElement->config.border;
                         Clay_RenderCommand renderCommand = {
                                 .boundingBox = currentElementBoundingBox,
                                 .renderData = { .border = {
                                     .color = borderConfig->color,
-                                    .cornerRadius = sharedConfig->cornerRadius,
+                                    .cornerRadius = currentElement->config.cornerRadius,
                                     .width = borderConfig->width
                                 }},
-                                .userData = sharedConfig->userData,
+                                .userData = currentElement->config.userData,
                                 .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length).id,
                                 .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
                         };
@@ -3149,7 +3113,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                             .renderData = { .rectangle = {
                                                 .backgroundColor = borderConfig->color,
                                             } },
-                                            .userData = sharedConfig->userData,
+                                            .userData = currentElement->config.userData,
                                             .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length + 1 + i).id,
                                             .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
@@ -3165,7 +3129,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                             .renderData = { .rectangle = {
                                                     .backgroundColor = borderConfig->color,
                                             } },
-                                            .userData = sharedConfig->userData,
+                                            .userData = currentElement->config.userData,
                                             .id = Clay__HashNumber(currentElement->id, currentElement->childrenOrTextContent.children.length + 1 + i).id,
                                             .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
@@ -3266,7 +3230,7 @@ typedef struct {
 
 Clay__DebugElementConfigTypeLabelConfig Clay__DebugGetElementConfigTypeLabel(Clay__ElementConfigType type) {
     switch (type) {
-        case CLAY__ELEMENT_CONFIG_TYPE_SHARED: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Shared"), {243,134,48,255} };
+//        case CLAY__ELEMENT_CONFIG_TYPE_SHARED: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Shared"), {243,134,48,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_TEXT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Text"), {105,210,231,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_ASPECT: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Aspect"), {101,149,194,255} };
 //        case CLAY__ELEMENT_CONFIG_TYPE_IMAGE: return CLAY__INIT(Clay__DebugElementConfigTypeLabelConfig) { CLAY_STRING("Image"), {121,189,154,255} };
@@ -3362,25 +3326,22 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 if (idString.length > 0) {
                     CLAY_TEXT(idString, offscreen ? CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }) : Clay__DebugView_TextNameConfig);
                 }
+                Clay_Color labelColor = {243,134,48,90};
+                labelColor.a = 90;
+                Clay_Color backgroundColor = currentElement->config.backgroundColor;
+                Clay_CornerRadius radius = currentElement->config.cornerRadius;
+                if (backgroundColor.a > 0) {
+                    CLAY_AUTO_ID({ .layout = { .padding = { 8, 8, 2, 2 } }, .backgroundColor = labelColor, .cornerRadius = CLAY_CORNER_RADIUS(4), .border = { .color = labelColor, .width = { 1, 1, 1, 1, 0} } }) {
+                        CLAY_TEXT(CLAY_STRING("Color"), CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
+                    }
+                }
+                if (radius.bottomLeft > 0) {
+                    CLAY_AUTO_ID({ .layout = { .padding = { 8, 8, 2, 2 } }, .backgroundColor = labelColor, .cornerRadius = CLAY_CORNER_RADIUS(4), .border = { .color = labelColor, .width = { 1, 1, 1, 1, 0 } } }) {
+                        CLAY_TEXT(CLAY_STRING("Radius"), CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
+                    }
+                }
                 for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
                     Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, elementConfigIndex);
-                    if (elementConfig->type == CLAY__ELEMENT_CONFIG_TYPE_SHARED) {
-                        Clay_Color labelColor = {243,134,48,90};
-                        labelColor.a = 90;
-                        Clay_Color backgroundColor = elementConfig->config.sharedElementConfig->backgroundColor;
-                        Clay_CornerRadius radius = elementConfig->config.sharedElementConfig->cornerRadius;
-                        if (backgroundColor.a > 0) {
-                            CLAY_AUTO_ID({ .layout = { .padding = { 8, 8, 2, 2 } }, .backgroundColor = labelColor, .cornerRadius = CLAY_CORNER_RADIUS(4), .border = { .color = labelColor, .width = { 1, 1, 1, 1, 0} } }) {
-                                CLAY_TEXT(CLAY_STRING("Color"), CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
-                            }
-                        }
-                        if (radius.bottomLeft > 0) {
-                            CLAY_AUTO_ID({ .layout = { .padding = { 8, 8, 2, 2 } }, .backgroundColor = labelColor, .cornerRadius = CLAY_CORNER_RADIUS(4), .border = { .color = labelColor, .width = { 1, 1, 1, 1, 0 } } }) {
-                                CLAY_TEXT(CLAY_STRING("Radius"), CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
-                            }
-                        }
-                        continue;
-                    }
                     Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(elementConfig->type);
                     Clay_Color backgroundColor = config.color;
                     backgroundColor.a = 90;
@@ -3697,6 +3658,7 @@ void Clay__RenderDebugView(void) {
                         CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
                     }
                 }
+//                Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, elementConfig->type);
                 if (selectedItem->layoutElement->isTextElement) {
                     Clay_TextElementConfig *textConfig = &selectedItem->layoutElement->textConfig;
                     CLAY_AUTO_ID({ .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
@@ -3895,25 +3857,13 @@ void Clay__RenderDebugView(void) {
                         Clay__RenderDebugViewColor(borderConfig->color, infoTextConfig);
                     }
                 }
-                for (int32_t elementConfigIndex = 0; elementConfigIndex < selectedItem->layoutElement->elementConfigs.length; ++elementConfigIndex) {
-                    Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&selectedItem->layoutElement->elementConfigs, elementConfigIndex);
-                    Clay__RenderDebugViewElementConfigHeader(selectedItem->elementId.stringId, elementConfig->type);
-                    switch (elementConfig->type) {
-                        case CLAY__ELEMENT_CONFIG_TYPE_SHARED: {
-                            Clay_SharedElementConfig *sharedConfig = elementConfig->config.sharedElementConfig;
-                            CLAY_AUTO_ID({ .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
-                                // .backgroundColor
-                                CLAY_TEXT(CLAY_STRING("Background Color"), infoTitleConfig);
-                                Clay__RenderDebugViewColor(sharedConfig->backgroundColor, infoTextConfig);
-                                // .cornerRadius
-                                CLAY_TEXT(CLAY_STRING("Corner Radius"), infoTitleConfig);
-                                Clay__RenderDebugViewCornerRadius(sharedConfig->cornerRadius, infoTextConfig);
-                            }
-                            break;
-                        }
-                        case CLAY__ELEMENT_CONFIG_TYPE_CUSTOM:
-                        default: break;
-                    }
+                CLAY_AUTO_ID({ .layout = { .padding = attributeConfigPadding, .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM }}) {
+                    // .backgroundColor
+                    CLAY_TEXT(CLAY_STRING("Background Color"), infoTitleConfig);
+                    Clay__RenderDebugViewColor(selectedItem->layoutElement->config.backgroundColor, infoTextConfig);
+                    // .cornerRadius
+                    CLAY_TEXT(CLAY_STRING("Corner Radius"), infoTitleConfig);
+                    Clay__RenderDebugViewCornerRadius(selectedItem->layoutElement->config.cornerRadius, infoTextConfig);
                 }
             }
         } else {
