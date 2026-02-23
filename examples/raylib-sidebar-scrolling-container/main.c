@@ -38,7 +38,7 @@ Clay_TextElementConfig dropdownTextElementConfig = { .fontSize = 24, .textColor 
 
 void RenderDropdownTextItem(int index) {
     CLAY_AUTO_ID({ .layout = dropdownTextItemLayout, .backgroundColor = {180, 180, 180, 255} }) {
-        CLAY_TEXT(CLAY_STRING("I'm a text field in a scroll container."), &dropdownTextElementConfig);
+        CLAY_TEXT(CLAY_STRING("I'm a text field in a scroll container."), dropdownTextElementConfig);
     }
 }
 
