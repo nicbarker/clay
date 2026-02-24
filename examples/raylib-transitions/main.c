@@ -45,6 +45,7 @@ void RenderDropdownTextItem(int index) {
 typedef struct {
     int id;
     Clay_Color color;
+    const char* stringId;
 } SortableBox;
 
 int cellCount = 30;
@@ -66,13 +67,6 @@ typedef struct {
 } Arena;
 
 Arena frameArena = {};
-
-Clay_String* FrameAllocateString(Clay_String string) {
-    Clay_String *allocated = (Clay_String *)(frameArena.memory + frameArena.offset);
-    *allocated = string;
-    frameArena.offset += sizeof(Clay_String);
-    return allocated;
-}
 
 bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
     if (arguments.transitionState == CLAY_TRANSITION_STATE_EXITING) {
@@ -153,8 +147,9 @@ void HandlePinkButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
         for (int i = 0; i < cellCount; i++) {
             int index = colors[i].id;
             colors[i] = (SortableBox) {
-                    .id = index,
-                    .color = { 255 - index, 255 - index * 4, 255 - index * 2, 255 }
+                .id = index,
+                .color = { 255 - index, 255 - index * 4, 255 - index * 2, 255 },
+                .stringId = colors[i].stringId
             };
         }
     }
@@ -166,7 +161,8 @@ void HandleBlueButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
             int index = colors[i].id;
             colors[i] = (SortableBox) {
                 .id = index,
-                .color = { 255 - index * 4, 255 - index * 2, 255 - index, 255 }
+                .color = { 255 - index * 4, 255 - index * 2, 255 - index, 255 },
+                .stringId = colors[i].stringId
             };
         }
     }
@@ -244,10 +240,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                         }
                     }) {
                         Clay_OnHover(HandleCellButtonInteraction, (void*)index);
-                        char *idString = (char *)(frameArena.memory + frameArena.offset);
-                        snprintf(idString, 3, "%02d", colors[index].id);
-                        frameArena.offset += 2;
-                        CLAY_TEXT(((Clay_String) { .length = 2, .chars = idString }), CLAY_TEXT_CONFIG({
+                        CLAY_TEXT(((Clay_String) { .length = 2, .chars = colors[index].stringId, .isStaticallyAllocated = true }), CLAY_TEXT_CONFIG({
                             .fontSize = 32,
                             .textColor = {154, 123, 184, 255 }
                         }));
@@ -329,7 +322,7 @@ void UpdateDrawFrame(Font* fonts)
 bool reinitializeClay = false;
 
 void HandleClayErrors(Clay_ErrorData errorData) {
-    printf("%s", errorData.errorText.chars);
+    printf("%s\n", errorData.errorText.chars);
     if (errorData.errorType == CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED) {
         reinitializeClay = true;
         Clay_SetMaxElementCount(Clay_GetMaxElementCount() * 2);
@@ -355,10 +348,14 @@ int main(void) {
 
     frameArena = (Arena) {.memory = malloc(1024) };
 
+    char* charData = (char*)malloc(cellCount * 3);
+
     for (int i = 0; i < cellCount; i++) {
+        snprintf(&charData[i * 3], 3, "%02d", i);
         colors[i] = (SortableBox) {
             .id = i,
-            .color = { 255 - i, 255 - i * 4, 255 - i * 2, 255 }
+            .color = { 255 - i, 255 - i * 4, 255 - i * 2, 255 },
+            .stringId = &charData[i * 3],
         };
     }
 
