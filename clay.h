@@ -1282,7 +1282,6 @@ struct Clay_Context {
     Clay__int32_tArray openLayoutElementStack;
     Clay__int32_tArray layoutElementChildren;
     Clay__int32_tArray layoutElementChildrenBuffer;
-    Clay__int32_tArray aspectRatioElementIndexes;
     Clay__int32_tArray reusableElementIndexBuffer;
     Clay__int32_tArray layoutElementClipElementIds;
     // Misc Data Structures
@@ -2038,9 +2037,6 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
                 .userData = context->errorHandler.userData });
     }
 
-    if (declaration->aspectRatio.aspectRatio > 0) {
-        Clay__int32_tArray_Add(&context->aspectRatioElementIndexes, context->layoutElements.length - 1);
-    }
     if (declaration->floating.attachTo != CLAY_ATTACH_TO_NONE) {
         Clay_FloatingElementConfig* floatingConfig = &openLayoutElement->config.floating;
         // This looks dodgy but because of the auto generated root element the depth of the tree will always be at least 2 here
@@ -2138,7 +2134,6 @@ void Clay__InitializeEphemeralMemory(Clay_Context* context) {
     context->layoutElementTreeRoots = Clay__LayoutElementTreeRootArray_Allocate_Arena_InitialLength(maxElementCount, context->transitionOutWaitingCount, arena);
     context->layoutElementChildren = Clay__int32_tArray_Allocate_Arena_InitialLength(maxElementCount, context->transitionOutWaitingCount, arena);
     context->openLayoutElementStack = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
-    context->aspectRatioElementIndexes = Clay__int32_tArray_Allocate_Arena_InitialLength(maxElementCount, context->transitionOutWaitingCount, arena);
     context->renderCommands = Clay_RenderCommandArray_Allocate_Arena(maxElementCount, arena);
     context->treeNodeVisited = Clay__boolArray_Allocate_Arena(maxElementCount, arena);
     context->treeNodeVisited.length = context->treeNodeVisited.capacity; // This array is accessed directly rather than behaving as a list
@@ -2176,11 +2171,10 @@ bool Clay__FloatEqual(float left, float right) {
 }
 
 // Writes out the location of text elements to layout elements buffer 1
-Clay__int32_tArray Clay__SizeContainersAlongAxis(bool xAxis) {
+void Clay__SizeContainersAlongAxis(bool xAxis, Clay__int32_tArray* textElementsOut, Clay__int32_tArray* aspectRatioElementsOut) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__int32_tArray bfsBuffer = context->layoutElementChildrenBuffer;
     Clay__int32_tArray resizableContainerBuffer = context->openLayoutElementStack;
-    Clay__int32_tArray textElements = context->openClipElementStack;
     for (int32_t rootIndex = 0; rootIndex < context->layoutElementTreeRoots.length; ++rootIndex) {
         bfsBuffer.length = 0;
         Clay__LayoutElementTreeRoot *root = Clay__LayoutElementTreeRootArray_Get(&context->layoutElementTreeRoots, rootIndex);
@@ -2243,10 +2237,14 @@ Clay__int32_tArray Clay__SizeContainersAlongAxis(bool xAxis) {
                 Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
                 float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
 
-                if (childElement->isTextElement) {
-                    Clay__int32_tArray_Add(&textElements, childElementIndex);
+                if (textElementsOut && childElement->isTextElement) {
+                    Clay__int32_tArray_Add(textElementsOut, childElementIndex);
                 } else if (childElement->children.length > 0) {
                     Clay__int32_tArray_Add(&bfsBuffer, childElementIndex);
+                }
+
+                if (aspectRatioElementsOut && childElement->config.aspectRatio.aspectRatio != 0) {
+                    Clay__int32_tArray_Add(aspectRatioElementsOut, childElementIndex);
                 }
 
                 if (childSizing.type != CLAY__SIZING_TYPE_PERCENT
@@ -2396,7 +2394,6 @@ Clay__int32_tArray Clay__SizeContainersAlongAxis(bool xAxis) {
             }
         }
     }
-    return textElements;
 }
 
 Clay_String Clay__IntToString(int32_t integer) {
@@ -2483,7 +2480,11 @@ void Clay__UpdateElementWithTransitionData(Clay_BoundingBox *boundingBox, Clay_L
 void Clay__CalculateFinalLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
     // Calculate sizing along the X axis
-    Clay__int32_tArray textElements = Clay__SizeContainersAlongAxis(true);
+    Clay__int32_tArray textElements = context->openClipElementStack;
+    textElements.length = 0;
+    Clay__int32_tArray aspectRatioElements = context->reusableElementIndexBuffer;
+    aspectRatioElements.length = 0;
+    Clay__SizeContainersAlongAxis(true, &textElements, &aspectRatioElements);
 
     // Wrap text
     for (int32_t textElementIndex = 0; textElementIndex < textElements.length; ++textElementIndex) {
@@ -2541,8 +2542,8 @@ void Clay__CalculateFinalLayout(float deltaTime) {
     }
 
     // Scale vertical heights according to aspect ratio
-    for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
-        Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
+    for (int32_t i = 0; i < aspectRatioElements.length; ++i) {
+        Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&aspectRatioElements, i));
         aspectElement->dimensions.height = (1 / aspectElement->config.aspectRatio.aspectRatio) * aspectElement->dimensions.width;
         aspectElement->config.layout.sizing.height.size.minMax.max = aspectElement->dimensions.height;
     }
@@ -2596,11 +2597,11 @@ void Clay__CalculateFinalLayout(float deltaTime) {
     }
 
     // Calculate sizing along the Y axis
-    Clay__SizeContainersAlongAxis(false);
+    Clay__SizeContainersAlongAxis(false, NULL, NULL);
 
     // Scale horizontal widths according to aspect ratio
-    for (int32_t i = 0; i < context->aspectRatioElementIndexes.length; ++i) {
-        Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->aspectRatioElementIndexes, i));
+    for (int32_t i = 0; i < aspectRatioElements.length; ++i) {
+        Clay_LayoutElement* aspectElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&aspectRatioElements, i));
         aspectElement->dimensions.width = aspectElement->config.aspectRatio.aspectRatio * aspectElement->dimensions.height;
     }
 
