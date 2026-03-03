@@ -33,24 +33,18 @@ typedef struct
 
 const char* overlayShaderCode = "#version 330\n"
                                 "\n"
-                                "// Input attributes from raylib\n"
                                 "in vec2 fragTexCoord;\n"
                                 "in vec4 fragColor;\n"
                                 "\n"
-                                "// Input uniforms\n"
                                 "uniform sampler2D texture0;\n"
-                                "uniform vec4 overlayColor; // The color AND the blend strength (alpha)\n"
+                                "uniform vec4 overlayColor;\n"
                                 "\n"
                                 "out vec4 finalColor;\n"
                                 "\n"
                                 "void main()\n"
                                 "{\n"
-                                "    // 1. Get the source color (Texture pixel * Tint color from Draw call)\n"
                                 "    vec4 texelColor = texture(texture0, fragTexCoord) * fragColor;\n"
                                 "\n"
-                                "    // 2. Perform the lerp (mix)\n"
-                                "    // We mix source RGB with overlay RGB using overlayColor.a as the weight.\n"
-                                "    // We keep the texelColor.a to preserve transparency (text, rounded corners, etc.)\n"
                                 "    vec3 blendedRGB = mix(texelColor.rgb, overlayColor.rgb, overlayColor.a);\n"
                                 "\n"
                                 "    finalColor = vec4(blendedRGB, texelColor.a);\n"
@@ -61,21 +55,17 @@ int colorLoc;
 bool overlayEnabled = false;
 
 void InitOverlay() {
-    // Load shader from file (or use a string)
     overlayShader = LoadShaderFromMemory(0, overlayShaderCode);
-    // Get the location of the "overlayColor" variable in the shader
     colorLoc = GetShaderLocation(overlayShader, "overlayColor");
 }
 
 void SetColorOverlay(Color color) {
     overlayEnabled = true;
-    // intensity 0.0 = 100% source color
-    // intensity 1.0 = 100% overlay color
     float colorFloat[4] = {
-            (float)color.r/255.0f,
-            (float)color.g/255.0f,
-            (float)color.b/255.0f,
-            (float)color.a/255.0f,
+        (float)color.r/255.0f,
+        (float)color.g/255.0f,
+        (float)color.b/255.0f,
+        (float)color.a/255.0f,
     };
 
     SetShaderValue(overlayShader, colorLoc, colorFloat, SHADER_UNIFORM_VEC4);
