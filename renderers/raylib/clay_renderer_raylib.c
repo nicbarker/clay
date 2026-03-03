@@ -31,6 +31,64 @@ typedef struct
     } customData;
 } CustomLayoutElement;
 
+const char* overlayShaderCode = "#version 330\n"
+                                "\n"
+                                "// Input attributes from raylib\n"
+                                "in vec2 fragTexCoord;\n"
+                                "in vec4 fragColor;\n"
+                                "\n"
+                                "// Input uniforms\n"
+                                "uniform sampler2D texture0;\n"
+                                "uniform vec4 overlayColor; // The color AND the blend strength (alpha)\n"
+                                "\n"
+                                "out vec4 finalColor;\n"
+                                "\n"
+                                "void main()\n"
+                                "{\n"
+                                "    // 1. Get the source color (Texture pixel * Tint color from Draw call)\n"
+                                "    vec4 texelColor = texture(texture0, fragTexCoord) * fragColor;\n"
+                                "\n"
+                                "    // 2. Perform the lerp (mix)\n"
+                                "    // We mix source RGB with overlay RGB using overlayColor.a as the weight.\n"
+                                "    // We keep the texelColor.a to preserve transparency (text, rounded corners, etc.)\n"
+                                "    vec3 blendedRGB = mix(texelColor.rgb, overlayColor.rgb, overlayColor.a);\n"
+                                "\n"
+                                "    finalColor = vec4(blendedRGB, texelColor.a);\n"
+                                "}";
+
+Shader overlayShader;
+int colorLoc;
+bool overlayEnabled = false;
+
+void InitOverlay() {
+    // Load shader from file (or use a string)
+    overlayShader = LoadShaderFromMemory(0, overlayShaderCode);
+    // Get the location of the "overlayColor" variable in the shader
+    colorLoc = GetShaderLocation(overlayShader, "overlayColor");
+}
+
+void SetColorOverlay(Color color) {
+    overlayEnabled = true;
+    // intensity 0.0 = 100% source color
+    // intensity 1.0 = 100% overlay color
+    float colorFloat[4] = {
+            (float)color.r/255.0f,
+            (float)color.g/255.0f,
+            (float)color.b/255.0f,
+            (float)color.a/255.0f,
+    };
+
+    SetShaderValue(overlayShader, colorLoc, colorFloat, SHADER_UNIFORM_VEC4);
+    BeginShaderMode(overlayShader);
+}
+
+void DisableColorOverlay() {
+    if (overlayEnabled) {
+        EndShaderMode();
+        overlayEnabled = false;
+    }
+}
+
 // Get a ray trace from the screen position (i.e mouse) within a specific section of the screen
 Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int screenWidth, int screenHeight, float zDistance)
 {
@@ -127,6 +185,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
 void Clay_Raylib_Initialize(int width, int height, const char *title, unsigned int flags) {
     SetConfigFlags(flags);
     InitWindow(width, height, title);
+    InitOverlay();
 //    EnableEventWaiting();
 }
 
@@ -150,7 +209,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
     for (int j = 0; j < renderCommands.length; j++)
     {
         Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
-        Clay_BoundingBox boundingBox = {roundf(renderCommand->boundingBox.x), roundf(renderCommand->boundingBox.y), roundf(renderCommand->boundingBox.width), roundf(renderCommand->boundingBox.height)};
+        Clay_BoundingBox boundingBox = {renderCommand->boundingBox.x, renderCommand->boundingBox.y, renderCommand->boundingBox.width, renderCommand->boundingBox.height};
         switch (renderCommand->commandType)
         {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
@@ -196,6 +255,13 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 EndScissorMode();
                 break;
             }
+            case CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START: {
+                SetColorOverlay(CLAY_COLOR_TO_RAYLIB_COLOR(renderCommand->renderData.colorOverlay.color));
+                break;
+            }
+            case CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END: {
+                DisableColorOverlay();
+            }
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                 Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
                 if (config->cornerRadius.topLeft > 0) {
@@ -210,19 +276,19 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 Clay_BorderRenderData *config = &renderCommand->renderData.border;
                 // Left border
                 if (config->width.left > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x), (int)roundf(boundingBox.y + config->cornerRadius.topLeft), (int)config->width.left, (int)roundf(boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft), CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangleV((Vector2) { boundingBox.x, boundingBox.y + config->cornerRadius.topLeft }, (Vector2) { config->width.left, boundingBox.height - config->cornerRadius.topLeft - config->cornerRadius.bottomLeft }, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 // Right border
                 if (config->width.right > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + boundingBox.width - config->width.right), (int)roundf(boundingBox.y + config->cornerRadius.topRight), (int)config->width.right, (int)roundf(boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight), CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangleV((Vector2) { boundingBox.x + boundingBox.width - config->width.right, boundingBox.y + config->cornerRadius.topRight }, (Vector2) { config->width.right, boundingBox.height - config->cornerRadius.topRight - config->cornerRadius.bottomRight }, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 // Top border
                 if (config->width.top > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + config->cornerRadius.topLeft), (int)roundf(boundingBox.y), (int)roundf(boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight), (int)config->width.top, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangleV((Vector2) { boundingBox.x + config->cornerRadius.topLeft, boundingBox.y }, (Vector2) { boundingBox.width - config->cornerRadius.topLeft - config->cornerRadius.topRight, (int)config->width.top }, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 // Bottom border
                 if (config->width.bottom > 0) {
-                    DrawRectangle((int)roundf(boundingBox.x + config->cornerRadius.bottomLeft), (int)roundf(boundingBox.y + boundingBox.height - config->width.bottom), (int)roundf(boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight), (int)config->width.bottom, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
+                    DrawRectangleV((Vector2) { boundingBox.x + config->cornerRadius.bottomLeft, boundingBox.y + boundingBox.height - config->width.bottom }, (Vector2) { boundingBox.width - config->cornerRadius.bottomLeft - config->cornerRadius.bottomRight, (int)config->width.bottom }, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));
                 }
                 if (config->cornerRadius.topLeft > 0) {
                     DrawRing((Vector2) { roundf(boundingBox.x + config->cornerRadius.topLeft), roundf(boundingBox.y + config->cornerRadius.topLeft) }, roundf(config->cornerRadius.topLeft - config->width.top), config->cornerRadius.topLeft, 180, 270, 10, CLAY_COLOR_TO_RAYLIB_COLOR(config->color));

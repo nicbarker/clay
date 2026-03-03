@@ -48,8 +48,10 @@ typedef struct {
     const char* stringId;
 } SortableBox;
 
+int maxCount = 30;
 int cellCount = 30;
-SortableBox colors[30] = {};
+char* charData;
+SortableBox colors[100] = {};
 
 bool blueColor = 0;
 
@@ -69,9 +71,6 @@ typedef struct {
 Arena frameArena = {};
 
 bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
-    if (arguments.transitionState == CLAY_TRANSITION_STATE_EXITING) {
-        int x = 5;
-    }
     float ratio = arguments.elapsedTime / arguments.duration;
     if (arguments.elapsedTime < arguments.duration) {
         float lerpAmount = (1 - powf(1 - ratio, 3.0f));
@@ -96,29 +95,28 @@ bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
         } else {
             arguments.current->backgroundColor = arguments.target.backgroundColor;
         }
+        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+            arguments.current->overlayColor = (Clay_Color) {
+                    .r = Lerp(arguments.initial.overlayColor.r, arguments.target.overlayColor.r, lerpAmount),
+                    .g = Lerp(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
+                    .b = Lerp(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
+                    .a = Lerp(arguments.initial.overlayColor.a, arguments.target.overlayColor.a, lerpAmount),
+            };
+        } else {
+            arguments.current->overlayColor = arguments.target.overlayColor;
+        }
         return false;
     } else {
         return true;
     }
 }
 
-bool ColorEaseOut(Clay_TransitionState transitionState, Clay_TransitionData initial, Clay_TransitionData *current, Clay_TransitionData target, float currentTime, float duration) {
-    float ratio = currentTime / duration;
-    if (currentTime < duration) {
-        float lerpAmount = (1 - powf(1 - ratio, 3.0f));
-        current->backgroundColor = (Clay_Color) {
-            .r = Lerp(initial.backgroundColor.r, target.backgroundColor.r, lerpAmount),
-            .g = Lerp(initial.backgroundColor.g, target.backgroundColor.g, lerpAmount),
-            .b = Lerp(initial.backgroundColor.b, target.backgroundColor.b, lerpAmount),
-            .a = Lerp(initial.backgroundColor.a, target.backgroundColor.a, lerpAmount),
-        };
-        current->boundingBox = target.boundingBox;
-        return false;
-    } else {
-        return true;
-    }
+Clay_TransitionData EnterExitSlideUp(Clay_TransitionData initialState) {
+    Clay_TransitionData targetState = initialState;
+    targetState.boundingBox.y += 20;
+    targetState.overlayColor = (Clay_Color) { 255, 255, 255, 255 };
+    return targetState;
 }
-
 // Swaps two elements in an array
 void swap(SortableBox *a, SortableBox *b) {
     SortableBox temp = *a;
@@ -126,14 +124,20 @@ void swap(SortableBox *a, SortableBox *b) {
     *b = temp;
 }
 
-// Shuffles the array in-place
 void shuffle(SortableBox *array, size_t n) {
     if (n <= 1) return;
 
     for (size_t i = n - 1; i > 0; i--) {
-        size_t j = rand() % (i + 1);  // random index from 0 to i
+        size_t j = rand() % (i + 1);
         swap(&array[i], &array[j]);
     }
+}
+
+void add(SortableBox *array, int32_t length, int32_t index, SortableBox toAdd) {
+    for (int i = length; i > index; --i) {
+        array[i] = array[i - 1];
+    }
+    array[index] = toAdd;
 }
 
 void HandleRandomiseButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData) {
@@ -152,6 +156,23 @@ void HandlePinkButtonInteraction(Clay_ElementId elementId, Clay_PointerData poin
                 .stringId = colors[i].stringId
             };
         }
+    }
+}
+
+void HandleNewButtonInteraction(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData) {
+    if (pointerData.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+        int32_t randomIndex = rand() % (cellCount + 1);
+        int32_t newId = maxCount;
+        snprintf(&charData[newId * 3], 3, "%02d", newId);
+
+        add(colors, maxCount, randomIndex, (SortableBox) {
+            .id = newId,
+            .color = { 255 - newId, 255 - newId * 4, 255 - newId * 2, 255 },
+            .stringId = &charData[newId * 3]
+        });
+
+        cellCount++;
+        maxCount++;
     }
 }
 
@@ -182,7 +203,7 @@ Clay_RenderCommandArray CreateLayout(void) {
     Clay_BeginLayout();
     CLAY(CLAY_ID("OuterContainer"), { .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0) }, .padding = { 16, 16, 16, 16 }, .childGap = 12 }, .backgroundColor = cWHITE }) {
         CLAY_AUTO_ID({ .layout.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_FIXED(60) }, .layout.padding.left = 16, .layout.childGap = 16, .layout.childAlignment.y = CLAY_ALIGN_Y_CENTER, .cornerRadius = { 12, 12, 12, 12 }, .backgroundColor = {174, 143, 204, 255 } }) {
-            CLAY_AUTO_ID({
+            CLAY(CLAY_ID("ShuffleButton"), {
                 .backgroundColor = Clay_Hovered() ? (Clay_Color){ 154, 123, 184, 255 } : (Clay_Color){ },
                 .layout.padding = { 16, 16, 8, 8 },
                 .cornerRadius = CLAY_CORNER_RADIUS(6),
@@ -200,7 +221,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                 Clay_OnHover(HandleBlueButtonInteraction, 0);
                 CLAY_TEXT(CLAY_STRING("Blue"), CLAY_TEXT_CONFIG({ .fontSize = 20, .textColor = cWHITE }));
             }
-            CLAY_AUTO_ID({
+            CLAY(CLAY_ID("PinkButton"), {
                 .backgroundColor = Clay_Hovered() ? (Clay_Color){ 154, 123, 184, 255 } : (Clay_Color){ },
                 .layout.padding = { 16, 16, 8, 8 },
                 .cornerRadius = CLAY_CORNER_RADIUS(6),
@@ -208,6 +229,15 @@ Clay_RenderCommandArray CreateLayout(void) {
             }) {
                 Clay_OnHover(HandlePinkButtonInteraction, 0);
                 CLAY_TEXT(CLAY_STRING("Pink"), CLAY_TEXT_CONFIG({ .fontSize = 20, .textColor = cWHITE }));
+            }
+            CLAY(CLAY_ID("AddButton"), {
+                .backgroundColor = Clay_Hovered() ? (Clay_Color){ 154, 123, 184, 255 } : (Clay_Color){ },
+                .layout.padding = { 16, 16, 8, 8 },
+                .cornerRadius = CLAY_CORNER_RADIUS(6),
+                .border = { .color = cWHITE, .width = CLAY_BORDER_OUTSIDE(2) },
+            }) {
+                Clay_OnHover(HandleNewButtonInteraction, 0);
+                CLAY_TEXT(CLAY_STRING("Add Box"), CLAY_TEXT_CONFIG({ .fontSize = 20, .textColor = cWHITE }));
             }
         }
         for (int i = 0; i < 5; i++) {
@@ -219,30 +249,25 @@ Clay_RenderCommandArray CreateLayout(void) {
                     }
                     Clay_Color boxColor = colors[index].color;
                     Clay_Color darker = { boxColor.r * 0.9, boxColor.g * 0.9, boxColor.b * 0.9, 255 };
-                    Clay_Color darkerStill = { boxColor.r * 0.7, boxColor.g * 0.7, boxColor.b * 0.7, 255 };
                     CLAY(CLAY_IDI("box", colors[index].id), {
                         .layout.sizing = GG,
                         .layout.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
-                        .backgroundColor = Clay_Hovered() ? darkerStill : boxColor,
+                        .backgroundColor = boxColor,
+                        .overlayColor = Clay_Hovered() ? (Clay_Color) { 80, 80, 80, 80 } : (Clay_Color) { 255, 255, 255, 0 },
                         .cornerRadius = {12, 12, 12, 12},
                         .border = { darker, CLAY_BORDER_OUTSIDE(3) },
-                        .transitions = {
-                            .move = {
-                                .handler = Clay_EaseOut,
-                                .duration = 0.5,
-                                .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
-                            },
-                            .exit = {
-                                .handler = Clay_EaseOut,
-                                .duration = 0.5,
-                                .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR,
-                            }
+                        .transition = {
+                            .handler = Clay_EaseOut,
+                            .duration = 0.5,
+                            .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
+                            .onBeginEnter = EnterExitSlideUp,
+                            .onBeginExit = EnterExitSlideUp,
                         }
                     }) {
                         Clay_OnHover(HandleCellButtonInteraction, (void*)index);
                         CLAY_TEXT(((Clay_String) { .length = 2, .chars = colors[index].stringId, .isStaticallyAllocated = true }), CLAY_TEXT_CONFIG({
                             .fontSize = 32,
-                            .textColor = {154, 123, 184, 255 }
+                            .textColor = colors[index].id > 29 ? (Clay_Color) {255, 255, 255, 255} : (Clay_Color) {154, 123, 184, 255 }
                         }));
                     }
                 }
@@ -348,7 +373,7 @@ int main(void) {
 
     frameArena = (Arena) {.memory = malloc(1024) };
 
-    char* charData = (char*)malloc(cellCount * 3);
+    charData = (char*)malloc(100 * 3);
 
     for (int i = 0; i < cellCount; i++) {
         snprintf(&charData[i * 3], 3, "%02d", i);
