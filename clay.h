@@ -25,6 +25,8 @@
 // HEADER DECLARATIONS ---------------------
 // -----------------------------------------
 
+//#define CLAY_IMPLEMENTATION
+
 #ifndef CLAY_HEADER
 #define CLAY_HEADER
 
@@ -85,12 +87,12 @@
 // Note: If a compile error led you here, you might be trying to use CLAY_ID_LOCAL with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SID_LOCAL instead.
 #define CLAY_ID_LOCAL(label) CLAY_SID_LOCAL(CLAY_STRING(label))
 
-#define CLAY_SID_LOCAL(label) Clay__HashString(label, Clay__GetParentElementId())
+#define CLAY_SID_LOCAL(label) Clay__HashString(label, Clay__GetOpenLayoutElementId())
 
 // Note: If a compile error led you here, you might be trying to use CLAY_IDI_LOCAL with something other than a string literal. To construct an ID with a dynamic string, use CLAY_SIDI_LOCAL instead.
 #define CLAY_IDI_LOCAL(label, index) CLAY_SIDI_LOCAL(CLAY_STRING(label), index)
 
-#define CLAY_SIDI_LOCAL(label, index) Clay__HashStringWithOffset(label, index, Clay__GetParentElementId())
+#define CLAY_SIDI_LOCAL(label, index) Clay__HashStringWithOffset(label, index, Clay__GetOpenLayoutElementId())
 
 #define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
 
@@ -990,6 +992,7 @@ CLAY_DLL_EXPORT Clay_ElementId Clay__HashString(Clay_String key, uint32_t seed);
 CLAY_DLL_EXPORT Clay_ElementId Clay__HashStringWithOffset(Clay_String key, uint32_t offset, uint32_t seed);
 CLAY_DLL_EXPORT void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig textConfig);
 CLAY_DLL_EXPORT uint32_t Clay__GetParentElementId(void);
+CLAY_DLL_EXPORT uint32_t Clay__GetOpenLayoutElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -1339,6 +1342,10 @@ Clay_String Clay__WriteStringToCharBuffer(Clay__charArray *buffer, Clay_String s
 Clay_LayoutElement* Clay__GetOpenLayoutElement(void) {
     Clay_Context* context = Clay_GetCurrentContext();
     return Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1));
+}
+
+uint32_t Clay__GetOpenLayoutElementId(void) {
+    return Clay__GetOpenLayoutElement()->id;
 }
 
 Clay_LayoutElement* Clay__GetParentElement(void) {
@@ -2083,7 +2090,7 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
         }
     }
 
-    if (declaration->clip.horizontal | declaration->clip.vertical) {
+    if (declaration->clip.horizontal || declaration->clip.vertical) {
         Clay__int32_tArray_Add(&context->openClipElementStack, (int)openLayoutElement->id);
         // Retrieve or create cached data to track scroll position across frames
         Clay__ScrollContainerDataInternal *scrollOffset = CLAY__NULL;
@@ -2780,7 +2787,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                 Clay__ScrollContainerDataInternal *scrollContainerData = CLAY__NULL;
                 // Apply scroll offsets to container
                 if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
-
                     // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
@@ -2867,122 +2873,124 @@ void Clay__CalculateFinalLayout(float deltaTime) {
 
                 bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
 
-                if (currentElement->isTextElement) {
-                    Clay_TextElementConfig *textElementConfig = &currentElement->textConfig;
-                    float naturalLineHeight = currentElement->textElementData.preferredDimensions.height;
-                    float finalLineHeight = textElementConfig->lineHeight > 0 ? (float)textElementConfig->lineHeight : naturalLineHeight;
-                    float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
-                    float yPosition = lineHeightOffset;
-                    for (int32_t lineIndex = 0; lineIndex < currentElement->textElementData.wrappedLines.length; ++lineIndex) {
-                        Clay__WrappedTextLine *wrappedLine = Clay__WrappedTextLineArraySlice_Get(&currentElement->textElementData.wrappedLines, lineIndex);
-                        if (wrappedLine->line.length == 0) {
+                if (!offscreen) {
+                    if (currentElement->isTextElement) {
+                        Clay_TextElementConfig *textElementConfig = &currentElement->textConfig;
+                        float naturalLineHeight = currentElement->textElementData.preferredDimensions.height;
+                        float finalLineHeight = textElementConfig->lineHeight > 0 ? (float)textElementConfig->lineHeight : naturalLineHeight;
+                        float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
+                        float yPosition = lineHeightOffset;
+                        for (int32_t lineIndex = 0; lineIndex < currentElement->textElementData.wrappedLines.length; ++lineIndex) {
+                            Clay__WrappedTextLine *wrappedLine = Clay__WrappedTextLineArraySlice_Get(&currentElement->textElementData.wrappedLines, lineIndex);
+                            if (wrappedLine->line.length == 0) {
+                                yPosition += finalLineHeight;
+                                continue;
+                            }
+                            float offset = (currentElementBoundingBox.width - wrappedLine->dimensions.width);
+                            if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT) {
+                                offset = 0;
+                            }
+                            if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
+                                offset /= 2;
+                            }
+                            Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                                    .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
+                                    .renderData = { .text = {
+                                            .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->textElementData.text.chars },
+                                            .textColor = textElementConfig->textColor,
+                                            .fontId = textElementConfig->fontId,
+                                            .fontSize = textElementConfig->fontSize,
+                                            .letterSpacing = textElementConfig->letterSpacing,
+                                            .lineHeight = textElementConfig->lineHeight,
+                                    }},
+                                    .userData = textElementConfig->userData,
+                                    .id = Clay__HashNumber(lineIndex, currentElement->id).id,
+                                    .zIndex = root->zIndex,
+                                    .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
+                            });
                             yPosition += finalLineHeight;
-                            continue;
-                        }
-                        float offset = (currentElementBoundingBox.width - wrappedLine->dimensions.width);
-                        if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT) {
-                            offset = 0;
-                        }
-                        if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
-                            offset /= 2;
-                        }
-                        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                            .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
-                            .renderData = { .text = {
-                                .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->textElementData.text.chars },
-                                .textColor = textElementConfig->textColor,
-                                .fontId = textElementConfig->fontId,
-                                .fontSize = textElementConfig->fontSize,
-                                .letterSpacing = textElementConfig->letterSpacing,
-                                .lineHeight = textElementConfig->lineHeight,
-                            }},
-                            .userData = textElementConfig->userData,
-                            .id = Clay__HashNumber(lineIndex, currentElement->id).id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
-                        });
-                        yPosition += finalLineHeight;
 
-                        if (!context->disableCulling && (currentElementBoundingBox.y + yPosition > context->layoutDimensions.height)) {
-                            break;
+                            if (!context->disableCulling && (currentElementBoundingBox.y + yPosition > context->layoutDimensions.height)) {
+                                break;
+                            }
                         }
-                    }
-                } else if (!offscreen) {
-                    if (currentElement->config.overlayColor.a > 0) {
-                        Clay_RenderCommand renderCommand = {
-                            .renderData = {
-                                .colorOverlay = { .color = currentElement->config.overlayColor }
-                            },
-                            .userData = currentElement->config.userData,
-                            .id = currentElement->id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
-                        };
-                        Clay__AddRenderCommand(renderCommand);
-                    }
-                    if (currentElement->config.image.imageData) {
-                        Clay_RenderCommand renderCommand = {
-                            .boundingBox = currentElementBoundingBox,
-                            .renderData = {
-                                .image = {
-                                    .backgroundColor = currentElement->config.backgroundColor,
-                                    .cornerRadius = currentElement->config.cornerRadius,
-                                    .imageData = currentElement->config.image.imageData,
-                                }
-                            },
-                            .userData = currentElement->config.userData,
-                            .id = currentElement->id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
-                        };
-                        Clay__AddRenderCommand(renderCommand);
-                    }
-                    if (currentElement->config.custom.customData) {
-                        Clay_RenderCommand renderCommand = {
-                            .boundingBox = currentElementBoundingBox,
-                            .renderData = {
-                                .custom = {
-                                    .backgroundColor = currentElement->config.backgroundColor,
-                                    .cornerRadius = currentElement->config.cornerRadius,
-                                    .customData = currentElement->config.custom.customData,
-                                }
-                            },
-                            .userData = currentElement->config.userData,
-                            .id = currentElement->id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
-                        };
-                        Clay__AddRenderCommand(renderCommand);
-                    }
-                    if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
-                        Clay_RenderCommand renderCommand = {
-                            .boundingBox = currentElementBoundingBox,
-                            .renderData = {
-                                    .clip = {
-                                            .horizontal = currentElement->config.clip.horizontal,
-                                            .vertical = currentElement->config.clip.vertical,
-                                    }
-                            },
-                            .userData = currentElement->config.userData,
-                            .id = currentElement->id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-                        };
-                        Clay__AddRenderCommand(renderCommand);
-                    }
-                    if (currentElement->config.backgroundColor.a > 0) {
-                        Clay_RenderCommand renderCommand = {
-                            .boundingBox = currentElementBoundingBox,
-                            .renderData = { .rectangle = {
-                                .backgroundColor = currentElement->config.backgroundColor,
-                                .cornerRadius = currentElement->config.cornerRadius,
-                            } },
-                            .userData = currentElement->config.userData,
-                            .id = currentElement->id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-                        };
-                        Clay__AddRenderCommand(renderCommand);
+                    } else {
+                        if (currentElement->config.overlayColor.a > 0) {
+                            Clay_RenderCommand renderCommand = {
+                                    .renderData = {
+                                            .colorOverlay = { .color = currentElement->config.overlayColor }
+                                    },
+                                    .userData = currentElement->config.userData,
+                                    .id = currentElement->id,
+                                    .zIndex = root->zIndex,
+                                    .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
+                            };
+                            Clay__AddRenderCommand(renderCommand);
+                        }
+                        if (currentElement->config.image.imageData) {
+                            Clay_RenderCommand renderCommand = {
+                                    .boundingBox = currentElementBoundingBox,
+                                    .renderData = {
+                                            .image = {
+                                                    .backgroundColor = currentElement->config.backgroundColor,
+                                                    .cornerRadius = currentElement->config.cornerRadius,
+                                                    .imageData = currentElement->config.image.imageData,
+                                            }
+                                    },
+                                    .userData = currentElement->config.userData,
+                                    .id = currentElement->id,
+                                    .zIndex = root->zIndex,
+                                    .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
+                            };
+                            Clay__AddRenderCommand(renderCommand);
+                        }
+                        if (currentElement->config.custom.customData) {
+                            Clay_RenderCommand renderCommand = {
+                                    .boundingBox = currentElementBoundingBox,
+                                    .renderData = {
+                                            .custom = {
+                                                    .backgroundColor = currentElement->config.backgroundColor,
+                                                    .cornerRadius = currentElement->config.cornerRadius,
+                                                    .customData = currentElement->config.custom.customData,
+                                            }
+                                    },
+                                    .userData = currentElement->config.userData,
+                                    .id = currentElement->id,
+                                    .zIndex = root->zIndex,
+                                    .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
+                            };
+                            Clay__AddRenderCommand(renderCommand);
+                        }
+                        if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
+                            Clay_RenderCommand renderCommand = {
+                                    .boundingBox = currentElementBoundingBox,
+                                    .renderData = {
+                                            .clip = {
+                                                    .horizontal = currentElement->config.clip.horizontal,
+                                                    .vertical = currentElement->config.clip.vertical,
+                                            }
+                                    },
+                                    .userData = currentElement->config.userData,
+                                    .id = currentElement->id,
+                                    .zIndex = root->zIndex,
+                                    .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
+                            };
+                            Clay__AddRenderCommand(renderCommand);
+                        }
+                        if (currentElement->config.backgroundColor.a > 0) {
+                            Clay_RenderCommand renderCommand = {
+                                    .boundingBox = currentElementBoundingBox,
+                                    .renderData = { .rectangle = {
+                                            .backgroundColor = currentElement->config.backgroundColor,
+                                            .cornerRadius = currentElement->config.cornerRadius,
+                                    } },
+                                    .userData = currentElement->config.userData,
+                                    .id = currentElement->id,
+                                    .zIndex = root->zIndex,
+                                    .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                            };
+                            Clay__AddRenderCommand(renderCommand);
+                        }
                     }
                 }
 
@@ -3313,14 +3321,17 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                         CLAY_TEXT(CLAY_STRING("Radius"), CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
                     }
                 }
+                if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
+                    CLAY_AUTO_ID({ .layout = { .padding = { 8, 8, 2, 2 } }, .backgroundColor = backgroundColor, .cornerRadius = CLAY_CORNER_RADIUS(4), .border = { .color = {242, 196, 90, 255}, .width = { 1, 1, 1, 1, 0 } } }) {
+                        CLAY_TEXT(CLAY_STRING("Clip"), CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
+                    }
+                }
 //                for (int32_t elementConfigIndex = 0; elementConfigIndex < currentElement->elementConfigs.length; ++elementConfigIndex) {
 //                    Clay_ElementConfig *elementConfig = Clay__ElementConfigArraySlice_Get(&currentElement->elementConfigs, elementConfigIndex);
 //                    Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(elementConfig->type);
 //                    Clay_Color backgroundColor = config.color;
 //                    backgroundColor.a = 90;
-//                    CLAY_AUTO_ID({ .layout = { .padding = { 8, 8, 2, 2 } }, .backgroundColor = backgroundColor, .cornerRadius = CLAY_CORNER_RADIUS(4), .border = { .color = config.color, .width = { 1, 1, 1, 1, 0 } } }) {
-//                        CLAY_TEXT(config.label, CLAY_TEXT_CONFIG({ .textColor = offscreen ? CLAY__DEBUGVIEW_COLOR_3 : CLAY__DEBUGVIEW_COLOR_4, .fontSize = 16 }));
-//                    }
+
 //                }
             }
 
@@ -4544,7 +4555,7 @@ void Clay_ResetMeasureTextCache(void) {
     context->measureTextHashMap.length = 0;
     context->measuredWords.length = 0;
     context->measuredWordsFreeList.length = 0;
-    
+
     for (int32_t i = 0; i < context->measureTextHashMap.capacity; ++i) {
         context->measureTextHashMap.internalArray[i] = 0;
     }

@@ -259,7 +259,9 @@ Clay_RenderCommandArray CreateLayout(void) {
                         .transition = {
                             .handler = Clay_EaseOut,
                             .duration = 0.5,
-                            .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
+                            .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR
+                                    | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR
+                                    | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
                             .onBeginEnter = EnterExitSlideUp,
                             .onBeginExit = EnterExitSlideUp,
                         }
