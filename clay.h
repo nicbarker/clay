@@ -25,8 +25,6 @@
 // HEADER DECLARATIONS ---------------------
 // -----------------------------------------
 
-//#define CLAY_IMPLEMENTATION
-
 #ifndef CLAY_HEADER
 #define CLAY_HEADER
 
@@ -2124,11 +2122,11 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
         }
         if (!transitionData) {
             transitionData = Clay__TransitionDataInternalArray_Add(&context->transitionDatas, CLAY__INIT(Clay__TransitionDataInternal){
-                .state = CLAY_TRANSITION_STATE_ENTERING,
-                .elementId = openLayoutElement->id,
                 .elementThisFrame = openLayoutElement,
+                .elementId = openLayoutElement->id,
                 .parentId = Clay__GetParentElementId(),
-                .siblingIndex = ParentElement->children.length
+                .siblingIndex = ParentElement->children.length,
+                .state = CLAY_TRANSITION_STATE_ENTERING,
             });
         }
     }
@@ -4371,6 +4369,13 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         Clay__int32_tArray_Add(&bfsBuffer, layoutElement->children.elements[j]);
                     }
                     transitionOutWaitingCount++;
+                }
+            } else {
+                Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(data->elementId);
+                if (hashMapItem->generation == context->generation) {
+                    Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, i);
+                    i--;
+                    continue;
                 }
             }
         }
