@@ -250,7 +250,7 @@ Clay_RenderCommandArray CreateLayout(void) {
                     Clay_Color boxColor = colors[index].color;
                     Clay_Color darker = { boxColor.r * 0.9, boxColor.g * 0.9, boxColor.b * 0.9, 255 };
                     CLAY(CLAY_IDI("box", colors[index].id), {
-                        .layout.sizing = GG,
+                        .layout.sizing = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW() },
                         .layout.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
                         .backgroundColor = boxColor,
                         .overlayColor = Clay_Hovered() ? (Clay_Color) { 80, 80, 80, 80 } : (Clay_Color) { 255, 255, 255, 0 },
@@ -262,8 +262,8 @@ Clay_RenderCommandArray CreateLayout(void) {
                             .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR
                                     | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR
                                     | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
-                            .onBeginEnter = EnterExitSlideUp,
-                            .onBeginExit = EnterExitSlideUp,
+                            .enter = { .setInitialState = EnterExitSlideUp },
+                            .exit = { .setFinalState = EnterExitSlideUp },
                         }
                     }) {
                         Clay_OnHover(HandleCellButtonInteraction, (void*)index);
