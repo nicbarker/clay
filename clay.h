@@ -1221,6 +1221,7 @@ typedef struct Clay__TransitionDataInternal {
     float elapsedTime;
     Clay_TransitionState state;
     bool transitionOut;
+    Clay_TransitionProperty activeProperties;
 } Clay__TransitionDataInternal;
 
 CLAY__ARRAY_DEFINE(Clay__TransitionDataInternal, Clay__TransitionDataInternalArray)
@@ -2511,31 +2512,32 @@ Clay_TransitionData Clay__CreateTransitionDataForElement(Clay_BoundingBox *bound
     return transitionData;
 }
 
-bool Clay__ShouldTransition(Clay_TransitionProperty properties, Clay_TransitionData *current, Clay_TransitionData *target, Clay_Vector2 newRelativePosition, Clay_Vector2 oldRelativePosition) {
+Clay_TransitionProperty Clay__ShouldTransition(Clay_TransitionProperty properties, Clay_TransitionData *current, Clay_TransitionData *target, Clay_Vector2 newRelativePosition, Clay_Vector2 oldRelativePosition) {
+    int32_t activeProperties = CLAY_TRANSITION_PROPERTY_ALL;
     if (properties & CLAY_TRANSITION_PROPERTY_X && !Clay__FloatEqual(newRelativePosition.x, oldRelativePosition.x)) {
-        return true;
+        activeProperties |= CLAY_TRANSITION_PROPERTY_X;
     }
     if (properties & CLAY_TRANSITION_PROPERTY_Y && !Clay__FloatEqual(newRelativePosition.y, oldRelativePosition.y)) {
-        return true;
+        activeProperties |= CLAY_TRANSITION_PROPERTY_Y;
     }
     if (properties & CLAY_TRANSITION_PROPERTY_WIDTH && !Clay__FloatEqual(current->boundingBox.width, target->boundingBox.width)) {
-        return true;
+        activeProperties |= CLAY_TRANSITION_PROPERTY_WIDTH;
     }
     if (properties & CLAY_TRANSITION_PROPERTY_HEIGHT && !Clay__FloatEqual(current->boundingBox.height, target->boundingBox.height)) {
-        return true;
+        activeProperties |= CLAY_TRANSITION_PROPERTY_HEIGHT;
     }
 
     if (properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
         if (!Clay__MemCmp((char *) &current->backgroundColor, (char *) &target->backgroundColor, sizeof(Clay_Color))) {
-            return true;
+            activeProperties |= CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR;
         }
     }
     if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
         if (!Clay__MemCmp((char *) &current->overlayColor, (char *) &target->overlayColor, sizeof(Clay_Color))) {
-            return true;
+            activeProperties |= CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR;
         }
     }
-    return false;
+    return (Clay_TransitionProperty)activeProperties;
 }
 
 void Clay__UpdateElementWithTransitionData(Clay_BoundingBox *boundingBox, Clay_LayoutElement* layoutElement, Clay_TransitionData* data) {
@@ -2850,11 +2852,15 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                             } else {
                                 if (transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
                                     targetTransitionData = transitionData->targetState;
-                                } else if (Clay__ShouldTransition(currentElement->config.transition.properties, &transitionData->targetState, &targetTransitionData, transitionData->parentRelativeTargetPosition, oldRelativeTargetPosition)) {
-                                    transitionData->elapsedTime = 0;
-                                    transitionData->initialState = transitionData->currentState;
-                                    transitionData->targetState = targetTransitionData;
-                                    transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
+                                } else {
+                                    Clay_TransitionProperty activeProperties = Clay__ShouldTransition(currentElement->config.transition.properties, &transitionData->targetState, &targetTransitionData, transitionData->parentRelativeTargetPosition, oldRelativeTargetPosition);
+                                    if (activeProperties != 0) {
+                                        transitionData->activeProperties = activeProperties;
+                                        transitionData->elapsedTime = 0;
+                                        transitionData->initialState = transitionData->currentState;
+                                        transitionData->targetState = targetTransitionData;
+                                        transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
+                                    }
                                 }
 
                                 if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
@@ -2867,7 +2873,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                             targetTransitionData,
                                             transitionData->elapsedTime,
                                             currentElement->config.transition.duration,
-                                            currentElement->config.transition.properties
+                                            transitionData->activeProperties == 0 ? currentElement->config.transition.properties : transitionData->activeProperties
                                         });
                                     scrollOffset.x += currentTransitionData.boundingBox.x - currentElementBoundingBox.x;
                                     scrollOffset.y += currentTransitionData.boundingBox.y - currentElementBoundingBox.y;
@@ -2945,77 +2951,77 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                     } else {
                         if (currentElement->config.overlayColor.a > 0) {
                             Clay_RenderCommand renderCommand = {
-                                    .renderData = {
-                                            .colorOverlay = { .color = currentElement->config.overlayColor }
-                                    },
-                                    .userData = currentElement->config.userData,
-                                    .id = currentElement->id,
-                                    .zIndex = root->zIndex,
-                                    .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
+                                .renderData = {
+                                    .colorOverlay = { .color = currentElement->config.overlayColor }
+                                },
+                                .userData = currentElement->config.userData,
+                                .id = currentElement->id,
+                                .zIndex = root->zIndex,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
                             };
                             Clay__AddRenderCommand(renderCommand);
                         }
                         if (currentElement->config.image.imageData) {
                             Clay_RenderCommand renderCommand = {
-                                    .boundingBox = currentElementBoundingBox,
-                                    .renderData = {
-                                            .image = {
-                                                    .backgroundColor = currentElement->config.backgroundColor,
-                                                    .cornerRadius = currentElement->config.cornerRadius,
-                                                    .imageData = currentElement->config.image.imageData,
-                                            }
-                                    },
-                                    .userData = currentElement->config.userData,
-                                    .id = currentElement->id,
-                                    .zIndex = root->zIndex,
+                                .boundingBox = currentElementBoundingBox,
+                                .renderData = {
+                                    .image = {
+                                        .backgroundColor = currentElement->config.backgroundColor,
+                                        .cornerRadius = currentElement->config.cornerRadius,
+                                        .imageData = currentElement->config.image.imageData,
+                                    }
+                                },
+                                .userData = currentElement->config.userData,
+                                .id = currentElement->id,
+                                .zIndex = root->zIndex,
                                     .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
                             };
                             Clay__AddRenderCommand(renderCommand);
                         }
                         if (currentElement->config.custom.customData) {
                             Clay_RenderCommand renderCommand = {
-                                    .boundingBox = currentElementBoundingBox,
-                                    .renderData = {
-                                            .custom = {
-                                                    .backgroundColor = currentElement->config.backgroundColor,
-                                                    .cornerRadius = currentElement->config.cornerRadius,
-                                                    .customData = currentElement->config.custom.customData,
-                                            }
-                                    },
-                                    .userData = currentElement->config.userData,
-                                    .id = currentElement->id,
-                                    .zIndex = root->zIndex,
-                                    .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
+                                .boundingBox = currentElementBoundingBox,
+                                .renderData = {
+                                    .custom = {
+                                        .backgroundColor = currentElement->config.backgroundColor,
+                                        .cornerRadius = currentElement->config.cornerRadius,
+                                        .customData = currentElement->config.custom.customData,
+                                    }
+                                },
+                                .userData = currentElement->config.userData,
+                                .id = currentElement->id,
+                                .zIndex = root->zIndex,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
                             };
                             Clay__AddRenderCommand(renderCommand);
                         }
                         if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
                             Clay_RenderCommand renderCommand = {
-                                    .boundingBox = currentElementBoundingBox,
-                                    .renderData = {
-                                            .clip = {
-                                                    .horizontal = currentElement->config.clip.horizontal,
-                                                    .vertical = currentElement->config.clip.vertical,
-                                            }
-                                    },
-                                    .userData = currentElement->config.userData,
-                                    .id = currentElement->id,
-                                    .zIndex = root->zIndex,
-                                    .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
+                                .boundingBox = currentElementBoundingBox,
+                                .renderData = {
+                                    .clip = {
+                                        .horizontal = currentElement->config.clip.horizontal,
+                                        .vertical = currentElement->config.clip.vertical,
+                                    }
+                                },
+                                .userData = currentElement->config.userData,
+                                .id = currentElement->id,
+                                .zIndex = root->zIndex,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
                             };
                             Clay__AddRenderCommand(renderCommand);
                         }
                         if (currentElement->config.backgroundColor.a > 0) {
                             Clay_RenderCommand renderCommand = {
-                                    .boundingBox = currentElementBoundingBox,
-                                    .renderData = { .rectangle = {
-                                            .backgroundColor = currentElement->config.backgroundColor,
-                                            .cornerRadius = currentElement->config.cornerRadius,
-                                    } },
-                                    .userData = currentElement->config.userData,
-                                    .id = currentElement->id,
-                                    .zIndex = root->zIndex,
-                                    .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                                .boundingBox = currentElementBoundingBox,
+                                .renderData = { .rectangle = {
+                                    .backgroundColor = currentElement->config.backgroundColor,
+                                    .cornerRadius = currentElement->config.cornerRadius,
+                                } },
+                                .userData = currentElement->config.userData,
+                                .id = currentElement->id,
+                                .zIndex = root->zIndex,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                             };
                             Clay__AddRenderCommand(renderCommand);
                         }
@@ -3069,29 +3075,26 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                     dfsBuffer.length--;
                     continue;
                 }
-                // DFS is returning upwards backwards
-                bool closeClipElement = false;
-                if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
-                    Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
-                    closeClipElement = !Clay__ElementIsOffscreen(&currentElementData->boundingBox);
-                    for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
-                        Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-                        if (mapping->layoutElement == currentElement) {
-                            scrollOffset = currentElement->config.clip.childOffset;
-                            if (context->externalScrollHandlingEnabled) {
-                                scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
+                Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
+                if (!Clay__ElementIsOffscreen(&currentElementData->boundingBox)) {
+                    // DFS is returning upwards backwards
+                    bool closeClipElement = false;
+                    if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
+                        closeClipElement = true;
+                        for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
+                            Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
+                            if (mapping->layoutElement == currentElement) {
+                                scrollOffset = currentElement->config.clip.childOffset;
+                                if (context->externalScrollHandlingEnabled) {
+                                    scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
-                }
 
-                if (Clay__BorderHasAnyWidth(&currentElement->config.border)) {
-                    Clay_LayoutElementHashMapItem *currentElementData = Clay__GetHashMapItem(currentElement->id);
-                    Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
-
-                    // Culling - Don't bother to generate render commands for rectangles entirely outside the screen - this won't stop their children from being rendered if they overflow
-                    if (!Clay__ElementIsOffscreen(&currentElementBoundingBox)) {
+                    if (Clay__BorderHasAnyWidth(&currentElement->config.border)) {
+                        Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
                         Clay_BorderElementConfig *borderConfig = &currentElement->config.border;
                         Clay_RenderCommand renderCommand = {
                                 .boundingBox = currentElementBoundingBox,
@@ -3144,22 +3147,22 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                             }
                         }
                     }
-                }
-                if (currentElement->config.overlayColor.a > 0) {
-                    Clay_RenderCommand renderCommand = {
-                        .userData = currentElement->config.userData,
-                        .id = currentElement->id,
-                        .zIndex = root->zIndex,
-                        .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END,
-                    };
-                    Clay__AddRenderCommand(renderCommand);
-                }
-                // This exists because the scissor needs to end _after_ borders between elements
-                if (closeClipElement) {
-                    Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                        .id = Clay__HashNumber(currentElement->id, rootElement->children.length + 11).id,
-                        .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
-                    });
+                    if (currentElement->config.overlayColor.a > 0) {
+                        Clay_RenderCommand renderCommand = {
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                    }
+                    // This exists because the scissor needs to end _after_ borders between elements
+                    if (closeClipElement) {
+                        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                            .id = Clay__HashNumber(currentElement->id, rootElement->children.length + 11).id,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
+                        });
+                    }
                 }
 
                 dfsBuffer.length--;
@@ -3217,7 +3220,10 @@ void Clay__CalculateFinalLayout(float deltaTime) {
         }
 
         if (root->clipElementId) {
-            Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) { .id = Clay__HashNumber(rootElement->id, rootElement->children.length + 11).id, .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
+            Clay_LayoutElementHashMapItem *clipHashMapItem = Clay__GetHashMapItem(root->clipElementId);
+            if (clipHashMapItem && !Clay__ElementIsOffscreen(&clipHashMapItem->boundingBox)) {
+                Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) { .id = Clay__HashNumber(rootElement->id, rootElement->children.length + 11).id, .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
+            }
         }
     }
 }
@@ -4640,7 +4646,7 @@ use of this software.
 
 Permission is granted to anyone to use this software for any purpose,
 including commercial applications, and to alter it and redistribute it
-freely, subject to the following restrictions`:
+freely, subject to the following restrictions:
 
     1. The origin of this software must not be misrepresented; you must not
     claim that you wrote the original software. If you use this software in a
