@@ -455,7 +455,6 @@ typedef CLAY_PACKED_ENUM {
     // (default) "Capture" the pointer event and don't allow events like hover and click to pass through to elements underneath.
     CLAY_POINTER_CAPTURE_MODE_CAPTURE,
     //    CLAY_POINTER_CAPTURE_MODE_PARENT, TODO pass pointer through to attached parent
-
     // Transparently pass through pointer events like hover and click to elements underneath the floating element.
     CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
 } Clay_PointerCaptureMode;
@@ -570,6 +569,7 @@ typedef struct {
 
 typedef enum {
     CLAY_TRANSITION_STATE_IDLE,
+    CLAY_TRANSITION_STATE_APPEARED,
     CLAY_TRANSITION_STATE_ENTERING,
     CLAY_TRANSITION_STATE_TRANSITIONING,
     CLAY_TRANSITION_STATE_EXITING,
@@ -583,7 +583,7 @@ typedef enum {
     CLAY_TRANSITION_PROPERTY_WIDTH = 4,
     CLAY_TRANSITION_PROPERTY_HEIGHT = 8,
     CLAY_TRANSITION_PROPERTY_DIMENSIONS = CLAY_TRANSITION_PROPERTY_WIDTH | CLAY_TRANSITION_PROPERTY_HEIGHT,
-    CLAY_TRANSITION_PROPERTY_BOUNDING_BOX = CLAY_TRANSITION_PROPERTY_X | CLAY_TRANSITION_PROPERTY_Y | CLAY_TRANSITION_PROPERTY_WIDTH | CLAY_TRANSITION_PROPERTY_HEIGHT,
+    CLAY_TRANSITION_PROPERTY_BOUNDING_BOX = CLAY_TRANSITION_PROPERTY_POSITION | CLAY_TRANSITION_PROPERTY_DIMENSIONS,
     CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR = 16,
     CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR = 32,
     CLAY_TRANSITION_PROPERTY_CORNER_RADIUS = 64,
@@ -600,21 +600,27 @@ typedef struct {
     Clay_TransitionProperty properties;
 } Clay_TransitionCallbackArguments;
 
-typedef enum {
+typedef CLAY_PACKED_ENUM {
     CLAY_TRANSITION_ENTER_TRIGGER_ON_FIRST_PARENT_FRAME,
     CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME,
 } Clay_TransitionEnterTriggerType;
 
-typedef enum {
+typedef CLAY_PACKED_ENUM {
     CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS,
     CLAY_TRANSITION_EXIT_SKIP_WHEN_PARENT_EXITS,
 } Clay_TransitionExitTriggerType;
+
+typedef CLAY_PACKED_ENUM {
+    CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING,
+    CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING,
+} Clay_TransitionInteractionHandlingType;
 
 // Controls settings related to transitions
 typedef struct Clay_TransitionElementConfig {
     bool (*handler)(Clay_TransitionCallbackArguments arguments);
     float duration;
     Clay_TransitionProperty properties;
+    Clay_TransitionInteractionHandlingType interactionHandling;
     struct {
         Clay_TransitionData (*setInitialState)(Clay_TransitionData targetState);
         Clay_TransitionEnterTriggerType trigger;
@@ -922,6 +928,8 @@ CLAY_DLL_EXPORT Clay_Arena Clay_CreateArenaWithCapacityAndMemory(size_t capacity
 // Sets the state of the "pointer" (i.e. the mouse or touch) in Clay's internal data. Used for detecting and responding to mouse events in the debug view,
 // as well as for Clay_Hovered() and scroll element handling.
 CLAY_DLL_EXPORT void Clay_SetPointerState(Clay_Vector2 position, bool pointerDown);
+// Returns the state of the "pointer" (i.e. the mouse or touch) which was set via Clay_SetPointerState().
+CLAY_DLL_EXPORT Clay_PointerData Clay_GetPointerState(void);
 // Initialize Clay's internal arena and setup required data before layout can begin. Only needs to be called once.
 // - arena can be created using Clay_CreateArenaWithCapacityAndMemory()
 // - layoutDimensions are the initial bounding dimensions of the layout (i.e. the screen width and height for a full screen layout)
@@ -1221,6 +1229,7 @@ typedef struct Clay__TransitionDataInternal {
     float elapsedTime;
     Clay_TransitionState state;
     bool transitionOut;
+    bool reparented;
     Clay_TransitionProperty activeProperties;
 } Clay__TransitionDataInternal;
 
@@ -2141,6 +2150,9 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
             if (openLayoutElement->id == existingData->elementId) {
                 transitionData = existingData;
                 transitionData->elementThisFrame = openLayoutElement;
+                if (transitionData->parentId != parentElement->id) {
+                    transitionData->reparented = true; // TODO might be able to derive this and avoid the bool
+                }
                 transitionData->parentId = parentElement->id;
                 transitionData->siblingIndex = parentElement->children.length;
                 transitionData->transitionOut = !!declaration->transition.exit.setFinalState;
@@ -2152,7 +2164,7 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
                 .elementId = openLayoutElement->id,
                 .parentId = parentElement->id,
                 .siblingIndex = parentElement->children.length,
-                .state = CLAY_TRANSITION_STATE_ENTERING,
+                .state = CLAY_TRANSITION_STATE_APPEARED,
                 .transitionOut = !!declaration->transition.exit.setFinalState
             });
         }
@@ -2512,12 +2524,12 @@ Clay_TransitionData Clay__CreateTransitionDataForElement(Clay_BoundingBox *bound
     return transitionData;
 }
 
-Clay_TransitionProperty Clay__ShouldTransition(Clay_TransitionProperty properties, Clay_TransitionData *current, Clay_TransitionData *target, Clay_Vector2 newRelativePosition, Clay_Vector2 oldRelativePosition) {
+Clay_TransitionProperty Clay__ShouldTransition(Clay_TransitionProperty properties, Clay_TransitionData *current, Clay_TransitionData *target, Clay_Vector2 newRelativePosition, Clay_Vector2 oldRelativePosition, bool reparented) {
     int32_t activeProperties = CLAY_TRANSITION_PROPERTY_ALL;
-    if (properties & CLAY_TRANSITION_PROPERTY_X && !Clay__FloatEqual(newRelativePosition.x, oldRelativePosition.x)) {
+    if (properties & CLAY_TRANSITION_PROPERTY_X && (!Clay__FloatEqual(newRelativePosition.x, oldRelativePosition.x) || (reparented && !Clay__FloatEqual(current->boundingBox.x, target->boundingBox.x)))) {
         activeProperties |= CLAY_TRANSITION_PROPERTY_X;
     }
-    if (properties & CLAY_TRANSITION_PROPERTY_Y && !Clay__FloatEqual(newRelativePosition.y, oldRelativePosition.y)) {
+    if (properties & CLAY_TRANSITION_PROPERTY_Y && (!Clay__FloatEqual(newRelativePosition.y, oldRelativePosition.y) || (reparented && !Clay__FloatEqual(current->boundingBox.y, target->boundingBox.y)))) {
         activeProperties |= CLAY_TRANSITION_PROPERTY_Y;
     }
     if (properties & CLAY_TRANSITION_PROPERTY_WIDTH && !Clay__FloatEqual(current->boundingBox.width, target->boundingBox.width)) {
@@ -2832,7 +2844,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                 targetTransitionData.boundingBox.x - parentItem->boundingBox.x - parentScrollOffset.x,
                                 targetTransitionData.boundingBox.y - parentItem->boundingBox.y - parentScrollOffset.y,
                             };
-                            if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING) {
+                            if (transitionData->state == CLAY_TRANSITION_STATE_APPEARED) {
                                 Clay_LayoutElementHashMapItem* parentMapItem = Clay__GetHashMapItem(transitionData->parentId);
                                 if (!currentElement->config.transition.enter.setInitialState || (currentElement->config.transition.enter.trigger == CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME && parentMapItem->appearedThisFrame)) {
                                     transitionData->state = CLAY_TRANSITION_STATE_IDLE;
@@ -2843,17 +2855,18 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                     transitionData->initialState = currentElement->config.transition.enter.setInitialState(targetTransitionData);
                                     transitionData->currentState = transitionData->initialState;
                                     transitionData->targetState = targetTransitionData;
-                                    transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
+                                    transitionData->state = CLAY_TRANSITION_STATE_ENTERING;
                                     transitionData->elapsedTime = 0;
+                                    transitionData->activeProperties = currentElement->config.transition.properties;
                                     scrollOffset.x += transitionData->currentState.boundingBox.x - currentElementBoundingBox.x;
                                     scrollOffset.y += transitionData->currentState.boundingBox.y - currentElementBoundingBox.y;
                                     Clay__UpdateElementWithTransitionData(&currentElementBoundingBox, currentElement, &transitionData->initialState);
                                 }
                             } else {
-                                if (transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
+                                if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING || transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
                                     targetTransitionData = transitionData->targetState;
                                 } else {
-                                    Clay_TransitionProperty activeProperties = Clay__ShouldTransition(currentElement->config.transition.properties, &transitionData->targetState, &targetTransitionData, transitionData->parentRelativeTargetPosition, oldRelativeTargetPosition);
+                                    Clay_TransitionProperty activeProperties = Clay__ShouldTransition(currentElement->config.transition.properties, &transitionData->targetState, &targetTransitionData, transitionData->parentRelativeTargetPosition, oldRelativeTargetPosition, transitionData->reparented);
                                     if (activeProperties != 0) {
                                         transitionData->activeProperties = activeProperties;
                                         transitionData->elapsedTime = 0;
@@ -2884,7 +2897,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                     transitionData->currentState = currentTransitionData;
 
                                     if (transitionComplete) {
-                                        if (transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING) {
+                                        if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING || transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING) {
                                             transitionData->state = CLAY_TRANSITION_STATE_IDLE;
                                             transitionData->initialState = targetTransitionData;
                                             transitionData->currentState = targetTransitionData;
@@ -4052,6 +4065,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
         Clay__int32_tArray_Add(&dfsBuffer, (int32_t)root->layoutElementIndex);
         context->treeNodeVisited.internalArray[0] = false;
         bool found = false;
+        bool skipTree = false;
         while (dfsBuffer.length > 0) {
             if (context->treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
                 dfsBuffer.length--;
@@ -4059,6 +4073,24 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             }
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&dfsBuffer, (int)dfsBuffer.length - 1));
+            // Skip mouse interactions on an element if it's currently transitioning, based on user config
+            if (currentElement->config.transition.handler) {
+                for (int I = 0; I < context->transitionDatas.length; ++I) {
+                    Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, I);
+                    if (data->elementId == currentElement->id) {
+                        if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING) {
+                            if (data->state == CLAY_TRANSITION_STATE_EXITING || data->state == CLAY_TRANSITION_STATE_ENTERING || ((data->activeProperties & CLAY_TRANSITION_PROPERTY_POSITION) && data->state == CLAY_TRANSITION_STATE_TRANSITIONING)) {
+                                skipTree = true;
+                            }
+                        } else if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING) {
+                            if (data->state == CLAY_TRANSITION_STATE_EXITING) {
+                                skipTree = true;
+                            }
+                        }
+                    }
+                }
+            }
+
             Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO think of a way around this, maybe the fact that it's essentially a binary tree limits the cost, but the worst case is not great
             int32_t clipElementId = Clay__int32_tArray_GetValue(&context->layoutElementClipElementIds, (int32_t)(currentElement - context->layoutElements.internalArray));
             Clay_LayoutElementHashMapItem *clipItem = Clay__GetHashMapItem(clipElementId);
@@ -4067,13 +4099,15 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                 elementBox.x -= root->pointerOffset.x;
                 elementBox.y -= root->pointerOffset.y;
                 if ((Clay__PointIsInsideRect(position, elementBox)) && (clipElementId == 0 || (Clay__PointIsInsideRect(position, clipItem->boundingBox)) || context->externalScrollHandlingEnabled)) {
-                    if (mapItem->onHoverFunction) {
-                        mapItem->onHoverFunction(mapItem->elementId, context->pointerInfo, mapItem->hoverFunctionUserData);
+                    if (!skipTree) {
+                        if (mapItem->onHoverFunction) {
+                            mapItem->onHoverFunction(mapItem->elementId, context->pointerInfo, mapItem->hoverFunctionUserData);
+                        }
+                        Clay_ElementIdArray_Add(&context->pointerOverIds, mapItem->elementId);
                     }
-                    Clay_ElementIdArray_Add(&context->pointerOverIds, mapItem->elementId);
                     found = true;
                 }
-                if (currentElement->isTextElement) {
+                if (skipTree || currentElement->isTextElement) {
                     dfsBuffer.length--;
                     continue;
                 }
@@ -4105,6 +4139,11 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
         }
     }
+}
+
+CLAY_WASM_EXPORT("Clay_GetPointerState")
+CLAY_DLL_EXPORT Clay_PointerData Clay_GetPointerState(void) {
+    return Clay_GetCurrentContext()->pointerInfo;
 }
 
 CLAY_WASM_EXPORT("Clay_Initialize")
@@ -4365,7 +4404,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
             if (data->transitionOut) {
                 Clay_LayoutElementHashMapItem *parentHashMapItem = Clay__GetHashMapItem(data->parentId);
                 // Parent also wasn't found - just delete rather than transition
-                if (config->exit.trigger == CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS || parentHashMapItem->generation <= context->generation) {
+                if (config->exit.trigger == CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS || !parentHashMapItem || parentHashMapItem->generation > context->generation) {
                     if (data->state != CLAY_TRANSITION_STATE_EXITING) {
                         if (parentHashMapItem->generation <= context->generation) {
                             data->elementThisFrame->config.floating.attachTo = CLAY_ATTACH_TO_ROOT;
@@ -4376,6 +4415,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         data->elementThisFrame->config.layout.sizing.width = CLAY_SIZING_FIXED(data->elementThisFrame->dimensions.width);
                         data->elementThisFrame->config.layout.sizing.height = CLAY_SIZING_FIXED(data->elementThisFrame->dimensions.height);
                         data->state = CLAY_TRANSITION_STATE_EXITING;
+                        data->activeProperties = config->properties;
                         data->elapsedTime = 0;
                         data->targetState = config->exit.setFinalState(data->targetState);
                     }

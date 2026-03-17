@@ -72,18 +72,28 @@ Arena frameArena = {};
 
 bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
     float ratio = arguments.elapsedTime / arguments.duration;
-    if (arguments.elapsedTime < arguments.duration) {
+    if (ratio < 1) {
         float lerpAmount = (1 - powf(1 - ratio, 3.0f));
         bool allProperties = arguments.properties == CLAY_TRANSITION_PROPERTY_ALL;
-        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_BOUNDING_BOX) {
-            arguments.current->boundingBox = (Clay_BoundingBox) {
-                .x = Lerp(arguments.initial.boundingBox.x, arguments.target.boundingBox.x, lerpAmount),
-                .y = Lerp(arguments.initial.boundingBox.y, arguments.target.boundingBox.y, lerpAmount),
-                .width = Lerp(arguments.initial.boundingBox.width, arguments.target.boundingBox.width, lerpAmount),
-                .height = Lerp(arguments.initial.boundingBox.height, arguments.target.boundingBox.height, lerpAmount),
-            };
+        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_X) {
+            arguments.current->boundingBox.x = Lerp(arguments.initial.boundingBox.x, arguments.target.boundingBox.x, lerpAmount);
         } else {
-            arguments.current->boundingBox = arguments.target.boundingBox;
+            arguments.current->boundingBox.x = arguments.target.boundingBox.x;
+        }
+        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_Y) {
+            arguments.current->boundingBox.y = Lerp(arguments.initial.boundingBox.y, arguments.target.boundingBox.y, lerpAmount);
+        } else {
+            arguments.current->boundingBox.y = arguments.target.boundingBox.y;
+        }
+        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
+            arguments.current->boundingBox.width = Lerp(arguments.initial.boundingBox.width, arguments.target.boundingBox.width, lerpAmount);
+        } else {
+            arguments.current->boundingBox.width = arguments.target.boundingBox.width;
+        }
+        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) {
+            arguments.current->boundingBox.height = Lerp(arguments.initial.boundingBox.height, arguments.target.boundingBox.height, lerpAmount);
+        } else {
+            arguments.current->boundingBox.height = arguments.target.boundingBox.height;
         }
         if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
             arguments.current->backgroundColor = (Clay_Color) {
@@ -97,16 +107,19 @@ bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
         }
         if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
             arguments.current->overlayColor = (Clay_Color) {
-                    .r = Lerp(arguments.initial.overlayColor.r, arguments.target.overlayColor.r, lerpAmount),
-                    .g = Lerp(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
-                    .b = Lerp(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
-                    .a = Lerp(arguments.initial.overlayColor.a, arguments.target.overlayColor.a, lerpAmount),
+                .r = Lerp(arguments.initial.overlayColor.r, arguments.target.overlayColor.r, lerpAmount),
+                .g = Lerp(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
+                .b = Lerp(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
+                .a = Lerp(arguments.initial.overlayColor.a, arguments.target.overlayColor.a, lerpAmount),
             };
         } else {
             arguments.current->overlayColor = arguments.target.overlayColor;
         }
         return false;
     } else {
+        arguments.current->boundingBox = arguments.target.boundingBox;
+        arguments.current->backgroundColor = arguments.target.backgroundColor;
+        arguments.current->overlayColor = arguments.target.overlayColor;
         return true;
     }
 }
