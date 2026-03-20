@@ -622,11 +622,11 @@ typedef struct Clay_TransitionElementConfig {
     Clay_TransitionProperty properties;
     Clay_TransitionInteractionHandlingType interactionHandling;
     struct {
-        Clay_TransitionData (*setInitialState)(Clay_TransitionData targetState);
+        Clay_TransitionData (*setInitialState)(Clay_TransitionData targetState, Clay_TransitionProperty properties);
         Clay_TransitionEnterTriggerType trigger;
     } enter;
     struct {
-        Clay_TransitionData (*setFinalState)(Clay_TransitionData initialState);
+        Clay_TransitionData (*setFinalState)(Clay_TransitionData initialState, Clay_TransitionProperty properties);
         Clay_TransitionExitTriggerType trigger;
     } exit;
 } Clay_TransitionElementConfig;
@@ -1078,6 +1078,10 @@ typeName arrayName##_GetValue(arrayName *array, int32_t index) {                
     return Clay__Array_RangeCheck(index, array->length) ? array->internalArray[index] : typeName##_DEFAULT;     \
 }                                                                                                               \
                                                                                                                 \
+typeName *arrayName##_GetCheckCapacity(arrayName *array, int32_t index) {                                                    \
+    return Clay__Array_RangeCheck(index, array->capacity) ? &array->internalArray[index] : &typeName##_DEFAULT;   \
+}                                                                                                               \
+                                                                                                                \
 typeName *arrayName##_Add(arrayName *array, typeName item) {                                                    \
     if (Clay__Array_AddCapacityCheck(array->length, array->capacity)) {                                         \
         array->internalArray[array->length++] = item;                                                           \
@@ -1100,14 +1104,22 @@ typeName arrayName##_RemoveSwapback(arrayName *array, int32_t index) {          
 	return typeName##_DEFAULT;                                                                                  \
 }                                                                                                               \
                                                                                                                 \
-typeName* arrayName##_Set(arrayName *array, int32_t index, typeName value) {                                         \
+typeName* arrayName##_Set(arrayName *array, int32_t index, typeName value) {                                    \
 	if (Clay__Array_RangeCheck(index, array->capacity)) {                                                       \
 		array->internalArray[index] = value;                                                                    \
-		array->length = index < array->length ? array->length : index + 1;                                            \
+		array->length = index < array->length ? array->length : index + 1;                                      \
         return &array->internalArray[index];\
-	}                                                                                                              \
+	}                                                                                                           \
     return NULL;\
 }                                                                                                               \
+                                                                                                                \
+typeName* arrayName##_Set_DontTouchLength(arrayName *array, int32_t index, typeName value) {                                    \
+	if (Clay__Array_RangeCheck(index, array->capacity)) {                                                       \
+		array->internalArray[index] = value;                                                                    \
+        return &array->internalArray[index];\
+	}                                                                                                           \
+    return NULL;\
+}  \
 
 #define CLAY__ARRAY_DEFINE(typeName, arrayName)     \
 typedef struct                                      \
@@ -1758,6 +1770,9 @@ bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_BoundingBox rect) {
 }
 
 Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Clay_LayoutElement* layoutElement) {
+    if (elementId.id == 3210827596) {
+        int x = 5;
+    }
     Clay_Context* context = Clay_GetCurrentContext();
     if (context->layoutElementsHashMapInternal.length == context->layoutElementsHashMapInternal.capacity - 1) {
         return NULL;
@@ -2852,7 +2867,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                     transitionData->currentState = targetTransitionData;
                                     transitionData->targetState = targetTransitionData;
                                 } else {
-                                    transitionData->initialState = currentElement->config.transition.enter.setInitialState(targetTransitionData);
+                                    transitionData->initialState = currentElement->config.transition.enter.setInitialState(targetTransitionData, currentElement->config.transition.properties);
                                     transitionData->currentState = transitionData->initialState;
                                     transitionData->targetState = targetTransitionData;
                                     transitionData->state = CLAY_TRANSITION_STATE_ENTERING;
@@ -2863,8 +2878,10 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                     Clay__UpdateElementWithTransitionData(&currentElementBoundingBox, currentElement, &transitionData->initialState);
                                 }
                             } else {
-                                if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING || transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
+                                if (transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
                                     targetTransitionData = transitionData->targetState;
+                                } else if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING) {
+                                    transitionData->targetState = targetTransitionData;
                                 } else {
                                     Clay_TransitionProperty activeProperties = Clay__ShouldTransition(currentElement->config.transition.properties, &transitionData->targetState, &targetTransitionData, transitionData->parentRelativeTargetPosition, oldRelativeTargetPosition, transitionData->reparented);
                                     if (activeProperties != 0) {
@@ -4337,73 +4354,59 @@ void Clay_BeginLayout(void) {
     Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) { .layoutElementIndex = 0 });
 }
 
-typedef struct {
-    int32_t ElementsAdded;
-    int32_t ElementChildrenAdded;
-} Clay__TransitionElementsAddedCount;
-
-Clay__TransitionElementsAddedCount Clay__CloneTransitionElements(int32_t rootIndex, int32_t rootChildIndex, bool exiting) {
+void Clay__CloneElementsWithExitTransition() {
     Clay_Context* context = Clay_GetCurrentContext();
-    int32_t nextEmptySlotOffset = 0;
-    int32_t nextEmptyChildOffset = 0;
+    int32_t nextIndex = context->layoutElements.capacity - 1;
+    int32_t nextChildIndex = context->layoutElementChildren.capacity - 1;
 
     for (int i = 0; i < context->transitionDatas.length; ++i) {
         Clay__TransitionDataInternal *data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
-        if ((exiting && data->state != CLAY_TRANSITION_STATE_EXITING) || (!exiting && data->state == CLAY_TRANSITION_STATE_EXITING)) continue;
         Clay_TransitionElementConfig* config = &data->elementThisFrame->config.transition;
-        if (config->exit.setFinalState) {
+        if (data->transitionOut) {
             Clay__int32_tArray bfsBuffer = context->openLayoutElementStack;
             bfsBuffer.length = 0;
-            int32_t currentRootIndex = rootIndex + nextEmptySlotOffset;
-            context->layoutElements.internalArray[currentRootIndex] = *data->elementThisFrame;
-            context->layoutElementIdStrings.internalArray[currentRootIndex] = context->layoutElementIdStrings.internalArray[data->elementThisFrame - context->layoutElements.internalArray];
-            Clay__int32_tArray_Add(&bfsBuffer, currentRootIndex);
-            data->elementThisFrame = &context->layoutElements.internalArray[currentRootIndex];
+            Clay_LayoutElement* newElement = Clay_LayoutElementArray_Set_DontTouchLength(&context->layoutElements, nextIndex, *data->elementThisFrame);
+            Clay__StringArray_Set_DontTouchLength(&context->layoutElementIdStrings, nextIndex, *Clay__StringArray_GetCheckCapacity(&context->layoutElementIdStrings, data->elementThisFrame - context->layoutElements.internalArray));
+            Clay__int32_tArray_Add(&bfsBuffer, nextIndex);
+            data->elementThisFrame = newElement;
+            nextIndex--;
+
             int32_t bufferIndex = 0;
-            nextEmptySlotOffset++;
             while(bufferIndex < bfsBuffer.length) {
-                // Note: this is purposefully not a range checked access - if the element has transitioned out, it will be beyond the length of the layoutElements array
-                Clay_LayoutElement *layoutElement = &context->layoutElements.internalArray[Clay__int32_tArray_GetValue(&bfsBuffer, bufferIndex)];
+                Clay_LayoutElement *layoutElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, Clay__int32_tArray_GetValue(&bfsBuffer, bufferIndex));
                 bufferIndex++;
-                int32_t firstChildSlot = rootChildIndex + nextEmptyChildOffset;
-                for (int j = 0; j < layoutElement->children.length; ++j) {
-                    // Note: this is purposefully not a range checked access - if the element has transitioned out, it will be beyond the length of the layoutElements array
-                    Clay_LayoutElement* childElement = &context->layoutElements.internalArray[layoutElement->children.elements[j]];
-                    int32_t nextSlot = rootIndex + nextEmptySlotOffset;
-                    Clay__int32_tArray_Add(&bfsBuffer, nextSlot);
-                    context->layoutElements.internalArray[nextSlot] = *childElement;
-                    context->layoutElementIdStrings.internalArray[nextSlot] = context->layoutElementIdStrings.internalArray[childElement - context->layoutElements.internalArray];
-                    Clay_LayoutElement* newChildElement = &context->layoutElements.internalArray[nextSlot];
-                    if (exiting && newChildElement->isTextElement) {
-                        newChildElement->textElementData.wrappedLines.length = 0;
-                    }
-                    int32_t childSlot = rootChildIndex + nextEmptyChildOffset;
-                    context->layoutElementChildren.internalArray[childSlot] = nextSlot;
-                    nextEmptySlotOffset++;
-                    nextEmptyChildOffset++;
+                for (int j = layoutElement->children.length - 1; j >= 0; --j) {
+                    Clay_LayoutElement* childElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, layoutElement->children.elements[j]);
+                    Clay__int32_tArray_Add(&bfsBuffer, nextIndex);
+                    Clay_LayoutElement* newChildElement = Clay_LayoutElementArray_Set_DontTouchLength(&context->layoutElements, nextIndex, *childElement);
+                    Clay__StringArray_Set_DontTouchLength(&context->layoutElementIdStrings, nextIndex, *Clay__StringArray_GetCheckCapacity(&context->layoutElementIdStrings, childElement - context->layoutElements.internalArray));
+                    Clay__int32_tArray_Set_DontTouchLength(&context->layoutElementChildren, nextChildIndex, nextIndex);
+                    nextIndex--;
+                    nextChildIndex--;
                 }
-                layoutElement->children.elements = &context->layoutElementChildren.internalArray[firstChildSlot];
+                layoutElement->children.elements = &context->layoutElementChildren.internalArray[nextChildIndex + 1];
             }
         }
     }
-    return CLAY__INIT(Clay__TransitionElementsAddedCount) { .ElementsAdded = nextEmptySlotOffset, .ElementChildrenAdded = nextEmptyChildOffset };
 };
 
 CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__CloseElement();
-    int32_t transitionOutWaitingCount = 0;
-    // First count total number of elements waiting for transition out
+
     for (int i = 0; i < context->transitionDatas.length; ++i) {
         Clay__TransitionDataInternal *data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
         Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(data->elementId);
-        Clay_TransitionElementConfig* config = &data->elementThisFrame->config.transition;
-        // Element wasn't found this frame - either delete transition data or transition out
-        if (hashMapItem->generation <= context->generation) {
-            if (data->transitionOut) {
+        // This might seems strange - can't we just look up the element itself, and check the config to see whether it has an exit transition defined?
+        // That would work fine if the element actually had an exit transition in the first place. If it doesn't have an exit transition defined, the element
+        // will have simply disappeared completely at this point, and there will be no element through which to access the config.
+        if (data->transitionOut) {
+            Clay_TransitionElementConfig* config = &data->elementThisFrame->config.transition;
+            // Element wasn't found this frame - either delete transition data or transition out
+            if (hashMapItem->generation <= context->generation) {
                 Clay_LayoutElementHashMapItem *parentHashMapItem = Clay__GetHashMapItem(data->parentId);
-                // Parent also wasn't found - just delete rather than transition
+                // Don't exit transition if the parent has also exited and SKIP_WHEN_PARENT_EXITS is used
                 if (config->exit.trigger == CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS || !parentHashMapItem || parentHashMapItem->generation > context->generation) {
                     if (data->state != CLAY_TRANSITION_STATE_EXITING) {
                         if (parentHashMapItem->generation <= context->generation) {
@@ -4417,71 +4420,69 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         data->state = CLAY_TRANSITION_STATE_EXITING;
                         data->activeProperties = config->properties;
                         data->elapsedTime = 0;
-                        data->targetState = config->exit.setFinalState(data->targetState);
+                        data->targetState = config->exit.setFinalState(data->targetState, config->properties);
                     }
+
+                    // Clone the entire subtree back into the main UI layout tree
+                    Clay__int32_tArray bfsBuffer = context->openLayoutElementStack;
+                    bfsBuffer.length = 0;
+                    data->elementThisFrame = Clay_LayoutElementArray_Add(&context->layoutElements, *data->elementThisFrame);
+                    int32_t exitingElementIndex = data->elementThisFrame - context->layoutElements.internalArray;
+                    Clay__StringArray_Add(&context->layoutElementIdStrings, *Clay__StringArray_GetCheckCapacity(&context->layoutElementIdStrings, exitingElementIndex));
+                    Clay__int32_tArray_Add(&context->layoutElementClipElementIds, *Clay__int32_tArray_GetCheckCapacity(&context->layoutElementClipElementIds, exitingElementIndex));
+                    Clay__int32_tArray_Add(&bfsBuffer, exitingElementIndex);
+                    hashMapItem->layoutElement = data->elementThisFrame;
+                    hashMapItem->generation = context->generation + 1;
+                    int32_t bufferIndex = 0;
+                    while (bufferIndex < bfsBuffer.length) {
+                        Clay_LayoutElement *layoutElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, Clay__int32_tArray_GetValue(&bfsBuffer, bufferIndex));
+                        bufferIndex++;
+                        int32_t firstChildSlot = context->layoutElementChildren.length;
+                        for (int j = 0; j < layoutElement->children.length; ++j) {
+                            Clay_LayoutElement* childElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, layoutElement->children.elements[j]);
+                            int32_t childElementIndex = childElement - context->layoutElements.internalArray;
+                            Clay_LayoutElement* newChildElement = Clay_LayoutElementArray_Add(&context->layoutElements, *childElement);
+                            Clay__StringArray_Add(&context->layoutElementIdStrings, *Clay__StringArray_GetCheckCapacity(&context->layoutElementIdStrings, childElementIndex));
+                            Clay__int32_tArray_Add(&context->layoutElementClipElementIds, *Clay__int32_tArray_GetCheckCapacity(&context->layoutElementClipElementIds, childElementIndex));
+                            Clay__int32_tArray_Add(&bfsBuffer, context->layoutElements.length - 1);
+                            if (newChildElement->isTextElement) {
+                                newChildElement->textElementData.wrappedLines.length = 0;
+                            }
+                            Clay__int32_tArray_Add(&context->layoutElementChildren, context->layoutElements.length - 1);
+                        }
+                        layoutElement->children.elements = &context->layoutElementChildren.internalArray[firstChildSlot];
+                    }
+
+                    // Reattach the inserted subtree to its previous parent if it still exists
+                    if (parentHashMapItem->generation > context->generation) {
+                        Clay_LayoutElement *parentElement = parentHashMapItem->layoutElement;
+                        int32_t newChildrenStartIndex = context->layoutElementChildren.length;
+                        bool found = 0;
+                        for (int j = 0; j < parentElement->children.length; ++j) {
+                            if (j == data->siblingIndex) {
+                                Clay__int32_tArray_Add(&context->layoutElementChildren, exitingElementIndex);
+                                found = true;
+                            }
+                            Clay__int32_tArray_Add(&context->layoutElementChildren, parentElement->children.elements[j]);
+                        }
+                        if (!found) {
+                            Clay__int32_tArray_Add(&context->layoutElementChildren, exitingElementIndex);
+                        }
+                        parentElement->children.length++;
+                        parentElement->children.elements = &context->layoutElementChildren.internalArray[newChildrenStartIndex];
+                    }
+                // Parent exited, just delete child without exit transition
                 } else {
                     Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, i);
                     i--;
                     continue;
                 }
-            } else {
-                Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, i);
-                i--;
-                continue;
             }
-        } else if (data->transitionOut) {
-            Clay__int32_tArray bfsBuffer = context->openLayoutElementStack;
-            bfsBuffer.length = 0;
-            Clay__int32_tArray_Add(&bfsBuffer, data->elementThisFrame - context->layoutElements.internalArray);
-            int32_t bufferIndex = 0;
-            while(bufferIndex < bfsBuffer.length) {
-                // Note: this is purposefully not a range checked access - if the element has transitioned out, it will be beyond the length of the layoutElements array
-                Clay_LayoutElement *layoutElement = &context->layoutElements.internalArray[Clay__int32_tArray_GetValue(&bfsBuffer, bufferIndex)];
-                bufferIndex++;
-                for (int j = 0; j < layoutElement->children.length; ++j) {
-                    Clay__int32_tArray_Add(&bfsBuffer, layoutElement->children.elements[j]);
-                }
-                transitionOutWaitingCount++;
-            }
-        }
-    }
-
-    int32_t rootIndex = context->layoutElements.length;
-    int32_t rootChildIndex = context->layoutElementChildren.length;
-
-    Clay__TransitionElementsAddedCount exitingElementCounts = Clay__CloneTransitionElements(rootIndex, rootChildIndex, true);
-
-    context->exitingElementsLength = exitingElementCounts.ElementsAdded;
-    context->exitingElementsChildrenLength = exitingElementCounts.ElementChildrenAdded;
-
-    context->layoutElements.length += context->exitingElementsLength;
-    context->layoutElementIdStrings.length += context->exitingElementsLength;
-    context->layoutElementChildren.length += context->exitingElementsChildrenLength;
-    context->layoutElementClipElementIds.length += context->exitingElementsLength;
-
-    for (int32_t i = 0; i < context->transitionDatas.length; i++) {
-        Clay__TransitionDataInternal *transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas,i);
-        int32_t elementIndex = transitionData->elementThisFrame - context->layoutElements.internalArray;
-        if (transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
-            Clay_LayoutElementHashMapItem* hashItem = Clay__GetHashMapItem(transitionData->elementId);
-            Clay_LayoutElementHashMapItem *parentMapItem = Clay__GetHashMapItem(transitionData->parentId);
-            Clay_LayoutElement *parentElement = parentMapItem->layoutElement;
-            if (parentMapItem->generation > context->generation) {
-                int32_t newChildrenStartIndex = context->layoutElementChildren.length;
-                bool found = 0;
-                for (int j = 0; j < parentElement->children.length; ++j) {
-                    if (j == transitionData->siblingIndex) {
-                        Clay__int32_tArray_Add(&context->layoutElementChildren, elementIndex);
-                        found = true;
-                    }
-                    Clay__int32_tArray_Add(&context->layoutElementChildren, parentElement->children.elements[j]);
-                }
-                if (!found) {
-                    Clay__int32_tArray_Add(&context->layoutElementChildren, elementIndex);
-                }
-                parentElement->children.length++;
-                parentElement->children.elements = &context->layoutElementChildren.internalArray[newChildrenStartIndex];
-            }
+        // Transition element exited and doesn't have an exit handler defined, delete the transition data
+        } else if (hashMapItem->generation <= context->generation) {
+            Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, i);
+            i--;
+            continue;
         }
     }
 
@@ -4506,10 +4507,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     } else {
         Clay__CalculateFinalLayout(deltaTime);
 
-        rootIndex = context->layoutElements.capacity - transitionOutWaitingCount;
-        rootChildIndex = context->layoutElementChildren.capacity - transitionOutWaitingCount;
-
-        Clay__CloneTransitionElements(rootIndex, rootChildIndex, false);
+        Clay__CloneElementsWithExitTransition();
     }
     if (context->openLayoutElementStack.length > 1) {
         context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {

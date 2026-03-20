@@ -124,10 +124,14 @@ bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
     }
 }
 
-Clay_TransitionData EnterExitSlideUp(Clay_TransitionData initialState) {
+Clay_TransitionData EnterExitSlideUp(Clay_TransitionData initialState, Clay_TransitionProperty properties) {
     Clay_TransitionData targetState = initialState;
-    targetState.boundingBox.y += 20;
-    targetState.overlayColor = (Clay_Color) { 255, 255, 255, 255 };
+    if (properties & CLAY_TRANSITION_PROPERTY_Y) {
+        targetState.boundingBox.y += 20;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+        targetState.overlayColor = (Clay_Color) { 255, 255, 255, 255 };
+    }
     return targetState;
 }
 // Swaps two elements in an array
