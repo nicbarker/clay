@@ -565,6 +565,8 @@ typedef struct {
     Clay_BoundingBox boundingBox;
     Clay_Color backgroundColor;
     Clay_Color overlayColor;
+    Clay_Color borderColor;
+    Clay_BorderWidth borderWidth;
 } Clay_TransitionData;
 
 typedef enum {
@@ -587,7 +589,9 @@ typedef enum {
     CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR = 16,
     CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR = 32,
     CLAY_TRANSITION_PROPERTY_CORNER_RADIUS = 64,
-    CLAY_TRANSITION_PROPERTY_BORDER = 128,
+    CLAY_TRANSITION_PROPERTY_BORDER_COLOR = 128,
+    CLAY_TRANSITION_PROPERTY_BORDER_WIDTH = 256,
+    CLAY_TRANSITION_PROPERTY_BORDER = CLAY_TRANSITION_PROPERTY_BORDER_COLOR | CLAY_TRANSITION_PROPERTY_BORDER_WIDTH
 } Clay_TransitionProperty;
 
 typedef struct {
@@ -615,6 +619,12 @@ typedef CLAY_PACKED_ENUM {
     CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING,
 } Clay_TransitionInteractionHandlingType;
 
+typedef CLAY_PACKED_ENUM {
+    CLAY_EXIT_TRANSITION_ORDERING_UNDERNEATH_SIBLINGS,
+    CLAY_EXIT_TRANSITION_ORDERING_NATURAL_ORDER,
+    CLAY_EXIT_TRANSITION_ORDERING_ABOVE_SIBLINGS,
+} Clay_ExitTransitionSiblingOrdering;
+
 // Controls settings related to transitions
 typedef struct Clay_TransitionElementConfig {
     bool (*handler)(Clay_TransitionCallbackArguments arguments);
@@ -628,6 +638,7 @@ typedef struct Clay_TransitionElementConfig {
     struct {
         Clay_TransitionData (*setFinalState)(Clay_TransitionData initialState, Clay_TransitionProperty properties);
         Clay_TransitionExitTriggerType trigger;
+        Clay_ExitTransitionSiblingOrdering siblingOrdering;
     } exit;
 } Clay_TransitionElementConfig;
 
@@ -2534,7 +2545,9 @@ Clay_TransitionData Clay__CreateTransitionDataForElement(Clay_BoundingBox *bound
     Clay_TransitionData transitionData = {
         .boundingBox = *boundingBox,
         .backgroundColor = layoutElement->config.backgroundColor,
-        .overlayColor = layoutElement->config.overlayColor
+        .overlayColor = layoutElement->config.overlayColor,
+        .borderColor = layoutElement->config.border.color,
+        .borderWidth = layoutElement->config.border.width,
     };
     return transitionData;
 }
@@ -2564,6 +2577,16 @@ Clay_TransitionProperty Clay__ShouldTransition(Clay_TransitionProperty propertie
             activeProperties |= CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR;
         }
     }
+    if (properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
+        if (!Clay__MemCmp((char *) &current->borderColor, (char *) &target->borderColor, sizeof(Clay_Color))) {
+            activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_COLOR;
+        }
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
+        if (!Clay__MemCmp((char *) &current->borderWidth, (char *) &target->borderWidth, sizeof(Clay_BorderWidth))) {
+            activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_WIDTH;
+        }
+    }
     return (Clay_TransitionProperty)activeProperties;
 }
 
@@ -2571,6 +2594,7 @@ void Clay__UpdateElementWithTransitionData(Clay_BoundingBox *boundingBox, Clay_L
     *boundingBox = data->boundingBox;
     layoutElement->config.backgroundColor = data->backgroundColor;
     layoutElement->config.overlayColor = data->overlayColor;
+    layoutElement->config.border = CLAY__INIT(Clay_BorderElementConfig) { data->borderColor, data->borderWidth };
 }
 
 void Clay__CalculateFinalLayout(float deltaTime) {
@@ -4457,9 +4481,13 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     if (parentHashMapItem->generation > context->generation) {
                         Clay_LayoutElement *parentElement = parentHashMapItem->layoutElement;
                         int32_t newChildrenStartIndex = context->layoutElementChildren.length;
-                        bool found = 0;
+                        bool found = false;
+                        if (config->exit.siblingOrdering == CLAY_EXIT_TRANSITION_ORDERING_UNDERNEATH_SIBLINGS) {
+                            Clay__int32_tArray_Add(&context->layoutElementChildren, exitingElementIndex);
+                            found = true;
+                        }
                         for (int j = 0; j < parentElement->children.length; ++j) {
-                            if (j == data->siblingIndex) {
+                            if (config->exit.siblingOrdering == CLAY_EXIT_TRANSITION_ORDERING_NATURAL_ORDER && j == data->siblingIndex) {
                                 Clay__int32_tArray_Add(&context->layoutElementChildren, exitingElementIndex);
                                 found = true;
                             }
