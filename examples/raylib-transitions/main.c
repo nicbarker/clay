@@ -96,7 +96,7 @@ bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
             arguments.current->boundingBox.height = arguments.target.boundingBox.height;
         }
         if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
-            arguments.current->backgroundColor = (Clay_Color) {
+            arguments.current->backgroundColor = CLAY__INIT(Clay_Color) {
                 .r = Lerp(arguments.initial.backgroundColor.r, arguments.target.backgroundColor.r, lerpAmount),
                 .g = Lerp(arguments.initial.backgroundColor.g, arguments.target.backgroundColor.g, lerpAmount),
                 .b = Lerp(arguments.initial.backgroundColor.b, arguments.target.backgroundColor.b, lerpAmount),
@@ -106,7 +106,7 @@ bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
             arguments.current->backgroundColor = arguments.target.backgroundColor;
         }
         if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
-            arguments.current->overlayColor = (Clay_Color) {
+            arguments.current->overlayColor = CLAY__INIT(Clay_Color) {
                 .r = Lerp(arguments.initial.overlayColor.r, arguments.target.overlayColor.r, lerpAmount),
                 .g = Lerp(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
                 .b = Lerp(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
@@ -115,11 +115,34 @@ bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
         } else {
             arguments.current->overlayColor = arguments.target.overlayColor;
         }
+        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
+            arguments.current->borderColor = CLAY__INIT(Clay_Color) {
+                .r = Lerp(arguments.initial.borderColor.r, arguments.target.borderColor.r, lerpAmount),
+                .g = Lerp(arguments.initial.borderColor.g, arguments.target.borderColor.g, lerpAmount),
+                .b = Lerp(arguments.initial.borderColor.b, arguments.target.borderColor.b, lerpAmount),
+                .a = Lerp(arguments.initial.borderColor.a, arguments.target.borderColor.a, lerpAmount),
+            };
+        } else {
+            arguments.current->borderColor = arguments.target.borderColor;
+        }
+        if (allProperties || arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
+            arguments.current->borderWidth = CLAY__INIT(Clay_BorderWidth) {
+                .left = Lerp(arguments.initial.borderWidth.left, arguments.target.borderWidth.left, lerpAmount),
+                .right = Lerp(arguments.initial.borderWidth.right, arguments.target.borderWidth.right, lerpAmount),
+                .top = Lerp(arguments.initial.borderWidth.top, arguments.target.borderWidth.top, lerpAmount),
+                .bottom = Lerp(arguments.initial.borderWidth.bottom, arguments.target.borderWidth.bottom, lerpAmount),
+                .betweenChildren = Lerp(arguments.initial.borderWidth.betweenChildren, arguments.target.borderWidth.betweenChildren, lerpAmount),
+            };
+        } else {
+            arguments.current->borderWidth = arguments.target.borderWidth;
+        }
         return false;
     } else {
         arguments.current->boundingBox = arguments.target.boundingBox;
         arguments.current->backgroundColor = arguments.target.backgroundColor;
         arguments.current->overlayColor = arguments.target.overlayColor;
+        arguments.current->borderColor = arguments.target.borderColor;
+        arguments.current->borderWidth = arguments.target.borderWidth;
         return true;
     }
 }
@@ -275,15 +298,15 @@ Clay_RenderCommandArray CreateLayout(void) {
                         .border = { darker, CLAY_BORDER_OUTSIDE(3) },
                         .transition = {
                             .handler = Clay_EaseOut,
-                            .duration = 0.5,
+                            .duration = 1.f,
                             .properties = CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR
                                     | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR
-                                    | CLAY_TRANSITION_PROPERTY_BOUNDING_BOX,
+                                    | CLAY_TRANSITION_PROPERTY_WIDTH | CLAY_TRANSITION_PROPERTY_X | CLAY_TRANSITION_PROPERTY_Y,
                             .enter = { .setInitialState = EnterExitSlideUp },
                             .exit = { .setFinalState = EnterExitSlideUp },
                         }
                     }) {
-                        Clay_OnHover(HandleCellButtonInteraction, (void*)index);
+                        Clay_OnHover(HandleCellButtonInteraction, (void*)(uint64_t)index);
                         CLAY_TEXT(((Clay_String) { .length = 2, .chars = colors[index].stringId, .isStaticallyAllocated = true }), CLAY_TEXT_CONFIG({
                             .fontSize = 32,
                             .textColor = colors[index].id > 29 ? (Clay_Color) {255, 255, 255, 255} : (Clay_Color) {154, 123, 184, 255 }
