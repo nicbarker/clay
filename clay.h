@@ -577,7 +577,7 @@ typedef enum {
 } Clay_TransitionState;
 
 typedef enum {
-    CLAY_TRANSITION_PROPERTY_ALL = 0,
+    CLAY_TRANSITION_PROPERTY_NONE = 0,
     CLAY_TRANSITION_PROPERTY_X = 1,
     CLAY_TRANSITION_PROPERTY_Y = 2,
     CLAY_TRANSITION_PROPERTY_POSITION = CLAY_TRANSITION_PROPERTY_X | CLAY_TRANSITION_PROPERTY_Y,
@@ -2163,8 +2163,8 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
             scrollOffset->scrollPosition = Clay__QueryScrollOffset(scrollOffset->elementId, context->queryScrollOffsetUserData);
         }
     }
+    // Setup data to track transitions across frames
     if (declaration->transition.handler) {
-        // Retrieve or create cached data to track scroll position across frames
         Clay__TransitionDataInternal *transitionData = CLAY__NULL;
         Clay_LayoutElement* parentElement = Clay__GetParentElement();
         for (int32_t i = 0; i < context->transitionDatas.length; i++) {
@@ -2250,7 +2250,7 @@ bool Clay__FloatEqual(float left, float right) {
 }
 
 Clay_TransitionProperty Clay__ComputeTransitionTargetChangeProperties(Clay_TransitionProperty propertyMask, Clay_TransitionData *oldTarget, Clay_TransitionData *newTarget, Clay_Vector2 newRelativePosition, Clay_Vector2 oldRelativePosition, bool reparented) {
-    int32_t activeProperties = CLAY_TRANSITION_PROPERTY_ALL;
+    int32_t activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
     if (propertyMask & CLAY_TRANSITION_PROPERTY_X && (!Clay__FloatEqual(newRelativePosition.x, oldRelativePosition.x) || (reparented && !Clay__FloatEqual(oldTarget->boundingBox.x, newTarget->boundingBox.x)))) {
         activeProperties |= CLAY_TRANSITION_PROPERTY_X;
     }
@@ -2283,18 +2283,41 @@ Clay_TransitionProperty Clay__ComputeTransitionTargetChangeProperties(Clay_Trans
 void Clay__ProcessTransition(Clay__TransitionDataInternal* transitionData, Clay_LayoutElement* currentElement, bool targetChanged, Clay_TransitionProperty propertyMask, float deltaTime) {
     Clay_LayoutElementHashMapItem* mapItem = Clay__GetHashMapItem(currentElement->id);
     Clay_LayoutElementHashMapItem* parentMapItem = Clay__GetHashMapItem(transitionData->parentId);
-    if (mapItem->appearedThisFrame) {
+
+    if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING) {
         if (!currentElement->config.transition.enter.setInitialState || (currentElement->config.transition.enter.trigger == CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME && parentMapItem->appearedThisFrame)) {
-            transitionData->initialState = transitionData->targetState;
-            transitionData->currentState = transitionData->targetState;
             transitionData->state = CLAY_TRANSITION_STATE_IDLE;
-        } else {
+        } else if (mapItem->appearedThisFrame) {
             Clay_TransitionProperty properties = CLAY__INIT(Clay_TransitionProperty) (currentElement->config.transition.properties & propertyMask);
             transitionData->initialState = currentElement->config.transition.enter.setInitialState(transitionData->targetState, properties);
             transitionData->currentState = transitionData->initialState;
-            transitionData->state = CLAY_TRANSITION_STATE_ENTERING;
             transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty)(transitionData->activeProperties | properties);
         }
+    }
+
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_X) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_X)) {
+        transitionData->currentState.boundingBox.x = transitionData->targetState.boundingBox.x;
+    }
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_Y) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_Y)) {
+        transitionData->currentState.boundingBox.y = transitionData->targetState.boundingBox.y;
+    }
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_WIDTH) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_WIDTH)) {
+        transitionData->currentState.boundingBox.width = transitionData->targetState.boundingBox.width;
+    }
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_HEIGHT) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_HEIGHT)) {
+        transitionData->currentState.boundingBox.height = transitionData->targetState.boundingBox.height;
+    }
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR)) {
+        transitionData->currentState.backgroundColor = transitionData->targetState.backgroundColor;
+    }
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR)) {
+        transitionData->currentState.overlayColor = transitionData->targetState.overlayColor;
+    }
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR)) {
+        transitionData->currentState.borderColor = transitionData->targetState.borderColor;
+    }
+    if ((propertyMask & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH)) {
+        transitionData->currentState.borderWidth = transitionData->targetState.borderWidth;
     }
 
     if (!mapItem->appearedThisFrame && targetChanged && (transitionData->state == CLAY_TRANSITION_STATE_IDLE || transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING)) {
@@ -2303,7 +2326,10 @@ void Clay__ProcessTransition(Clay__TransitionDataInternal* transitionData, Clay_
         transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
     }
 
-    if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
+    if (transitionData->state == CLAY_TRANSITION_STATE_IDLE) {
+        transitionData->initialState = transitionData->targetState;
+        transitionData->currentState = transitionData->targetState;
+    } else {
         bool transitionComplete = currentElement->config.transition.handler(CLAY__INIT(Clay_TransitionCallbackArguments) {
             transitionData->state,
             transitionData->initialState,
@@ -2321,6 +2347,7 @@ void Clay__ProcessTransition(Clay__TransitionDataInternal* transitionData, Clay_
             } else {
                 transitionData->state = CLAY_TRANSITION_STATE_IDLE;
                 transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty)(0);
+                transitionData->initialState = transitionData->currentState;
             }
         }
     }
@@ -2332,7 +2359,7 @@ void Clay__UpdateLayoutTransitionsForElement(Clay_LayoutElement* currentElement,
     }
 
     Clay_Context* context = Clay_GetCurrentContext();
-    Clay__TransitionDataInternal *transitionData;
+    Clay__TransitionDataInternal *transitionData = NULL;
     for (int32_t i = 0; i < context->transitionDatas.length; i++) {
         if (Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i)->elementThisFrame == currentElement) {
             transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
@@ -2344,27 +2371,32 @@ void Clay__UpdateLayoutTransitionsForElement(Clay_LayoutElement* currentElement,
         return;
     }
 
+    Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(transitionData->elementId);
     Clay_TransitionData oldTargetTransitionData = transitionData->targetState;
     bool targetChanged;
     if (width) {
         transitionData->targetState.boundingBox.width = currentElement->dimensions.width;
         targetChanged = (currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) && !Clay__FloatEqual(oldTargetTransitionData.boundingBox.width, transitionData->targetState.boundingBox.width);
-        if (targetChanged) transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty) (transitionData->activeProperties | CLAY_TRANSITION_PROPERTY_WIDTH);
+        if (targetChanged && !mapItem->appearedThisFrame) transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty) (transitionData->activeProperties | CLAY_TRANSITION_PROPERTY_WIDTH);
+//        Clay_String string = Clay_GetCurrentContext()->layoutElementIdStrings.internalArray[currentElement - Clay_GetCurrentContext()->layoutElements.internalArray];
+//        if (targetChanged && !mapItem->appearedThisFrame && string.chars && strcmp(string.chars, "Indent") == 0) {
+//            int x =5 ;
+//        }
         Clay__ProcessTransition(transitionData, currentElement, targetChanged, CLAY_TRANSITION_PROPERTY_WIDTH, deltaTime);
         currentElement->dimensions.width = transitionData->currentState.boundingBox.width;
     } else {
         transitionData->targetState.boundingBox.height = currentElement->dimensions.height;
         targetChanged = (currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) && !Clay__FloatEqual(oldTargetTransitionData.boundingBox.height, transitionData->targetState.boundingBox.height);
-        if (targetChanged) transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty) (transitionData->activeProperties | CLAY_TRANSITION_PROPERTY_HEIGHT);
+        if (targetChanged && !mapItem->appearedThisFrame) transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty) (transitionData->activeProperties | CLAY_TRANSITION_PROPERTY_HEIGHT);
         Clay__ProcessTransition(transitionData, currentElement, targetChanged, CLAY_TRANSITION_PROPERTY_HEIGHT, deltaTime);
         currentElement->dimensions.height = transitionData->currentState.boundingBox.height;
     }
 }
 
 // Handle transitions for non-layout affecting properties, such as position, color
-Clay_Vector2 Clay__UpdateNonLayoutTransitionsForElement(Clay_LayoutElement* currentElement, Clay_Vector2 targetPosition, float deltaTime) {
+Clay_Vector2 Clay__UpdateNonLayoutTransitionsForElement(Clay_LayoutElement* currentElement, Clay_Vector2 defaultPosition, Clay_Vector2 targetPosition, float deltaTime) {
     if (!currentElement->config.transition.handler) {
-        return targetPosition;
+        return defaultPosition;
     }
 
     Clay_Context* context = Clay_GetCurrentContext();
@@ -2377,7 +2409,7 @@ Clay_Vector2 Clay__UpdateNonLayoutTransitionsForElement(Clay_LayoutElement* curr
     }
 
     if (!transitionData) {
-        return targetPosition;
+        return defaultPosition;
     }
 
     if (transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
@@ -2415,7 +2447,7 @@ Clay_Vector2 Clay__UpdateNonLayoutTransitionsForElement(Clay_LayoutElement* curr
         currentElement->config.border.color = transitionData->currentState.borderColor;
         return CLAY__INIT(Clay_Vector2) { transitionData->currentState.boundingBox.x, transitionData->currentState.boundingBox.y };
     } else {
-        return CLAY__INIT(Clay_Vector2) { targetPosition.x, targetPosition.y };
+        return defaultPosition;
     }
 }
 
@@ -2716,13 +2748,6 @@ bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
            (boundingBox->y + boundingBox->height < 0);
 }
 
-void Clay__UpdateElementWithTransitionData(Clay_BoundingBox *boundingBox, Clay_LayoutElement* layoutElement, Clay_TransitionData* data) {
-    *boundingBox = data->boundingBox;
-    layoutElement->config.backgroundColor = data->backgroundColor;
-    layoutElement->config.overlayColor = data->overlayColor;
-    layoutElement->config.border = CLAY__INIT(Clay_BorderElementConfig) { data->borderColor, data->borderWidth };
-}
-
 void Clay__CalculateFinalLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
 
@@ -2961,229 +2986,8 @@ void Clay__CalculateFinalLayout(float deltaTime) {
             Clay_LayoutConfig *layoutConfig = &currentElement->config.layout;
             Clay_Vector2 scrollOffset = CLAY__DEFAULT_STRUCT;
 
-            // This will only be run a single time for each element in downwards DFS order
-            if (!context->treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
-                context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
-
-                Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
-                if (currentElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE) {
-                    Clay_FloatingElementConfig *floatingElementConfig = &currentElement->config.floating;
-                    Clay_Dimensions expand = floatingElementConfig->expand;
-                    currentElementBoundingBox.x -= expand.width;
-                    currentElementBoundingBox.width += expand.width * 2;
-                    currentElementBoundingBox.y -= expand.height;
-                    currentElementBoundingBox.height += expand.height * 2;
-                }
-
-                Clay__ScrollContainerDataInternal *scrollContainerData = CLAY__NULL;
-                // Apply scroll offsets to container
-                if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
-                    // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
-                    for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
-                        Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-                        if (mapping->layoutElement == currentElement) {
-                            scrollContainerData = mapping;
-                            mapping->boundingBox = currentElementBoundingBox;
-                            scrollOffset = currentElement->config.clip.childOffset;
-                            if (context->externalScrollHandlingEnabled) {
-                                scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(currentElement->id);
-                if (hashMapItem) {
-                    hashMapItem->boundingBox = currentElementBoundingBox;
-                }
-
-                bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
-
-                if (!offscreen) {
-                    if (currentElement->isTextElement) {
-                        Clay_TextElementConfig *textElementConfig = &currentElement->textConfig;
-                        float naturalLineHeight = currentElement->textElementData.preferredDimensions.height;
-                        float finalLineHeight = textElementConfig->lineHeight > 0 ? (float)textElementConfig->lineHeight : naturalLineHeight;
-                        float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
-                        float yPosition = lineHeightOffset;
-                        for (int32_t lineIndex = 0; lineIndex < currentElement->textElementData.wrappedLines.length; ++lineIndex) {
-                            Clay__WrappedTextLine *wrappedLine = Clay__WrappedTextLineArraySlice_Get(&currentElement->textElementData.wrappedLines, lineIndex);
-                            if (wrappedLine->line.length == 0) {
-                                yPosition += finalLineHeight;
-                                continue;
-                            }
-                            float offset = (currentElementBoundingBox.width - wrappedLine->dimensions.width);
-                            if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT) {
-                                offset = 0;
-                            }
-                            if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
-                                offset /= 2;
-                            }
-                            Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
-                                .renderData = { .text = {
-                                    .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->textElementData.text.chars },
-                                    .textColor = textElementConfig->textColor,
-                                    .fontId = textElementConfig->fontId,
-                                    .fontSize = textElementConfig->fontSize,
-                                    .letterSpacing = textElementConfig->letterSpacing,
-                                    .lineHeight = textElementConfig->lineHeight,
-                                }},
-                                .userData = textElementConfig->userData,
-                                .id = Clay__HashNumber(lineIndex, currentElement->id).id,
-                                .zIndex = root->zIndex,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
-                            });
-                            yPosition += finalLineHeight;
-
-                            if (!context->disableCulling && (currentElementBoundingBox.y + yPosition > context->layoutDimensions.height)) {
-                                break;
-                            }
-                        }
-                    } else {
-                        if (currentElement->config.overlayColor.a > 0) {
-                            Clay_RenderCommand renderCommand = {
-                                .renderData = {
-                                    .colorOverlay = { .color = currentElement->config.overlayColor }
-                                },
-                                .userData = currentElement->config.userData,
-                                .id = currentElement->id,
-                                .zIndex = root->zIndex,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
-                            };
-                            Clay__AddRenderCommand(renderCommand);
-                        }
-                        if (currentElement->config.image.imageData) {
-                            Clay_RenderCommand renderCommand = {
-                                .boundingBox = currentElementBoundingBox,
-                                .renderData = {
-                                    .image = {
-                                        .backgroundColor = currentElement->config.backgroundColor,
-                                        .cornerRadius = currentElement->config.cornerRadius,
-                                        .imageData = currentElement->config.image.imageData,
-                                    }
-                                },
-                                .userData = currentElement->config.userData,
-                                .id = currentElement->id,
-                                .zIndex = root->zIndex,
-                                    .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
-                            };
-                            Clay__AddRenderCommand(renderCommand);
-                        }
-                        if (currentElement->config.custom.customData) {
-                            Clay_RenderCommand renderCommand = {
-                                .boundingBox = currentElementBoundingBox,
-                                .renderData = {
-                                    .custom = {
-                                        .backgroundColor = currentElement->config.backgroundColor,
-                                        .cornerRadius = currentElement->config.cornerRadius,
-                                        .customData = currentElement->config.custom.customData,
-                                    }
-                                },
-                                .userData = currentElement->config.userData,
-                                .id = currentElement->id,
-                                .zIndex = root->zIndex,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
-                            };
-                            Clay__AddRenderCommand(renderCommand);
-                        }
-                        if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
-                            Clay_RenderCommand renderCommand = {
-                                .boundingBox = currentElementBoundingBox,
-                                .renderData = {
-                                    .clip = {
-                                        .horizontal = currentElement->config.clip.horizontal,
-                                        .vertical = currentElement->config.clip.vertical,
-                                    }
-                                },
-                                .userData = currentElement->config.userData,
-                                .id = currentElement->id,
-                                .zIndex = root->zIndex,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
-                            };
-                            Clay__AddRenderCommand(renderCommand);
-                        }
-                        if (currentElement->config.backgroundColor.a > 0) {
-                            Clay_RenderCommand renderCommand = {
-                                .boundingBox = currentElementBoundingBox,
-                                .renderData = { .rectangle = {
-                                    .backgroundColor = currentElement->config.backgroundColor,
-                                    .cornerRadius = currentElement->config.cornerRadius,
-                                } },
-                                .userData = currentElement->config.userData,
-                                .id = currentElement->id,
-                                .zIndex = root->zIndex,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
-                            };
-                            Clay__AddRenderCommand(renderCommand);
-                        }
-                    }
-                }
-
-                // Setup initial on-axis alignment
-                if (!currentElementTreeNode->layoutElement->isTextElement) {
-                    Clay_Dimensions contentSize = {0,0};
-                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-                        for (int32_t i = 0; i < currentElement->children.length; ++i) {
-                            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
-                            if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
-                            Clay_Dimensions childDimensions = childElement->dimensions;
-                            if (childElement->config.transition.handler) {
-                                for (int j = 0; j < context->transitionDatas.length; ++j) {
-                                    Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
-                                    if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
-                                        childDimensions = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
-                                        break;
-                                    }
-                                }
-                            }
-                            contentSize.width += childDimensions.width;
-                            contentSize.height = CLAY__MAX(contentSize.height, childDimensions.height);
-                        }
-                        contentSize.width += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
-                        float extraSpace = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - contentSize.width;
-                        switch (layoutConfig->childAlignment.x) {
-                            case CLAY_ALIGN_X_LEFT: extraSpace = 0; break;
-                            case CLAY_ALIGN_X_CENTER: extraSpace /= 2; break;
-                            default: break;
-                        }
-                        currentElementTreeNode->nextChildOffset.x += extraSpace;
-                        extraSpace = CLAY__MAX(0, extraSpace);
-                    } else {
-                        for (int32_t i = 0; i < currentElement->children.length; ++i) {
-                            Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
-                            if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
-                            Clay_Dimensions childDimensions = childElement->dimensions;
-                            if (childElement->config.transition.handler) {
-                                for (int j = 0; j < context->transitionDatas.length; ++j) {
-                                    Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
-                                    if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
-                                        childDimensions = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
-                                        break;
-                                    }
-                                }
-                            }
-                            contentSize.width = CLAY__MAX(contentSize.width, childDimensions.width);
-                            contentSize.height += childDimensions.height;
-                        }
-                        contentSize.height += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
-                        float extraSpace = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - contentSize.height;
-                        switch (layoutConfig->childAlignment.y) {
-                            case CLAY_ALIGN_Y_TOP: extraSpace = 0; break;
-                            case CLAY_ALIGN_Y_CENTER: extraSpace /= 2; break;
-                            default: break;
-                        }
-                        extraSpace = CLAY__MAX(0, extraSpace);
-                        currentElementTreeNode->nextChildOffset.y += extraSpace;
-                    }
-
-                    if (scrollContainerData) {
-                        scrollContainerData->contentSize = CLAY__INIT(Clay_Dimensions) { contentSize.width + (float)(layoutConfig->padding.left + layoutConfig->padding.right), contentSize.height + (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) };
-                    }
-                }
-            }
-            else {
+            // DFS is returning back upwards
+            if (context->treeNodeVisited.internalArray[dfsBuffer.length - 1]) {
                 if (currentElement->isTextElement) {
                     dfsBuffer.length--;
                     continue;
@@ -3212,9 +3016,9 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                         Clay_RenderCommand renderCommand = {
                                 .boundingBox = currentElementBoundingBox,
                                 .renderData = { .border = {
-                                    .color = borderConfig->color,
-                                    .cornerRadius = currentElement->config.cornerRadius,
-                                    .width = borderConfig->width
+                                        .color = borderConfig->color,
+                                        .cornerRadius = currentElement->config.cornerRadius,
+                                        .width = borderConfig->width
                                 }},
                                 .userData = currentElement->config.userData,
                                 .id = Clay__HashNumber(currentElement->id, currentElement->children.length).id,
@@ -3230,13 +3034,13 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
                                     if (i > 0) {
                                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                            .boundingBox = { currentElementBoundingBox.x + borderOffset.x + scrollOffset.x - halfWidth, currentElementBoundingBox.y + scrollOffset.y, (float)borderConfig->width.betweenChildren, currentElement->dimensions.height },
-                                            .renderData = { .rectangle = {
-                                                .backgroundColor = borderConfig->color,
-                                            } },
-                                            .userData = currentElement->config.userData,
-                                            .id = Clay__HashNumber(currentElement->id, currentElement->children.length + 1 + i).id,
-                                            .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                                                .boundingBox = { currentElementBoundingBox.x + borderOffset.x + scrollOffset.x - halfWidth, currentElementBoundingBox.y + scrollOffset.y, (float)borderConfig->width.betweenChildren, currentElement->dimensions.height },
+                                                .renderData = { .rectangle = {
+                                                        .backgroundColor = borderConfig->color,
+                                                } },
+                                                .userData = currentElement->config.userData,
+                                                .id = Clay__HashNumber(currentElement->id, currentElement->children.length + 1 + i).id,
+                                                .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
                                     }
                                     borderOffset.x += (childElement->dimensions.width + (float)layoutConfig->childGap);
@@ -3246,13 +3050,13 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
                                     if (i > 0) {
                                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                                            .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y - halfWidth, currentElement->dimensions.width, (float)borderConfig->width.betweenChildren },
-                                            .renderData = { .rectangle = {
-                                                .backgroundColor = borderConfig->color,
-                                            } },
-                                            .userData = currentElement->config.userData,
-                                            .id = Clay__HashNumber(currentElement->id, currentElement->children.length + 1 + i).id,
-                                            .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                                                .boundingBox = { currentElementBoundingBox.x + scrollOffset.x, currentElementBoundingBox.y + borderOffset.y + scrollOffset.y - halfWidth, currentElement->dimensions.width, (float)borderConfig->width.betweenChildren },
+                                                .renderData = { .rectangle = {
+                                                        .backgroundColor = borderConfig->color,
+                                                } },
+                                                .userData = currentElement->config.userData,
+                                                .id = Clay__HashNumber(currentElement->id, currentElement->children.length + 1 + i).id,
+                                                .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
                                         });
                                     }
                                     borderOffset.y += (childElement->dimensions.height + (float)layoutConfig->childGap);
@@ -3262,18 +3066,18 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                     }
                     if (currentElement->config.overlayColor.a > 0) {
                         Clay_RenderCommand renderCommand = {
-                            .userData = currentElement->config.userData,
-                            .id = currentElement->id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END,
+                                .userData = currentElement->config.userData,
+                                .id = currentElement->id,
+                                .zIndex = root->zIndex,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END,
                         };
                         Clay__AddRenderCommand(renderCommand);
                     }
                     // This exists because the scissor needs to end _after_ borders between elements
                     if (closeClipElement) {
                         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                            .id = Clay__HashNumber(currentElement->id, rootElement->children.length + 11).id,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
+                                .id = Clay__HashNumber(currentElement->id, rootElement->children.length + 11).id,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
                         });
                     }
                 }
@@ -3282,62 +3086,306 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                 continue;
             }
 
-            // Add children to the DFS buffer
-            if (!currentElement->isTextElement) {
-                dfsBuffer.length += currentElement->children.length;
+            // This will only be run a single time for each element in downwards DFS order
+            context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
+            Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+            if (currentElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE) {
+                Clay_FloatingElementConfig *floatingElementConfig = &currentElement->config.floating;
+                Clay_Dimensions expand = floatingElementConfig->expand;
+                currentElementBoundingBox.x -= expand.width;
+                currentElementBoundingBox.width += expand.width * 2;
+                currentElementBoundingBox.y -= expand.height;
+                currentElementBoundingBox.height += expand.height * 2;
+            }
+
+            Clay__ScrollContainerDataInternal *scrollContainerData = CLAY__NULL;
+            // Apply scroll offsets to container
+            if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
+                // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
+                for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
+                    Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
+                    if (mapping->layoutElement == currentElement) {
+                        scrollContainerData = mapping;
+                        mapping->boundingBox = currentElementBoundingBox;
+                        scrollOffset = currentElement->config.clip.childOffset;
+                        if (context->externalScrollHandlingEnabled) {
+                            scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            bool offscreen = Clay__ElementIsOffscreen(&currentElementBoundingBox);
+
+            // Generate render commands for current element
+            if (!offscreen) {
+                if (currentElement->isTextElement) {
+                    Clay_TextElementConfig *textElementConfig = &currentElement->textConfig;
+                    float naturalLineHeight = currentElement->textElementData.preferredDimensions.height;
+                    float finalLineHeight = textElementConfig->lineHeight > 0 ? (float)textElementConfig->lineHeight : naturalLineHeight;
+                    float lineHeightOffset = (finalLineHeight - naturalLineHeight) / 2;
+                    float yPosition = lineHeightOffset;
+                    for (int32_t lineIndex = 0; lineIndex < currentElement->textElementData.wrappedLines.length; ++lineIndex) {
+                        Clay__WrappedTextLine *wrappedLine = Clay__WrappedTextLineArraySlice_Get(&currentElement->textElementData.wrappedLines, lineIndex);
+                        if (wrappedLine->line.length == 0) {
+                            yPosition += finalLineHeight;
+                            continue;
+                        }
+                        float offset = (currentElementBoundingBox.width - wrappedLine->dimensions.width);
+                        if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT) {
+                            offset = 0;
+                        }
+                        if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
+                            offset /= 2;
+                        }
+                        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                            .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
+                            .renderData = { .text = {
+                                .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->textElementData.text.chars },
+                                .textColor = textElementConfig->textColor,
+                                .fontId = textElementConfig->fontId,
+                                .fontSize = textElementConfig->fontSize,
+                                .letterSpacing = textElementConfig->letterSpacing,
+                                .lineHeight = textElementConfig->lineHeight,
+                            }},
+                            .userData = textElementConfig->userData,
+                            .id = Clay__HashNumber(lineIndex, currentElement->id).id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
+                        });
+                        yPosition += finalLineHeight;
+
+                        if (!context->disableCulling && (currentElementBoundingBox.y + yPosition > context->layoutDimensions.height)) {
+                            break;
+                        }
+                    }
+                } else {
+                    if (currentElement->config.overlayColor.a > 0) {
+                        Clay_RenderCommand renderCommand = {
+                            .renderData = {
+                                .colorOverlay = { .color = currentElement->config.overlayColor }
+                            },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                    }
+                    if (currentElement->config.image.imageData) {
+                        Clay_RenderCommand renderCommand = {
+                            .boundingBox = currentElementBoundingBox,
+                            .renderData = {
+                                .image = {
+                                    .backgroundColor = currentElement->config.backgroundColor,
+                                    .cornerRadius = currentElement->config.cornerRadius,
+                                    .imageData = currentElement->config.image.imageData,
+                                }
+                            },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                    }
+                    if (currentElement->config.custom.customData) {
+                        Clay_RenderCommand renderCommand = {
+                            .boundingBox = currentElementBoundingBox,
+                            .renderData = {
+                                .custom = {
+                                    .backgroundColor = currentElement->config.backgroundColor,
+                                    .cornerRadius = currentElement->config.cornerRadius,
+                                    .customData = currentElement->config.custom.customData,
+                                }
+                            },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                    }
+                    if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
+                        Clay_RenderCommand renderCommand = {
+                            .boundingBox = currentElementBoundingBox,
+                            .renderData = {
+                                .clip = {
+                                    .horizontal = currentElement->config.clip.horizontal,
+                                    .vertical = currentElement->config.clip.vertical,
+                                }
+                            },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_START,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                    }
+                    if (currentElement->config.backgroundColor.a > 0) {
+                        Clay_RenderCommand renderCommand = {
+                            .boundingBox = currentElementBoundingBox,
+                            .renderData = { .rectangle = {
+                                .backgroundColor = currentElement->config.backgroundColor,
+                                .cornerRadius = currentElement->config.cornerRadius,
+                            } },
+                            .userData = currentElement->config.userData,
+                            .id = currentElement->id,
+                            .zIndex = root->zIndex,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE,
+                        };
+                        Clay__AddRenderCommand(renderCommand);
+                    }
+                }
+            }
+
+            Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(currentElement->id);
+            if (hashMapItem) {
+                hashMapItem->boundingBox = currentElementBoundingBox;
+            }
+
+            if (currentElement->isTextElement) continue;
+
+            // Setup positions for child elements and add to DFS buffer ----------
+
+            // On-axis alignment
+            Clay_Dimensions contentSizeCurrent = {};
+            Clay_Dimensions contentSizeTarget = {};
+            Clay_Vector2 nextChildOffsetTarget = {};
+            if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                 for (int32_t i = 0; i < currentElement->children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
-                    Clay_Dimensions childDimensions = childElement->dimensions;
+                    if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
+                    Clay_Dimensions childDimensionsTarget = childElement->dimensions;
                     if (childElement->config.transition.handler) {
                         for (int j = 0; j < context->transitionDatas.length; ++j) {
                             Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
                             if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
-                                childDimensions = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
+                                childDimensionsTarget = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
                                 break;
                             }
                         }
                     }
-                    // Alignment along non layout axis
-                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-                        currentElementTreeNode->nextChildOffset.y = currentElement->config.layout.padding.top;
-                        float whiteSpaceAroundChild = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - childDimensions.height;
-                        switch (layoutConfig->childAlignment.y) {
-                            case CLAY_ALIGN_Y_TOP: break;
-                            case CLAY_ALIGN_Y_CENTER: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild / 2; break;
-                            case CLAY_ALIGN_Y_BOTTOM: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild; break;
-                        }
-                    } else {
-                        currentElementTreeNode->nextChildOffset.x = currentElement->config.layout.padding.left;
-                        float whiteSpaceAroundChild = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - childDimensions.width;
-                        switch (layoutConfig->childAlignment.x) {
-                            case CLAY_ALIGN_X_LEFT: break;
-                            case CLAY_ALIGN_X_CENTER: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild / 2; break;
-                            case CLAY_ALIGN_X_RIGHT: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild; break;
+                    contentSizeCurrent.width += childElement->dimensions.width;
+                    contentSizeCurrent.height = CLAY__MAX(contentSizeCurrent.height, childElement->dimensions.height);
+                    contentSizeTarget.width += childDimensionsTarget.width;
+                    contentSizeTarget.height = CLAY__MAX(contentSizeCurrent.height, childDimensionsTarget.height);
+                }
+                contentSizeCurrent.width += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
+                contentSizeTarget.width += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
+                float extraSpace = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - contentSizeCurrent.width;
+                float extraSpaceTarget = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - contentSizeTarget.width;
+                switch (layoutConfig->childAlignment.x) {
+                    case CLAY_ALIGN_X_LEFT: extraSpace = 0; extraSpaceTarget = 0; break;
+                    case CLAY_ALIGN_X_CENTER: extraSpace /= 2; extraSpaceTarget /= 2; break;
+                    default: break;
+                }
+                extraSpace = CLAY__MAX(0, extraSpace);
+                nextChildOffsetTarget.x = currentElementTreeNode->nextChildOffset.x + extraSpaceTarget;
+                currentElementTreeNode->nextChildOffset.x += extraSpace;
+            } else {
+                for (int32_t i = 0; i < currentElement->children.length; ++i) {
+                    Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
+                    if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
+                    Clay_Dimensions childDimensionsTarget = childElement->dimensions;
+                    if (childElement->config.transition.handler) {
+                        for (int j = 0; j < context->transitionDatas.length; ++j) {
+                            Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
+                            if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
+                                childDimensionsTarget = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
+                                break;
+                            }
                         }
                     }
+                    contentSizeCurrent.width = CLAY__MAX(contentSizeCurrent.width, childElement->dimensions.width);
+                    contentSizeCurrent.height += childElement->dimensions.height;
+                    contentSizeTarget.width = CLAY__MAX(contentSizeTarget.width, childDimensionsTarget.width);
+                    contentSizeTarget.height += childDimensionsTarget.height;
+                }
+                contentSizeCurrent.height += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
+                contentSizeTarget.height += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
+                float extraSpace = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - contentSizeCurrent.height;
+                float extraSpaceTarget = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - contentSizeTarget.height;
+                switch (layoutConfig->childAlignment.y) {
+                    case CLAY_ALIGN_Y_TOP: extraSpace = 0; extraSpaceTarget = 0; break;
+                    case CLAY_ALIGN_Y_CENTER: extraSpace /= 2; extraSpaceTarget /= 2; break;
+                    default: break;
+                }
+                extraSpace = CLAY__MAX(0, extraSpace);
+                nextChildOffsetTarget.y = currentElementTreeNode->nextChildOffset.y + extraSpaceTarget;
+                currentElementTreeNode->nextChildOffset.y += extraSpace;
+            }
 
-                    Clay_Vector2 childPosition = {
-                        currentElementTreeNode->position.x + currentElementTreeNode->nextChildOffset.x + scrollOffset.x,
-                        currentElementTreeNode->position.y + currentElementTreeNode->nextChildOffset.y + scrollOffset.y,
-                    };
+            if (scrollContainerData) {
+                scrollContainerData->contentSize = CLAY__INIT(Clay_Dimensions) {contentSizeCurrent.width + (float)(layoutConfig->padding.left + layoutConfig->padding.right), contentSizeCurrent.height + (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) };
+            }
 
-                    childPosition = Clay__UpdateNonLayoutTransitionsForElement(childElement, childPosition, deltaTime);
-                    // DFS buffer elements need to be added in reverse because stack traversal happens backwards
-                    uint32_t newNodeIndex = dfsBuffer.length - 1 - i;
-                    dfsBuffer.internalArray[newNodeIndex] = CLAY__INIT(Clay__LayoutElementTreeNode) {
-                        .layoutElement = childElement,
-                        .position = { childPosition.x, childPosition.y },
-                        .nextChildOffset = { .x = (float)childElement->config.layout.padding.left, .y = (float)childElement->config.layout.padding.top },
-                    };
-                    context->treeNodeVisited.internalArray[newNodeIndex] = false;
-
-                    // Update parent offsets
-                    if (childElement->config.floating.attachTo != CLAY_ATTACH_TO_INLINE) {
-                        if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
-                            currentElementTreeNode->nextChildOffset.x += childDimensions.width + (float)layoutConfig->childGap;
-                        } else {
-                            currentElementTreeNode->nextChildOffset.y += childDimensions.height + (float)layoutConfig->childGap;
+            // Add children to the DFS buffer
+            dfsBuffer.length += currentElement->children.length;
+            for (int32_t i = 0; i < currentElement->children.length; ++i) {
+                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
+                Clay_Dimensions childDimensionsTarget = childElement->dimensions;
+                if (childElement->config.transition.handler) {
+                    for (int j = 0; j < context->transitionDatas.length; ++j) {
+                        Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
+                        if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
+                            childDimensionsTarget = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
+                            break;
                         }
+                    }
+                }
+                // Alignment along non layout axis
+                if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+                    currentElementTreeNode->nextChildOffset.y = currentElement->config.layout.padding.top;
+                    nextChildOffsetTarget.y = currentElement->config.layout.padding.top;
+                    float whiteSpaceAroundChild = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - childElement->dimensions.height;
+                    float whiteSpaceAroundChildTarget = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - childDimensionsTarget.height;
+                    switch (layoutConfig->childAlignment.y) {
+                        case CLAY_ALIGN_Y_TOP: break;
+                        case CLAY_ALIGN_Y_CENTER: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild / 2; nextChildOffsetTarget.y += whiteSpaceAroundChildTarget / 2; break;
+                        case CLAY_ALIGN_Y_BOTTOM: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild; nextChildOffsetTarget.y += whiteSpaceAroundChildTarget; break;
+                    }
+                } else {
+                    currentElementTreeNode->nextChildOffset.x = currentElement->config.layout.padding.left;
+                    nextChildOffsetTarget.x = currentElement->config.layout.padding.left;
+                    float whiteSpaceAroundChild = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - childElement->dimensions.width;
+                    float whiteSpaceAroundChildTarget = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - childDimensionsTarget.width;
+                    switch (layoutConfig->childAlignment.x) {
+                        case CLAY_ALIGN_X_LEFT: break;
+                        case CLAY_ALIGN_X_CENTER: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild / 2; nextChildOffsetTarget.x += whiteSpaceAroundChildTarget / 2; break;
+                        case CLAY_ALIGN_X_RIGHT: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild; nextChildOffsetTarget.x += whiteSpaceAroundChildTarget; break;
+                    }
+                }
+
+                Clay_Vector2 childPosition = {
+                    currentElementTreeNode->position.x + currentElementTreeNode->nextChildOffset.x + scrollOffset.x,
+                    currentElementTreeNode->position.y + currentElementTreeNode->nextChildOffset.y + scrollOffset.y,
+                };
+
+                Clay_Vector2 childPositionTarget = {
+                    currentElementTreeNode->position.x + nextChildOffsetTarget.x + scrollOffset.x,
+                    currentElementTreeNode->position.y + nextChildOffsetTarget.y + scrollOffset.y,
+                };
+
+                childPosition = Clay__UpdateNonLayoutTransitionsForElement(childElement, childPosition, childPositionTarget, deltaTime);
+                // DFS buffer elements need to be added in reverse because stack traversal happens backwards
+                uint32_t newNodeIndex = dfsBuffer.length - 1 - i;
+                dfsBuffer.internalArray[newNodeIndex] = CLAY__INIT(Clay__LayoutElementTreeNode) {
+                    .layoutElement = childElement,
+                    .position = { childPosition.x, childPosition.y },
+                    .nextChildOffset = { .x = (float)childElement->config.layout.padding.left, .y = (float)childElement->config.layout.padding.top },
+                };
+                context->treeNodeVisited.internalArray[newNodeIndex] = false;
+
+                // Update parent offsets
+                if (childElement->config.floating.attachTo != CLAY_ATTACH_TO_INLINE) {
+                    if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
+                        currentElementTreeNode->nextChildOffset.x += childElement->dimensions.width + (float)layoutConfig->childGap;
+                        nextChildOffsetTarget.x += childDimensionsTarget.width + (float)layoutConfig->childGap;
+                    } else {
+                        currentElementTreeNode->nextChildOffset.y += childElement->dimensions.height + (float)layoutConfig->childGap;
+                        nextChildOffsetTarget.y += childDimensionsTarget.height + (float)layoutConfig->childGap;
                     }
                 }
             }
