@@ -259,7 +259,9 @@ Clay_RenderCommandArray CreateLayout(void) {
             }
         }
         for (int i = 0; i < 5; i++) {
-            CLAY(CLAY_IDI("row", i), { .layout.childGap = 12, .layout.sizing = GG }) {
+            Clay_ElementId rowId = CLAY_IDI("row", i);
+            Clay_ElementData rowData = Clay_GetElementData(rowId);
+            CLAY(rowId, { .layout.childGap = 12, .layout.sizing = GG }) {
                 for (int j = 0; j < 6; j++) {
                     int index = i * 6 + j;
                     if (index >= cellCount) {

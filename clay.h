@@ -2173,7 +2173,7 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
                 transitionData = existingData;
                 transitionData->elementThisFrame = openLayoutElement;
                 if (transitionData->parentId != parentElement->id) {
-                    transitionData->reparented = true; // TODO might be able to derive this and avoid the bool
+                    transitionData->reparented = true;
                 }
                 transitionData->parentId = parentElement->id;
                 transitionData->siblingIndex = parentElement->children.length;
@@ -2186,7 +2186,6 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
                 .elementId = openLayoutElement->id,
                 .parentId = parentElement->id,
                 .siblingIndex = parentElement->children.length,
-                .state = CLAY_TRANSITION_STATE_ENTERING,
                 .transitionOut = !!declaration->transition.exit.setFinalState
             });
         }
@@ -2229,7 +2228,7 @@ void Clay__InitializePersistentMemory(Clay_Context* context) {
     Clay_Arena *arena = &context->internalArena;
 
     context->scrollContainerDatas = Clay__ScrollContainerDataInternalArray_Allocate_Arena(100, arena);
-    context->transitionDatas = Clay__TransitionDataInternalArray_Allocate_Arena(100, arena);
+    context->transitionDatas = Clay__TransitionDataInternalArray_Allocate_Arena(200, arena);
     context->layoutElementsHashMapInternal = Clay__LayoutElementHashMapItemArray_Allocate_Arena(maxElementCount, arena);
     context->layoutElementsHashMap = Clay__int32_tArray_Allocate_Arena(maxElementCount, arena);
     context->measureTextHashMapInternal = Clay__MeasureTextCacheItemArray_Allocate_Arena(maxElementCount, arena);
@@ -2248,209 +2247,6 @@ bool Clay__FloatEqual(float left, float right) {
     float subtracted = left - right;
     return subtracted < CLAY__EPSILON && subtracted > -CLAY__EPSILON;
 }
-
-Clay_TransitionProperty Clay__ComputeTransitionTargetChangeProperties(Clay_TransitionProperty propertyMask, Clay_TransitionData *oldTarget, Clay_TransitionData *newTarget, Clay_Vector2 newRelativePosition, Clay_Vector2 oldRelativePosition, bool reparented) {
-    int32_t activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
-    if (propertyMask & CLAY_TRANSITION_PROPERTY_X && (!Clay__FloatEqual(newRelativePosition.x, oldRelativePosition.x) || (reparented && !Clay__FloatEqual(oldTarget->boundingBox.x, newTarget->boundingBox.x)))) {
-        activeProperties |= CLAY_TRANSITION_PROPERTY_X;
-    }
-    if (propertyMask & CLAY_TRANSITION_PROPERTY_Y && (!Clay__FloatEqual(newRelativePosition.y, oldRelativePosition.y) || (reparented && !Clay__FloatEqual(oldTarget->boundingBox.y, newTarget->boundingBox.y)))) {
-        activeProperties |= CLAY_TRANSITION_PROPERTY_Y;
-    }
-    if (propertyMask & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
-        if (!Clay__MemCmp((char *) &oldTarget->backgroundColor, (char *) &newTarget->backgroundColor, sizeof(Clay_Color))) {
-            activeProperties |= CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR;
-        }
-    }
-    if (propertyMask & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
-        if (!Clay__MemCmp((char *) &oldTarget->overlayColor, (char *) &newTarget->overlayColor, sizeof(Clay_Color))) {
-            activeProperties |= CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR;
-        }
-    }
-    if (propertyMask & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
-        if (!Clay__MemCmp((char *) &oldTarget->borderColor, (char *) &newTarget->borderColor, sizeof(Clay_Color))) {
-            activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_COLOR;
-        }
-    }
-    if (propertyMask & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
-        if (!Clay__MemCmp((char *) &oldTarget->borderWidth, (char *) &newTarget->borderWidth, sizeof(Clay_BorderWidth))) {
-            activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_WIDTH;
-        }
-    }
-    return (Clay_TransitionProperty)activeProperties;
-}
-
-void Clay__ProcessTransition(Clay__TransitionDataInternal* transitionData, Clay_LayoutElement* currentElement, bool targetChanged, Clay_TransitionProperty propertyMask, float deltaTime) {
-    Clay_LayoutElementHashMapItem* mapItem = Clay__GetHashMapItem(currentElement->id);
-    Clay_LayoutElementHashMapItem* parentMapItem = Clay__GetHashMapItem(transitionData->parentId);
-
-    if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING) {
-        if (!currentElement->config.transition.enter.setInitialState || (currentElement->config.transition.enter.trigger == CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME && parentMapItem->appearedThisFrame)) {
-            transitionData->state = CLAY_TRANSITION_STATE_IDLE;
-        } else if (mapItem->appearedThisFrame) {
-            Clay_TransitionProperty properties = CLAY__INIT(Clay_TransitionProperty) (currentElement->config.transition.properties & propertyMask);
-            transitionData->initialState = currentElement->config.transition.enter.setInitialState(transitionData->targetState, properties);
-            transitionData->currentState = transitionData->initialState;
-            transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty)(transitionData->activeProperties | properties);
-        }
-    }
-
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_X) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_X)) {
-        transitionData->currentState.boundingBox.x = transitionData->targetState.boundingBox.x;
-    }
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_Y) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_Y)) {
-        transitionData->currentState.boundingBox.y = transitionData->targetState.boundingBox.y;
-    }
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_WIDTH) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_WIDTH)) {
-        transitionData->currentState.boundingBox.width = transitionData->targetState.boundingBox.width;
-    }
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_HEIGHT) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_HEIGHT)) {
-        transitionData->currentState.boundingBox.height = transitionData->targetState.boundingBox.height;
-    }
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR)) {
-        transitionData->currentState.backgroundColor = transitionData->targetState.backgroundColor;
-    }
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR)) {
-        transitionData->currentState.overlayColor = transitionData->targetState.overlayColor;
-    }
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR)) {
-        transitionData->currentState.borderColor = transitionData->targetState.borderColor;
-    }
-    if ((propertyMask & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) && !(transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH)) {
-        transitionData->currentState.borderWidth = transitionData->targetState.borderWidth;
-    }
-
-    if (!mapItem->appearedThisFrame && targetChanged && (transitionData->state == CLAY_TRANSITION_STATE_IDLE || transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING)) {
-        transitionData->elapsedTime = 0;
-        transitionData->initialState = transitionData->currentState;
-        transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
-    }
-
-    if (transitionData->state == CLAY_TRANSITION_STATE_IDLE) {
-        transitionData->initialState = transitionData->targetState;
-        transitionData->currentState = transitionData->targetState;
-    } else {
-        bool transitionComplete = currentElement->config.transition.handler(CLAY__INIT(Clay_TransitionCallbackArguments) {
-            transitionData->state,
-            transitionData->initialState,
-            &transitionData->currentState,
-            transitionData->targetState,
-            transitionData->elapsedTime,
-            currentElement->config.transition.duration,
-            CLAY__INIT(Clay_TransitionProperty) (transitionData->activeProperties & propertyMask)
-        });
-
-        if (transitionComplete) {
-            if (transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
-                Clay_Context* context = Clay_GetCurrentContext();
-                Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, transitionData - context->transitionDatas.internalArray);
-            } else {
-                transitionData->state = CLAY_TRANSITION_STATE_IDLE;
-                transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty)(0);
-                transitionData->initialState = transitionData->currentState;
-            }
-        }
-    }
-}
-
-void Clay__UpdateLayoutTransitionsForElement(Clay_LayoutElement* currentElement, bool width, float deltaTime) {
-    if (!currentElement->config.transition.handler) {
-        return;
-    }
-
-    Clay_Context* context = Clay_GetCurrentContext();
-    Clay__TransitionDataInternal *transitionData = NULL;
-    for (int32_t i = 0; i < context->transitionDatas.length; i++) {
-        if (Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i)->elementThisFrame == currentElement) {
-            transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
-            break;
-        }
-    }
-
-    if (!transitionData) {
-        return;
-    }
-
-    Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(transitionData->elementId);
-    Clay_TransitionData oldTargetTransitionData = transitionData->targetState;
-    bool targetChanged;
-    if (width) {
-        transitionData->targetState.boundingBox.width = currentElement->dimensions.width;
-        targetChanged = (currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) && !Clay__FloatEqual(oldTargetTransitionData.boundingBox.width, transitionData->targetState.boundingBox.width);
-        if (targetChanged && !mapItem->appearedThisFrame) transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty) (transitionData->activeProperties | CLAY_TRANSITION_PROPERTY_WIDTH);
-//        Clay_String string = Clay_GetCurrentContext()->layoutElementIdStrings.internalArray[currentElement - Clay_GetCurrentContext()->layoutElements.internalArray];
-//        if (targetChanged && !mapItem->appearedThisFrame && string.chars && strcmp(string.chars, "Indent") == 0) {
-//            int x =5 ;
-//        }
-        Clay__ProcessTransition(transitionData, currentElement, targetChanged, CLAY_TRANSITION_PROPERTY_WIDTH, deltaTime);
-        currentElement->dimensions.width = transitionData->currentState.boundingBox.width;
-    } else {
-        transitionData->targetState.boundingBox.height = currentElement->dimensions.height;
-        targetChanged = (currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) && !Clay__FloatEqual(oldTargetTransitionData.boundingBox.height, transitionData->targetState.boundingBox.height);
-        if (targetChanged && !mapItem->appearedThisFrame) transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty) (transitionData->activeProperties | CLAY_TRANSITION_PROPERTY_HEIGHT);
-        Clay__ProcessTransition(transitionData, currentElement, targetChanged, CLAY_TRANSITION_PROPERTY_HEIGHT, deltaTime);
-        currentElement->dimensions.height = transitionData->currentState.boundingBox.height;
-    }
-}
-
-// Handle transitions for non-layout affecting properties, such as position, color
-Clay_Vector2 Clay__UpdateNonLayoutTransitionsForElement(Clay_LayoutElement* currentElement, Clay_Vector2 defaultPosition, Clay_Vector2 targetPosition, float deltaTime) {
-    if (!currentElement->config.transition.handler) {
-        return defaultPosition;
-    }
-
-    Clay_Context* context = Clay_GetCurrentContext();
-    Clay__TransitionDataInternal *transitionData = NULL;
-    for (int32_t i = 0; i < context->transitionDatas.length; i++) {
-        if (Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i)->elementId == currentElement->id) {
-            transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
-            break;
-        }
-    }
-
-    if (!transitionData) {
-        return defaultPosition;
-    }
-
-    if (transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
-        Clay_Vector2 parentScrollOffset = {};
-        Clay_LayoutElementHashMapItem* parentMapItem = Clay__GetHashMapItem(transitionData->parentId);
-        if (parentMapItem->layoutElement->config.clip.horizontal || parentMapItem->layoutElement->config.clip.vertical) {
-            parentScrollOffset = parentMapItem->layoutElement->config.clip.childOffset;
-        }
-        Clay_Vector2 oldRelativeTargetPosition = transitionData->parentRelativeTargetPosition;
-        Clay_TransitionData oldTargetTransitionData = transitionData->targetState;
-        transitionData->targetState.boundingBox.x = targetPosition.x;
-        transitionData->targetState.boundingBox.y = targetPosition.y;
-        transitionData->targetState.backgroundColor = currentElement->config.backgroundColor;
-        transitionData->targetState.overlayColor = currentElement->config.overlayColor;
-        transitionData->targetState.borderColor = currentElement->config.border.color;
-        transitionData->targetState.borderWidth = currentElement->config.border.width;
-        transitionData->parentRelativeTargetPosition = CLAY__INIT(Clay_Vector2) {
-            targetPosition.x - parentMapItem->boundingBox.x - parentScrollOffset.x,
-            targetPosition.y - parentMapItem->boundingBox.y - parentScrollOffset.y,
-        };
-
-        Clay_TransitionProperty changedProperties = Clay__ComputeTransitionTargetChangeProperties(currentElement->config.transition.properties, &oldTargetTransitionData, &transitionData->targetState, transitionData->parentRelativeTargetPosition, oldRelativeTargetPosition, transitionData->reparented);
-        if (changedProperties != 0) {
-            transitionData->activeProperties = CLAY__INIT(Clay_TransitionProperty)(transitionData->activeProperties | changedProperties);
-        }
-        Clay__ProcessTransition(transitionData, currentElement, changedProperties != 0, CLAY__INIT(Clay_TransitionProperty)(~CLAY_TRANSITION_PROPERTY_DIMENSIONS), deltaTime);
-    } else {
-        Clay__ProcessTransition(transitionData, currentElement, false, CLAY__INIT(Clay_TransitionProperty)(~CLAY_TRANSITION_PROPERTY_DIMENSIONS), deltaTime);
-    }
-
-    if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
-        currentElement->config.backgroundColor = transitionData->currentState.backgroundColor;
-        currentElement->config.overlayColor = transitionData->currentState.overlayColor;
-        currentElement->config.border.width = transitionData->currentState.borderWidth;
-        currentElement->config.border.color = transitionData->currentState.borderColor;
-        return CLAY__INIT(Clay_Vector2) { transitionData->currentState.boundingBox.x, transitionData->currentState.boundingBox.y };
-    } else {
-        return defaultPosition;
-    }
-}
-
 
 // Writes out the location of text elements to layout elements buffer 1
 void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArray* textElementsOut, Clay__int32_tArray* aspectRatioElementsOut) {
@@ -2500,6 +2296,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
         if (rootElement->config.layout.sizing.height.type != CLAY__SIZING_TYPE_PERCENT) {
             rootElement->dimensions.height = CLAY__MIN(CLAY__MAX(rootElement->dimensions.height, rootElement->config.layout.sizing.height.size.minMax.min), rootElement->config.layout.sizing.height.size.minMax.max);
         }
+
 
         for (int32_t i = 0; i < bfsBuffer.length; ++i) {
             int32_t parentIndex = Clay__int32_tArray_GetValue(&bfsBuffer, i);
@@ -2681,11 +2478,6 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                     *childSize = CLAY__MAX(minSize, CLAY__MIN(*childSize, maxSize));
                 }
             }
-
-            for (int32_t childOffset = 0; childOffset < parent->children.length; childOffset++) {
-                Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, parent->children.elements[childOffset]);
-                Clay__UpdateLayoutTransitionsForElement(childElement, xAxis, deltaTime);
-            }
         }
     }
 }
@@ -2748,7 +2540,7 @@ bool Clay__ElementIsOffscreen(Clay_BoundingBox *boundingBox) {
            (boundingBox->y + boundingBox->height < 0);
 }
 
-void Clay__CalculateFinalLayout(float deltaTime) {
+void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes) {
     Clay_Context* context = Clay_GetCurrentContext();
 
     // Calculate sizing along the X axis
@@ -3014,15 +2806,15 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                         Clay_BoundingBox currentElementBoundingBox = currentElementData->boundingBox;
                         Clay_BorderElementConfig *borderConfig = &currentElement->config.border;
                         Clay_RenderCommand renderCommand = {
-                                .boundingBox = currentElementBoundingBox,
-                                .renderData = { .border = {
-                                        .color = borderConfig->color,
-                                        .cornerRadius = currentElement->config.cornerRadius,
-                                        .width = borderConfig->width
-                                }},
-                                .userData = currentElement->config.userData,
-                                .id = Clay__HashNumber(currentElement->id, currentElement->children.length).id,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
+                            .boundingBox = currentElementBoundingBox,
+                            .renderData = { .border = {
+                                .color = borderConfig->color,
+                                .cornerRadius = currentElement->config.cornerRadius,
+                                .width = borderConfig->width
+                            }},
+                            .userData = currentElement->config.userData,
+                            .id = Clay__HashNumber(currentElement->id, currentElement->children.length).id,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_BORDER,
                         };
                         Clay__AddRenderCommand(renderCommand);
                         if (borderConfig->width.betweenChildren > 0 && borderConfig->color.a > 0) {
@@ -3089,6 +2881,14 @@ void Clay__CalculateFinalLayout(float deltaTime) {
             // This will only be run a single time for each element in downwards DFS order
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+            if (useStoredBoundingBoxes && currentElement->config.transition.handler) {
+                for (int j = 0; j < context->transitionDatas.length; ++j) {
+                    Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
+                    if (transitionData->elementId == currentElement->id && transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
+                        currentElementBoundingBox = transitionData->currentState.boundingBox;
+                    }
+                }
+            }
             if (currentElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE) {
                 Clay_FloatingElementConfig *floatingElementConfig = &currentElement->config.floating;
                 Clay_Dimensions expand = floatingElementConfig->expand;
@@ -3241,9 +3041,7 @@ void Clay__CalculateFinalLayout(float deltaTime) {
             }
 
             Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(currentElement->id);
-            if (hashMapItem) {
-                hashMapItem->boundingBox = currentElementBoundingBox;
-            }
+            hashMapItem->boundingBox = currentElementBoundingBox;
 
             if (currentElement->isTextElement) continue;
 
@@ -3251,69 +3049,37 @@ void Clay__CalculateFinalLayout(float deltaTime) {
 
             // On-axis alignment
             Clay_Dimensions contentSizeCurrent = {};
-            Clay_Dimensions contentSizeTarget = {};
-            Clay_Vector2 nextChildOffsetTarget = {};
             if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                 for (int32_t i = 0; i < currentElement->children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
                     if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
-                    Clay_Dimensions childDimensionsTarget = childElement->dimensions;
-                    if (childElement->config.transition.handler) {
-                        for (int j = 0; j < context->transitionDatas.length; ++j) {
-                            Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
-                            if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
-                                childDimensionsTarget = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
-                                break;
-                            }
-                        }
-                    }
                     contentSizeCurrent.width += childElement->dimensions.width;
                     contentSizeCurrent.height = CLAY__MAX(contentSizeCurrent.height, childElement->dimensions.height);
-                    contentSizeTarget.width += childDimensionsTarget.width;
-                    contentSizeTarget.height = CLAY__MAX(contentSizeCurrent.height, childDimensionsTarget.height);
                 }
                 contentSizeCurrent.width += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
-                contentSizeTarget.width += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
                 float extraSpace = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - contentSizeCurrent.width;
-                float extraSpaceTarget = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - contentSizeTarget.width;
                 switch (layoutConfig->childAlignment.x) {
-                    case CLAY_ALIGN_X_LEFT: extraSpace = 0; extraSpaceTarget = 0; break;
-                    case CLAY_ALIGN_X_CENTER: extraSpace /= 2; extraSpaceTarget /= 2; break;
+                    case CLAY_ALIGN_X_LEFT: extraSpace = 0; break;
+                    case CLAY_ALIGN_X_CENTER: extraSpace /= 2; break;
                     default: break;
                 }
                 extraSpace = CLAY__MAX(0, extraSpace);
-                nextChildOffsetTarget.x = currentElementTreeNode->nextChildOffset.x + extraSpaceTarget;
                 currentElementTreeNode->nextChildOffset.x += extraSpace;
-            } else {
+            } else if (layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM) {
                 for (int32_t i = 0; i < currentElement->children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
                     if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
-                    Clay_Dimensions childDimensionsTarget = childElement->dimensions;
-                    if (childElement->config.transition.handler) {
-                        for (int j = 0; j < context->transitionDatas.length; ++j) {
-                            Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
-                            if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
-                                childDimensionsTarget = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
-                                break;
-                            }
-                        }
-                    }
                     contentSizeCurrent.width = CLAY__MAX(contentSizeCurrent.width, childElement->dimensions.width);
                     contentSizeCurrent.height += childElement->dimensions.height;
-                    contentSizeTarget.width = CLAY__MAX(contentSizeTarget.width, childDimensionsTarget.width);
-                    contentSizeTarget.height += childDimensionsTarget.height;
                 }
                 contentSizeCurrent.height += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
-                contentSizeTarget.height += (float)(CLAY__MAX(currentElement->children.length - 1, 0) * layoutConfig->childGap);
                 float extraSpace = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - contentSizeCurrent.height;
-                float extraSpaceTarget = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - contentSizeTarget.height;
                 switch (layoutConfig->childAlignment.y) {
-                    case CLAY_ALIGN_Y_TOP: extraSpace = 0; extraSpaceTarget = 0; break;
-                    case CLAY_ALIGN_Y_CENTER: extraSpace /= 2; extraSpaceTarget /= 2; break;
+                    case CLAY_ALIGN_Y_TOP: extraSpace = 0; break;
+                    case CLAY_ALIGN_Y_CENTER: extraSpace /= 2; break;
                     default: break;
                 }
                 extraSpace = CLAY__MAX(0, extraSpace);
-                nextChildOffsetTarget.y = currentElementTreeNode->nextChildOffset.y + extraSpaceTarget;
                 currentElementTreeNode->nextChildOffset.y += extraSpace;
             }
 
@@ -3325,55 +3091,36 @@ void Clay__CalculateFinalLayout(float deltaTime) {
             dfsBuffer.length += currentElement->children.length;
             for (int32_t i = 0; i < currentElement->children.length; ++i) {
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
-                Clay_Dimensions childDimensionsTarget = childElement->dimensions;
-                if (childElement->config.transition.handler) {
-                    for (int j = 0; j < context->transitionDatas.length; ++j) {
-                        Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
-                        if (data->elementId == childElement->id && data->state != CLAY_TRANSITION_STATE_IDLE) {
-                            childDimensionsTarget = CLAY__INIT(Clay_Dimensions) { data->targetState.boundingBox.width, data->targetState.boundingBox.height };
-                            break;
-                        }
-                    }
-                }
+                Clay_LayoutElementHashMapItem* childMapItem = Clay__GetHashMapItem(childElement->id);
                 // Alignment along non layout axis
                 if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                     currentElementTreeNode->nextChildOffset.y = currentElement->config.layout.padding.top;
-                    nextChildOffsetTarget.y = currentElement->config.layout.padding.top;
                     float whiteSpaceAroundChild = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - childElement->dimensions.height;
-                    float whiteSpaceAroundChildTarget = currentElement->dimensions.height - (float)(layoutConfig->padding.top + layoutConfig->padding.bottom) - childDimensionsTarget.height;
                     switch (layoutConfig->childAlignment.y) {
                         case CLAY_ALIGN_Y_TOP: break;
-                        case CLAY_ALIGN_Y_CENTER: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild / 2; nextChildOffsetTarget.y += whiteSpaceAroundChildTarget / 2; break;
-                        case CLAY_ALIGN_Y_BOTTOM: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild; nextChildOffsetTarget.y += whiteSpaceAroundChildTarget; break;
+                        case CLAY_ALIGN_Y_CENTER: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild / 2; break;
+                        case CLAY_ALIGN_Y_BOTTOM: currentElementTreeNode->nextChildOffset.y += whiteSpaceAroundChild; break;
                     }
                 } else {
                     currentElementTreeNode->nextChildOffset.x = currentElement->config.layout.padding.left;
-                    nextChildOffsetTarget.x = currentElement->config.layout.padding.left;
                     float whiteSpaceAroundChild = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - childElement->dimensions.width;
-                    float whiteSpaceAroundChildTarget = currentElement->dimensions.width - (float)(layoutConfig->padding.left + layoutConfig->padding.right) - childDimensionsTarget.width;
                     switch (layoutConfig->childAlignment.x) {
                         case CLAY_ALIGN_X_LEFT: break;
-                        case CLAY_ALIGN_X_CENTER: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild / 2; nextChildOffsetTarget.x += whiteSpaceAroundChildTarget / 2; break;
-                        case CLAY_ALIGN_X_RIGHT: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild; nextChildOffsetTarget.x += whiteSpaceAroundChildTarget; break;
+                        case CLAY_ALIGN_X_CENTER: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild / 2; break;
+                        case CLAY_ALIGN_X_RIGHT: currentElementTreeNode->nextChildOffset.x += whiteSpaceAroundChild; break;
                     }
                 }
 
                 Clay_Vector2 childPosition = {
-                    currentElementTreeNode->position.x + currentElementTreeNode->nextChildOffset.x + scrollOffset.x,
-                    currentElementTreeNode->position.y + currentElementTreeNode->nextChildOffset.y + scrollOffset.y,
+                    currentElementBoundingBox.x + currentElementTreeNode->nextChildOffset.x + scrollOffset.x,
+                    currentElementBoundingBox.y + currentElementTreeNode->nextChildOffset.y + scrollOffset.y,
                 };
 
-                Clay_Vector2 childPositionTarget = {
-                    currentElementTreeNode->position.x + nextChildOffsetTarget.x + scrollOffset.x,
-                    currentElementTreeNode->position.y + nextChildOffsetTarget.y + scrollOffset.y,
-                };
-
-                childPosition = Clay__UpdateNonLayoutTransitionsForElement(childElement, childPosition, childPositionTarget, deltaTime);
                 // DFS buffer elements need to be added in reverse because stack traversal happens backwards
                 uint32_t newNodeIndex = dfsBuffer.length - 1 - i;
                 dfsBuffer.internalArray[newNodeIndex] = CLAY__INIT(Clay__LayoutElementTreeNode) {
                     .layoutElement = childElement,
-                    .position = { childPosition.x, childPosition.y },
+                    .position = CLAY__INIT(Clay_Vector2) { childPosition.x, childPosition.y },
                     .nextChildOffset = { .x = (float)childElement->config.layout.padding.left, .y = (float)childElement->config.layout.padding.top },
                 };
                 context->treeNodeVisited.internalArray[newNodeIndex] = false;
@@ -3382,10 +3129,8 @@ void Clay__CalculateFinalLayout(float deltaTime) {
                 if (childElement->config.floating.attachTo != CLAY_ATTACH_TO_INLINE) {
                     if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                         currentElementTreeNode->nextChildOffset.x += childElement->dimensions.width + (float)layoutConfig->childGap;
-                        nextChildOffsetTarget.x += childDimensionsTarget.width + (float)layoutConfig->childGap;
                     } else {
                         currentElementTreeNode->nextChildOffset.y += childElement->dimensions.height + (float)layoutConfig->childGap;
-                        nextChildOffsetTarget.y += childDimensionsTarget.height + (float)layoutConfig->childGap;
                     }
                 }
             }
@@ -3396,13 +3141,6 @@ void Clay__CalculateFinalLayout(float deltaTime) {
             if (clipHashMapItem && !Clay__ElementIsOffscreen(&clipHashMapItem->boundingBox)) {
                 Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) { .id = Clay__HashNumber(rootElement->id, rootElement->children.length + 11).id, .commandType = CLAY_RENDER_COMMAND_TYPE_SCISSOR_END });
             }
-        }
-    }
-
-    for (int I = 0; I < context->transitionDatas.length; ++I) {
-        Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, I);
-        if (data->state != CLAY_TRANSITION_STATE_IDLE) {
-            data->elapsedTime += deltaTime;
         }
     }
 }
@@ -4539,6 +4277,43 @@ void Clay__CloneElementsWithExitTransition() {
     }
 };
 
+void Clay_ApplyTransitionedPropertiesToElement(Clay_LayoutElement* currentElement, Clay_TransitionProperty properties, Clay_TransitionData currentTransitionData, Clay_BoundingBox* boundingBox, bool reparented) {
+    if (properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
+        if (!reparented) {
+            currentElement->dimensions.width = currentTransitionData.boundingBox.width;
+            currentElement->config.layout.sizing.width = CLAY_SIZING_FIXED(currentTransitionData.boundingBox.width);
+        } else {
+            boundingBox->width = currentTransitionData.boundingBox.width;
+        }
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_HEIGHT) {
+        if (!reparented) {
+            currentElement->dimensions.height = currentTransitionData.boundingBox.height;
+            currentElement->config.layout.sizing.height = CLAY_SIZING_FIXED(currentTransitionData.boundingBox.height);
+        } else {
+            boundingBox->height = currentTransitionData.boundingBox.height;
+        }
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_X) {
+        boundingBox->x = currentTransitionData.boundingBox.x;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_Y) {
+        boundingBox->y = currentTransitionData.boundingBox.y;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+        currentElement->config.overlayColor = currentTransitionData.overlayColor;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
+        currentElement->config.backgroundColor = currentTransitionData.backgroundColor;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
+        currentElement->config.border.color = currentTransitionData.borderColor;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
+        currentElement->config.border.width = currentTransitionData.borderWidth;
+    }
+}
+
 CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
@@ -4658,7 +4433,131 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
             .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT
         });
     } else {
-        Clay__CalculateFinalLayout(deltaTime);
+        Clay__CalculateFinalLayout(deltaTime, false);
+
+        for (int i = 0; i < context->transitionDatas.length; ++i) {
+            Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
+            Clay_LayoutElement* currentElement = transitionData->elementThisFrame;
+            Clay_LayoutElementHashMapItem* mapItem = Clay__GetHashMapItem(currentElement->id);
+            Clay_LayoutElementHashMapItem* parentMapItem = Clay__GetHashMapItem(currentElement->id);
+            Clay_TransitionData targetState = transitionData->targetState;
+            if (transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
+                targetState = CLAY__INIT(Clay_TransitionData) {
+                    mapItem->boundingBox,
+                    currentElement->config.backgroundColor,
+                    currentElement->config.overlayColor,
+                    currentElement->config.border.color,
+                    currentElement->config.border.width,
+                };
+            }
+            Clay_TransitionData oldTargetState = transitionData->targetState;
+            transitionData->targetState = targetState;
+            if (mapItem->appearedThisFrame) {
+                if (currentElement->config.transition.enter.setInitialState && !(parentMapItem->appearedThisFrame && currentElement->config.transition.enter.trigger == CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME)) {
+                    transitionData->state = CLAY_TRANSITION_STATE_ENTERING;
+                    transitionData->initialState = currentElement->config.transition.enter.setInitialState(transitionData->targetState, currentElement->config.transition.properties);
+                    transitionData->currentState = transitionData->initialState;
+                    Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->initialState, &mapItem->boundingBox, transitionData->reparented);
+                } else {
+                    transitionData->initialState = targetState;
+                    transitionData->currentState = targetState;
+                }
+            } else {
+                Clay_Vector2 newRelativePosition = { mapItem->boundingBox.x, mapItem->boundingBox.y };
+                newRelativePosition.x -= parentMapItem->boundingBox.x;
+                newRelativePosition.y -= parentMapItem->boundingBox.y;
+                Clay_TransitionProperty properties = currentElement->config.transition.properties;
+                int32_t activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
+                if (properties & CLAY_TRANSITION_PROPERTY_X) {
+                    if (!Clay__FloatEqual(oldTargetState.boundingBox.x, targetState.boundingBox.x)) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_X;
+                    }
+                }
+                if (properties & CLAY_TRANSITION_PROPERTY_Y) {
+                    if (!Clay__FloatEqual(oldTargetState.boundingBox.y, targetState.boundingBox.y)) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_Y;
+                    }
+                }
+                if (properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
+                    if (!Clay__FloatEqual(oldTargetState.boundingBox.width, targetState.boundingBox.width)) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_WIDTH;
+                    }
+                }
+                if (properties & CLAY_TRANSITION_PROPERTY_HEIGHT) {
+                    if (!Clay__FloatEqual(oldTargetState.boundingBox.height, targetState.boundingBox.height)) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_HEIGHT;
+                    }
+                }
+                if (properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
+                    if (!Clay__MemCmp((char *) &oldTargetState.backgroundColor, (char *)&targetState.backgroundColor, sizeof(Clay_Color))) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR;
+                    }
+                }
+                if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+                    if (!Clay__MemCmp((char *) &oldTargetState.overlayColor, (char *)&targetState.overlayColor, sizeof(Clay_Color))) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR;
+                    }
+                }
+                if (properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
+                    if (!Clay__MemCmp((char *) &oldTargetState.borderColor, (char *)&targetState.borderColor, sizeof(Clay_Color))) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_COLOR;
+                    }
+                }
+                if (properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
+                    if (!Clay__MemCmp((char *) &oldTargetState.borderWidth, (char *)&targetState.borderWidth, sizeof(Clay_BorderWidth))) {
+                        activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_WIDTH;
+                    }
+                }
+
+                if (activeProperties != 0) {
+                    if (transitionData->state == CLAY_TRANSITION_STATE_IDLE || transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING) {
+                        transitionData->elapsedTime = 0;
+                        transitionData->initialState = transitionData->currentState;
+                        transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
+                    }
+                }
+
+                if (transitionData->state == CLAY_TRANSITION_STATE_IDLE) {
+                    transitionData->initialState = targetState;
+                    transitionData->currentState = targetState;
+                    transitionData->targetState = targetState;
+                } else {
+                    bool transitionComplete = true;
+                    transitionComplete = currentElement->config.transition.handler(CLAY__INIT(Clay_TransitionCallbackArguments) {
+                        transitionData->state,
+                        transitionData->initialState,
+                        &transitionData->currentState,
+                        targetState,
+                        transitionData->elapsedTime,
+                        currentElement->config.transition.duration,
+                        currentElement->config.transition.properties
+                    });
+
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) == 0) transitionData->currentState.boundingBox.x = targetState.boundingBox.x;
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) == 0) transitionData->currentState.boundingBox.y = targetState.boundingBox.y;
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) == 0) transitionData->currentState.boundingBox.width = targetState.boundingBox.width;
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) == 0) transitionData->currentState.boundingBox.height = targetState.boundingBox.height;
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) == 0) transitionData->currentState.backgroundColor = targetState.backgroundColor;
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) == 0) transitionData->currentState.overlayColor = targetState.overlayColor;
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) == 0) transitionData->currentState.borderColor = targetState.borderColor;
+                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) == 0) transitionData->currentState.borderWidth = targetState.borderWidth;
+
+                    Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->currentState, &mapItem->boundingBox, transitionData->reparented);
+                    transitionData->elapsedTime += deltaTime;
+
+                    if (transitionComplete) {
+                        if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING || transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING) {transitionData->state = CLAY_TRANSITION_STATE_IDLE;
+                            transitionData->elapsedTime = 0;
+                            transitionData->reparented = false;
+                        } else if (transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
+                            Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, i);
+                        }
+                    }
+                }
+            }
+        }
+
+        Clay__CalculateFinalLayout(deltaTime, true);
 
         Clay__CloneElementsWithExitTransition();
     }
