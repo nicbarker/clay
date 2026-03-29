@@ -469,8 +469,6 @@ typedef CLAY_PACKED_ENUM {
     CLAY_ATTACH_TO_ELEMENT_WITH_ID,
     // Attaches this floating element to the root of the layout, which combined with the .offset field provides functionality similar to "absolute positioning".
     CLAY_ATTACH_TO_ROOT,
-    // Attaches this floating element to the root of the layout, which combined with the .offset field provides functionality similar to "absolute positioning".
-    CLAY_ATTACH_TO_INLINE,
 } Clay_FloatingAttachToElement;
 
 // Controls whether or not a floating element is clipped to the same clipping rectangle as the element it's attached to.
@@ -1217,6 +1215,9 @@ typedef struct Clay_LayoutElement {
     uint32_t id;
     uint16_t floatingChildrenCount;
     bool isTextElement;
+    // True if the element is currently in an exit transition, and is "synthetic"
+    // i.e. data was retained from previous frames
+    bool exiting;
 } Clay_LayoutElement;
 
 CLAY__ARRAY_DEFINE(Clay_LayoutElement, Clay_LayoutElementArray)
@@ -2333,7 +2334,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                 }
 
                 // Note: setting isFirstChild = false is skipped here
-                if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) {
+                if (childElement->exiting) {
                     continue;
                 }
 
@@ -3060,7 +3061,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes) {
             if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                 for (int32_t i = 0; i < currentElement->children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
-                    if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
+                    if (childElement->exiting) continue;
                     contentSizeCurrent.width += childElement->dimensions.width;
                     contentSizeCurrent.height = CLAY__MAX(contentSizeCurrent.height, childElement->dimensions.height);
                 }
@@ -3076,7 +3077,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes) {
             } else if (layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM) {
                 for (int32_t i = 0; i < currentElement->children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
-                    if (childElement->config.floating.attachTo == CLAY_ATTACH_TO_INLINE) continue;
+                    if (childElement->exiting) continue;
                     contentSizeCurrent.width = CLAY__MAX(contentSizeCurrent.width, childElement->dimensions.width);
                     contentSizeCurrent.height += childElement->dimensions.height;
                 }
@@ -3134,7 +3135,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes) {
                 context->treeNodeVisited.internalArray[newNodeIndex] = false;
 
                 // Update parent offsets
-                if (childElement->config.floating.attachTo != CLAY_ATTACH_TO_INLINE) {
+                if (!childElement->exiting) {
                     if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                         currentElementTreeNode->nextChildOffset.x += childElement->dimensions.width + (float)layoutConfig->childGap;
                     } else {
@@ -4344,9 +4345,9 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         if (parentHashMapItem->generation <= context->generation) {
                             data->elementThisFrame->config.floating.attachTo = CLAY_ATTACH_TO_ROOT;
                             data->elementThisFrame->config.floating.offset = CLAY__INIT(Clay_Vector2) { hashMapItem->boundingBox.x, hashMapItem->boundingBox.y };
-                        } else {
-                            data->elementThisFrame->config.floating.attachTo = CLAY_ATTACH_TO_INLINE;
+                            data->siblingIndex = 0;
                         }
+                        data->elementThisFrame->exiting = true;
                         data->elementThisFrame->config.layout.sizing.width = CLAY_SIZING_FIXED(data->elementThisFrame->dimensions.width);
                         data->elementThisFrame->config.layout.sizing.height = CLAY_SIZING_FIXED(data->elementThisFrame->dimensions.height);
                         data->state = CLAY_TRANSITION_STATE_EXITING;
@@ -4517,12 +4518,11 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     }
                 }
 
-                if (activeProperties != 0) {
-                    if (transitionData->state == CLAY_TRANSITION_STATE_IDLE || transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING) {
-                        transitionData->elapsedTime = 0;
-                        transitionData->initialState = transitionData->currentState;
-                        transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
-                    }
+                if (activeProperties != 0 && transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
+                    transitionData->elapsedTime = 0;
+                    transitionData->initialState = transitionData->currentState;
+                    transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
+                    transitionData->activeProperties = activeProperties;
                 }
 
                 if (transitionData->state == CLAY_TRANSITION_STATE_IDLE) {
@@ -4548,6 +4548,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         if (transitionData->state == CLAY_TRANSITION_STATE_ENTERING || transitionData->state == CLAY_TRANSITION_STATE_TRANSITIONING) {transitionData->state = CLAY_TRANSITION_STATE_IDLE;
                             transitionData->elapsedTime = 0;
                             transitionData->reparented = false;
+                            transitionData->activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
                         } else if (transitionData->state == CLAY_TRANSITION_STATE_EXITING) {
                             Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, i);
                         }
