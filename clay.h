@@ -604,13 +604,13 @@ typedef struct {
 } Clay_TransitionCallbackArguments;
 
 typedef CLAY_PACKED_ENUM {
-    CLAY_TRANSITION_ENTER_TRIGGER_ON_FIRST_PARENT_FRAME,
     CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME,
+    CLAY_TRANSITION_ENTER_TRIGGER_ON_FIRST_PARENT_FRAME,
 } Clay_TransitionEnterTriggerType;
 
 typedef CLAY_PACKED_ENUM {
-    CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS,
     CLAY_TRANSITION_EXIT_SKIP_WHEN_PARENT_EXITS,
+    CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS,
 } Clay_TransitionExitTriggerType;
 
 typedef CLAY_PACKED_ENUM {
@@ -2170,6 +2170,11 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
         for (int32_t i = 0; i < context->transitionDatas.length; i++) {
             Clay__TransitionDataInternal *existingData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
             if (openLayoutElement->id == existingData->elementId) {
+                if (existingData->state == CLAY_TRANSITION_STATE_EXITING) {
+                    existingData->state = CLAY_TRANSITION_STATE_IDLE;
+                    Clay_LayoutElementHashMapItem* hashMapItem = Clay__GetHashMapItem(openLayoutElement->id);
+                    hashMapItem->appearedThisFrame = false;
+                }
                 transitionData = existingData;
                 transitionData->elementThisFrame = openLayoutElement;
                 if (transitionData->parentId != parentElement->id) {
@@ -2885,7 +2890,10 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes) {
                 for (int j = 0; j < context->transitionDatas.length; ++j) {
                     Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
                     if (transitionData->elementId == currentElement->id && transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
-                        currentElementBoundingBox = transitionData->currentState.boundingBox;
+                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) != 0) currentElementBoundingBox.x = transitionData->currentState.boundingBox.x;
+                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) != 0) currentElementBoundingBox.y = transitionData->currentState.boundingBox.y;
+                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) != 0) currentElementBoundingBox.width = transitionData->currentState.boundingBox.width;
+                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) != 0) currentElementBoundingBox.height = transitionData->currentState.boundingBox.height;
                     }
                 }
             }
@@ -4438,8 +4446,8 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
         for (int i = 0; i < context->transitionDatas.length; ++i) {
             Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
             Clay_LayoutElement* currentElement = transitionData->elementThisFrame;
-            Clay_LayoutElementHashMapItem* mapItem = Clay__GetHashMapItem(currentElement->id);
-            Clay_LayoutElementHashMapItem* parentMapItem = Clay__GetHashMapItem(currentElement->id);
+            Clay_LayoutElementHashMapItem* mapItem = Clay__GetHashMapItem(transitionData->elementId);
+            Clay_LayoutElementHashMapItem* parentMapItem = Clay__GetHashMapItem(transitionData->parentId);
             Clay_TransitionData targetState = transitionData->targetState;
             if (transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
                 targetState = CLAY__INIT(Clay_TransitionData) {
@@ -4532,15 +4540,6 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         currentElement->config.transition.duration,
                         currentElement->config.transition.properties
                     });
-
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) == 0) transitionData->currentState.boundingBox.x = targetState.boundingBox.x;
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) == 0) transitionData->currentState.boundingBox.y = targetState.boundingBox.y;
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) == 0) transitionData->currentState.boundingBox.width = targetState.boundingBox.width;
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) == 0) transitionData->currentState.boundingBox.height = targetState.boundingBox.height;
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) == 0) transitionData->currentState.backgroundColor = targetState.backgroundColor;
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) == 0) transitionData->currentState.overlayColor = targetState.overlayColor;
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) == 0) transitionData->currentState.borderColor = targetState.borderColor;
-                    if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) == 0) transitionData->currentState.borderWidth = targetState.borderWidth;
 
                     Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->currentState, &mapItem->boundingBox, transitionData->reparented);
                     transitionData->elapsedTime += deltaTime;
