@@ -1322,8 +1322,7 @@ Clay_LayoutElement* Clay__GetOpenLayoutElement(void) {
 }
 
 uint32_t Clay__GetParentElementId(void) {
-    Clay_Context* context = Clay_GetCurrentContext();
-    return Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 2))->id;
+    return Clay__GetOpenLayoutElement()->id;
 }
 
 Clay_LayoutConfig * Clay__StoreLayoutConfig(Clay_LayoutConfig config) {  return Clay_GetCurrentContext()->booleanWarnings.maxElementsExceeded ? &CLAY_LAYOUT_DEFAULT : Clay__LayoutConfigArray_Add(&Clay_GetCurrentContext()->layoutConfigs, config); }
