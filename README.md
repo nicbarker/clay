@@ -1973,8 +1973,8 @@ typedef struct Clay_TransitionElementConfig
       CLAY_TRANSITION_PROPERTY_BORDER = CLAY_TRANSITION_PROPERTY_BORDER_COLOR | CLAY_TRANSITION_PROPERTY_BORDER_WIDTH
     };
     Clay_TransitionInteractionHandlingType interactionHandling {
-        CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING (default),
-        CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING,
+        CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING_POSITION (default),
+        CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION,
     };
     struct {
         // Function pointer, see below for details
@@ -1996,7 +1996,7 @@ typedef struct Clay_TransitionElementConfig
             CLAY_EXIT_TRANSITION_ORDERING_ABOVE_SIBLINGS,
         };
     } exit;
-} Clay_BorderElementConfig;
+} Clay_TransitionElementConfig;
 ```
 
 **Fields**
@@ -2078,53 +2078,180 @@ typedef enum {
 
 **`.interactionHandling`** - `Clay_TransitionInteractionHandlingType`
 
-`CLAY(CLAY_ID("Transition"), { .transition = { .interactionHandling = CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING } })`
+`CLAY(CLAY_ID("Transition"), { .transition = { .interactionHandling = CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION } })`
 
-This flag controls how interactions are handled when elements are transitions. By default, Clay will ignore interactions i.e. returning `false` for functions like `Clay_Hovered()` when `.interactionHandling` is in the default mode of `CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING`
+This flag controls how interactions are handled when elements are transitioning their **positions**. By default, Clay will ignore interactions i.e. returning `false` for functions like `Clay_Hovered()` when `.interactionHandling` is in the default mode of `CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING`
 
-You can set `.interactionHandling = CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING` if you want to interact with transitioning elements.
+You can set `.interactionHandling = CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION` if you want to interact with transitioning elements.
 
 The full list of values is as follows:
 
 ```C
 typedef enum {
-    CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING (default),
-    CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING,
+    CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING_POSITION (default),
+    CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION,
 } Clay_TransitionInteractionHandlingType;
+```
+
+---
+
+**`.enter.setInitialState`** - `Clay_TransitionData (Clay_TransitionData targetState, Clay_TransitionProperty properties) {}`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .enter = { .setInitialState = { EnterSlideUp } } })`
+
+This function pointer is called the first frame an element appears, and allows you to modify the "initial state" of the element to create an entry transition. Common techniques include offsetting the y position to "slide up / down",
+or using a `.colorOverlay` matched to the background color to fade in.
+
+The function will be called with `Clay_TransitionData` that provides the first-frame state of the element, which you can modify and then return. 
+
+**Note: "Enter" transitions will only trigger if this function pointer is set.**
+
+Here is an example "fade in & slide up" function:
+
+```C
+Clay_TransitionData EnterSlideUp(Clay_TransitionData initialState, Clay_TransitionProperty properties) {
+    Clay_TransitionData targetState = initialState;
+    if (properties & CLAY_TRANSITION_PROPERTY_Y) {
+        targetState.boundingBox.y += 20;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+        // Assuming the background color is white, this will produce an alpha-like "fade-in" effect
+        targetState.overlayColor = (Clay_Color) { 255, 255, 255, 255 };
+    }
+    return targetState;
+}
+```
+
+---
+
+**`.enter.trigger`** - `Clay_TransitionEnterTriggerType`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .enter = { .trigger = CLAY_TRANSITION_ENTER_TRIGGER_ON_FIRST_PARENT_FRAME } } })`
+
+This flag controls whether or not the "enter" transition of this element will trigger on the same frame that the parent element first appeared.
+
+A common use case for enter transitions is adding items to animated lists. Without this flag, the first frame the list is displayed, all the item enter animations will simultaneously trigger, which is usually undesirable.
+
+For cases where you _do_ want enter animations to trigger when the parent first appears, you can set  `.trigger = CLAY_TRANSITION_ENTER_TRIGGER_ON_FIRST_PARENT_FRAME`.
+
+The full list of values is as follows:
+
+```C
+typedef enum trigger {
+  CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME (default),
+  CLAY_TRANSITION_ENTER_TRIGGER_ON_FIRST_PARENT_FRAME,
+} Clay_TransitionEnterTriggerType;
+```
+
+---
+
+**`.exit.setFinalState`** - `Clay_TransitionData (Clay_TransitionData currentState, Clay_TransitionProperty properties) {}`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .exit = { .setFinalState = { ExitSlideDown } } })`
+
+This function pointer is called the frame the element "exits" (i.e. it was in the layout tree last frame, and this frame it isn't).
+It allows you to modify the "final state" of the element to create an exit transition. Common techniques include offsetting the y position to "slide up / down",
+or using a `.colorOverlay` matched to the background color to fade out.
+
+The function will be called with `Clay_TransitionData` that provides the final-frame state of the element, which you can modify and then return.
+
+**Note: "Exit" transitions will only trigger if this function pointer is set.**
+
+Here is an example "fade out & slide down" function:
+
+```C
+Clay_TransitionData ExitSlideDown(Clay_TransitionData currentState, Clay_TransitionProperty properties) {
+    Clay_TransitionData finalState = currentState;
+    if (properties & CLAY_TRANSITION_PROPERTY_Y) {
+        finalState.boundingBox.y += 20;
+    }
+    if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+        // Assuming the background color is white, this will produce an alpha-like "fade-out" effect
+        finalState.overlayColor = (Clay_Color) { 255, 255, 255, 255 };
+    }
+    return finalState;
+}
+```
+
+---
+
+**`.exit.trigger`** - `Clay_TransitionExitTriggerType`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .exit = { .trigger = CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS } } })`
+
+This flag controls whether or not the "exit" transition of this element will trigger on the same frame that the parent element disappears.
+
+A common use case for exit transitions is removing items from animated lists. Without this flag, the frame after the list disappears (due to say, menu navigation), all the item exit animations will simultaneously trigger, which is usually undesirable.
+
+For cases where you _do_ want exit animations to trigger when the parent exits, you can set  `.trigger = CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS`.
+
+The full list of values is as follows:
+
+```C
+typedef enum {
+  CLAY_TRANSITION_EXIT_SKIP_WHEN_PARENT_EXITS (default),
+  CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS,
+} Clay_TransitionExitTriggerType;
+```
+
+---
+
+**`.exit.siblingOrdering`** - `Clay_ExitTransitionSiblingOrdering`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .exit = { .siblingOrdering = CLAY_EXIT_TRANSITION_ORDERING_NATURAL_ORDER } } })`
+
+This flag controls the relative z-ordering of exiting elements.
+
+It's often useful to be able to control whether you want an exiting element to appear "underneath siblings" in its "natural order" (i.e. above the previous sibling, below the subsequent sibling) or "above all siblings."
+
+By default, exiting elements will be underneath siblings as this appears to be the most common case.
+
+The full list of values is as follows:
+
+```C
+typedef enum {
+  CLAY_EXIT_TRANSITION_ORDERING_UNDERNEATH_SIBLINGS (default),
+  CLAY_EXIT_TRANSITION_ORDERING_NATURAL_ORDER,
+  CLAY_EXIT_TRANSITION_ORDERING_ABOVE_SIBLINGS,
+} Clay_ExitTransitionSiblingOrdering;
 ```
 
 ---
 
 **Examples**
 
+See video below for how the following would look.
+
 ```C
-// 300x300 container with a 1px red border around all the edges
-CLAY(CLAY_ID("OuterBorder"), {
-    .layout = { .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) } },
-    .border = { .width = { 1, 1, 1, 1, 0 }, .color = COLOR_RED }
+// Note: for transitions to work, elements need a stable ID from one frame to the next - using loop indexes or CLAY_AUTO_ID will not work.
+CLAY(CLAY_IDI("box", colors[index].id), {
+    .layout.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() },
+    .layout.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
+    .backgroundColor = boxColor,
+    .overlayColor = Clay_Hovered() ? (Clay_Color) { 140, 140, 140, 80 } : (Clay_Color) { 255, 255, 255, 0 },
+    // Transitions will activate once a handler function is defined.
+    .transition = {
+        .handler = Clay_EaseOut,
+        .duration = 0.5f,
+        // A "flag" enum is used to specify which properties to transition, use a bitwise OR (|) to construct the flags.
+        .properties = CLAY_TRANSITION_PROPERTY_WIDTH
+                | CLAY_TRANSITION_PROPERTY_POSITION
+                | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR
+                | CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR,
+        .enter = { .setInitialState = EnterExitSlideUp },
+        .exit = { .setFinalState = EnterExitSlideUp },
+    }
 }) {
-    // ...
-}
-
-// Container with a 3px yellow bottom border
-CLAY(CLAY_ID("OuterBorder"), {
-    .border = { .width = { .bottom = 3 }, .color = COLOR_YELLOW }
-}) {
-    // ...
-}
-
-// Container with a 5px curved border around the edges, and a 5px blue border between all children laid out top to bottom
-CLAY(CLAY_ID("OuterBorder"), {
-    .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM },
-    .border = { .width = { 5, 5, 5, 5, 5 }, .color = COLOR_BLUE }
-}) {
-    // Child
-    // -- 5px blue border will be here --
-    // Child
-    // -- 5px blue border will be here --
-    // Child
+    CLAY_TEXT(CLAY_STRING("Animated Box"), CLAY_TEXT_CONFIG({
+      .fontSize = 32,
+      .textColor = colors[index].id > 29 ? (Clay_Color) { 255, 255, 255, 255 } : (Clay_Color) { 154, 123, 184, 255 }
+    }));
 }
 ```
+
+<video src="https://github.com/user-attachments/assets/a8e5cd88-f0da-4fad-acd0-81f253436bc7" controls></video>
+
+_An example of the transition API action can be found at examples/raylib-transitions_
 
 ### Clay_Color
 

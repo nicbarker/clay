@@ -612,8 +612,8 @@ typedef CLAY_PACKED_ENUM {
 } Clay_TransitionExitTriggerType;
 
 typedef CLAY_PACKED_ENUM {
-    CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING,
-    CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING,
+    CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING_POSITION,
+    CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION,
 } Clay_TransitionInteractionHandlingType;
 
 typedef CLAY_PACKED_ENUM {
@@ -4064,11 +4064,11 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                 for (int I = 0; I < context->transitionDatas.length; ++I) {
                     Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, I);
                     if (data->elementId == currentElement->id) {
-                        if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING) {
+                        if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING_POSITION) {
                             if (data->state == CLAY_TRANSITION_STATE_EXITING || data->state == CLAY_TRANSITION_STATE_ENTERING || ((data->activeProperties & CLAY_TRANSITION_PROPERTY_POSITION) && data->state == CLAY_TRANSITION_STATE_TRANSITIONING)) {
                                 skipTree = true;
                             }
-                        } else if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING) {
+                        } else if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION) {
                             if (data->state == CLAY_TRANSITION_STATE_EXITING) {
                                 skipTree = true;
                             }
