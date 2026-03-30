@@ -1244,7 +1244,6 @@ typedef struct Clay__TransitionDataInternal {
     Clay_TransitionData initialState;
     Clay_TransitionData currentState;
     Clay_TransitionData targetState;
-    Clay_Vector2 parentRelativeTargetPosition;
     Clay_LayoutElement* elementThisFrame;
     uint32_t elementId;
     uint32_t parentId;

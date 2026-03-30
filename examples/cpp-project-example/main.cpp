@@ -16,6 +16,6 @@ int main(void) {
     CLAY_AUTO_ID({ .layout = layoutElement, .backgroundColor = {255,255,255,0} }) {
         CLAY_TEXT(CLAY_STRING(""), CLAY_TEXT_CONFIG({ .fontId = 0 }));
     }
-    Clay_EndLayout();
+    Clay_EndLayout(0);
     return 0;
 }

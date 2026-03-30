@@ -4,7 +4,8 @@
 ### Major Features
 - Microsecond layout performance
 - Flex-box like layout model for complex, responsive layouts including text wrapping, scrolling containers and aspect ratio scaling
-- Single ~4k LOC **clay.h** file with **zero** dependencies (including no standard library)
+- Transition API for easy layout animations
+- Single 4.8k LOC **clay.h** file with **zero** dependencies (including no standard library linking)
 - Wasm support: compile with clang to a 15kb uncompressed **.wasm** file for use in the browser
 - Static arena based memory use with no malloc / free, and low total memory overhead (e.g. ~3.5mb for 8192 layout elements).
 - React-like nested declarative syntax
@@ -91,7 +92,7 @@ int main() {
                 .backgroundColor = COLOR_LIGHT
             }) {
                 CLAY(CLAY_ID("ProfilePictureOuter"), { .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }, .backgroundColor = COLOR_RED }) {
-                    CLAY(CLAY_ID("ProfilePicture"), {.layout = { .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}, .image = { .imageData = &profilePicture } }) {}
+                    CLAY(CLAY_ID("ProfilePicture"), { .layout = { .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}, .image = { .imageData = &profilePicture } }) {}
                     CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
                 }
 
@@ -113,7 +114,7 @@ int main() {
 
             switch (renderCommand->commandType) {
                 case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                    DrawRectangle( renderCommand->boundingBox, renderCommand->renderData.rectangle.backgroundColor);
+                    DrawRectangle(renderCommand->boundingBox, renderCommand->renderData.rectangle.backgroundColor);
                 }
                 // ... Implement handling of other command types
             }
@@ -456,6 +457,40 @@ switch (renderCommand->commandType) {
 ```
 
 More specific details can be found in the full [Custom Element API](#clay_customelementconfig).
+
+### Transitions
+Clay includes a "Transition" API, which allows you to smoothly animate / tween from one state to another.
+Both layout-affecting properties such as `width` and `height`, as well as non-layout properties such as `backgroundColor` are supported.
+See the [transition documentation]() for more info.
+
+```C
+// Note: for transitions to work, elements need a stable ID from one frame to the next - using loop indexes or CLAY_AUTO_ID will not work.
+CLAY(CLAY_IDI("box", colors[index].id), {
+    .layout.sizing = { CLAY_SIZING_GROW(), CLAY_SIZING_GROW() },
+    .layout.childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER },
+    .backgroundColor = boxColor,
+    .overlayColor = Clay_Hovered() ? (Clay_Color) { 140, 140, 140, 80 } : (Clay_Color) { 255, 255, 255, 0 },
+    // Transitions will activate once a handler function is defined.
+    .transition = {
+        .handler = Clay_EaseOut,
+        .duration = 0.5f,
+        // A "flag" enum is used to specify which properties to transition, use a bitwise OR (|) to construct the flags.
+        .properties = CLAY_TRANSITION_PROPERTY_WIDTH | CLAY_TRANSITION_PROPERTY_POSITION | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR | CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR,
+        .enter = { .setInitialState = EnterExitSlideUp },
+        .exit = { .setFinalState = EnterExitSlideUp },
+    }
+}) {
+    Clay_OnHover(HandleCellButtonInteraction, (void*)(uint64_t)index);
+    CLAY_TEXT(((Clay_String) { .length = 2, .chars = colors[index].stringId, .isStaticallyAllocated = true }), CLAY_TEXT_CONFIG({
+        .fontSize = 32,
+        .textColor = colors[index].id > 29 ? (Clay_Color) {255, 255, 255, 255} : (Clay_Color) {154, 123, 184, 255 }
+    }));
+}
+```
+
+<video src="https://github.com/user-attachments/assets/a8e5cd88-f0da-4fad-acd0-81f253436bc7" controls></video>
+
+_An example of the transition API action can be found at examples/raylib-transitions_
 
 ### Retained Mode Rendering
 Clay was originally designed for [Immediate Mode](https://www.youtube.com/watch?v=Z1qyvQsjK5Y) rendering - where the entire UI is redrawn every frame. This may not be possible with your platform, renderer design or performance constraints.
@@ -1900,6 +1935,196 @@ switch (renderCommand->commandType) {
 **Rendering**
 
 Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand` with `commandType = CLAY_RENDER_COMMAND_TYPE_CUSTOM` will be created.
+
+### Clay_TransitionElementConfig
+
+**Usage**
+
+`CLAY(CLAY_ID("Transition"), { .transition = { ...transition config } }) {}`
+
+**Notes**
+
+`Clay_TransitionElementConfig` is used to configure element "transitions", which are animations between states.
+A `.handler` function and `.properties` must be provided for transitions to occur.
+
+**Struct Definition (Pseudocode)**
+
+```C
+typedef struct Clay_TransitionElementConfig
+{
+    // Handler function pointer for computing current frame state, see below for more info
+    bool (*handler)(Clay_TransitionCallbackArguments arguments);
+    float duration;
+    // Note: this is a flags field. You can pass multiple properties using a bitwise OR, e.g. CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR | CLAY_TRANSITION_PROPERTY_CORNER_RADIUS
+    Clay_TransitionProperty properties = {
+      CLAY_TRANSITION_PROPERTY_NONE (default),
+      CLAY_TRANSITION_PROPERTY_X,
+      CLAY_TRANSITION_PROPERTY_Y,
+      CLAY_TRANSITION_PROPERTY_POSITION = CLAY_TRANSITION_PROPERTY_X | CLAY_TRANSITION_PROPERTY_Y,
+      CLAY_TRANSITION_PROPERTY_WIDTH,
+      CLAY_TRANSITION_PROPERTY_HEIGHT,
+      CLAY_TRANSITION_PROPERTY_DIMENSIONS = CLAY_TRANSITION_PROPERTY_WIDTH | CLAY_TRANSITION_PROPERTY_HEIGHT,
+      CLAY_TRANSITION_PROPERTY_BOUNDING_BOX = CLAY_TRANSITION_PROPERTY_POSITION | CLAY_TRANSITION_PROPERTY_DIMENSIONS,
+      CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR,
+      CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR,
+      CLAY_TRANSITION_PROPERTY_CORNER_RADIUS,
+      CLAY_TRANSITION_PROPERTY_BORDER_COLOR,
+      CLAY_TRANSITION_PROPERTY_BORDER_WIDTH,
+      CLAY_TRANSITION_PROPERTY_BORDER = CLAY_TRANSITION_PROPERTY_BORDER_COLOR | CLAY_TRANSITION_PROPERTY_BORDER_WIDTH
+    };
+    Clay_TransitionInteractionHandlingType interactionHandling {
+        CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING (default),
+        CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING,
+    };
+    struct {
+        // Function pointer, see below for details
+        Clay_TransitionData (*setInitialState)(Clay_TransitionData targetState, Clay_TransitionProperty properties);
+        Clay_TransitionEnterTriggerType trigger {
+            CLAY_TRANSITION_ENTER_SKIP_ON_FIRST_PARENT_FRAME (default),
+            CLAY_TRANSITION_ENTER_TRIGGER_ON_FIRST_PARENT_FRAME,
+        };
+    } enter;
+    struct {
+        Clay_TransitionData (*setFinalState)(Clay_TransitionData initialState, Clay_TransitionProperty properties);
+        Clay_TransitionExitTriggerType trigger {
+            CLAY_TRANSITION_EXIT_SKIP_WHEN_PARENT_EXITS (default),
+            CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS,
+        };
+        Clay_ExitTransitionSiblingOrdering siblingOrdering {
+            CLAY_EXIT_TRANSITION_ORDERING_UNDERNEATH_SIBLINGS (default),
+            CLAY_EXIT_TRANSITION_ORDERING_NATURAL_ORDER,
+            CLAY_EXIT_TRANSITION_ORDERING_ABOVE_SIBLINGS,
+        };
+    } exit;
+} Clay_BorderElementConfig;
+```
+
+**Fields**
+
+**`.handler`** - `bool (Clay_TransitionCallbackArguments arguments) {}`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .handler = Clay_EaseOut } })`
+
+When a transition has begun, this function will be called each frame to determine the current state of the element in transition. Clay provides the built-in `Clay_EaseOut` function which uses a standard [EaseOut](https://easings.net/) curve.
+
+If you want to implement your own transition handler, the handler function takes [Clay_TransitionCallbackArguments](todo) and returns a `bool` to indicate whether the transition has finished or not (`return true` means the transition is complete, `return false` means that the handler should be called again next frame)
+Consider inspecting the source of the [Clay_EaseOut]() function for more information.
+
+```C
+// Example custom handler
+bool TransitionHandler(Clay_TransitionCallbackArguments arguments) {
+    float ratio = 1;
+    if (arguments.duration > 0) {
+        // You may want to guard against durations of zero if you use them
+        ratio = arguments.elapsedTime / arguments.duration;
+    }
+    float lerpAmount = (1 - powf(1 - CLAY__MIN(ratio, 1.f), 3.0f));
+    // Only animate properties that were specified in the original config
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_X) {
+        // Clay provides the initial state from when the transition first started, as well as the target state, to allow
+        // easy interpolation
+        arguments.current->boundingBox.x = Lerp(arguments.initial.boundingBox.x, arguments.target.boundingBox.x, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_Y) {
+        arguments.current->boundingBox.y = Lerp(arguments.initial.boundingBox.y, arguments.target.boundingBox.y, lerpAmount);
+    }
+    // etc...
+    
+    // End (return true) once elapsedTime is greater than duration 
+    return ratio >= 1;
+}
+```
+
+---
+
+**`.duration`** - `float`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .duration = 0.2f } })`
+
+The duration in seconds that the transition should take to arrive at its target state. Passed through to the handler function.
+
+---
+
+**`.properties`** - `Clay_TransitionProperty`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .properties = CLAY_TRANSITION_PROPERTY_X | CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR } })`
+
+A flag field containing the properties on which to transition. Any properties that change but are not listed here will immediately snap to their target value.
+
+This flag is a bitfield, which means that you will use bitwise operations to interact with it. For example, use bitwise OR `|` to combine multiple flags, or bitwise AND `&` to test if a flag is switched on.
+
+The full list of available transition properties is as follows:
+
+```C
+typedef enum {
+      CLAY_TRANSITION_PROPERTY_NONE (default),
+      CLAY_TRANSITION_PROPERTY_X,
+      CLAY_TRANSITION_PROPERTY_Y,
+      CLAY_TRANSITION_PROPERTY_POSITION = CLAY_TRANSITION_PROPERTY_X | CLAY_TRANSITION_PROPERTY_Y,
+      CLAY_TRANSITION_PROPERTY_WIDTH,
+      CLAY_TRANSITION_PROPERTY_HEIGHT,
+      CLAY_TRANSITION_PROPERTY_DIMENSIONS = CLAY_TRANSITION_PROPERTY_WIDTH | CLAY_TRANSITION_PROPERTY_HEIGHT,
+      CLAY_TRANSITION_PROPERTY_BOUNDING_BOX = CLAY_TRANSITION_PROPERTY_POSITION | CLAY_TRANSITION_PROPERTY_DIMENSIONS,
+      CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR,
+      CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR,
+      CLAY_TRANSITION_PROPERTY_CORNER_RADIUS,
+      CLAY_TRANSITION_PROPERTY_BORDER_COLOR,
+      CLAY_TRANSITION_PROPERTY_BORDER_WIDTH,
+      CLAY_TRANSITION_PROPERTY_BORDER = CLAY_TRANSITION_PROPERTY_BORDER_COLOR | CLAY_TRANSITION_PROPERTY_BORDER_WIDTH
+} Clay_TransitionProperty;
+```
+
+---
+
+**`.interactionHandling`** - `Clay_TransitionInteractionHandlingType`
+
+`CLAY(CLAY_ID("Transition"), { .transition = { .interactionHandling = CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING } })`
+
+This flag controls how interactions are handled when elements are transitions. By default, Clay will ignore interactions i.e. returning `false` for functions like `Clay_Hovered()` when `.interactionHandling` is in the default mode of `CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING`
+
+You can set `.interactionHandling = CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING` if you want to interact with transitioning elements.
+
+The full list of values is as follows:
+
+```C
+typedef enum {
+    CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING (default),
+    CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING,
+} Clay_TransitionInteractionHandlingType;
+```
+
+---
+
+**Examples**
+
+```C
+// 300x300 container with a 1px red border around all the edges
+CLAY(CLAY_ID("OuterBorder"), {
+    .layout = { .sizing = { .width = CLAY_SIZING_FIXED(300), .height = CLAY_SIZING_FIXED(300) } },
+    .border = { .width = { 1, 1, 1, 1, 0 }, .color = COLOR_RED }
+}) {
+    // ...
+}
+
+// Container with a 3px yellow bottom border
+CLAY(CLAY_ID("OuterBorder"), {
+    .border = { .width = { .bottom = 3 }, .color = COLOR_YELLOW }
+}) {
+    // ...
+}
+
+// Container with a 5px curved border around the edges, and a 5px blue border between all children laid out top to bottom
+CLAY(CLAY_ID("OuterBorder"), {
+    .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM },
+    .border = { .width = { 5, 5, 5, 5, 5 }, .color = COLOR_BLUE }
+}) {
+    // Child
+    // -- 5px blue border will be here --
+    // Child
+    // -- 5px blue border will be here --
+    // Child
+}
+```
 
 ### Clay_Color
 
