@@ -245,11 +245,11 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 EndScissorMode();
                 break;
             }
-            case CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START: {
+            case CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START: {
                 SetColorOverlay(CLAY_COLOR_TO_RAYLIB_COLOR(renderCommand->renderData.overlayColor.color));
                 break;
             }
-            case CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END: {
+            case CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END: {
                 DisableColorOverlay();
             }
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {

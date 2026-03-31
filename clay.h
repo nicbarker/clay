@@ -699,7 +699,7 @@ typedef struct Clay_ClipRenderData {
     bool vertical;
 } Clay_ClipRenderData;
 
-// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
+// Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END
 typedef struct Clay_OverlayColorRenderData {
     Clay_Color color;
 } Clay_OverlayColorRenderData;
@@ -730,7 +730,7 @@ typedef union Clay_RenderData {
     Clay_BorderRenderData border;
     // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START|END
     Clay_ClipRenderData clip;
-    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START|END
+    // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START|END
     Clay_OverlayColorRenderData overlayColor;
 } Clay_RenderData;
 
@@ -776,9 +776,9 @@ typedef CLAY_PACKED_ENUM {
     // The renderer should finish any previously active clipping, and begin rendering elements in full again.
     CLAY_RENDER_COMMAND_TYPE_SCISSOR_END,
     // The renderer should begin performing a "color overlay" on all subsequent render commands until disabled again.
-    CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
+    CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START,
     // The renderer should disable any previously active "color overlay" and render elements with their standard colors again.
-    CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END,
+    CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END,
     // The renderer should provide a custom implementation for handling this render command based on its .customData
     CLAY_RENDER_COMMAND_TYPE_CUSTOM,
 } Clay_RenderCommandType;
@@ -2865,7 +2865,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                                 .userData = currentElement->config.userData,
                                 .id = currentElement->id,
                                 .zIndex = root->zIndex,
-                                .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END,
                         };
                         Clay__AddRenderCommand(renderCommand);
                     }
@@ -2976,7 +2976,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                             .userData = currentElement->config.userData,
                             .id = currentElement->id,
                             .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START,
+                            .commandType = CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START,
                         };
                         Clay__AddRenderCommand(renderCommand);
                     }

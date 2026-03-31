@@ -1205,7 +1205,7 @@ Uses [Clay_Color](#clay_color). Conventionally accepts `rgba` float values betwe
 
 Uses [Clay_Color](#clay_color). Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
 
-Specifying `.overlayColor` will cause two new render commands to be emitted: `COLOR_OVERLAY_BEGIN` immediately, and `COLOR_OVERLAY_END` after this elements subtree has been emitted.
+Specifying `.overlayColor` will cause two new render commands to be emitted: `OVERLAY_COLOR_BEGIN` immediately, and `OVERLAY_COLOR_END` after this elements subtree has been emitted.
 
 This instructs the renderer to begin applying a color overlay to this element, and all child elements. The color overlay effect is similar to glsl's `mix(source, target, alpha)`. As a result, the strength of the color overlay is controlled by the `.a` channel of `.overlayColor`.
 Zero alpha means "all child colors remain the same", full alpha means "all child colours are replaced by the RGB overlayColor", and values in between mean "lerp from the child color to the overlay color by the alpha".
@@ -2498,8 +2498,8 @@ An enum indicating how this render command should be handled. Possible values in
 - `CLAY_RENDER_COMMAND_TYPE_IMAGE` - An image should be drawn, configured with `.renderData.image`
 - `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` - Named after [glScissor](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glScissor.xhtml), this indicates that the renderer should begin culling any subsequent pixels that are drawn outside the `.boundingBox` of this render command.
 - `CLAY_RENDER_COMMAND_TYPE_SCISSOR_END` - Only ever appears after a matching `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` command, and indicates that the scissor has ended.
-- `CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START` - The renderer should begin applying an overlay color to all subsequent render commands, similar to glsl's `mix(source, target, alpha)`.
-- `CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END` - The previous `COLOR_OVERLAY` should be removed. Note: nested color overlays may require a stack data structure on the renderer side.
+- `CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START` - The renderer should begin applying an overlay color to all subsequent render commands, similar to glsl's `mix(source, target, alpha)`.
+- `CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END` - The previous `OVERLAY_COLOR` should be removed. Note: nested color overlays may require a stack data structure on the renderer side.
 - `CLAY_RENDER_COMMAND_TYPE_CUSTOM` - A custom render command controlled by the user, configured with `.renderData.custom`
 
 ---
