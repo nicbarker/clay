@@ -57,7 +57,7 @@
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define CLAY_TEXT_CONFIG(...) CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__)
+#define CLAY_TEXT_CONFIG(...) __VA_ARGS__
 
 #define CLAY_BORDER_OUTSIDE(widthValue) {widthValue, widthValue, widthValue, widthValue, 0}
 
@@ -159,7 +159,7 @@ static inline void Clay__SuppressUnusedLatchDefinitionVariableWarning(void) { (v
 #define CLAY__WRAPPER_STRUCT(type) typedef struct { type wrapped; } CLAY__WRAPPER_TYPE(type)
 #define CLAY__CONFIG_WRAPPER(type, ...) (CLAY__INIT(CLAY__WRAPPER_TYPE(type)) { __VA_ARGS__ }).wrapped
 
-#define CLAY_TEXT(text, ...) Clay__OpenTextElement(text, __VA_ARGS__)
+#define CLAY_TEXT(text, ...) Clay__OpenTextElement(text, CLAY__CONFIG_WRAPPER(Clay_TextElementConfig, __VA_ARGS__))
 
 #ifdef __cplusplus
 
@@ -694,15 +694,15 @@ typedef struct Clay_CustomRenderData {
 } Clay_CustomRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
-typedef struct Clay_ScrollRenderData {
+typedef struct Clay_ClipRenderData {
     bool horizontal;
     bool vertical;
 } Clay_ClipRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
-typedef struct Clay_ColorOverlayRenderData {
+typedef struct Clay_OverlayColorRenderData {
     Clay_Color color;
-} Clay_ColorOverlayRenderData;
+} Clay_OverlayColorRenderData;
 
 // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_BORDER
 typedef struct Clay_BorderRenderData {
@@ -731,7 +731,7 @@ typedef union Clay_RenderData {
     // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START|END
     Clay_ClipRenderData clip;
     // Render command data when commandType == CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START|END
-    Clay_ColorOverlayRenderData colorOverlay;
+    Clay_OverlayColorRenderData overlayColor;
 } Clay_RenderData;
 
 // Miscellaneous Structs & Enums ---------------------------------
@@ -2974,7 +2974,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                     if (currentElement->config.overlayColor.a > 0) {
                         Clay_RenderCommand renderCommand = {
                             .renderData = {
-                                .colorOverlay = { .color = currentElement->config.overlayColor }
+                                .overlayColor = { .color = currentElement->config.overlayColor }
                             },
                             .userData = currentElement->config.userData,
                             .id = currentElement->id,
@@ -3301,7 +3301,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                 }
                 if (currentElementData->elementId.stringId.length > 0) {
                     CLAY_AUTO_ID() {
-                        Clay_TextElementConfig textConfig = offscreen ? CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }) : Clay__DebugView_TextNameConfig;
+                        Clay_TextElementConfig textConfig = offscreen ? CLAY__INIT(Clay_TextElementConfig) { .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 } : Clay__DebugView_TextNameConfig;
                         CLAY_TEXT(currentElementData->elementId.stringId, textConfig);
                         if (currentElementData->elementId.offset != 0) {
                             CLAY_TEXT(CLAY_STRING(" ("), textConfig);
@@ -3356,7 +3356,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
             if (currentElement->isTextElement) {
                 layoutData.rowCount++;
                 Clay__TextElementData *textElementData = &currentElement->textElementData;
-                Clay_TextElementConfig rawTextConfig = offscreen ? CLAY_TEXT_CONFIG({ .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 }) : Clay__DebugView_TextNameConfig;
+                Clay_TextElementConfig rawTextConfig = offscreen ? CLAY__INIT(Clay_TextElementConfig) { .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 } : Clay__DebugView_TextNameConfig;
                 CLAY_AUTO_ID({ .layout = { .sizing = { .height = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_ROW_HEIGHT)}, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } } }) {
                     CLAY_AUTO_ID({ .layout = { .sizing = {.width = CLAY_SIZING_FIXED(CLAY__DEBUGVIEW_INDENT_WIDTH + 16) } } }) {}
                     CLAY_TEXT(CLAY_STRING("\""), rawTextConfig);

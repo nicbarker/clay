@@ -153,7 +153,7 @@ int main(void) {
 	// Moved into a separate function for brevity.
 	Layout();
 
-	Clay_RenderCommandArray commands = Clay_EndLayout();
+	Clay_RenderCommandArray commands = Clay_EndLayout(0);
 	// Pass our layout to the cairo backend
 	Clay_Cairo_Render(commands, fonts);
 

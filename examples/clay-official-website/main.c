@@ -110,7 +110,7 @@ void LandingPageMobile() {
 void FeatureBlocksDesktop() {
     CLAY(CLAY_ID("FeatureBlocksOuter"), { .layout = { .sizing = { CLAY_SIZING_GROW(0) } } }) {
         CLAY(CLAY_ID("FeatureBlocksInner"), { .layout = { .sizing = { CLAY_SIZING_GROW(0) }, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }, .border = { .width = { .betweenChildren = 2 }, .color = COLOR_RED } }) {
-            Clay_TextElementConfig *textConfig = CLAY_TEXT_CONFIG({ .fontSize = 24, .fontId = FONT_ID_BODY_24, .textColor = COLOR_RED });
+            Clay_TextElementConfig textConfig = CLAY_TEXT_CONFIG({ .fontSize = 24, .fontId = FONT_ID_BODY_24, .textColor = COLOR_RED });
             CLAY(CLAY_ID("HFileBoxOuter"), { .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_PERCENT(0.5f) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {50, 50, 32, 32}, .childGap = 8 } }) {
                 CLAY(CLAY_ID("HFileIncludeOuter"), { .layout = { .padding = {8, 4} }, .backgroundColor = COLOR_RED, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
                     CLAY_TEXT(CLAY_STRING("#include clay.h"), CLAY_TEXT_CONFIG({ .fontSize = 24, .fontId = FONT_ID_BODY_24, .textColor = COLOR_LIGHT }));
@@ -129,7 +129,7 @@ void FeatureBlocksDesktop() {
 
 void FeatureBlocksMobile() {
     CLAY(CLAY_ID("FeatureBlocksInner"), { .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(0) } }, .border = { .width = { .betweenChildren = 2 }, .color = COLOR_RED } }) {
-        Clay_TextElementConfig *textConfig = CLAY_TEXT_CONFIG({ .fontSize = 24, .fontId = FONT_ID_BODY_24, .textColor = COLOR_RED });
+        Clay_TextElementConfig textConfig = CLAY_TEXT_CONFIG({ .fontSize = 24, .fontId = FONT_ID_BODY_24, .textColor = COLOR_RED });
         CLAY(CLAY_ID("HFileBoxOuter"), { .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(0) }, .childAlignment = {0, CLAY_ALIGN_Y_CENTER}, .padding = {16, 16, 32, 32}, .childGap = 8 } }) {
             CLAY(CLAY_ID("HFileIncludeOuter"), { .layout = { .padding = {8, 4} }, .backgroundColor = COLOR_RED, .cornerRadius = CLAY_CORNER_RADIUS(8) }) {
                 CLAY_TEXT(CLAY_STRING("#include clay.h"), CLAY_TEXT_CONFIG({ .fontSize = 24, .fontId = FONT_ID_BODY_24, .textColor = COLOR_LIGHT }));
@@ -342,7 +342,7 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
     Clay_BeginLayout();
     CLAY(CLAY_ID("OuterContainer"), { .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) } }, .backgroundColor = COLOR_LIGHT }) {
         CLAY(CLAY_ID("Header"), { .layout = { .sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(50) }, .childAlignment = { 0, CLAY_ALIGN_Y_CENTER }, .childGap = 16, .padding = { 32, 32 } } }) {
-            CLAY_TEXT(CLAY_STRING("Clay"), &headerTextConfig);
+            CLAY_TEXT(CLAY_STRING("Clay"), headerTextConfig);
             CLAY(CLAY_ID("Spacer"), { .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) } } }) {}
             if (!mobileScreen) {
                 CLAY(CLAY_ID("LinkExamplesOuter"), { .layout = { .padding = {8, 8} } }) {
@@ -426,7 +426,7 @@ Clay_RenderCommandArray CreateLayout(bool mobileScreen, float lerpValue) {
             .cornerRadius = CLAY_CORNER_RADIUS(5)
         }) {}
     }
-    return Clay_EndLayout();
+    return Clay_EndLayout(0);
 }
 
 bool debugModeEnabled = false;

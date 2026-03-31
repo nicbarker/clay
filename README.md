@@ -93,7 +93,7 @@ int main() {
             }) {
                 CLAY(CLAY_ID("ProfilePictureOuter"), { .layout = { .sizing = { .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(16), .childGap = 16, .childAlignment = { .y = CLAY_ALIGN_Y_CENTER } }, .backgroundColor = COLOR_RED }) {
                     CLAY(CLAY_ID("ProfilePicture"), { .layout = { .sizing = { .width = CLAY_SIZING_FIXED(60), .height = CLAY_SIZING_FIXED(60) }}, .image = { .imageData = &profilePicture } }) {}
-                    CLAY_TEXT(CLAY_STRING("Clay - UI Library"), CLAY_TEXT_CONFIG({ .fontSize = 24, .textColor = {255, 255, 255, 255} }));
+                    CLAY_TEXT(CLAY_STRING("Clay - UI Library"), { .fontSize = 24, .textColor = {255, 255, 255, 255} });
                 }
 
                 // Standard C code like loops etc work inside components
@@ -229,7 +229,7 @@ Child elements are added by opening a block: `{}` after calling the `CLAY()` mac
 // Parent element with 8px of padding
 CLAY(CLAY_ID("parent"), { .layout = { .padding = CLAY_PADDING_ALL(8) } }) {
     // Child element 1
-    CLAY_TEXT(CLAY_STRING("Hello World"), CLAY_TEXT_CONFIG({ .fontSize = 16 }));
+    CLAY_TEXT(CLAY_STRING("Hello World"), { .fontSize = 16 });
     // Child element 2 with red background
     CLAY((CLAY_ID("child"), { .backgroundColor = COLOR_RED }) {
         // etc
@@ -361,7 +361,7 @@ If you want to query mouse / pointer overlaps outside layout declarations, you c
 ```C
 // Reminder: Clay_SetPointerState must be called before functions that rely on pointer position otherwise it will have no effect
 Clay_Vector2 mousePosition = { x, y };
-Clay_SetPointerState(mousePosition);
+Clay_SetPointerState(mousePosition, mouseButtonDown(0));
 // ...
 // If profile picture was clicked
 if (mouseButtonDown(0) && Clay_PointerOver(Clay_GetElementId("ProfilePicture"))) {
@@ -414,7 +414,7 @@ A classic example use case for floating elements is tooltips and modals.
 ```C
 // The two text elements will be laid out top to bottom, and the floating container
 // will be attached to "Outer"
-CLAY(CLAY_ID("Outer"), { .layout = { .layoutDirection = TOP_TO_BOTTOM } }) {
+CLAY(CLAY_ID("Outer"), { .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM } }) {
     CLAY_TEXT(text, &headerTextConfig);
     CLAY(CLAY_ID("Tooltip"), { .floating = { .attachTo = CLAY_ATTACH_TO_PARENT } }) {}
     CLAY_TEXT(text, &headerTextConfig);
@@ -509,10 +509,10 @@ CLAY(CLAY_IDI("box", colors[index].id), {
     }
 }) {
     Clay_OnHover(HandleCellButtonInteraction, (void*)(uint64_t)index);
-    CLAY_TEXT(((Clay_String) { .length = 2, .chars = colors[index].stringId, .isStaticallyAllocated = true }), CLAY_TEXT_CONFIG({
+    CLAY_TEXT(((Clay_String) { .length = 2, .chars = colors[index].stringId, .isStaticallyAllocated = true }), {
         .fontSize = 32,
         .textColor = colors[index].id > 29 ? (Clay_Color) {255, 255, 255, 255} : (Clay_Color) {154, 123, 184, 255 }
-    }));
+    });
 }
 ```
 
@@ -925,7 +925,7 @@ Note that `Clay_TextElementConfig` uses `uint32_t fontId`. Font ID to font asset
 **Struct API (Pseudocode)**
 
 ```C
-// CLAY_TEXT(text, CLAY_TEXT_CONFIG({ .member = value })) supports these options
+// CLAY_TEXT(text, { .member = value }) supports these options
 Clay_TextElementConfig {
     Clay_Color textColor {
         float r; float g; float b; float a;
@@ -946,7 +946,7 @@ Clay_TextElementConfig {
 
 **`.textColor`**
 
-`CLAY_TEXT_CONFIG(.textColor = {120, 120, 120, 255})`
+`CLAY_TEXT(text, { .textColor = {120, 120, 120, 255} })`
 
 Uses [Clay_Color](#clay_color). Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
 
@@ -954,7 +954,7 @@ Uses [Clay_Color](#clay_color). Conventionally accepts `rgba` float values betwe
 
 **`.fontId`**
 
-`CLAY_TEXT_CONFIG(.fontId = FONT_ID_LATO)`
+`CLAY_TEXT(text, { .fontId = FONT_ID_LATO })`
 
 It's up to the user to load fonts and create a mapping from `fontId` to a font that can be measured and rendered.
 
@@ -962,7 +962,7 @@ It's up to the user to load fonts and create a mapping from `fontId` to a font t
 
 **`.fontSize`**
 
-`CLAY_TEXT_CONFIG(.fontSize = 16)`
+`CLAY_TEXT(text, { .fontSize = 16 })`
 
 Font size is generally thought of as `x pixels tall`, but interpretation is left up to the user & renderer.
 
@@ -970,7 +970,7 @@ Font size is generally thought of as `x pixels tall`, but interpretation is left
 
 **`.letterSpacing`**
 
-`CLAY_TEXT_CONFIG(.letterSpacing = 1)`
+`CLAY_TEXT(text, { .letterSpacing = 1 })`
 
 `.letterSpacing` results in **horizontal** white space between individual rendered characters.
 
@@ -978,7 +978,7 @@ Font size is generally thought of as `x pixels tall`, but interpretation is left
 
 **`.lineHeight`**
 
-`CLAY_TEXT_CONFIG(.lineHeight = 20)`
+`CLAY_TEXT(text, { .lineHeight = 20 })`
 
 `.lineHeight` - when non zero - forcibly sets the `height` of each wrapped line of text to `.lineheight` pixels tall. Will affect the layout of both parents and siblings. A value of `0` will use the measured height of the font.
 
@@ -986,7 +986,7 @@ Font size is generally thought of as `x pixels tall`, but interpretation is left
 
 **`.wrapMode`**
 
-`CLAY_TEXT_CONFIG(.wrapMode = CLAY_TEXT_WRAP_NONE)`
+`CLAY_TEXT(text, { .wrapMode = CLAY_TEXT_WRAP_NONE })`
 
 `.wrapMode` specifies under what conditions text should [wrap](https://en.wikipedia.org/wiki/Line_wrap_and_word_wrap).
 
@@ -1038,7 +1038,7 @@ CLAY(CLAY_ID("Button"), {
 }
 
 // Later on outside of layout code
-bool buttonIsHovered = Clay_IsPointerOver(Clay_GetElementId("Button"));
+bool buttonIsHovered = Clay_PointerOver(Clay_GetElementId("Button"));
 if (buttonIsHovered && leftMouseButtonPressed) {
     // ... do some click handling
 }
@@ -1148,7 +1148,6 @@ The **Clay_ElementDeclaration** struct is the only argument to the `CLAY()` macr
 
 ```C
 typedef struct {
-    Clay_ElementId id;
     Clay_LayoutConfig layout;
     Clay_Color backgroundColor;
     Clay_CornerRadius cornerRadius;
@@ -1284,7 +1283,7 @@ CLAY(CLAY_ID("ScrollingContainer"), {
 }
 ```
 
-Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE` will be created, with `renderCommand->elementConfig.rectangleElementConfig` containing a pointer to the element's Clay_RectangleElementConfig.
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_RECTANGLE` will be created, with `renderCommand->renderData.rectangle` containing a pointer to the element's Clay_RectangleElementConfig.
 
 ### Clay_LayoutConfig
 
@@ -1435,7 +1434,7 @@ YourImage *imageToRender = renderCommand->elementConfig.imageElementConfig->imag
 
 **Rendering**
 
-Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->renderData.image->imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `renderCommand->renderData.image->backgroundColor` with the image.
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->renderData.image.imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `renderCommand->renderData.image.backgroundColor` with the image.
 
 ---
 
@@ -1529,7 +1528,7 @@ YourImage *imageToRender = renderCommand->elementConfig.imageElementConfig->imag
 
 **Rendering**
 
-Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->renderData.image->imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `renderCommand->renderData.image->backgroundColor` with the image.
+Element is subject to [culling](#visibility-culling). Otherwise, a single `Clay_RenderCommand`s with `commandType = CLAY_RENDER_COMMAND_TYPE_IMAGE` will be created. The user will need to access `renderCommand->renderData.image.imageData` to retrieve image data referenced during layout creation. It's also up to the user to decide how / if they wish to blend `renderCommand->renderData.image.backgroundColor` with the image.
 
 ---
 
@@ -1717,11 +1716,11 @@ Clay_FloatingElementConfig {
     };
     uint32_t parentId;
     int16_t zIndex;
-    Clay_FloatingAttachPoints attachPoint {
+    Clay_FloatingAttachPoints attachPoints {
         .element = CLAY_ATTACH_POINT_LEFT_TOP (default) | CLAY_ATTACH_POINT_LEFT_CENTER | CLAY_ATTACH_POINT_LEFT_BOTTOM | CLAY_ATTACH_POINT_CENTER_TOP | CLAY_ATTACH_POINT_CENTER_CENTER | CLAY_ATTACH_POINT_CENTER_BOTTOM | CLAY_ATTACH_POINT_RIGHT_TOP | CLAY_ATTACH_POINT_RIGHT_CENTER | CLAY_ATTACH_POINT_RIGHT_BOTTOM
         .parent = CLAY_ATTACH_POINT_LEFT_TOP (default) | CLAY_ATTACH_POINT_LEFT_CENTER | CLAY_ATTACH_POINT_LEFT_BOTTOM | CLAY_ATTACH_POINT_CENTER_TOP | CLAY_ATTACH_POINT_CENTER_CENTER | CLAY_ATTACH_POINT_CENTER_BOTTOM | CLAY_ATTACH_POINT_RIGHT_TOP | CLAY_ATTACH_POINT_RIGHT_CENTER | CLAY_ATTACH_POINT_RIGHT_BOTTOM
     };
-    Clay_FloatingAttachToElement attachTo {
+    Clay_PointerCaptureMode pointerCaptureMode {
         CLAY_POINTER_CAPTURE_MODE_CAPTURE (default),
         CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
     };
@@ -1752,7 +1751,7 @@ Used to expand the width and height of the floating container _before_ laying ou
 
 ---
 
-**`.zIndex`** - `float`
+**`.zIndex`** - `int16_t`
 
 `CLAY(CLAY_ID("Floating"), { .floating = { .zIndex = 1 } })`
 
@@ -1822,18 +1821,18 @@ CLAY(CLAY_IDI("SidebarButton", 5), { }) {
 }
 
 // Any other point in the hierarchy
-CLAY(CLAY_ID("OptionTooltip"), { .floating = { .attachTo = CLAY_ATTACH_TO_ELEMENT_ID, .parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex).id }) {
+CLAY(CLAY_ID("OptionTooltip"), { .floating = { .attachTo = CLAY_ATTACH_TO_ELEMENT_WITH_ID, .parentId = CLAY_IDI("SidebarButton", tooltip.attachedButtonIndex).id }) {
     // Tooltip contents...
 }
 ```
 
 ---
 
-**`.attachment`** - `Clay_FloatingAttachPoints`
+**`.attachPoints`** - `Clay_FloatingAttachPoints`
 
-`CLAY(CLAY_ID("Floating"), { .floating = { .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP } } }) {}`
+`CLAY(CLAY_ID("Floating"), { .floating = { .attachPoints = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP } } }) {}`
 
-In terms of positioning the floating container, `.attachment` specifies 
+In terms of positioning the floating container, `.attachPoints` specifies 
 
 - The point on the floating container (`.element`)
 - The point on the parent element that it "attaches" to (`.parent`)
@@ -1846,7 +1845,7 @@ For example:
 
 "Attach the LEFT_CENTER of the floating container to the RIGHT_TOP of the parent"
 
-`CLAY(CLAY_ID("Floating"), { .floating = { .attachment = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP } } });`
+`CLAY(CLAY_ID("Floating"), { .floating = { .attachPoints = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP } } });`
 
 ![Screenshot 2024-08-23 at 11 53 24 AM](https://github.com/user-attachments/assets/ebe75e0d-1904-46b0-982d-418f929d1516)
 
@@ -1867,7 +1866,7 @@ CLAY(CLAY_ID("OptionsList"), { .layout = { childGap = 16 } }) {
     CLAY(CLAY_IDI("Option", 2), { .layout = { padding = CLAY_PADDING_ALL(16)), .backgroundColor = COLOR_BLUE } }) {
         CLAY_TEXT(CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
         // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-        CLAY(CLAY_ID("OptionTooltip"), { .floating = { .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP } } }) {
+        CLAY(CLAY_ID("OptionTooltip"), { .floating = { .zIndex = 1, .attachPoints = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP } } }) {
             CLAY_TEXT(CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
         }
     }
@@ -1884,7 +1883,7 @@ for (int i = 0; i < 1000; i++) {
 }
 // Note the use of "parentId".
 // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
-CLAY(CLAY_ID("OptionTooltip"), { .floating = { .parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachment = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER } } }) {
+CLAY(CLAY_ID("OptionTooltip"), { .floating = { .parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachPoints = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER } } }) {
     CLAY_TEXT(CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
 }
 ```
@@ -2429,7 +2428,7 @@ An array of [Clay_RenderCommand](#clay_rendercommand)s representing the calculat
 typedef struct {
     Clay_BoundingBox boundingBox;
     Clay_RenderData renderData;
-    uintptr_t userData;
+    void* userData;
     uint32_t id;
     int16_t zIndex;
     Clay_RenderCommandType commandType;
@@ -2443,15 +2442,15 @@ typedef struct {
 An enum indicating how this render command should be handled. Possible values include:
 
 - `CLAY_RENDER_COMMAND_TYPE_NONE` - Should be ignored by the renderer, and never emitted by clay under normal conditions.
-- `CLAY_RENDER_COMMAND_TYPE_RECTANGLE` - A rectangle should be drawn, configured with `.config.rectangleElementConfig`
-- `CLAY_RENDER_COMMAND_TYPE_BORDER` - A border should be drawn, configured with `.config.borderElementConfig`
-- `CLAY_RENDER_COMMAND_TYPE_TEXT` - Text should be drawn, configured with `.config.textElementConfig`
-- `CLAY_RENDER_COMMAND_TYPE_IMAGE` - An image should be drawn, configured with `.config.imageElementConfig`
+- `CLAY_RENDER_COMMAND_TYPE_RECTANGLE` - A rectangle should be drawn, configured with `.renderData.rectangle`
+- `CLAY_RENDER_COMMAND_TYPE_BORDER` - A border should be drawn, configured with `.renderData.border`
+- `CLAY_RENDER_COMMAND_TYPE_TEXT` - Text should be drawn, configured with `.renderData.text`
+- `CLAY_RENDER_COMMAND_TYPE_IMAGE` - An image should be drawn, configured with `.renderData.image`
 - `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` - Named after [glScissor](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glScissor.xhtml), this indicates that the renderer should begin culling any subsequent pixels that are drawn outside the `.boundingBox` of this render command.
 - `CLAY_RENDER_COMMAND_TYPE_SCISSOR_END` - Only ever appears after a matching `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` command, and indicates that the scissor has ended.
 - `CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START` - The renderer should begin applying an overlay color to all subsequent render commands, similar to glsl's `mix(source, target, alpha)`.
 - `CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END` - The previous `COLOR_OVERLAY` should be removed. Note: nested color overlays may require a stack data structure on the renderer side.
-- `CLAY_RENDER_COMMAND_TYPE_CUSTOM` - A custom render command controlled by the user, configured with `.config.customElementConfig`
+- `CLAY_RENDER_COMMAND_TYPE_CUSTOM` - A custom render command controlled by the user, configured with `.renderData.custom`
 
 ---
 
@@ -2494,11 +2493,13 @@ typedef union {
 
 A C union containing various structs, with the type dependent on `.commandType`. Possible values include:
 
-- `config.rectangle` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE`.
-- `config.text` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. See [Clay_Text](#clay_text) for details.
-- `config.image` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE`. See [Clay_Image](#clay_imageelementconfig) for details.
-- `config.border` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_BORDER`. See [Clay_Border](#clay_borderelementconfig) for details.
-- `config.custom` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM`. See [Clay_Custom](#clay_customelementconfig) for details.
+- `renderData.rectangle` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_RECTANGLE`.
+- `renderData.text` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_TEXT`. See [Clay_Text](#clay_text) for details.
+- `renderData.image` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_IMAGE`. See [Clay_ImageElementConfig](#clay_imageelementconfig) for details.
+- `renderData.custom` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_CUSTOM`. See [Clay_CustomElementConfig](#clay_customelementconfig) for details.
+- `renderData.border` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_BORDER`. See [Clay_BorderElementConfig](#clay_borderelementconfig) for details.
+- `renderData.clip` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START`. See [Clay_ClipElementConfig](#clay_clipelementconfig) for details.
+- `renderData.overlayColor` - Used when `.commandType == CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START`. See [Clay_ElementDeclaration.overlayColor](#clay_elementdeclaration) for details.
 
 **Union Structs**
 
@@ -2739,7 +2740,7 @@ An enum representing the type of error Clay encountered. It's up to the user to 
 - `CLAY_ERROR_TYPE_TEXT_MEASUREMENT_FUNCTION_NOT_PROVIDED` - The user is attempting to use `CLAY_TEXT` and either forgot to call [Clay_SetMeasureTextFunction](#clay_setmeasuretextfunction) or accidentally passed a null function pointer.
 - `CLAY_ERROR_TYPE_ARENA_CAPACITY_EXCEEDED` - Clay was initialized with an Arena that was too small for the configured [Clay_SetMaxElementCount](#clay_setmaxelementcount). Try using [Clay_MinMemorySize()](#clay_minmemorysize) to get the exact number of bytes required by the current configuration.
 - `CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED` - The declared UI hierarchy has too many elements for the configured max element count. Use [Clay_SetMaxElementCount](#clay_setmaxelementcount) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
-- `CLAY_ERROR_TYPE_ELEMENTS_CAPACITY_EXCEEDED` - The declared UI hierarchy has too much text for the configured text measure cache size. Use [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmeasuretextcachesize) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
+- `CLAY_ERROR_TYPE_TEXT_MEASUREMENT_CAPACITY_EXCEEDED` - The declared UI hierarchy has too much text for the configured text measure cache size. Use [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmeasuretextcachesize) to increase the max, then call [Clay_MinMemorySize()](#clay_minmemorysize) again and reinitialize clay's memory with the required size.
 - `CLAY_ERROR_TYPE_DUPLICATE_ID` - Two elements in Clays UI Hierarchy have been declared with exactly the same ID. Set a breakpoint in your error handler function for a stack trace back to exactly where this occured.
 - `CLAY_ERROR_TYPE_FLOATING_CONTAINER_PARENT_NOT_FOUND` - A `CLAY_FLOATING` element was declared with the `.parentId` property, but no element with that ID was found. Set a breakpoint in your error handler function for a stack trace back to exactly where this occured.
 - `CLAY_ERROR_TYPE_INTERNAL_ERROR` - Clay has encountered an internal logic or memory error. Please report this as a bug with a stack trace to help us fix these!
