@@ -172,7 +172,7 @@ TransitionProperty :: enum c.int {
 TransitionPropertyFlags :: bit_set[TransitionProperty; c.int]
 TransitionPropertyPosition :: TransitionPropertyFlags{.X, .Y}
 TransitionPropertyDimensions :: TransitionPropertyFlags{.Width, .Height}
-TransitiionPropertyBoundingBox :: TransitionPropertyPosition + TransitionPropertyDimensions
+TransitionPropertyBoundingBox :: TransitionPropertyPosition + TransitionPropertyDimensions
 TransitionPropertyBorder :: TransitionPropertyFlags{.BorderColor, .BorderWidth}
 
 TransitionCallbackArguments :: struct {
