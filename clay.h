@@ -4827,7 +4827,7 @@ void Clay_ResetMeasureTextCache(void) {
     context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
 }
 
-#define CLAY__LERP(from, to, mix) from + (to - from) * mix
+#define CLAY__LERP(from, to, mix) (from + (to - from) * mix)
 
 CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
     float ratio = 1;
@@ -4874,11 +4874,11 @@ CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
     }
     if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
         arguments.current->borderWidth = CLAY__INIT(Clay_BorderWidth) {
-            .left = CLAY__LERP(arguments.initial.borderWidth.left, arguments.target.borderWidth.left, lerpAmount),
-            .right = CLAY__LERP(arguments.initial.borderWidth.right, arguments.target.borderWidth.right, lerpAmount),
-            .top = CLAY__LERP(arguments.initial.borderWidth.top, arguments.target.borderWidth.top, lerpAmount),
-            .bottom = CLAY__LERP(arguments.initial.borderWidth.bottom, arguments.target.borderWidth.bottom, lerpAmount),
-            .betweenChildren = CLAY__LERP(arguments.initial.borderWidth.betweenChildren, arguments.target.borderWidth.betweenChildren, lerpAmount),
+            .left = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.left, arguments.target.borderWidth.left, lerpAmount),
+            .right = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.right, arguments.target.borderWidth.right, lerpAmount),
+            .top = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.top, arguments.target.borderWidth.top, lerpAmount),
+            .bottom = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.bottom, arguments.target.borderWidth.bottom, lerpAmount),
+            .betweenChildren = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.betweenChildren, arguments.target.borderWidth.betweenChildren, lerpAmount),
         };
     }
     return ratio >= 1;
