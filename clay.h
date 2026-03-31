@@ -4484,7 +4484,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     // Otherwise, just attach to the root as a floating element
                     } else {
                         Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
-                            .layoutElementIndex = data->elementThisFrame - context->layoutElements.internalArray,
+                            .layoutElementIndex = (int32_t)(data->elementThisFrame - context->layoutElements.internalArray),
                             .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id,
                             .zIndex = 1,
                         });
