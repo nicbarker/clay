@@ -4420,7 +4420,6 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         if (parentHashMapItem->generation <= context->generation) {
                             data->elementThisFrame->config.floating.attachTo = CLAY_ATTACH_TO_ROOT;
                             data->elementThisFrame->config.floating.offset = CLAY__INIT(Clay_Vector2) { hashMapItem->boundingBox.x, hashMapItem->boundingBox.y };
-                            data->siblingIndex = 0;
                         }
                         data->elementThisFrame->exiting = true;
                         data->elementThisFrame->config.layout.sizing.width = CLAY_SIZING_FIXED(data->elementThisFrame->dimensions.width);
@@ -4482,6 +4481,13 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         }
                         parentElement->children.length++;
                         parentElement->children.elements = &context->layoutElementChildren.internalArray[newChildrenStartIndex];
+                    // Otherwise, just attach to the root as a floating element
+                    } else {
+                        Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
+                            .layoutElementIndex = data->elementThisFrame - context->layoutElements.internalArray,
+                            .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id,
+                            .zIndex = 1,
+                        });
                     }
                 // Parent exited, just delete child without exit transition
                 } else {
