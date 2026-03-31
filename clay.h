@@ -1021,6 +1021,8 @@ CLAY_DLL_EXPORT int32_t Clay_GetMaxMeasureTextCacheWordCount(void);
 CLAY_DLL_EXPORT void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount);
 // Resets Clay's internal text measurement cache. Useful if font mappings have changed or fonts have been reloaded.
 CLAY_DLL_EXPORT void Clay_ResetMeasureTextCache(void);
+// A built in transition function that uses the "Ease Out" curve
+CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments);
 
 // Internal API functions required by macros ----------------------
 
@@ -4823,6 +4825,63 @@ void Clay_ResetMeasureTextCache(void) {
         context->measureTextHashMap.internalArray[i] = 0;
     }
     context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
+}
+
+#define CLAY__LERP(from, to, mix) from + (to - from) * mix
+
+CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
+    float ratio = 1;
+    if (arguments.duration > 0) {
+        ratio = CLAY__MIN(arguments.elapsedTime / arguments.duration, 1);
+    }
+    float inverse = 1.0f - ratio;
+    float lerpAmount = 1.0f - (inverse * inverse * inverse);
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_X) {
+        arguments.current->boundingBox.x = CLAY__LERP(arguments.initial.boundingBox.x, arguments.target.boundingBox.x, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_Y) {
+        arguments.current->boundingBox.y = CLAY__LERP(arguments.initial.boundingBox.y, arguments.target.boundingBox.y, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
+        arguments.current->boundingBox.width = CLAY__LERP(arguments.initial.boundingBox.width, arguments.target.boundingBox.width, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) {
+        arguments.current->boundingBox.height = CLAY__LERP(arguments.initial.boundingBox.height, arguments.target.boundingBox.height, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
+        arguments.current->backgroundColor = CLAY__INIT(Clay_Color) {
+            .r = CLAY__LERP(arguments.initial.backgroundColor.r, arguments.target.backgroundColor.r, lerpAmount),
+            .g = CLAY__LERP(arguments.initial.backgroundColor.g, arguments.target.backgroundColor.g, lerpAmount),
+            .b = CLAY__LERP(arguments.initial.backgroundColor.b, arguments.target.backgroundColor.b, lerpAmount),
+            .a = CLAY__LERP(arguments.initial.backgroundColor.a, arguments.target.backgroundColor.a, lerpAmount),
+        };
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+        arguments.current->overlayColor = CLAY__INIT(Clay_Color) {
+            .r = CLAY__LERP(arguments.initial.overlayColor.r, arguments.target.overlayColor.r, lerpAmount),
+            .g = CLAY__LERP(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
+            .b = CLAY__LERP(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
+            .a = CLAY__LERP(arguments.initial.overlayColor.a, arguments.target.overlayColor.a, lerpAmount),
+        };
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
+        arguments.current->borderColor = CLAY__INIT(Clay_Color) {
+            .r = CLAY__LERP(arguments.initial.borderColor.r, arguments.target.borderColor.r, lerpAmount),
+            .g = CLAY__LERP(arguments.initial.borderColor.g, arguments.target.borderColor.g, lerpAmount),
+            .b = CLAY__LERP(arguments.initial.borderColor.b, arguments.target.borderColor.b, lerpAmount),
+            .a = CLAY__LERP(arguments.initial.borderColor.a, arguments.target.borderColor.a, lerpAmount),
+        };
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
+        arguments.current->borderWidth = CLAY__INIT(Clay_BorderWidth) {
+            .left = CLAY__LERP(arguments.initial.borderWidth.left, arguments.target.borderWidth.left, lerpAmount),
+            .right = CLAY__LERP(arguments.initial.borderWidth.right, arguments.target.borderWidth.right, lerpAmount),
+            .top = CLAY__LERP(arguments.initial.borderWidth.top, arguments.target.borderWidth.top, lerpAmount),
+            .bottom = CLAY__LERP(arguments.initial.borderWidth.bottom, arguments.target.borderWidth.bottom, lerpAmount),
+            .betweenChildren = CLAY__LERP(arguments.initial.borderWidth.betweenChildren, arguments.target.borderWidth.betweenChildren, lerpAmount),
+        };
+    }
+    return ratio >= 1;
 }
 
 #endif // CLAY_IMPLEMENTATION
