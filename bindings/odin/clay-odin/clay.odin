@@ -57,16 +57,17 @@ CornerRadius :: struct {
 	bottomRight: c.float,
 }
 
-BorderData :: struct {
-	width: u32,
-	color: Color,
-}
-
 ElementId :: struct {
 	id:       u32,
 	offset:   u32,
 	baseId:   u32,
 	stringId: String,
+}
+
+ElementIdArray :: struct {
+	capacity: i32,
+	length: i32,
+	internalArray: [^]ElementId,
 }
 
 when ODIN_OS == .Windows {
@@ -83,6 +84,8 @@ RenderCommandType :: enum EnumBackingType {
 	Image,
 	ScissorStart,
 	ScissorEnd,
+	OverlayColorStart,
+	OverlayColorEnd,
 	Custom,
 }
 
@@ -136,6 +139,87 @@ BorderWidth :: struct {
 BorderElementConfig :: struct {
 	color: Color,
 	width: BorderWidth,
+}
+
+TransitionData :: struct {
+	boundingBox: BoundingBox,
+	backgroundColor: Color,
+	overlayColor: Color,
+	borderColor: Color,
+	borderWidth: BorderWidth,
+}
+
+TransitionState :: enum c.int {
+	Idle,
+	Entering,
+	Transitioning,
+	Exiting,
+}
+
+TransitionProperty :: enum c.int {
+	None,
+	X,
+	Y,
+	Position = X | Y,
+	Width,
+	Height,
+	Dimensions = Width | Height,
+	BoundingBox = Position | Dimensions,
+	BackgroundColor,
+	OverlayColor,
+	CornerRadius,
+	BorderColor,
+	BorderWidth,
+	Border = BorderColor | BorderWidth,
+}
+
+TransitionPropertyFlags :: bit_set[TransitionProperty; c.int]
+
+TransitionCallbackArguments :: struct {
+	transitionState: TransitionState,
+	initial:  TransitionData,
+	current:  ^TransitionData,
+	target:   TransitionData,
+	elapsedTime: f32,
+	duration: f32,
+	properties: TransitionPropertyFlags,
+}
+
+TransitionEnterTriggerType :: enum EnumBackingType {
+	SkipOnFirstParentFrame,
+	TriggerOnFirstParentFrame,
+}
+
+TransitionExitTriggerType :: enum EnumBackingType {
+	SkipWhenParentExits,
+	TriggerWhenParentExits,
+}
+
+TransitionInteractionHandlingType :: enum EnumBackingType {
+	DisableInteractionsWhileTransitioningPosition,
+	AllowInteractionsWhileTransitioningPosition,
+}
+
+ExitTransitionSiblingOrdering :: enum EnumBackingType {
+	UnderneathSiblings,
+	NaturalOrder,
+	AboveSiblings,
+}
+
+TransitionElementConfig :: struct {
+	handler: proc "c" (args: TransitionCallbackArguments) -> bool,
+	duration: f32,
+	properties: TransitionPropertyFlags,
+	interactionHandling: TransitionInteractionHandlingType,
+	enter: struct {
+		setInitialState: proc "c" (initialState: TransitionData, properties: TransitionPropertyFlags) -> TransitionData,
+		trigger: TransitionEnterTriggerType,
+	},
+	exit: struct {
+		setFinalState: proc "c" (finalState: TransitionData, properties: TransitionPropertyFlags) -> TransitionData,
+		trigger: TransitionExitTriggerType,
+		siblingOrdering: ExitTransitionSiblingOrdering,
+	},
 }
 
 ClipElementConfig :: struct {
@@ -215,6 +299,15 @@ CustomRenderData :: struct {
 	customData: rawptr,
 }
 
+ClipRenderData :: struct {
+	horizontal: bool,
+	vertical: bool,
+}
+
+OverlayColorRenderData :: struct {
+	color: Color,
+}
+
 BorderRenderData :: struct {
 	color: Color,
 	cornerRadius: CornerRadius,
@@ -227,6 +320,8 @@ RenderCommandData :: struct #raw_union {
 	image: ImageRenderData,
 	custom: CustomRenderData,
 	border: BorderRenderData,
+	clip: ClipRenderData,
+	overlayColor: OverlayColorRenderData,
 }
 
 RenderCommand :: struct {
@@ -340,6 +435,7 @@ ClayArray :: struct($type: typeid) {
 ElementDeclaration :: struct {
 	layout:          LayoutConfig,
 	backgroundColor: Color,
+	overlayColor:    Color,
 	cornerRadius:    CornerRadius,
 	aspectRatio:     AspectRatioElementConfig,
 	image:           ImageElementConfig,
@@ -347,6 +443,7 @@ ElementDeclaration :: struct {
 	custom:          CustomElementConfig,
 	clip:            ClipElementConfig,
 	border:          BorderElementConfig,
+	transition:      TransitionElementConfig,
 	userData:        rawptr,
 }
 
@@ -359,6 +456,7 @@ ErrorType :: enum EnumBackingType {
 	FloatingContainerParentNotFound,
 	PercentageOver1,
 	InternalError,
+	UnbalancedOpenClose,
 }
 
 ErrorData :: struct {
@@ -382,19 +480,22 @@ foreign Clay {
 	MinMemorySize :: proc() -> u32 ---
 	CreateArenaWithCapacityAndMemory :: proc(capacity: c.size_t, offset: [^]u8) -> Arena ---
 	SetPointerState :: proc(position: Vector2, pointerDown: bool) ---
+	GetPointerState :: proc() -> PointerData ---
 	Initialize :: proc(arena: Arena, layoutDimensions: Dimensions, errorHandler: ErrorHandler) -> ^Context ---
 	GetCurrentContext :: proc() -> ^Context ---
 	SetCurrentContext :: proc(ctx: ^Context) ---
 	UpdateScrollContainers :: proc(enableDragScrolling: bool, scrollDelta: Vector2, deltaTime: c.float) ---
 	SetLayoutDimensions :: proc(dimensions: Dimensions) ---
 	BeginLayout :: proc() ---
-	EndLayout :: proc() -> ClayArray(RenderCommand) ---
+	EndLayout :: proc(deltaTime: c.float) -> ClayArray(RenderCommand) ---
+	GetOpenElementId :: proc() -> u32 ---
 	GetElementId :: proc(id: String) -> ElementId ---
 	GetElementIdWithIndex :: proc(id: String, index: u32) -> ElementId ---
 	GetElementData :: proc(id: ElementId) -> ElementData ---
 	Hovered :: proc() -> bool ---
 	OnHover :: proc(onHoverFunction: proc "c" (id: ElementId, pointerData: PointerData, userData: rawptr), userData: rawptr) ---
 	PointerOver :: proc(id: ElementId) -> bool ---
+	GetPointerOverIds :: proc() -> ElementIdArray ---
 	GetScrollOffset :: proc() -> Vector2 ---
 	GetScrollContainerData :: proc(id: ElementId) -> ScrollContainerData ---
 	SetMeasureTextFunction :: proc(measureTextFunction: proc "c" (text: StringSlice, config: ^TextElementConfig, userData: rawptr) -> Dimensions, userData: rawptr) ---
@@ -408,6 +509,7 @@ foreign Clay {
 	GetMaxMeasureTextCacheWordCount :: proc() -> i32 ---
 	SetMaxMeasureTextCacheWordCount :: proc(maxMeasureTextCacheWordCount: i32) ---
 	ResetMeasureTextCache :: proc() ---
+	EaseOut :: proc(arguments: TransitionCallbackArguments) -> bool ---
 }
 
 @(link_prefix = "Clay_", default_calling_convention = "c", private)
@@ -415,9 +517,7 @@ foreign Clay {
 	_ConfigureOpenElement :: proc(config: ElementDeclaration) ---
 	_HashString :: proc(key: String, seed: u32) -> ElementId ---
 	_HashStringWithOffset :: proc(key: String, index: u32, seed: u32) -> ElementId ---
-	_OpenTextElement :: proc(text: String, textConfig: ^TextElementConfig) ---
-	_StoreTextElementConfig :: proc(config: TextElementConfig) -> ^TextElementConfig ---
-	_GetParentElementId :: proc() -> u32 ---
+	_OpenTextElement :: proc(text: String, textConfig: TextElementConfig) ---
 }
 
 ConfigureOpenElement :: proc(config: ElementDeclaration) -> bool {
@@ -439,18 +539,19 @@ UI_AutoId :: proc() -> proc (config: ElementDeclaration) -> bool {
 
 UI :: proc{UI_WithId, UI_AutoId}
 
-Text :: proc($text: string, config: ^TextElementConfig) {
+Text :: proc {
+	TextStatic,
+	TextDynamic,
+}
+
+TextStatic :: proc($text: string, config: TextElementConfig) {
 	wrapped := MakeString(text)
 	wrapped.isStaticallyAllocated = true
 	_OpenTextElement(wrapped, config)
 }
 
-TextDynamic :: proc(text: string, config: ^TextElementConfig) {
+TextDynamic :: proc(text: string, config: TextElementConfig) {
 	_OpenTextElement(MakeString(text), config)
-}
-
-TextConfig :: proc(config: TextElementConfig) -> ^TextElementConfig {
-	return _StoreTextElementConfig(config)
 }
 
 PaddingAll :: proc(allPadding: u16) -> Padding {
@@ -494,5 +595,5 @@ ID :: proc(label: string, index: u32 = 0) -> ElementId {
 }
 
 ID_LOCAL :: proc(label: string, index: u32 = 0) -> ElementId {
-	return _HashStringWithOffset(MakeString(label), index, _GetParentElementId())
+	return _HashStringWithOffset(MakeString(label), index, GetOpenElementId())
 }
