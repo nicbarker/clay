@@ -939,6 +939,12 @@ Clay_TextElementConfig {
         CLAY_TEXT_WRAP_NEWLINES,
         CLAY_TEXT_WRAP_NONE,
     };
+    Clay_TextAlignment textAlignment {
+        CLAY_TEXT_ALIGN_LEFT (default),
+        CLAY_TEXT_ALIGN_CENTER,
+        CLAY_TEXT_ALIGN_RIGHT,
+    };
+    void *userData;
 };
 ```
 
@@ -998,15 +1004,29 @@ Available options are:
 
 ---
 
+**`.textAlignment`**
+
+`CLAY_TEXT(text, { .textAlignment = CLAY_TEXT_ALIGN_CENTER })`
+
+`.textAlignment` controls how **wrapping** text lines are aligned. If you want to control the alignment of single lines of text, instead use the `childAlignment` property of the **parent** layout element.
+
+Available options are:
+
+- `CLAY_TEXT_ALIGN_LEFT` (default)
+- `CLAY_TEXT_ALIGN_CENTER`
+- `CLAY_TEXT_ALIGN_RIGHT`
+
+---
+
 **Examples**
 
 ```C
 // Define a font somewhere in your code
 const uint32_t FONT_ID_LATO = 3;
 // ..
-CLAY_TEXT(CLAY_STRING("John Smith"), CLAY_TEXT_CONFIG({ .fontId = FONT_ID_LATO, .fontSize = 24, .textColor = {255, 0, 0, 255} }));
+CLAY_TEXT(CLAY_STRING("John Smith"), { .fontId = FONT_ID_LATO, .fontSize = 24, .textColor = {255, 0, 0, 255} });
 // Rendering example
-Font fontToUse = LoadedFonts[renderCommand->renderData.text->fontId];
+Font fontToUse = LoadedFonts[renderCommand->renderData.text.fontId];
 ```
 
 **Rendering**
@@ -1861,17 +1881,17 @@ Controls whether pointer events like hover and click should pass through to cont
 // Horizontal container with three option buttons
 CLAY(CLAY_ID("OptionsList"), { .layout = { childGap = 16 } }) {
     CLAY(CLAY_IDI("Option", 1), { .layout = { padding = CLAY_PADDING_ALL(16)), .backgroundColor = COLOR_BLUE } }) {
-        CLAY_TEXT(CLAY_STRING("Option 1"), CLAY_TEXT_CONFIG());
+        CLAY_TEXT(CLAY_STRING("Option 1"), {});
     }
     CLAY(CLAY_IDI("Option", 2), { .layout = { padding = CLAY_PADDING_ALL(16)), .backgroundColor = COLOR_BLUE } }) {
-        CLAY_TEXT(CLAY_STRING("Option 2"), CLAY_TEXT_CONFIG());
+        CLAY_TEXT(CLAY_STRING("Option 2"), {});
         // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
         CLAY(CLAY_ID("OptionTooltip"), { .floating = { .zIndex = 1, .attachPoints = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_TOP } } }) {
-            CLAY_TEXT(CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
+            CLAY_TEXT(CLAY_STRING("Most popular!"), {});
         }
     }
     CLAY(CLAY_IDI("Option", 3), { .layout = { padding = CLAY_PADDING_ALL(16)), .backgroundColor = COLOR_BLUE } }) {
-        CLAY_TEXT(CLAY_STRING("Option 3"), CLAY_TEXT_CONFIG());
+        CLAY_TEXT(CLAY_STRING("Option 3"), {});
     }
 }
 
@@ -1884,7 +1904,7 @@ for (int i = 0; i < 1000; i++) {
 // Note the use of "parentId".
 // Floating tooltip will attach above the "Option 2" container and not affect widths or positions of other elements
 CLAY(CLAY_ID("OptionTooltip"), { .floating = { .parentId = CLAY_IDI("Option", 2).id, .zIndex = 1, .attachPoints = { .element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_TOP_CENTER } } }) {
-    CLAY_TEXT(CLAY_STRING("Most popular!"), CLAY_TEXT_CONFIG());
+    CLAY_TEXT(CLAY_STRING("Most popular!"), {});
 }
 ```
 
@@ -2295,10 +2315,10 @@ CLAY(CLAY_IDI("box", colors[index].id), {
         .exit = { .setFinalState = EnterExitSlideUp },
     }
 }) {
-    CLAY_TEXT(CLAY_STRING("Animated Box"), CLAY_TEXT_CONFIG({
+    CLAY_TEXT(CLAY_STRING("Animated Box"), {
       .fontSize = 32,
       .textColor = colors[index].id > 29 ? (Clay_Color) { 255, 255, 255, 255 } : (Clay_Color) { 154, 123, 184, 255 }
-    }));
+    });
 }
 ```
 
