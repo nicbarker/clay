@@ -4392,6 +4392,10 @@ void Clay_ApplyTransitionedPropertiesToElement(Clay_LayoutElement* currentElemen
     }
 }
 
+void Clay__CreateDebugView() {
+
+}
+
 CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
@@ -4492,19 +4496,9 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
         }
     }
 
-    bool elementsExceededBeforeDebugView = context->booleanWarnings.maxElementsExceeded;
-    if (context->debugModeEnabled && !elementsExceededBeforeDebugView) {
-        context->warningsEnabled = false;
-        Clay__RenderDebugView();
-        context->warningsEnabled = true;
-    }
     if (context->booleanWarnings.maxElementsExceeded) {
         Clay_String message;
-        if (!elementsExceededBeforeDebugView) {
-            message = CLAY_STRING("Clay Error: Layout elements exceeded Clay__maxElementCount after adding the debug-view to the layout.");
-        } else {
-            message = CLAY_STRING("Clay Error: Layout elements exceeded Clay__maxElementCount");
-        }
+        message = CLAY_STRING("Clay Error: Layout elements exceeded Clay__maxElementCount");
         Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand ) {
             .boundingBox = { context->layoutDimensions.width / 2 - 59 * 4, context->layoutDimensions.height / 2, 0, 0 },
             .renderData = { .text = { .stringContents = CLAY__INIT(Clay_StringSlice) { .length = message.length, .chars = message.chars, .baseChars = message.chars }, .textColor = {255, 0, 0, 255}, .fontSize = 16 } },
@@ -4627,10 +4621,21 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                 }
             }
 
-            Clay__CalculateFinalLayout(deltaTime, true, true);
+            if (context->debugModeEnabled) {
+                context->warningsEnabled = false;
+                Clay__RenderDebugView();
+                context->warningsEnabled = true;
+            }
 
+            Clay__CalculateFinalLayout(deltaTime, true, true);
             Clay__CloneElementsWithExitTransition();
         } else {
+            if (context->debugModeEnabled) {
+                context->warningsEnabled = false;
+                Clay__RenderDebugView();
+                context->warningsEnabled = true;
+            }
+
             Clay__CalculateFinalLayout(deltaTime, false, true);
         }
     }
