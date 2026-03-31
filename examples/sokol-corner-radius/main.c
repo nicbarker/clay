@@ -65,7 +65,7 @@ Clay_RenderCommandArray CornerRadiusTest(){
             }
         }
     }
-    return Clay_EndLayout();
+    return Clay_EndLayout(0);
 }
 
 static void frame() {

@@ -256,7 +256,7 @@ Clay_RenderCommandArray ClayVideoDemo_CreateLayout(ClayVideoDemo_Data *data) {
         }
     }
 
-    Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+    Clay_RenderCommandArray renderCommands = Clay_EndLayout(0);
     for (int32_t i = 0; i < renderCommands.length; i++) {
         Clay_RenderCommandArray_Get(&renderCommands, i)->boundingBox.y += data->yOffset;
     }
