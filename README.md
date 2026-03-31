@@ -106,7 +106,7 @@ int main() {
         }
 
         // All clay layouts are declared between Clay_BeginLayout and Clay_EndLayout
-        Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+        Clay_RenderCommandArray renderCommands = Clay_EndLayout(deltaTime); // deltaTime is the time since the last frame, and is used for transitions
 
         // More comprehensive rendering examples can be found in the renderers/ directory
         for (int i = 0; i < renderCommands.length; i++) {
@@ -591,14 +591,14 @@ Clay_Context* instance2 = Clay_Initialize(arena2, layoutDimensions, errorHandler
 Clay_SetCurrentContext(instance1);
 Clay_BeginLayout();
 // ... declare layout for instance1
-Clay_RenderCommandArray renderCommands1 = Clay_EndLayout();
+Clay_RenderCommandArray renderCommands1 = Clay_EndLayout(deltaTime);
 render(renderCommands1);
 
 // Switch to the second instance
 Clay_SetCurrentContext(instance2);
 Clay_BeginLayout();
 // ... declare layout for instance2
-Clay_RenderCommandArray renderCommands2 = Clay_EndLayout();
+Clay_RenderCommandArray renderCommands2 = Clay_EndLayout(deltaTime);
 render(renderCommands2);
 ```
 
@@ -632,7 +632,7 @@ Returns the minimum amount of memory **in bytes** that clay needs to accommodate
 
 ### Clay_CreateArenaWithCapacityAndMemory
 
-`Clay_Arena Clay_CreateArenaWithCapacityAndMemory(uint32_t capacity, void *offset)`
+`Clay_Arena Clay_CreateArenaWithCapacityAndMemory(size_t capacity, void *memory)`
 
 Creates a `Clay_Arena` struct with the given capacity and base memory pointer, which can be passed to [Clay_Initialize](#clay_initialize).
 
@@ -640,7 +640,7 @@ Creates a `Clay_Arena` struct with the given capacity and base memory pointer, w
 
 ### Clay_SetMeasureTextFunction
 
-`void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData), uintptr_t userData)`
+`void Clay_SetMeasureTextFunction(Clay_Dimensions (*measureTextFunction)(Clay_StringSlice text, Clay_TextElementConfig *config, void* userData), void* userData)`
 
 Takes a pointer to a function that can be used to measure the `width, height` dimensions of a string. Used by clay during layout to determine [CLAY_TEXT](#clay_text) element sizing and wrapping.
 
@@ -660,7 +660,7 @@ Clay caches measurements from the provided MeasureTextFunction, and this will be
 
 ### Clay_SetMaxElementCount
 
-`void Clay_SetMaxElementCount(uint32_t maxElementCount)`
+`void Clay_SetMaxElementCount(int32_t maxElementCount)`
 
 Sets the internal maximum element count that will be used in subsequent [Clay_Initialize()](#clay_initialize) and [Clay_MinMemorySize()](#clay_minmemorysize) calls, allowing clay to allocate larger UI hierarchies.
 
@@ -670,7 +670,7 @@ Sets the internal maximum element count that will be used in subsequent [Clay_In
 
 ### Clay_SetMaxMeasureTextCacheWordCount
 
-`void Clay_SetMaxMeasureTextCacheWordCount(uint32_t maxMeasureTextCacheWordCount)`
+`void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureTextCacheWordCount)`
 
 Sets the internal text measurement cache size that will be used in subsequent [Clay_Initialize()](#clay_initialize) and [Clay_MinMemorySize()](#clay_minmemorysize) calls, allowing clay to allocate more text. The value represents how many separate words can be stored in the text measurement cache.
 
@@ -1214,7 +1214,7 @@ This can be used as a cheap replacement for alpha / opacity to "fade in / out", 
 
 ---
 
-**`.cornerRadius`** - `float`
+**`.cornerRadius`** - `Clay_CornerRadius`
 
 `CLAY(CLAY_ID("Element"), { .cornerRadius = { .topLeft = 16, .topRight = 16, .bottomLeft = 16, .bottomRight = 16 } })`
 
@@ -1260,7 +1260,7 @@ Uses [Clay_CustomElementConfig](#clay_customelementconfig). Configures the eleme
 
 `CLAY(CLAY_ID("Element"), { .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() } })`
 
-Uses [Clay_ClipElementConfig](#clay_scrollelementconfig). Configures the element as a clip element, which causes child elements to be clipped / masked if they overflow, and together with the functions listed in [Scrolling Elements](#scrolling-elements) enables scrolling of child contents.
+Uses [Clay_ClipElementConfig](#clay_cliplelementconfig). Configures the element as a clip element, which causes child elements to be clipped / masked if they overflow, and together with the functions listed in [Scrolling Elements](#scrolling-elements) enables scrolling of child contents.
 
 <img width="580" alt="An image demonstrating the concept of clipping which prevents rendering of a child elements pixels if they fall outside the bounds of the parent element." src="https://github.com/user-attachments/assets/2eb83ff9-e186-4ea4-8a87-d90cbc0838b5">
 
@@ -1570,6 +1570,7 @@ Note: In order to process scrolling based on pointer position and mouse wheel or
 Clay_ClipElementConfig {
     bool horizontal;
     bool vertical;
+    Clay_Vector2 childOffset;
 };
 ```
 
@@ -1588,6 +1589,14 @@ Enables or disables horizontal clipping for this container element.
 `CLAY(LAY_ID("VerticalScroll"), { .clip = { .vertical = true } })`
 
 Enables or disables vertical clipping for this container element.
+
+---
+
+**`.childOffset`** - `Clay_Vector2`
+
+`CLAY(LAY_ID("VerticalScroll"), { .clip = { .vertical = true, .childOffset = Clay_GetScrollOffset() } })`
+
+Controls the x/y offset for child elements of this clip container. Used to control scrolling. You can either provide the vector manually if you want to manage scrolling yourself, or you can use the built in [Clay_GetScrollOffset](#clay_getscrolloffset) function which will manage scrolling for you automatically.
 
 ---
 
@@ -1750,6 +1759,10 @@ Clay_FloatingElementConfig {
         CLAY_ATTACH_TO_ELEMENT_WITH_ID,
         CLAY_ATTACH_TO_ROOT,
     };
+    Clay_FloatingClipToElement clipTo {
+        CLAY_CLIP_TO_NONE (default),
+        CLAY_CLIP_TO_ATTACHED_PARENT,
+    };
 };
 ```
 
@@ -1869,11 +1882,28 @@ For example:
 
 ![Screenshot 2024-08-23 at 11 53 24 AM](https://github.com/user-attachments/assets/ebe75e0d-1904-46b0-982d-418f929d1516)
 
+---
+
 **`.pointerCaptureMode`** - `Clay_PointerCaptureMode`
 
 `CLAY({ .floating = { .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE } })`
 
 Controls whether pointer events like hover and click should pass through to content underneath this floating element, or whether the pointer should be "captured" by this floating element. Defaults to `CLAY_POINTER_CAPTURE_MODE_CAPTURE`. 
+
+---
+
+**`.clipTo`** - `Clay_FloatingClipToElement`
+
+`CLAY({ .floating = { .clipTo = CLAY_CLIP_TO_ATTACHED_PARENT } })`
+
+By default, floating elements will appear with a z-order **above** their parent, and won't be clipped by a `.clip` defined on that parent. To clip floating elements by their parents' clip rectangle, use `.clipTo = CLAY_CLIP_TO_ATTACHED_PARENT`.
+
+```C
+typedef enum {
+    CLAY_CLIP_TO_NONE,
+    CLAY_CLIP_TO_ATTACHED_PARENT,
+} Clay_FloatingClipToElement;
+```
 
 **Examples**
 
@@ -2414,8 +2444,8 @@ Stores the original string that was passed in when [CLAY_ID](#clay_id) or [CLAY_
 ```C
 typedef struct
 {
-	uint32_t capacity;
-	uint32_t length;
+	int32_t capacity;
+	int32_t length;
 	Clay_RenderCommand *internalArray;
 } Clay_RenderCommandArray;
 ```
