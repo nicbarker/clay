@@ -160,20 +160,20 @@ TransitionProperty :: enum c.int {
 	None,
 	X,
 	Y,
-	Position = X | Y,
 	Width,
 	Height,
-	Dimensions = Width | Height,
-	BoundingBox = Position | Dimensions,
 	BackgroundColor,
 	OverlayColor,
 	CornerRadius,
 	BorderColor,
 	BorderWidth,
-	Border = BorderColor | BorderWidth,
 }
 
 TransitionPropertyFlags :: bit_set[TransitionProperty; c.int]
+TransitionPropertyPosition :: TransitionPropertyFlags{.X, .Y}
+TransitionPropertyDimensions :: TransitionPropertyFlags{.Width, .Height}
+TransitiionPropertyBoundingBox :: TransitionPropertyPosition + TransitionPropertyDimensions
+TransitionPropertyBorder :: TransitionPropertyFlags{.BorderColor, .BorderWidth}
 
 TransitionCallbackArguments :: struct {
 	transitionState: TransitionState,
