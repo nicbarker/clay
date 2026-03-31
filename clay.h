@@ -1030,8 +1030,7 @@ CLAY_DLL_EXPORT void Clay__CloseElement(void);
 CLAY_DLL_EXPORT Clay_ElementId Clay__HashString(Clay_String key, uint32_t seed);
 CLAY_DLL_EXPORT Clay_ElementId Clay__HashStringWithOffset(Clay_String key, uint32_t offset, uint32_t seed);
 CLAY_DLL_EXPORT void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig textConfig);
-CLAY_DLL_EXPORT uint32_t Clay__GetParentElementId(void);
-CLAY_DLL_EXPORT uint32_t Clay__GetOpenLayoutElementId(void);
+CLAY_DLL_EXPORT uint32_t Clay__GetOpenElementId(void);
 
 extern Clay_Color Clay__debugViewHighlightColor;
 extern uint32_t Clay__debugViewWidth;
@@ -1403,7 +1402,7 @@ Clay_LayoutElement* Clay__GetOpenLayoutElement(void) {
     return Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&context->openLayoutElementStack, context->openLayoutElementStack.length - 1));
 }
 
-uint32_t Clay__GetOpenLayoutElementId(void) {
+uint32_t Clay__GetOpenElementId(void) {
     return Clay__GetOpenLayoutElement()->id;
 }
 

@@ -141,55 +141,83 @@ For help starting out or to discuss clay, considering joining [the discord serve
 
 ## Summary
 
-- [High Level Documentation](#high-level-documentation)
-  - [Building UI Hierarchies](#building-ui-hierarchies)
-  - [Configuring Layout and Styling UI Elements](#configuring-layout-and-styling-ui-elements)
-  - [Element IDs](#element-ids)
-  - [Mouse, Touch and Pointer Interactions](#mouse-touch-and-pointer-interactions)
-  - [Scrolling Elements](#scrolling-elements)
-  - [Floating Elements](#floating-elements-absolute-positioning)
-  - [Custom Elements](#laying-out-your-own-custom-elements)
-  - [Retained Mode Rendering](#retained-mode-rendering)
-  - [Visibility Culling](#visibility-culling)
-  - [Preprocessor Directives](#preprocessor-directives)
-  - [Bindings](#bindings-for-non-c)
-  - [Debug Tools](#debug-tools)
-- [API](#api)
-  - [Naming Conventions](#naming-conventions)
-  - [Public Functions](#public-functions)
-    - [Lifecycle](#lifecycle-for-public-functions)
-    - [Clay_MinMemorySize](#clay_minmemorysize)
-    - [Clay_CreateArenaWithCapacityAndMemory](#clay_createarenawithcapacityandmemory)
-    - [Clay_SetMeasureTextFunction](#clay_setmeasuretextfunction)
-    - [Clay_ResetMeasureTextCache](#clay_resetmeasuretextcache)
-    - [Clay_SetMaxElementCount](#clay_setmaxelementcount)
-    - [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmaxmeasuretextcachewordcount)
-    - [Clay_Initialize](#clay_initialize)
-    - [Clay_GetCurrentContext](#clay_getcurrentcontext)
-    - [Clay_SetCurrentContext](#clay_setcurrentcontext)
-    - [Clay_SetLayoutDimensions](#clay_setlayoutdimensions)
-    - [Clay_SetPointerState](#clay_setpointerstate)
-    - [Clay_UpdateScrollContainers](#clay_updatescrollcontainers)
-    - [Clay_BeginLayout](#clay_beginlayout)
-    - [Clay_EndLayout](#clay_endlayout)
-    - [Clay_Hovered](#clay_hovered)
-    - [Clay_OnHover](#clay_onhover)
-    - [Clay_PointerOver](#clay_pointerover)
-    - [Clay_GetScrollContainerData](#clay_getscrollcontainerdata)
-    - [Clay_GetElementData](#clay_getelementdata)
-    - [Clay_GetElementId](#clay_getelementid)
-  - [Element Macros](#element-macros)
-    - [CLAY](#clay)
-    - [CLAY_ID](#clay_id)
-    - [CLAY_IDI](#clay_idi)
-  - [Data Structures & Defs](#data-structures--definitions)
-    - [Clay_String](#clay_string)
-    - [Clay_ElementId](#clay_elementid)
-    - [Clay_RenderCommandArray](#clay_rendercommandarray)
-    - [Clay_RenderCommand](#clay_rendercommand)
-    - [Clay_ScrollContainerData](#clay_scrollcontainerdata)
-    - [Clay_ErrorHandler](#clay_errorhandler)
-    - [Clay_ErrorData](#clay_errordata)
+<!-- TOC -->
+* [High Level Documentation](#high-level-documentation)
+  * [Building UI Hierarchies](#building-ui-hierarchies)
+  * [Configuring Layout and Styling UI Elements](#configuring-layout-and-styling-ui-elements)
+  * [Element IDs](#element-ids)
+  * [Mouse, Touch and Pointer Interactions](#mouse-touch-and-pointer-interactions)
+  * [Scrolling Elements](#scrolling-elements)
+  * [Floating Elements ("Absolute" Positioning)](#floating-elements-absolute-positioning)
+  * [Laying Out Your Own Custom Elements](#laying-out-your-own-custom-elements)
+  * [Transitions](#transitions)
+  * [Retained Mode Rendering](#retained-mode-rendering)
+  * [Visibility Culling](#visibility-culling)
+  * [Preprocessor Directives](#preprocessor-directives)
+  * [Bindings for non C](#bindings-for-non-c)
+  * [Other implementations](#other-implementations)
+  * [Debug Tools](#debug-tools)
+  * [Running more than one Clay instance](#running-more-than-one-clay-instance)
+* [API](#api)
+    * [Naming Conventions](#naming-conventions)
+  * [Public Functions](#public-functions)
+    * [Lifecycle for public functions](#lifecycle-for-public-functions)
+    * [Clay_MinMemorySize](#clay_minmemorysize)
+    * [Clay_CreateArenaWithCapacityAndMemory](#clay_createarenawithcapacityandmemory)
+    * [Clay_SetMeasureTextFunction](#clay_setmeasuretextfunction)
+    * [Clay_ResetMeasureTextCache](#clay_resetmeasuretextcache)
+    * [Clay_SetMaxElementCount](#clay_setmaxelementcount)
+    * [Clay_SetMaxMeasureTextCacheWordCount](#clay_setmaxmeasuretextcachewordcount)
+    * [Clay_Initialize](#clay_initialize)
+    * [Clay_SetCurrentContext](#clay_setcurrentcontext)
+    * [Clay_GetCurrentContext](#clay_getcurrentcontext)
+    * [Clay_SetLayoutDimensions](#clay_setlayoutdimensions)
+    * [Clay_SetPointerState](#clay_setpointerstate)
+    * [Clay_UpdateScrollContainers](#clay_updatescrollcontainers)
+    * [Clay_GetScrollOffset](#clay_getscrolloffset)
+    * [Clay_BeginLayout](#clay_beginlayout)
+    * [Clay_EndLayout](#clay_endlayout)
+    * [Clay_Hovered](#clay_hovered)
+    * [Clay_OnHover](#clay_onhover)
+    * [Clay_PointerOver](#clay_pointerover)
+    * [Clay_GetOpenElementId](#clay_getopenelementid)
+    * [Clay_GetScrollContainerData](#clay_getscrollcontainerdata)
+    * [Clay_GetElementData](#clay_getelementdata)
+    * [Clay_GetElementId](#clay_getelementid)
+  * [Element Macros](#element-macros)
+    * [CLAY()](#clay)
+    * [CLAY_AUTO_ID()](#clay_auto_id)
+    * [CLAY_TEXT()](#clay_text)
+    * [CLAY_ID()](#clay_id)
+    * [CLAY_SID()](#clay_sid)
+    * [CLAY_IDI()](#clay_idi)
+    * [CLAY_SIDI()](#clay_sidi)
+    * [CLAY_ID_LOCAL()](#clay_id_local)
+    * [CLAY_SID_LOCAL()](#clay_sid_local)
+    * [CLAY_IDI_LOCAL()](#clay_idi_local)
+    * [CLAY_SIDI_LOCAL()](#clay_sidi_local)
+  * [Data Structures & Definitions](#data-structures--definitions)
+    * [Clay_ElementDeclaration](#clay_elementdeclaration)
+    * [Clay_LayoutConfig](#clay_layoutconfig)
+    * [Clay_ImageElementConfig](#clay_imageelementconfig)
+    * [Clay_AspectRatioElementConfig](#clay_aspectratioelementconfig)
+    * [Clay_ImageElementConfig](#clay_imageelementconfig-1)
+    * [Clay_ClipElementConfig](#clay_clipelementconfig)
+    * [Clay_BorderElementConfig](#clay_borderelementconfig)
+    * [Clay_FloatingElementConfig](#clay_floatingelementconfig)
+    * [Clay_CustomElementConfig](#clay_customelementconfig)
+    * [Clay_TransitionElementConfig](#clay_transitionelementconfig)
+    * [Clay_Color](#clay_color)
+    * [Clay_String](#clay_string)
+    * [Clay_ElementId](#clay_elementid)
+    * [Clay_RenderCommandArray](#clay_rendercommandarray)
+    * [Clay_RenderCommand](#clay_rendercommand)
+    * [Clay_ScrollContainerData](#clay_scrollcontainerdata)
+    * [Clay_ElementData](#clay_elementdata)
+    * [Clay_PointerData](#clay_pointerdata)
+    * [Clay_ErrorHandler](#clay_errorhandler)
+    * [Clay_ErrorData](#clay_errordata)
+<!-- TOC -->
 
 ## High Level Documentation
 
@@ -780,6 +808,17 @@ CLAY(CLAY_ID("Button"), { .layout = { .padding = CLAY_PADDING_ALL(8) } }) {
 
 Returns `true` if the pointer position previously set with `Clay_SetPointerState` is inside the bounding box of the layout element with the provided `id`. Note: this is based on the element's position from the **last** frame. If frame-accurate pointer overlap detection is required, perhaps in the case of significant change in UI layout between frames, you can simply run your layout code twice that frame. The second call to `Clay_PointerOver` will be frame-accurate.
 
+---
+
+### Clay_GetOpenElementId
+
+`Clay_ElementId Clay_GetOpenElementId()`
+
+Returns the [Clay_ElementId](#clay_elementid) of the currently open element. Useful for getting the ID of elements opened with [CLAY_AUTO_ID](#clay_auto_id).
+
+---
+
+
 ### Clay_GetScrollContainerData
 
 `Clay_ScrollContainerData Clay_GetScrollContainerData(Clay_ElementId id)`
@@ -978,7 +1017,7 @@ Element is subject to [culling](#visibility-culling). Otherwise, multiple `Clay_
 
 ---
 
-### CLAY_ID
+### CLAY_ID()
 
 `Clay_ElementId CLAY_ID(STRING_LITERAL idString)`
 
@@ -1135,9 +1174,24 @@ Uses [Clay_LayoutConfig](#clay_layoutconfig). Controls various settings related 
 
 **`.backgroundColor`** - `Clay_Color`
 
-`CLAY(CLAY_ID("Element"), { .backgroundColor = {120, 120, 120, 255} } })`
+`CLAY(CLAY_ID("Element"), { .backgroundColor = { 120, 120, 120, 255 } } })`
 
 Uses [Clay_Color](#clay_color). Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
+
+---
+
+**`.overlayColor`** - `Clay_Color`
+
+`CLAY(CLAY_ID("Element"), { .overlayColor = { 255, 120, 120, 255 } } })`
+
+Uses [Clay_Color](#clay_color). Conventionally accepts `rgba` float values between 0 and 255, but interpretation is left up to the renderer and does not affect layout.
+
+Specifying `.overlayColor` will cause two new render commands to be emitted: `COLOR_OVERLAY_BEGIN` immediately, and `COLOR_OVERLAY_END` after this elements subtree has been emitted.
+
+This instructs the renderer to begin applying a color overlay to this element, and all child elements. The color overlay effect is similar to glsl's `mix(source, target, alpha)`. As a result, the strength of the color overlay is controlled by the `.a` channel of `.overlayColor`.
+Zero alpha means "all child colors remain the same", full alpha means "all child colours are replaced by the RGB overlayColor", and values in between mean "lerp from the child color to the overlay color by the alpha".
+
+This can be used as a cheap replacement for alpha / opacity to "fade in / out", by applying (and potentially transitioning) an overlay color to the same color as the background with full alpha.
 
 ---
 
@@ -2100,7 +2154,7 @@ typedef enum {
 `CLAY(CLAY_ID("Transition"), { .transition = { .enter = { .setInitialState = { EnterSlideUp } } })`
 
 This function pointer is called the first frame an element appears, and allows you to modify the "initial state" of the element to create an entry transition. Common techniques include offsetting the y position to "slide up / down",
-or using a `.colorOverlay` matched to the background color to fade in.
+or using a `.overlayColor` matched to the background color to fade in.
 
 The function will be called with `Clay_TransitionData` that provides the first-frame state of the element, which you can modify and then return. 
 
@@ -2151,7 +2205,7 @@ typedef enum trigger {
 
 This function pointer is called the frame the element "exits" (i.e. it was in the layout tree last frame, and this frame it isn't).
 It allows you to modify the "final state" of the element to create an exit transition. Common techniques include offsetting the y position to "slide up / down",
-or using a `.colorOverlay` matched to the background color to fade out.
+or using a `.overlayColor` matched to the background color to fade out.
 
 The function will be called with `Clay_TransitionData` that provides the final-frame state of the element, which you can modify and then return.
 
@@ -2395,6 +2449,8 @@ An enum indicating how this render command should be handled. Possible values in
 - `CLAY_RENDER_COMMAND_TYPE_IMAGE` - An image should be drawn, configured with `.config.imageElementConfig`
 - `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` - Named after [glScissor](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glScissor.xhtml), this indicates that the renderer should begin culling any subsequent pixels that are drawn outside the `.boundingBox` of this render command.
 - `CLAY_RENDER_COMMAND_TYPE_SCISSOR_END` - Only ever appears after a matching `CLAY_RENDER_COMMAND_TYPE_SCISSOR_START` command, and indicates that the scissor has ended.
+- `CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_START` - The renderer should begin applying an overlay color to all subsequent render commands, similar to glsl's `mix(source, target, alpha)`.
+- `CLAY_RENDER_COMMAND_TYPE_COLOR_OVERLAY_END` - The previous `COLOR_OVERLAY` should be removed. Note: nested color overlays may require a stack data structure on the renderer side.
 - `CLAY_RENDER_COMMAND_TYPE_CUSTOM` - A custom render command controlled by the user, configured with `.config.customElementConfig`
 
 ---
