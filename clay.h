@@ -1239,7 +1239,7 @@ typedef struct {
 
 CLAY__ARRAY_DEFINE(Clay__ScrollContainerDataInternal, Clay__ScrollContainerDataInternalArray)
 
-// Data representing the current internal state of a scrolling element.
+// Data representing the current internal state of a transition element.
 typedef struct Clay__TransitionDataInternal {
     Clay_TransitionData initialState;
     Clay_TransitionData currentState;
