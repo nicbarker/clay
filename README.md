@@ -1876,11 +1876,11 @@ You can mentally visualise this as finding a point on the floating container, th
 
 For example:
 
-"Attach the LEFT_CENTER of the floating container to the RIGHT_TOP of the parent"
+"Attach the LEFT_BOTTOM of the floating container to the CENTER_CENTER of the parent"
 
-`CLAY(CLAY_ID("Floating"), { .floating = { .attachPoints = { .element = CLAY_ATTACH_POINT_LEFT_CENTER, .parent = CLAY_ATTACH_POINT_RIGHT_TOP } } });`
+`CLAY(CLAY_ID("Floating"), { .floating = { .attachPoints = { .element = CLAY_ATTACH_POINT_LEFT_BOTTOM, .parent = CLAY_ATTACH_POINT_CENTER_CENTER } } });`
 
-![Screenshot 2024-08-23 at 11 53 24 AM](https://github.com/user-attachments/assets/ebe75e0d-1904-46b0-982d-418f929d1516)
+<img width="1200" height="675" alt="Clay README Graphics" src="https://github.com/user-attachments/assets/95a829e3-ec17-47f2-8d16-10fda4968189" />
 
 ---
 
