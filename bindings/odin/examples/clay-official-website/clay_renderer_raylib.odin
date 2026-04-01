@@ -21,7 +21,7 @@ raylib_fonts := [dynamic]Raylib_Font{}
 // Alias for compatibility, default to ascii support
 measure_text :: measure_text_ascii
 
-measure_text_unicode :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {
+measure_text_unicode :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> (clay.Dimensions, rawptr) {
     // Needed for grapheme_count
     context = runtime.default_context()
     
@@ -56,10 +56,10 @@ measure_text_unicode :: proc "c" (text: clay.StringSlice, config: ^clay.TextElem
     //   maybe that's a raylib bug, maybe that's Clay?
 	total_spacing := f32(grapheme_count) * f32(config.letterSpacing)
 
-	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
+	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}, userData
 }
 
-measure_text_ascii :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {    
+measure_text_ascii :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> (clay.Dimensions, rawptr) {    
 	line_width: f32 = 0
     
 	font := raylib_fonts[config.fontId].font
@@ -85,7 +85,7 @@ measure_text_ascii :: proc "c" (text: clay.StringSlice, config: ^clay.TextElemen
     //   maybe that's a raylib bug, maybe that's Clay?
 	total_spacing := f32(len(text_str)) * f32(config.letterSpacing)
 
-	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
+	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}, userData
 }
 
 clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand), allocator := context.temp_allocator) {
