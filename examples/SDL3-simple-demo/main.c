@@ -157,14 +157,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
         case SDL_EVENT_WINDOW_RESIZED:
             Clay_SetLayoutDimensions((Clay_Dimensions) { (float) event->window.data1, (float) event->window.data2 });
             break;
-        case SDL_EVENT_MOUSE_MOTION:
-            Clay_SetPointerState((Clay_Vector2) { event->motion.x, event->motion.y },
-                                 event->motion.state & SDL_BUTTON_LMASK);
-            break;
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            Clay_SetPointerState((Clay_Vector2) { event->button.x, event->button.y },
-                                 event->button.button == SDL_BUTTON_LEFT);
-            break;
         case SDL_EVENT_MOUSE_WHEEL:
             Clay_UpdateScrollContainers(true, (Clay_Vector2) { event->wheel.x, event->wheel.y }, 0.01f);
             break;
@@ -178,6 +170,15 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *state = appstate;
+
+    float mouse_x, mouse_y;
+
+    Uint32 buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+
+    Clay_SetPointerState(
+        (Clay_Vector2){.x = mouse_x, .y = mouse_y},
+        buttons & SDL_BUTTON_LMASK
+    );
 
     Clay_RenderCommandArray render_commands = (show_demo
         ? ClayVideoDemo_CreateLayout(&state->demoData)
@@ -228,5 +229,6 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 
         SDL_free(state);
     }
+
     TTF_Quit();
 }
