@@ -56,6 +56,7 @@
 
 #define CLAY__MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CLAY__MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define CLAY__OFFSET_FOR_64_BYTE_ALIGNMENT(x) ((64 - (x & 63)) & 63)
 
 #define CLAY_TEXT_CONFIG(...) __VA_ARGS__
 
@@ -3926,7 +3927,7 @@ Clay_Color Clay__debugViewHighlightColor = { 168, 66, 28, 100 };
 Clay__WarningArray Clay__WarningArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
     size_t totalSizeBytes = capacity * sizeof(Clay_String);
     Clay__WarningArray array = {.capacity = capacity, .length = 0};
-    uintptr_t nextAllocOffset = arena->nextAllocation + (64 - (arena->nextAllocation % 64));
+    uintptr_t nextAllocOffset = arena->nextAllocation + CLAY__OFFSET_FOR_64_BYTE_ALIGNMENT(arena->nextAllocation);
     if (nextAllocOffset + totalSizeBytes <= arena->capacity) {
         array.internalArray = (Clay__Warning*)((uintptr_t)arena->memory + (uintptr_t)nextAllocOffset);
         arena->nextAllocation = nextAllocOffset + totalSizeBytes;
@@ -3952,7 +3953,7 @@ Clay__Warning *Clay__WarningArray_Add(Clay__WarningArray *array, Clay__Warning i
 void* Clay__Array_Allocate_Arena(int32_t capacity, uint32_t itemSize, Clay_Arena *arena)
 {
     size_t totalSizeBytes = capacity * itemSize;
-    uintptr_t nextAllocOffset = arena->nextAllocation + ((64 - (arena->nextAllocation % 64)) & 63);
+    uintptr_t nextAllocOffset = arena->nextAllocation + CLAY__OFFSET_FOR_64_BYTE_ALIGNMENT(arena->nextAllocation);
     if (nextAllocOffset + totalSizeBytes <= arena->capacity) {
         arena->nextAllocation = nextAllocOffset + totalSizeBytes;
         return (void*)((uintptr_t)arena->memory + (uintptr_t)nextAllocOffset);
@@ -4144,9 +4145,12 @@ CLAY_DLL_EXPORT Clay_PointerData Clay_GetPointerState(void) {
 CLAY_WASM_EXPORT("Clay_Initialize")
 Clay_Context* Clay_Initialize(Clay_Arena arena, Clay_Dimensions layoutDimensions, Clay_ErrorHandler errorHandler) {
     // Cacheline align memory passed in
-    uintptr_t baseOffset = 64 - ((uintptr_t)arena.memory % 64);
-    baseOffset = baseOffset == 64 ? 0 : baseOffset;
+    uintptr_t baseOffset = CLAY__OFFSET_FOR_64_BYTE_ALIGNMENT((uintptr_t)arena.memory);
     arena.memory += baseOffset;
+    // Ensure capacity won't underflow when adjusted for alignment
+    if (arena.capacity < baseOffset) return NULL;
+    // Adjust capacity to account for alignment offset
+    arena.capacity -= baseOffset;
     Clay_Context *context = Clay__Context_Allocate_Arena(&arena);
     if (context == NULL) return NULL;
     // DEFAULTS
