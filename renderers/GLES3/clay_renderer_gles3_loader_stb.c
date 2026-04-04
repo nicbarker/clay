@@ -188,7 +188,9 @@ static inline Clay_Dimensions Stb_MeasureText(
     Clay_TextElementConfig *config,
     void *userData)
 {
-    Stb_FontData *fontData = (Stb_FontData *)userData;
+    // Use fontData of specified font
+    Stb_FontData *allFontData = (Stb_FontData *)userData;
+    Stb_FontData *fontData = &allFontData[config->fontId];
 
     if (!fontData->cdata)
     {
