@@ -232,7 +232,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                     imageTexture,
                     (Rectangle) { 0, 0, imageTexture.width, imageTexture.height },
                     (Rectangle){boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height},
-                    (Vector2) {},
+                    (Vector2) { 0 },
                     0,
                     CLAY_COLOR_TO_RAYLIB_COLOR(tintColor));
                 break;
@@ -252,6 +252,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             case CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END: {
                 DisableColorOverlay();
             }
+            /* fall through */
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                 Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
                 if (config->cornerRadius.topLeft > 0) {

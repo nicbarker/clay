@@ -1486,7 +1486,7 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     __m128i v2 = _mm_set1_epi64x(0x3c6ef372fe94f82bULL);
     __m128i v3 = _mm_set1_epi64x(0xa54ff53a5f1d36f1ULL);
 
-    uint8_t overflowBuffer[16] = { 0 };  // Temporary buffer for small inputs
+    uint8_t overflowBuffer[16] = CLAY__DEFAULT_STRUCT;  // Temporary buffer for small inputs
 
     while (length > 0) {
         __m128i msg;
@@ -1535,7 +1535,7 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     uint64x2_t v2 = vdupq_n_u64(0x3c6ef372fe94f82bULL);
     uint64x2_t v3 = vdupq_n_u64(0xa54ff53a5f1d36f1ULL);
 
-    uint8_t overflowBuffer[8] = { 0 };
+    uint8_t overflowBuffer[8] = CLAY__DEFAULT_STRUCT;
 
     while (length > 0) {
         uint64x2_t msg;
@@ -2255,6 +2255,7 @@ bool Clay__FloatEqual(float left, float right) {
 
 // Writes out the location of text elements to layout elements buffer 1
 void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArray* textElementsOut, Clay__int32_tArray* aspectRatioElementsOut) {
+    (void)deltaTime;
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__int32_tArray bfsBuffer = context->layoutElementChildrenBuffer;
     Clay__int32_tArray resizableContainerBuffer = context->openLayoutElementStack;
@@ -3068,7 +3069,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             // Setup positions for child elements and add to DFS buffer ----------
 
             // On-axis alignment
-            Clay_Dimensions contentSizeCurrent = {};
+            Clay_Dimensions contentSizeCurrent = CLAY__DEFAULT_STRUCT;
             if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                 for (int32_t i = 0; i < currentElement->children.length; ++i) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
@@ -3111,7 +3112,6 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             dfsBuffer.length += currentElement->children.length;
             for (int32_t i = 0; i < currentElement->children.length; ++i) {
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, currentElement->children.elements[i]);
-                Clay_LayoutElementHashMapItem* childMapItem = Clay__GetHashMapItem(childElement->id);
                 // Alignment along non layout axis
                 if (layoutConfig->layoutDirection == CLAY_LEFT_TO_RIGHT) {
                     currentElementTreeNode->nextChildOffset.y = currentElement->config.layout.padding.top;
@@ -3310,7 +3310,7 @@ Clay__RenderDebugLayoutData Clay__RenderDebugLayoutElementsList(int32_t initialR
                     }
                 }
                 if (currentElementData->elementId.stringId.length > 0) {
-                    CLAY_AUTO_ID() {
+                    CLAY_AUTO_ID(0) {
                         Clay_TextElementConfig textConfig = offscreen ? CLAY__INIT(Clay_TextElementConfig) { .textColor = CLAY__DEBUGVIEW_COLOR_3, .fontSize = 16 } : Clay__DebugView_TextNameConfig;
                         CLAY_TEXT(currentElementData->elementId.stringId, textConfig);
                         if (currentElementData->elementId.offset != 0) {
@@ -3447,6 +3447,7 @@ void Clay__RenderDebugLayoutSizing(Clay_SizingAxis sizing, Clay_TextElementConfi
 }
 
 void Clay__DebugViewRenderElementConfigHeader(Clay_String elementId, Clay__DebugElementConfigType type) {
+    (void)elementId;
     Clay__DebugElementConfigTypeLabelConfig config = Clay__DebugGetElementConfigTypeLabel(type);
     Clay_Color backgroundColor = config.color;
     backgroundColor.a = 90;
@@ -3632,7 +3633,7 @@ void Clay__RenderDebugView(void) {
                     }
                     // .padding
                     CLAY_TEXT(CLAY_STRING("Padding"), infoTitleConfig);
-                    CLAY(CLAY_ID("Clay__DebugViewElementInfoPadding"), { }) {
+                    CLAY(CLAY_ID("Clay__DebugViewElementInfoPadding"), CLAY__DEFAULT_STRUCT) {
                         CLAY_TEXT(CLAY_STRING("{ left: "), infoTextConfig);
                         CLAY_TEXT(Clay__IntToString(layoutConfig->padding.left), infoTextConfig);
                         CLAY_TEXT(CLAY_STRING(", right: "), infoTextConfig);
@@ -3736,7 +3737,7 @@ void Clay__RenderDebugView(void) {
                             Clay__DebugViewRenderElementConfigHeader(selectedItem->elementId.stringId, CLAY__ELEMENT_CONFIG_TYPE_ASPECT);
                             CLAY_TEXT(CLAY_STRING("Aspect Ratio"), infoTitleConfig);
                             // Aspect Ratio
-                            CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatio"), { }) {
+                            CLAY(CLAY_ID("Clay__DebugViewElementInfoAspectRatio"), CLAY__DEFAULT_STRUCT) {
                                 CLAY_TEXT(Clay__IntToString(aspectRatioConfig->aspectRatio), infoTextConfig);
                                 CLAY_TEXT(CLAY_STRING("."), infoTextConfig);
                                 float frac = aspectRatioConfig->aspectRatio - (int)(aspectRatioConfig->aspectRatio);
@@ -4339,7 +4340,6 @@ void Clay__CloneElementsWithExitTransition() {
 
     for (int i = 0; i < context->transitionDatas.length; ++i) {
         Clay__TransitionDataInternal *data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, i);
-        Clay_TransitionElementConfig* config = &data->elementThisFrame->config.transition;
         if (data->transitionOut) {
             Clay__int32_tArray bfsBuffer = context->openLayoutElementStack;
             bfsBuffer.length = 0;
@@ -4356,7 +4356,6 @@ void Clay__CloneElementsWithExitTransition() {
                 for (int j = layoutElement->children.length - 1; j >= 0; --j) {
                     Clay_LayoutElement* childElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, layoutElement->children.elements[j]);
                     Clay__int32_tArray_Add(&bfsBuffer, nextIndex);
-                    Clay_LayoutElement* newChildElement = Clay_LayoutElementArray_Set_DontTouchLength(&context->layoutElements, nextIndex, *childElement);
                     Clay__StringArray_Set_DontTouchLength(&context->layoutElementIdStrings, nextIndex, *Clay__StringArray_GetCheckCapacity(&context->layoutElementIdStrings, childElement - context->layoutElements.internalArray));
                     Clay__int32_tArray_Set_DontTouchLength(&context->layoutElementChildren, nextChildIndex, nextIndex);
                     nextIndex--;
@@ -4366,7 +4365,7 @@ void Clay__CloneElementsWithExitTransition() {
             }
         }
     }
-};
+}
 
 void Clay_ApplyTransitionedPropertiesToElement(Clay_LayoutElement* currentElement, Clay_TransitionProperty properties, Clay_TransitionData currentTransitionData, Clay_BoundingBox* boundingBox, bool reparented) {
     if (properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
@@ -4481,7 +4480,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                             found = true;
                         }
                         for (int j = 0; j < parentElement->children.length; ++j) {
-                            if (config->exit.siblingOrdering == CLAY_EXIT_TRANSITION_ORDERING_NATURAL_ORDER && j == data->siblingIndex) {
+                            if (config->exit.siblingOrdering == CLAY_EXIT_TRANSITION_ORDERING_NATURAL_ORDER && (uint32_t)j == data->siblingIndex) {
                                 Clay__int32_tArray_Add(&context->layoutElementChildren, exitingElementIndex);
                                 found = true;
                             }
