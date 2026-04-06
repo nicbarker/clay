@@ -1247,6 +1247,7 @@ typedef struct Clay__TransitionDataInternal {
     Clay_TransitionData currentState;
     Clay_TransitionData targetState;
     Clay_LayoutElement* elementThisFrame;
+    Clay_Vector2 oldParentRelativePosition;
     uint32_t elementId;
     uint32_t parentId;
     uint32_t siblingIndex;
@@ -2887,15 +2888,25 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             // This will only be run a single time for each element in downwards DFS order
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
+            bool found = false;
             if (useStoredBoundingBoxes && currentElement->config.transition.handler) {
                 for (int j = 0; j < context->transitionDatas.length; ++j) {
                     Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
-                    if (transitionData->elementId == currentElement->id && transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
-                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) != 0) currentElementBoundingBox.x = transitionData->currentState.boundingBox.x;
-                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) != 0) currentElementBoundingBox.y = transitionData->currentState.boundingBox.y;
-                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) != 0) currentElementBoundingBox.width = transitionData->currentState.boundingBox.width;
-                        if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) != 0) currentElementBoundingBox.height = transitionData->currentState.boundingBox.height;
+                    if (transitionData->elementId == currentElement->id) {
+                        found = true;
+                        if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
+                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) != 0) currentElementBoundingBox.x = transitionData->currentState.boundingBox.x;
+                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) != 0) currentElementBoundingBox.y = transitionData->currentState.boundingBox.y;
+                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) != 0) currentElementBoundingBox.width = transitionData->currentState.boundingBox.width;
+                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) != 0) currentElementBoundingBox.height = transitionData->currentState.boundingBox.height;
+                        }
+                        break;
                     }
+                }
+                // An exiting element that completed its transition this frame - skip tree
+                if (!found) {
+                    dfsBuffer.length--;
+                    continue;
                 }
             }
             if (currentElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE) {
@@ -4484,7 +4495,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     // Otherwise, just attach to the root as a floating element
                     } else {
                         Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
-                            .layoutElementIndex = data->elementThisFrame - context->layoutElements.internalArray,
+                            .layoutElementIndex = (int32_t)(data->elementThisFrame - context->layoutElements.internalArray),
                             .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id,
                             .zIndex = 1,
                         });
@@ -4544,18 +4555,22 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         transitionData->currentState = targetState;
                     }
                 } else {
-                    Clay_Vector2 newRelativePosition = { mapItem->boundingBox.x, mapItem->boundingBox.y };
-                    newRelativePosition.x -= parentMapItem->boundingBox.x;
-                    newRelativePosition.y -= parentMapItem->boundingBox.y;
+                    Clay_Vector2 parentScrollOffset = parentMapItem->layoutElement->config.clip.childOffset;
+                    Clay_Vector2 newRelativePosition = {
+                        mapItem->boundingBox.x - parentMapItem->boundingBox.x - parentScrollOffset.x,
+                        mapItem->boundingBox.y - parentMapItem->boundingBox.y - parentScrollOffset.y,
+                    };
+                    Clay_Vector2 oldRelativePosition = transitionData->oldParentRelativePosition;
+                    transitionData->oldParentRelativePosition = newRelativePosition;
                     Clay_TransitionProperty properties = currentElement->config.transition.properties;
                     int32_t activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
                     if (properties & CLAY_TRANSITION_PROPERTY_X) {
-                        if (!Clay__FloatEqual(oldTargetState.boundingBox.x, targetState.boundingBox.x) && !context->rootResizedLastFrame) {
+                        if (!Clay__FloatEqual(oldTargetState.boundingBox.x, targetState.boundingBox.x) && !(Clay__FloatEqual(oldRelativePosition.x, newRelativePosition.x)) && !context->rootResizedLastFrame) {
                             activeProperties |= CLAY_TRANSITION_PROPERTY_X;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_Y) {
-                        if (!Clay__FloatEqual(oldTargetState.boundingBox.y, targetState.boundingBox.y) && !context->rootResizedLastFrame) {
+                        if (!Clay__FloatEqual(oldTargetState.boundingBox.y, targetState.boundingBox.y) && !(Clay__FloatEqual(oldRelativePosition.y, newRelativePosition.y)) && !context->rootResizedLastFrame) {
                             activeProperties |= CLAY_TRANSITION_PROPERTY_Y;
                         }
                     }
