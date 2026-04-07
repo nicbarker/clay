@@ -381,6 +381,18 @@ typedef CLAY_PACKED_ENUM {
     CLAY_TEXT_ALIGN_RIGHT,
 } Clay_TextAlignment;
 
+// Specifies where the ellipsis should appear when displaying texts that don't fit.
+typedef CLAY_PACKED_ENUM {
+    // (default) - Ellipsis should NOT appear in the text.
+    CLAY_TEXT_ELIDE_NONE,
+    // The ellipsis should appear at the beginning of the text.
+    CLAY_TEXT_ELIDE_LEFT,
+    // The ellipsis should appear at the end of the text.
+    CLAY_TEXT_ELIDE_RIGHT,
+    // The ellipsis should appear in the middle of the text.
+    CLAY_TEXT_ELIDE_MIDDLE,
+} Clay_TextElideMode;
+
 // Controls various functionality related to text elements.
 typedef struct Clay_TextElementConfig {
     // A pointer that will be transparently passed through to the resulting render command.
@@ -406,6 +418,13 @@ typedef struct Clay_TextElementConfig {
     // CLAY_TEXT_ALIGN_CENTER - Horizontally aligns wrapped lines of text to the center of their bounding box.
     // CLAY_TEXT_ALIGN_RIGHT - Horizontally aligns wrapped lines of text to the right hand side of their bounding box.
     Clay_TextAlignment textAlignment;
+    // Controls how to elide parts of the text to fit into the outer text bounding box.
+    // CLAY_TEXT_ELIDE_NONE (default) - Ellipsis should NOT appear in the text.
+    // CLAY_TEXT_ELIDE_LEFT - The ellipsis should appear at the beginning of the text.
+    // CLAY_TEXT_ELIDE_RIGHT - The ellipsis should appear at the end of the text.
+    // CLAY_TEXT_ELIDE_MIDDLE - The ellipsis should appear in the middle of the text.
+    // If this property is set to CLAY_TEXT_ELIDE_RIGHT, it can be used with wrapped text. The text will only elide if there is insufficient vertical space.
+    Clay_TextElideMode textElideMode;
 } Clay_TextElementConfig;
 
 CLAY__WRAPPER_STRUCT(Clay_TextElementConfig);
@@ -1149,7 +1168,16 @@ void Clay__ErrorHandlerFunctionDefault(Clay_ErrorData errorText) {
     (void) errorText;
 }
 
+#define CLAY__ELIDED_TEXT_PART_COUNT 3
+
+Clay_String CLAY__ELIDED_TEXT_PART_ID[CLAY__ELIDED_TEXT_PART_COUNT] = {
+    { .length = 1, .chars = "0" },
+    { .length = 1, .chars = "1" },
+    { .length = 1, .chars = "2" },
+};
+
 Clay_String CLAY__SPACECHAR = { .length = 1, .chars = " " };
+Clay_String CLAY__ELLIPSIS_STRING = { .length = 3, .chars = "..." };
 Clay_String CLAY__STRING_DEFAULT = { .length = 0, .chars = NULL };
 
 typedef struct {
@@ -1187,7 +1215,12 @@ CLAY__ARRAY_DEFINE_FUNCTIONS(Clay_RenderCommand, Clay_RenderCommandArray)
 
 typedef struct {
     Clay_Dimensions dimensions;
-    Clay_String line;
+    Clay_String text;
+} Clay__ElidedTextPart;
+
+typedef struct {
+    Clay__ElidedTextPart part[CLAY__ELIDED_TEXT_PART_COUNT];
+    bool forcedNewline;
 } Clay__WrappedTextLine;
 
 CLAY__ARRAY_DEFINE(Clay__WrappedTextLine, Clay__WrappedTextLineArray)
@@ -1293,6 +1326,7 @@ CLAY__ARRAY_DEFINE(Clay__MeasuredWord, Clay__MeasuredWordArray)
 typedef struct {
     Clay_Dimensions unwrappedDimensions;
     int32_t measuredWordsStartIndex;
+    int32_t measuredPartsStartIndex;
     float minWidth;
     bool containsNewlines;
     // Hash map data
@@ -1660,16 +1694,22 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         }
         // This element hasn't been seen in a few frames, delete the hash map item
         if (context->generation - hashEntry->generation > 2) {
-            // Add all the measured words that were included in this measurement to the freelist
+            // Add all the measured words and parts that were included in this measurement to the freelist
             int32_t nextWordIndex = hashEntry->measuredWordsStartIndex;
             while (nextWordIndex != -1) {
                 Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArray_Get(&context->measuredWords, nextWordIndex);
                 Clay__int32_tArray_Add(&context->measuredWordsFreeList, nextWordIndex);
                 nextWordIndex = measuredWord->next;
             }
+            int32_t nextPartIndex = hashEntry->measuredPartsStartIndex;
+            while (nextPartIndex != -1) {
+                Clay__MeasuredWord *measuredPart = Clay__MeasuredWordArray_Get(&context->measuredWords, nextPartIndex);
+                Clay__int32_tArray_Add(&context->measuredWordsFreeList, nextPartIndex);
+                nextPartIndex = measuredPart->next;
+            }
 
             int32_t nextIndex = hashEntry->nextIndex;
-            Clay__MeasureTextCacheItemArray_Set(&context->measureTextHashMapInternal, elementIndex, CLAY__INIT(Clay__MeasureTextCacheItem) { .measuredWordsStartIndex = -1 });
+            Clay__MeasureTextCacheItemArray_Set(&context->measureTextHashMapInternal, elementIndex, CLAY__INIT(Clay__MeasureTextCacheItem) { .measuredWordsStartIndex = -1, .measuredPartsStartIndex = -1 });
             Clay__int32_tArray_Add(&context->measureTextHashMapInternalFreeList, elementIndex);
             if (elementIndexPrevious == 0) {
                 context->measureTextHashMap.internalArray[hashBucket] = nextIndex;
@@ -1685,7 +1725,7 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
     }
 
     int32_t newItemIndex = 0;
-    Clay__MeasureTextCacheItem newCacheItem = { .measuredWordsStartIndex = -1, .id = id, .generation = context->generation };
+    Clay__MeasureTextCacheItem newCacheItem = { .measuredWordsStartIndex = -1, .measuredPartsStartIndex = -1, .id = id, .generation = context->generation };
     Clay__MeasureTextCacheItem *measured = NULL;
     if (context->measureTextHashMapInternalFreeList.length > 0) {
         newItemIndex = Clay__int32_tArray_GetValue(&context->measureTextHashMapInternalFreeList, context->measureTextHashMapInternalFreeList.length - 1);
@@ -1773,6 +1813,176 @@ Clay__MeasureTextCacheItem *Clay__MeasureTextCached(Clay_String *text, Clay_Text
         context->measureTextHashMap.internalArray[hashBucket] = newItemIndex;
     }
     return measured;
+}
+
+bool Clay__FindMeasuredWord(Clay__MeasuredWord *measuredWord, Clay_StringSlice slice, Clay__MeasuredWord **foundOrLast) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    while (measuredWord->next != -1) {
+        if (measuredWord->startOffset == slice.chars - slice.baseChars && measuredWord->length == slice.length) {
+            *foundOrLast = measuredWord;
+            return true;
+        }
+        measuredWord = Clay__MeasuredWordArray_Get(&context->measuredWords, measuredWord->next);
+    }
+    *foundOrLast = measuredWord;
+    return false;
+}
+
+Clay_StringSlice utf8GrowRight(Clay_StringSlice slice, Clay_StringSlice base) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    Clay_StringSlice result = slice;
+    if (slice.baseChars != base.baseChars) {
+        context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+                .errorType = CLAY_ERROR_TYPE_INTERNAL_ERROR,
+                .errorText = CLAY_STRING("Clay attempted to attribute a string slice to a different string. This is an internal error and is likely a bug."),
+                .userData = context->errorHandler.userData });
+        return slice;
+    }
+    while (result.length < base.length - (slice.chars - base.chars)) {
+        if ((result.chars[result.length] & 0x80) == 0x00 || (result.chars[result.length] & 0xc0) == 0xc0) {
+            break;
+        }
+        ++result.length;
+    }
+    return result;
+}
+
+Clay_StringSlice utf8ShrinkLeft(Clay_StringSlice slice) {
+    Clay_StringSlice result = slice;
+    while (result.length > 0) {
+        if ((result.chars[0] & 0x80) == 0x00 || (result.chars[0] & 0xc0) == 0xc0) {
+            break;
+        }
+        ++result.chars;
+        --result.length;
+    }
+    return result;
+}
+
+Clay__WrappedTextLine Clay__ElideText(Clay__MeasureTextCacheItem *textMeasured, Clay_StringSlice text, Clay_LayoutElement *containerElement, float lineHeight) {
+    Clay_Context* context = Clay_GetCurrentContext();
+
+    int32_t lower = 0;
+    int32_t upper = text.length;
+    int32_t mid = lower + (upper - lower) / 2;
+
+    Clay_Dimensions ellipsisDimensions = {
+        Clay__MeasureText(CLAY__INIT(Clay_StringSlice) { .length = CLAY__ELLIPSIS_STRING.length, .chars = CLAY__ELLIPSIS_STRING.chars, .baseChars = CLAY__ELLIPSIS_STRING.chars }, &containerElement->textConfig, context->measureTextUserData).width,
+        lineHeight
+    };
+
+    Clay__MeasuredWord tempPart = { .next = textMeasured->measuredPartsStartIndex };
+    Clay__MeasuredWord *firstMeasuredPart = textMeasured->measuredPartsStartIndex != -1 ? Clay__MeasuredWordArray_Get(&context->measuredWords, textMeasured->measuredPartsStartIndex) : &tempPart;
+
+    while (lower < upper) {
+        float partsWidth;
+        switch (containerElement->textConfig.textElideMode) {
+            case CLAY_TEXT_ELIDE_LEFT:
+            case CLAY_TEXT_ELIDE_RIGHT: {
+                Clay_StringSlice part;
+                if (containerElement->textConfig.textElideMode == CLAY_TEXT_ELIDE_LEFT) {
+                    part = utf8ShrinkLeft(CLAY__INIT(Clay_StringSlice) { .length = mid, .chars = text.chars + text.length - mid, .baseChars = text.baseChars });
+                } else {
+                    part = utf8GrowRight(CLAY__INIT(Clay_StringSlice) { .length = mid, .chars = text.chars, .baseChars = text.baseChars }, text);
+                }
+                Clay__MeasuredWord *measuredPart;
+                if (Clay__FindMeasuredWord(firstMeasuredPart, part, &measuredPart)) {
+                    partsWidth = measuredPart->width;
+                } else {
+                    partsWidth = Clay__MeasureText(part, &containerElement->textConfig, context->measureTextUserData).width;
+                    Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .length = part.length, .startOffset = part.chars - part.baseChars, .width = partsWidth, .next = -1 }, measuredPart);
+                }
+                break;
+            }
+            case CLAY_TEXT_ELIDE_MIDDLE: {
+                float leftWidth;
+                int32_t leftLength = mid / 2 + mid % 2;
+                Clay_StringSlice leftPart = utf8GrowRight(CLAY__INIT(Clay_StringSlice) { .length = leftLength, .chars = text.chars, .baseChars = text.baseChars }, text);
+                Clay__MeasuredWord *leftMeasuredPart;
+                if (Clay__FindMeasuredWord(firstMeasuredPart, leftPart, &leftMeasuredPart)) {
+                    leftWidth = leftMeasuredPart->width;
+                } else {
+                    leftWidth = Clay__MeasureText(leftPart, &containerElement->textConfig, context->measureTextUserData).width;
+                    Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .length = leftPart.length, .startOffset = leftPart.chars - leftPart.baseChars, .width = leftWidth, .next = -1 }, leftMeasuredPart);
+                }
+                float rightWidth;
+                int32_t rightOffset = text.length - mid + leftLength;
+                int32_t rightLength = mid / 2;
+                Clay_StringSlice rightPart = utf8ShrinkLeft(CLAY__INIT(Clay_StringSlice) { .length = rightLength, .chars = text.chars + text.length - mid + leftLength, .baseChars = text.baseChars });
+                Clay__MeasuredWord *rightMeasuredPart;
+                if (Clay__FindMeasuredWord(firstMeasuredPart, rightPart, &rightMeasuredPart)) {
+                    rightWidth = rightMeasuredPart->width;
+                } else {
+                    rightWidth = Clay__MeasureText(CLAY__INIT(Clay_StringSlice) { .length = rightLength, .chars = text.chars + rightOffset, .baseChars = text.baseChars }, &containerElement->textConfig, context->measureTextUserData).width;
+                    Clay__AddMeasuredWord(CLAY__INIT(Clay__MeasuredWord) { .length = rightPart.length, .startOffset = rightPart.chars - rightPart.baseChars, .width = rightWidth, .next = -1 }, rightMeasuredPart);
+                }
+                partsWidth = leftWidth + rightWidth;
+                break;
+            }
+            default: {
+                context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+                        .errorType = CLAY_ERROR_TYPE_INTERNAL_ERROR,
+                        .errorText = CLAY_STRING("Clay calculated a text bounding box that is too narrow for non-wrapped no-elided text. This is an internal error and is likely a bug."),
+                        .userData = context->errorHandler.userData });
+                return CLAY__INIT(Clay__WrappedTextLine) { .part = { CLAY__INIT(Clay__ElidedTextPart) { containerElement->dimensions, CLAY__INIT(Clay_String) { .length = text.length, .chars = text.chars } } } };
+            }
+        }
+
+        if (partsWidth + ellipsisDimensions.width <= containerElement->dimensions.width) {
+            lower = mid;
+        } else {
+            upper = mid - 1;
+        }
+
+        mid = lower + (lower == upper ? 0 : CLAY__MAX((upper - lower) / 2, 1));
+    }
+
+    textMeasured->measuredPartsStartIndex = tempPart.next;
+
+    switch (containerElement->textConfig.textElideMode) {
+        case CLAY_TEXT_ELIDE_LEFT: {
+            Clay_StringSlice part = utf8ShrinkLeft(CLAY__INIT(Clay_StringSlice) { .length = mid, .chars = text.chars + text.length - mid, .baseChars = text.baseChars });
+            Clay__MeasuredWord *measuredPart;
+            Clay__FindMeasuredWord(firstMeasuredPart, part, &measuredPart);
+            return CLAY__INIT(Clay__WrappedTextLine) { .part = {
+                CLAY__INIT(Clay__ElidedTextPart) { ellipsisDimensions, CLAY__ELLIPSIS_STRING },
+                CLAY__INIT(Clay__ElidedTextPart) { { measuredPart->width, lineHeight }, CLAY__INIT(Clay_String) { .length = part.length, .chars = part.chars } }
+            }};
+        }
+        case CLAY_TEXT_ELIDE_RIGHT: {
+            Clay_StringSlice part = utf8GrowRight(CLAY__INIT(Clay_StringSlice) { .length = mid, .chars = text.chars, .baseChars = text.baseChars }, text);
+            Clay__MeasuredWord *measuredPart;
+            Clay__FindMeasuredWord(firstMeasuredPart, part, &measuredPart);
+            return CLAY__INIT(Clay__WrappedTextLine) { .part = {
+                CLAY__INIT(Clay__ElidedTextPart) { { measuredPart->width, lineHeight }, CLAY__INIT(Clay_String) { .length = part.length, .chars = part.chars } },
+                CLAY__INIT(Clay__ElidedTextPart) { ellipsisDimensions, CLAY__ELLIPSIS_STRING }
+            }};
+        }
+        case CLAY_TEXT_ELIDE_MIDDLE: {
+            int32_t leftLength = mid / 2 + mid % 2;
+            int32_t rightLength = mid / 2;
+            Clay_StringSlice leftPart = utf8GrowRight(CLAY__INIT(Clay_StringSlice) { .length = leftLength, .chars = text.chars, .baseChars = text.baseChars }, text);
+            Clay_StringSlice rightPart = utf8ShrinkLeft(CLAY__INIT(Clay_StringSlice) { .length = rightLength, .chars = text.chars + text.length - mid + leftLength, .baseChars = text.baseChars });
+            Clay__MeasuredWord *leftMeasuredPart;
+            Clay__MeasuredWord *rightMeasuredPart;
+            Clay__FindMeasuredWord(firstMeasuredPart, leftPart, &leftMeasuredPart);
+            Clay__FindMeasuredWord(firstMeasuredPart, rightPart, &rightMeasuredPart);
+            return CLAY__INIT(Clay__WrappedTextLine) { .part = {
+                CLAY__INIT(Clay__ElidedTextPart) { { leftMeasuredPart->width, lineHeight }, CLAY__INIT(Clay_String) { .length = leftPart.length, .chars = leftPart.chars } },
+                CLAY__INIT(Clay__ElidedTextPart) { ellipsisDimensions, CLAY__ELLIPSIS_STRING },
+                CLAY__INIT(Clay__ElidedTextPart) { { rightMeasuredPart->width, lineHeight }, CLAY__INIT(Clay_String) { .length = rightPart.length, .chars = rightPart.chars } }
+            }};
+        }
+        default: {
+            context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
+                    .errorType = CLAY_ERROR_TYPE_INTERNAL_ERROR,
+                    .errorText = CLAY_STRING("Clay calculated a text bounding box that is too narrow for non-wrapped non-elided text. This is an internal error and is likely a bug."),
+                    .userData = context->errorHandler.userData });
+            break;
+        }
+    }
+
+    return CLAY__INIT(Clay__WrappedTextLine) { .part = { CLAY__INIT(Clay__ElidedTextPart) { containerElement->dimensions, CLAY__INIT(Clay_String) { .length = text.length, .chars = text.chars } } } };
 }
 
 bool Clay__PointIsInsideRect(Clay_Vector2 point, Clay_BoundingBox rect) {
@@ -2088,7 +2298,7 @@ void Clay__OpenTextElement(Clay_String text, Clay_TextElementConfig textConfig) 
     Clay__StringArray_Add(&context->layoutElementIdStrings, elementId.stringId);
     Clay_Dimensions textDimensions = { .width = textMeasured->unwrappedDimensions.width, .height = textConfig.lineHeight > 0 ? (float)textConfig.lineHeight : textMeasured->unwrappedDimensions.height };
     textElement->dimensions = textDimensions;
-    textElement->minDimensions = CLAY__INIT(Clay_Dimensions) { .width = textMeasured->minWidth, .height = textDimensions.height };
+    textElement->minDimensions = CLAY__INIT(Clay_Dimensions) { .width = textConfig.textElideMode == CLAY_TEXT_ELIDE_NONE ? textMeasured->minWidth : 0, .height = textDimensions.height };
     textElement->textElementData = CLAY__INIT(Clay__TextElementData) { .text = text, .preferredDimensions = textMeasured->unwrappedDimensions };
     parentElement->children.length++;
 }
@@ -2319,7 +2529,17 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             for (int32_t childOffset = 0; childOffset < parent->children.length; childOffset++) {
                 int32_t childElementIndex = parent->children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, childElementIndex);
-                Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                Clay_SizingAxis childSizing;
+                if (childElement->isTextElement) {
+                    if (!xAxis && childElement->textConfig.wrapMode == CLAY_TEXT_WRAP_WORDS && childElement->textConfig.textElideMode == CLAY_TEXT_ELIDE_RIGHT) {
+                        childSizing = CLAY__INIT(Clay_SizingAxis) { .size.minMax.max = CLAY__MAXFLOAT, .type = CLAY__SIZING_TYPE_GROW };
+                    } else {
+                        float lineHeight = childElement->textConfig.lineHeight > 0 ? (float)childElement->textConfig.lineHeight : childElement->textElementData.preferredDimensions.height;
+                        childSizing = CLAY__INIT(Clay_SizingAxis) { .size.minMax.max = xAxis ? childElement->textElementData.preferredDimensions.width : lineHeight, .type = CLAY__SIZING_TYPE_FIT };
+                    }
+                } else {
+                    childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                }
                 float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
 
                 if (textElementsOut && childElement->isTextElement) {
@@ -2339,7 +2559,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
 
                 if (childSizing.type != CLAY__SIZING_TYPE_PERCENT
                     && childSizing.type != CLAY__SIZING_TYPE_FIXED
-                    && (!childElement->isTextElement || childElement->textConfig.wrapMode == CLAY_TEXT_WRAP_WORDS)
+                    && (!childElement->isTextElement || childElement->textConfig.wrapMode == CLAY_TEXT_WRAP_WORDS || childElement->textConfig.textElideMode != CLAY_TEXT_ELIDE_NONE)
 //                    && (xAxis || !Clay__ElementHasConfig(childElement, CLAY__ELEMENT_CONFIG_TYPE_ASPECT))
                 ) {
                     Clay__int32_tArray_Add(&resizableContainerBuffer, childElementIndex);
@@ -2364,6 +2584,9 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             for (int32_t childOffset = 0; childOffset < parent->children.length; childOffset++) {
                 int32_t childElementIndex = parent->children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, childElementIndex);
+                if (childElement->isTextElement) {
+                    continue;
+                }
                 Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
                 float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
                 if (childSizing.type == CLAY__SIZING_TYPE_PERCENT) {
@@ -2423,7 +2646,16 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                 } else if (sizeToDistribute > 0 && growContainerCount > 0) {
                     for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                         Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
-                        Clay__SizingType childSizing = xAxis ? child->config.layout.sizing.width.type : child->config.layout.sizing.height.type;
+                        Clay__SizingType childSizing;
+                        if (child->isTextElement) {
+                            if (!xAxis && child->textConfig.wrapMode == CLAY_TEXT_WRAP_WORDS && child->textConfig.textElideMode == CLAY_TEXT_ELIDE_RIGHT) {
+                                childSizing = CLAY__SIZING_TYPE_GROW;
+                            } else {
+                                childSizing = CLAY__SIZING_TYPE_FIT;
+                            }
+                        } else {
+                            childSizing = xAxis ? child->config.layout.sizing.width.type : child->config.layout.sizing.height.type;
+                        }
                         if (childSizing != CLAY__SIZING_TYPE_GROW) {
                             Clay__int32_tArray_RemoveSwapback(&resizableContainerBuffer, childIndex--);
                         }
@@ -2451,7 +2683,17 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                         for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
                             float *childSize = xAxis ? &child->dimensions.width : &child->dimensions.height;
-                            float maxSize = xAxis ? child->config.layout.sizing.width.size.minMax.max : child->config.layout.sizing.height.size.minMax.max;
+                            float maxSize;
+                            if (child->isTextElement) {
+                                float lineHeight = child->textConfig.lineHeight > 0 ? (float)child->textConfig.lineHeight : child->textElementData.preferredDimensions.height;
+                                if (!xAxis && child->textConfig.wrapMode == CLAY_TEXT_WRAP_WORDS && child->textConfig.textElideMode == CLAY_TEXT_ELIDE_RIGHT) {
+                                    maxSize = lineHeight * (float)child->textElementData.wrappedLines.length;
+                                } else {
+                                    maxSize = xAxis ? child->textElementData.preferredDimensions.width : lineHeight;
+                                }
+                            } else {
+                                maxSize = xAxis ? child->config.layout.sizing.width.size.minMax.max : child->config.layout.sizing.height.size.minMax.max;
+                            }
                             float previousWidth = *childSize;
                             if (Clay__FloatEqual(*childSize, smallest)) {
                                 *childSize += widthToAdd;
@@ -2468,7 +2710,17 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             } else {
                 for (int32_t childOffset = 0; childOffset < resizableContainerBuffer.length; childOffset++) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childOffset));
-                    Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                    Clay_SizingAxis childSizing;
+                    if (childElement->isTextElement) {
+                        if (!xAxis && childElement->textConfig.wrapMode == CLAY_TEXT_WRAP_WORDS && childElement->textConfig.textElideMode == CLAY_TEXT_ELIDE_RIGHT) {
+                            childSizing = CLAY__INIT(Clay_SizingAxis) { .size.minMax.max = CLAY__MAXFLOAT, .type = CLAY__SIZING_TYPE_GROW };
+                        } else {
+                            float lineHeight = childElement->textConfig.lineHeight > 0 ? (float)childElement->textConfig.lineHeight : childElement->textElementData.preferredDimensions.height;
+                            childSizing = CLAY__INIT(Clay_SizingAxis) { .size.minMax.max = xAxis ? childElement->textElementData.preferredDimensions.width : lineHeight, .type = CLAY__SIZING_TYPE_FIT };
+                        }
+                    } else {
+                        childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                    }
                     float minSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
                     float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
 
@@ -2557,19 +2809,28 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
 
     // Wrap text
     for (int32_t textElementIndex = 0; textElementIndex < textElements.length; ++textElementIndex) {
-        Clay_LayoutElement *element = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&textElements, textElementIndex));
-        Clay__TextElementData *textElementData = &element->textElementData;
-        textElementData->wrappedLines = CLAY__INIT(Clay__WrappedTextLineArraySlice) { .length = 0, .internalArray = &context->wrappedTextLines.internalArray[context->wrappedTextLines.length] };
         Clay_LayoutElement *containerElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&textElements, textElementIndex));
+        Clay__TextElementData *textElementData = &containerElement->textElementData;
+        textElementData->wrappedLines = CLAY__INIT(Clay__WrappedTextLineArraySlice) { .length = 0, .internalArray = &context->wrappedTextLines.internalArray[context->wrappedTextLines.length] };
         Clay__MeasureTextCacheItem *measureTextCacheItem = Clay__MeasureTextCached(&textElementData->text, &containerElement->textConfig);
         float lineWidth = 0;
         float lineHeight = containerElement->textConfig.lineHeight > 0 ? (float)containerElement->textConfig.lineHeight : textElementData->preferredDimensions.height;
         int32_t lineLengthChars = 0;
         int32_t lineStartOffset = 0;
-        if (!measureTextCacheItem->containsNewlines && textElementData->preferredDimensions.width <= containerElement->dimensions.width) {
-            Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { containerElement->dimensions,  textElementData->text });
-            textElementData->wrappedLines.length++;
-            continue;
+        if (!measureTextCacheItem->containsNewlines) {
+            if (textElementData->preferredDimensions.width <= containerElement->dimensions.width) {
+                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { .part = { { containerElement->dimensions,  textElementData->text } } });
+                textElementData->wrappedLines.length++;
+                continue;
+            } else if (containerElement->textConfig.wrapMode == CLAY_TEXT_WRAP_NONE) {
+                // If the container is narrower than preferred text width then either word wrap or elision is enabled. Elision of non-wrapping text.
+                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, Clay__ElideText(measureTextCacheItem, CLAY__INIT(Clay_StringSlice) { textElementData->text.length, textElementData->text.chars, textElementData->text.chars }, containerElement, lineHeight));
+                textElementData->wrappedLines.length++;
+                continue;
+            }
+        } else if (containerElement->textConfig.wrapMode != CLAY_TEXT_WRAP_WORDS) {
+            // Discard the sizing along x because we don't need it for the elision.
+            containerElement->dimensions.width = textElementData->preferredDimensions.width;
         }
         float spaceWidth = Clay__MeasureText(CLAY__INIT(Clay_StringSlice) { .length = 1, .chars = CLAY__SPACECHAR.chars, .baseChars = CLAY__SPACECHAR.chars }, &containerElement->textConfig, context->measureTextUserData).width;
         int32_t wordIndex = measureTextCacheItem->measuredWordsStartIndex;
@@ -2580,7 +2841,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             Clay__MeasuredWord *measuredWord = Clay__MeasuredWordArray_Get(&context->measuredWords, wordIndex);
             // Only word on the line is too large, just render it anyway
             if (lineLengthChars == 0 && lineWidth + measuredWord->width > containerElement->dimensions.width) {
-                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { measuredWord->width, lineHeight }, { .length = measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] } });
+                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { .part = { CLAY__INIT(Clay__ElidedTextPart) { { measuredWord->width, lineHeight }, { .length = measuredWord->length, .chars = &textElementData->text.chars[measuredWord->startOffset] } } } });
                 textElementData->wrappedLines.length++;
                 wordIndex = measuredWord->next;
                 lineStartOffset = measuredWord->startOffset + measuredWord->length;
@@ -2589,7 +2850,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             else if (measuredWord->length == 0 || lineWidth + measuredWord->width > containerElement->dimensions.width) {
                 // Wrapped text lines list has overflowed, just render out the line
                 bool finalCharIsSpace = textElementData->text.chars[CLAY__MAX(lineStartOffset + lineLengthChars - 1, 0)] == ' ';
-                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth + (finalCharIsSpace ? -spaceWidth : 0), lineHeight }, { .length = lineLengthChars + (finalCharIsSpace ? -1 : 0), .chars = &textElementData->text.chars[lineStartOffset] } });
+                Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { .forcedNewline = measuredWord->length == 0, .part = { CLAY__INIT(Clay__ElidedTextPart) { { lineWidth + (finalCharIsSpace ? -spaceWidth : 0), lineHeight }, { .length = lineLengthChars + (finalCharIsSpace ? -1 : 0), .chars = &textElementData->text.chars[lineStartOffset] } } } });
                 textElementData->wrappedLines.length++;
                 if (lineLengthChars == 0 || measuredWord->length == 0) {
                     wordIndex = measuredWord->next;
@@ -2604,10 +2865,12 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             }
         }
         if (lineLengthChars > 0) {
-            Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { { lineWidth - containerElement->textConfig.letterSpacing, lineHeight }, {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } });
+            Clay__WrappedTextLineArray_Add(&context->wrappedTextLines, CLAY__INIT(Clay__WrappedTextLine) { .part = { CLAY__INIT(Clay__ElidedTextPart) { { lineWidth - containerElement->textConfig.letterSpacing, lineHeight }, {.length = lineLengthChars, .chars = &textElementData->text.chars[lineStartOffset] } } } });
             textElementData->wrappedLines.length++;
         }
-        containerElement->dimensions.height = lineHeight * (float)textElementData->wrappedLines.length;
+        if (containerElement->textConfig.wrapMode != CLAY_TEXT_WRAP_WORDS || containerElement->textConfig.textElideMode != CLAY_TEXT_ELIDE_RIGHT) {
+            containerElement->dimensions.height = lineHeight * (float)textElementData->wrappedLines.length;
+        }
     }
 
     // Scale vertical heights according to aspect ratio
@@ -2667,6 +2930,27 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
 
     // Calculate sizing along the Y axis
     Clay__SizeContainersAlongAxis(false, deltaTime, NULL, NULL);
+
+    // Elide text vertically
+    for (int32_t textElementIndex = 0; textElementIndex < textElements.length; ++textElementIndex) {
+        Clay_LayoutElement *containerElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&textElements, textElementIndex));
+        if (containerElement->textConfig.wrapMode != CLAY_TEXT_WRAP_WORDS || containerElement->textConfig.textElideMode != CLAY_TEXT_ELIDE_RIGHT) {
+            continue;
+        }
+        Clay__TextElementData *textElementData = &containerElement->textElementData;
+        float lineHeight = containerElement->textConfig.lineHeight > 0 ? (float)containerElement->textConfig.lineHeight : textElementData->preferredDimensions.height;
+        int32_t wrappedLinesTotal = textElementData->wrappedLines.length;
+        int32_t verticalWrapLinesCount =  containerElement->dimensions.height / lineHeight;
+        if (verticalWrapLinesCount < wrappedLinesTotal) {
+            Clay__MeasureTextCacheItem *measureTextCacheItem = Clay__MeasureTextCached(&textElementData->text, &containerElement->textConfig);
+            Clay__WrappedTextLine *lastLine = Clay__WrappedTextLineArraySlice_Get(&textElementData->wrappedLines, verticalWrapLinesCount - 1);
+            if (!lastLine->forcedNewline) {
+                Clay__WrappedTextLine *pastLastLine = Clay__WrappedTextLineArraySlice_Get(&textElementData->wrappedLines, verticalWrapLinesCount);
+                *lastLine = Clay__ElideText(measureTextCacheItem, CLAY__INIT(Clay_StringSlice) { lastLine->part[0].text.length + 1 + pastLastLine->part[0].text.length, lastLine->part[0].text.chars, textElementData->text.chars }, containerElement, lineHeight);
+            }
+            textElementData->wrappedLines.length = verticalWrapLinesCount;
+        }
+    }
 
     // Scale horizontal widths according to aspect ratio
     for (int32_t i = 0; i < aspectRatioElements.length; ++i) {
@@ -2948,32 +3232,70 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                     float yPosition = lineHeightOffset;
                     for (int32_t lineIndex = 0; lineIndex < currentElement->textElementData.wrappedLines.length; ++lineIndex) {
                         Clay__WrappedTextLine *wrappedLine = Clay__WrappedTextLineArraySlice_Get(&currentElement->textElementData.wrappedLines, lineIndex);
-                        if (wrappedLine->line.length == 0) {
+                        if (wrappedLine->part[0].text.length == 0) {
                             yPosition += finalLineHeight;
                             continue;
                         }
-                        float offset = (currentElementBoundingBox.width - wrappedLine->dimensions.width);
+                        float lineWidth = 0.f;
+                        for (int32_t linePart = 0; linePart < CLAY__ELIDED_TEXT_PART_COUNT; ++ linePart) {
+                            lineWidth += wrappedLine->part[linePart].dimensions.width;
+                        }
+                        float offset = (currentElementBoundingBox.width - lineWidth);
                         if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_LEFT) {
                             offset = 0;
                         }
                         if (textElementConfig->textAlignment == CLAY_TEXT_ALIGN_CENTER) {
                             offset /= 2;
                         }
-                        Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
-                            .boundingBox = { currentElementBoundingBox.x + offset, currentElementBoundingBox.y + yPosition, wrappedLine->dimensions.width, wrappedLine->dimensions.height },
-                            .renderData = { .text = {
-                                .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->line.length, .chars = wrappedLine->line.chars, .baseChars = currentElement->textElementData.text.chars },
-                                .textColor = textElementConfig->textColor,
-                                .fontId = textElementConfig->fontId,
-                                .fontSize = textElementConfig->fontSize,
-                                .letterSpacing = textElementConfig->letterSpacing,
-                                .lineHeight = textElementConfig->lineHeight,
-                            }},
-                            .userData = textElementConfig->userData,
-                            .id = Clay__HashNumber(lineIndex, currentElement->id).id,
-                            .zIndex = root->zIndex,
-                            .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
-                        });
+                        float partOffset = 0.f;
+                        for (int32_t linePart = 0; linePart < CLAY__ELIDED_TEXT_PART_COUNT; ++ linePart) {
+                            const char *partBaseChars = currentElement->textElementData.text.chars;
+                            uint32_t partId;
+                            if (wrappedLine->part[linePart].text.length == 0) {
+                                break;
+                            }
+                            switch (textElementConfig->textElideMode) {
+                                default:
+                                case CLAY_TEXT_ELIDE_NONE:
+                                case CLAY_TEXT_ELIDE_RIGHT:
+                                case CLAY_TEXT_ELIDE_MIDDLE: {
+                                    if (linePart == 1) {
+                                        partBaseChars = CLAY__ELLIPSIS_STRING.chars;
+                                        partId = Clay__HashStringWithOffset(CLAY__ELIDED_TEXT_PART_ID[linePart], lineIndex, currentElement->id).id;
+                                    } else {
+                                        partBaseChars = currentElement->textElementData.text.chars;
+                                        partId = Clay__HashStringWithOffset(CLAY__ELIDED_TEXT_PART_ID[linePart], lineIndex, currentElement->id).id;
+                                    }
+                                    break;
+                                }
+                                case CLAY_TEXT_ELIDE_LEFT: {
+                                    if (linePart == 1) {
+                                        partBaseChars = currentElement->textElementData.text.chars;
+                                        partId = Clay__HashStringWithOffset(CLAY__ELIDED_TEXT_PART_ID[linePart], lineIndex, currentElement->id).id;
+                                    } else {
+                                        partBaseChars = CLAY__ELLIPSIS_STRING.chars;
+                                        partId = Clay__HashStringWithOffset(CLAY__ELIDED_TEXT_PART_ID[linePart], lineIndex, currentElement->id).id;
+                                    }
+                                    break;
+                                }
+                            }
+                            Clay__AddRenderCommand(CLAY__INIT(Clay_RenderCommand) {
+                                .boundingBox = { currentElementBoundingBox.x + offset + partOffset, currentElementBoundingBox.y + yPosition, wrappedLine->part[linePart].dimensions.width, wrappedLine->part[linePart].dimensions.height },
+                                .renderData = { .text = {
+                                    .stringContents = CLAY__INIT(Clay_StringSlice) { .length = wrappedLine->part[linePart].text.length, .chars = wrappedLine->part[linePart].text.chars, .baseChars = partBaseChars },
+                                    .textColor = textElementConfig->textColor,
+                                    .fontId = textElementConfig->fontId,
+                                    .fontSize = textElementConfig->fontSize,
+                                    .letterSpacing = textElementConfig->letterSpacing,
+                                    .lineHeight = textElementConfig->lineHeight,
+                                }},
+                                .userData = textElementConfig->userData,
+                                .id = partId,
+                                .zIndex = root->zIndex,
+                                .commandType = CLAY_RENDER_COMMAND_TYPE_TEXT,
+                            });
+                            partOffset += wrappedLine->part[linePart].dimensions.width;
+                        }
                         yPosition += finalLineHeight;
 
                         if (!context->disableCulling && (currentElementBoundingBox.y + yPosition > context->layoutDimensions.height)) {
