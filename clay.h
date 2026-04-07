@@ -624,6 +624,7 @@ typedef CLAY_PACKED_ENUM {
 
 // Controls settings related to transitions
 typedef struct Clay_TransitionElementConfig {
+    bool (*handler)(Clay_TransitionCallbackArguments arguments);
     float (*curve)(float x);
     float duration;
     Clay_TransitionProperty properties;
@@ -1022,7 +1023,7 @@ CLAY_DLL_EXPORT void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureText
 // Resets Clay's internal text measurement cache. Useful if font mappings have changed or fonts have been reloaded.
 CLAY_DLL_EXPORT void Clay_ResetMeasureTextCache(void);
 // A built in transition function that uses the "Ease Out" curve
-CLAY_DLL_EXPORT float Clay_EaseOut(float x);
+CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments);
 
 // Internal API functions required by macros ----------------------
 
@@ -2164,7 +2165,7 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
         }
     }
     // Setup data to track transitions across frames
-    if (declaration->transition.curve) {
+    if (declaration->transition.handler || declaration->transition.curve) {
         Clay__TransitionDataInternal *transitionData = CLAY__NULL;
         Clay_LayoutElement* parentElement = Clay__GetParentElement();
         for (int32_t i = 0; i < context->transitionDatas.length; i++) {
@@ -2889,7 +2890,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
             bool found = false;
-            if (useStoredBoundingBoxes && currentElement->config.transition.curve) {
+            if (useStoredBoundingBoxes && (currentElement->config.transition.handler || currentElement->config.transition.curve)) {
                 for (int j = 0; j < context->transitionDatas.length; ++j) {
                     Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
                     if (transitionData->elementId == currentElement->id) {
@@ -4069,7 +4070,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&dfsBuffer, (int)dfsBuffer.length - 1));
             // Skip mouse interactions on an element if it's currently transitioning, based on user config
-            if (currentElement->config.transition.curve) {
+            if (currentElement->config.transition.handler || currentElement->config.transition.curve) {
                 for (int I = 0; I < context->transitionDatas.length; ++I) {
                     Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, I);
                     if (data->elementId == currentElement->id) {
@@ -4674,7 +4675,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         transitionData->targetState = targetState;
                     } else {
                         bool transitionComplete = true;
-                        transitionComplete = Clay__Interpolate(currentElement->config.transition.curve, CLAY__INIT(Clay_TransitionCallbackArguments) { //currentElement->config.transition.curve(CLAY__INIT(Clay_TransitionCallbackArguments) {
+                        Clay_TransitionCallbackArguments args = CLAY__INIT(Clay_TransitionCallbackArguments) {
                                 transitionData->state,
                                 transitionData->initialState,
                                 &transitionData->currentState,
@@ -4682,7 +4683,12 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                                 transitionData->elapsedTime,
                                 currentElement->config.transition.duration,
                                 currentElement->config.transition.properties
-                        });
+                        };
+                        if(currentElement->config.transition.handler) {
+                            transitionComplete = currentElement->config.transition.handler(args);
+                        } else if(currentElement->config.transition.curve) {
+                            transitionComplete = Clay__Interpolate(currentElement->config.transition.curve, args);
+                        }
 
                         Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->currentState, &mapItem->boundingBox, transitionData->reparented);
                         transitionData->elapsedTime += deltaTime;
@@ -4904,10 +4910,14 @@ void Clay_ResetMeasureTextCache(void) {
     context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
 }
 
-CLAY_WASM_EXPORT("Clay_EaseOut")
-float Clay_EaseOut(float x) {
+static float Clay__EaseOutCurve(float x) {
     float inverse = 1.0f - x;
     return 1.0f - (inverse * inverse * inverse);
+}
+
+CLAY_WASM_EXPORT("Clay_EaseOut")
+CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
+    return Clay__Interpolate(Clay__EaseOutCurve, arguments);
 }
 
 #endif // CLAY_IMPLEMENTATION
