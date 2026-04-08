@@ -2904,7 +2904,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                     }
                 }
                 // An exiting element that completed its transition this frame - skip tree
-                if (!found) {
+                if (!found && currentElement->config.transition.exit.setFinalState) {
                     dfsBuffer.length--;
                     continue;
                 }
