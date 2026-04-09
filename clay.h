@@ -95,7 +95,7 @@
 
 #define CLAY_SIDI_LOCAL(label, index) Clay__HashStringWithOffset(label, index, Clay_GetOpenElementId())
 
-#define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
+#define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - 1)
 
 #define CLAY__ENSURE_STRING_LITERAL(x) ("" x "")
 
