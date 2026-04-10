@@ -3616,56 +3616,58 @@ void Clay__RenderDebugView(void) {
                         CLAY_TEXT(Clay__IntToString(selectedItem->boundingBox.height), infoTextConfig);
                         CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
                     }
-                    // .layoutDirection
-                    CLAY_TEXT(CLAY_STRING("Layout Direction"), infoTitleConfig);
-                    Clay_LayoutConfig *layoutConfig = &selectedItem->layoutElement->config.layout;
-                    CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : CLAY_STRING("LEFT_TO_RIGHT"), infoTextConfig);
-                    // .sizing
-                    CLAY_TEXT(CLAY_STRING("Sizing"), infoTitleConfig);
-                    CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
-                        CLAY_TEXT(CLAY_STRING("width: "), infoTextConfig);
-                        Clay__RenderDebugLayoutSizing(layoutConfig->sizing.width, infoTextConfig);
-                    }
-                    CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
-                        CLAY_TEXT(CLAY_STRING("height: "), infoTextConfig);
-                        Clay__RenderDebugLayoutSizing(layoutConfig->sizing.height, infoTextConfig);
-                    }
-                    // .padding
-                    CLAY_TEXT(CLAY_STRING("Padding"), infoTitleConfig);
-                    CLAY(CLAY_ID("Clay__DebugViewElementInfoPadding"), { }) {
-                        CLAY_TEXT(CLAY_STRING("{ left: "), infoTextConfig);
-                        CLAY_TEXT(Clay__IntToString(layoutConfig->padding.left), infoTextConfig);
-                        CLAY_TEXT(CLAY_STRING(", right: "), infoTextConfig);
-                        CLAY_TEXT(Clay__IntToString(layoutConfig->padding.right), infoTextConfig);
-                        CLAY_TEXT(CLAY_STRING(", top: "), infoTextConfig);
-                        CLAY_TEXT(Clay__IntToString(layoutConfig->padding.top), infoTextConfig);
-                        CLAY_TEXT(CLAY_STRING(", bottom: "), infoTextConfig);
-                        CLAY_TEXT(Clay__IntToString(layoutConfig->padding.bottom), infoTextConfig);
-                        CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
-                    }
-                    // .childGap
-                    CLAY_TEXT(CLAY_STRING("Child Gap"), infoTitleConfig);
-                    CLAY_TEXT(Clay__IntToString(layoutConfig->childGap), infoTextConfig);
-                    // .childAlignment
-                    CLAY_TEXT(CLAY_STRING("Child Alignment"), infoTitleConfig);
-                    CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
-                        CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
-                        Clay_String alignX = CLAY_STRING("LEFT");
-                        if (layoutConfig->childAlignment.x == CLAY_ALIGN_X_CENTER) {
-                            alignX = CLAY_STRING("CENTER");
-                        } else if (layoutConfig->childAlignment.x == CLAY_ALIGN_X_RIGHT) {
-                            alignX = CLAY_STRING("RIGHT");
+                    if (!selectedItem->layoutElement->isTextElement) {
+                        // .layoutDirection
+                        CLAY_TEXT(CLAY_STRING("Layout Direction"), infoTitleConfig);
+                        Clay_LayoutConfig *layoutConfig = &selectedItem->layoutElement->config.layout;
+                        CLAY_TEXT(layoutConfig->layoutDirection == CLAY_TOP_TO_BOTTOM ? CLAY_STRING("TOP_TO_BOTTOM") : CLAY_STRING("LEFT_TO_RIGHT"), infoTextConfig);
+                        // .sizing
+                        CLAY_TEXT(CLAY_STRING("Sizing"), infoTitleConfig);
+                        CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
+                            CLAY_TEXT(CLAY_STRING("width: "), infoTextConfig);
+                            Clay__RenderDebugLayoutSizing(layoutConfig->sizing.width, infoTextConfig);
                         }
-                        CLAY_TEXT(alignX, infoTextConfig);
-                        CLAY_TEXT(CLAY_STRING(", y: "), infoTextConfig);
-                        Clay_String alignY = CLAY_STRING("TOP");
-                        if (layoutConfig->childAlignment.y == CLAY_ALIGN_Y_CENTER) {
-                            alignY = CLAY_STRING("CENTER");
-                        } else if (layoutConfig->childAlignment.y == CLAY_ALIGN_Y_BOTTOM) {
-                            alignY = CLAY_STRING("BOTTOM");
+                        CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
+                            CLAY_TEXT(CLAY_STRING("height: "), infoTextConfig);
+                            Clay__RenderDebugLayoutSizing(layoutConfig->sizing.height, infoTextConfig);
                         }
-                        CLAY_TEXT(alignY, infoTextConfig);
-                        CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
+                        // .padding
+                        CLAY_TEXT(CLAY_STRING("Padding"), infoTitleConfig);
+                        CLAY(CLAY_ID("Clay__DebugViewElementInfoPadding"), { }) {
+                            CLAY_TEXT(CLAY_STRING("{ left: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(layoutConfig->padding.left), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(", right: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(layoutConfig->padding.right), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(", top: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(layoutConfig->padding.top), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(", bottom: "), infoTextConfig);
+                            CLAY_TEXT(Clay__IntToString(layoutConfig->padding.bottom), infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
+                        }
+                        // .childGap
+                        CLAY_TEXT(CLAY_STRING("Child Gap"), infoTitleConfig);
+                        CLAY_TEXT(Clay__IntToString(layoutConfig->childGap), infoTextConfig);
+                        // .childAlignment
+                        CLAY_TEXT(CLAY_STRING("Child Alignment"), infoTitleConfig);
+                        CLAY_AUTO_ID({ .layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT } }) {
+                            CLAY_TEXT(CLAY_STRING("{ x: "), infoTextConfig);
+                            Clay_String alignX = CLAY_STRING("LEFT");
+                            if (layoutConfig->childAlignment.x == CLAY_ALIGN_X_CENTER) {
+                                alignX = CLAY_STRING("CENTER");
+                            } else if (layoutConfig->childAlignment.x == CLAY_ALIGN_X_RIGHT) {
+                                alignX = CLAY_STRING("RIGHT");
+                            }
+                            CLAY_TEXT(alignX, infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(", y: "), infoTextConfig);
+                            Clay_String alignY = CLAY_STRING("TOP");
+                            if (layoutConfig->childAlignment.y == CLAY_ALIGN_Y_CENTER) {
+                                alignY = CLAY_STRING("CENTER");
+                            } else if (layoutConfig->childAlignment.y == CLAY_ALIGN_Y_BOTTOM) {
+                                alignY = CLAY_STRING("BOTTOM");
+                            }
+                            CLAY_TEXT(alignY, infoTextConfig);
+                            CLAY_TEXT(CLAY_STRING(" }"), infoTextConfig);
+                        }
                     }
                 }
                 if (selectedItem->layoutElement->isTextElement) {
