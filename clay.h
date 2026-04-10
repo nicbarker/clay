@@ -306,6 +306,8 @@ typedef CLAY_PACKED_ENUM {
     CLAY__SIZING_TYPE_PERCENT,
     // Clamps the axis size to an exact size in pixels.
     CLAY__SIZING_TYPE_FIXED,
+    // For internal use
+    CLAY__SIZING_TYPE_TEXT,
 } Clay__SizingType;
 
 // Controls how child elements are aligned on each axis.
@@ -2253,6 +2255,14 @@ bool Clay__FloatEqual(float left, float right) {
     return subtracted < CLAY__EPSILON && subtracted > -CLAY__EPSILON;
 }
 
+Clay_SizingAxis Clay__GetElementSizing(Clay_LayoutElement* element, bool xAxis) {
+    if (element->isTextElement) {
+        return CLAY__INIT(Clay_SizingAxis){ .type = CLAY__SIZING_TYPE_TEXT };
+    } else {
+        return xAxis ? element->config.layout.sizing.width : element->config.layout.sizing.height;
+    }
+}
+
 // Writes out the location of text elements to layout elements buffer 1
 void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArray* textElementsOut, Clay__int32_tArray* aspectRatioElementsOut) {
     Clay_Context* context = Clay_GetCurrentContext();
@@ -2319,7 +2329,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             for (int32_t childOffset = 0; childOffset < parent->children.length; childOffset++) {
                 int32_t childElementIndex = parent->children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, childElementIndex);
-                Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                Clay_SizingAxis childSizing = Clay__GetElementSizing(childElement, xAxis);
                 float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
 
                 if (textElementsOut && childElement->isTextElement) {
@@ -2364,7 +2374,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             for (int32_t childOffset = 0; childOffset < parent->children.length; childOffset++) {
                 int32_t childElementIndex = parent->children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, childElementIndex);
-                Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                Clay_SizingAxis childSizing = Clay__GetElementSizing(childElement, xAxis);
                 float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
                 if (childSizing.type == CLAY__SIZING_TYPE_PERCENT) {
                     *childSize = (parentSize - totalPaddingAndChildGaps) * childSizing.size.percent;
@@ -2423,7 +2433,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                 } else if (sizeToDistribute > 0 && growContainerCount > 0) {
                     for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                         Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
-                        Clay__SizingType childSizing = xAxis ? child->config.layout.sizing.width.type : child->config.layout.sizing.height.type;
+                        Clay__SizingType childSizing = Clay__GetElementSizing(child, xAxis).type;
                         if (childSizing != CLAY__SIZING_TYPE_GROW) {
                             Clay__int32_tArray_RemoveSwapback(&resizableContainerBuffer, childIndex--);
                         }
@@ -2468,7 +2478,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             } else {
                 for (int32_t childOffset = 0; childOffset < resizableContainerBuffer.length; childOffset++) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childOffset));
-                    Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                    Clay_SizingAxis childSizing = Clay__GetElementSizing(childElement, xAxis);
                     float minSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
                     float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
 
