@@ -1018,6 +1018,23 @@ Available options are:
 
 ---
 
+**`.textElideMode`**
+
+`CLAY_TEXT(text, { .textElideMode = CLAY_TEXT_ELIDE_RIGHT })`
+
+`.textElideMode` controls how to elide parts of the text to fit into the outer text bounding box.
+
+Available options are:
+
+- `CLAY_TEXT_ELIDE_NONE` (default)
+- `CLAY_TEXT_ELIDE_LEFT`
+- `CLAY_TEXT_ELIDE_RIGHT`
+- `CLAY_TEXT_ELIDE_MIDDLE`
+
+If this property is set to CLAY_TEXT_ELIDE_RIGHT, it can be used with wrapped text. The text will only elide if there is insufficient vertical space.
+
+---
+
 **Examples**
 
 ```C
