@@ -625,6 +625,7 @@ typedef CLAY_PACKED_ENUM {
 // Controls settings related to transitions
 typedef struct Clay_TransitionElementConfig {
     bool (*handler)(Clay_TransitionCallbackArguments arguments);
+    float (*curve)(float x);
     float duration;
     Clay_TransitionProperty properties;
     Clay_TransitionInteractionHandlingType interactionHandling;
@@ -2164,7 +2165,7 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
         }
     }
     // Setup data to track transitions across frames
-    if (declaration->transition.handler) {
+    if (declaration->transition.handler || declaration->transition.curve) {
         Clay__TransitionDataInternal *transitionData = CLAY__NULL;
         Clay_LayoutElement* parentElement = Clay__GetParentElement();
         for (int32_t i = 0; i < context->transitionDatas.length; i++) {
@@ -2889,7 +2890,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
             bool found = false;
-            if (useStoredBoundingBoxes && currentElement->config.transition.handler) {
+            if (useStoredBoundingBoxes && (currentElement->config.transition.handler || currentElement->config.transition.curve)) {
                 for (int j = 0; j < context->transitionDatas.length; ++j) {
                     Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
                     if (transitionData->elementId == currentElement->id) {
@@ -4069,7 +4070,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&dfsBuffer, (int)dfsBuffer.length - 1));
             // Skip mouse interactions on an element if it's currently transitioning, based on user config
-            if (currentElement->config.transition.handler) {
+            if (currentElement->config.transition.handler || currentElement->config.transition.curve) {
                 for (int I = 0; I < context->transitionDatas.length; ++I) {
                     Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, I);
                     if (data->elementId == currentElement->id) {
@@ -4409,6 +4410,62 @@ void Clay__CreateDebugView() {
 
 }
 
+#define CLAY__LERP(from, to, mix) (from + (to - from) * mix)
+
+bool Clay__Interpolate(float (*curve)(float x), Clay_TransitionCallbackArguments arguments) {
+    float ratio = 1;
+    if (arguments.duration > 0) {
+        ratio = CLAY__MIN(arguments.elapsedTime / arguments.duration, 1);
+    }
+    float lerpAmount = curve(ratio);
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_X) {
+        arguments.current->boundingBox.x = CLAY__LERP(arguments.initial.boundingBox.x, arguments.target.boundingBox.x, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_Y) {
+        arguments.current->boundingBox.y = CLAY__LERP(arguments.initial.boundingBox.y, arguments.target.boundingBox.y, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
+        arguments.current->boundingBox.width = CLAY__LERP(arguments.initial.boundingBox.width, arguments.target.boundingBox.width, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) {
+        arguments.current->boundingBox.height = CLAY__LERP(arguments.initial.boundingBox.height, arguments.target.boundingBox.height, lerpAmount);
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
+        arguments.current->backgroundColor = CLAY__INIT(Clay_Color) {
+            .r = CLAY__LERP(arguments.initial.backgroundColor.r, arguments.target.backgroundColor.r, lerpAmount),
+            .g = CLAY__LERP(arguments.initial.backgroundColor.g, arguments.target.backgroundColor.g, lerpAmount),
+            .b = CLAY__LERP(arguments.initial.backgroundColor.b, arguments.target.backgroundColor.b, lerpAmount),
+            .a = CLAY__LERP(arguments.initial.backgroundColor.a, arguments.target.backgroundColor.a, lerpAmount),
+        };
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
+        arguments.current->overlayColor = CLAY__INIT(Clay_Color) {
+            .r = CLAY__LERP(arguments.initial.overlayColor.r, arguments.target.overlayColor.r, lerpAmount),
+            .g = CLAY__LERP(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
+            .b = CLAY__LERP(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
+            .a = CLAY__LERP(arguments.initial.overlayColor.a, arguments.target.overlayColor.a, lerpAmount),
+        };
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
+        arguments.current->borderColor = CLAY__INIT(Clay_Color) {
+            .r = CLAY__LERP(arguments.initial.borderColor.r, arguments.target.borderColor.r, lerpAmount),
+            .g = CLAY__LERP(arguments.initial.borderColor.g, arguments.target.borderColor.g, lerpAmount),
+            .b = CLAY__LERP(arguments.initial.borderColor.b, arguments.target.borderColor.b, lerpAmount),
+            .a = CLAY__LERP(arguments.initial.borderColor.a, arguments.target.borderColor.a, lerpAmount),
+        };
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
+        arguments.current->borderWidth = CLAY__INIT(Clay_BorderWidth) {
+            .left = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.left, arguments.target.borderWidth.left, lerpAmount),
+            .right = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.right, arguments.target.borderWidth.right, lerpAmount),
+            .top = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.top, arguments.target.borderWidth.top, lerpAmount),
+            .bottom = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.bottom, arguments.target.borderWidth.bottom, lerpAmount),
+            .betweenChildren = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.betweenChildren, arguments.target.borderWidth.betweenChildren, lerpAmount),
+        };
+    }
+    return ratio >= 1;
+}
+
 CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
@@ -4618,7 +4675,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         transitionData->targetState = targetState;
                     } else {
                         bool transitionComplete = true;
-                        transitionComplete = currentElement->config.transition.handler(CLAY__INIT(Clay_TransitionCallbackArguments) {
+                        Clay_TransitionCallbackArguments args = CLAY__INIT(Clay_TransitionCallbackArguments) {
                                 transitionData->state,
                                 transitionData->initialState,
                                 &transitionData->currentState,
@@ -4626,7 +4683,12 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                                 transitionData->elapsedTime,
                                 currentElement->config.transition.duration,
                                 currentElement->config.transition.properties
-                        });
+                        };
+                        if(currentElement->config.transition.handler) {
+                            transitionComplete = currentElement->config.transition.handler(args);
+                        } else if(currentElement->config.transition.curve) {
+                            transitionComplete = Clay__Interpolate(currentElement->config.transition.curve, args);
+                        }
 
                         Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->currentState, &mapItem->boundingBox, transitionData->reparented);
                         transitionData->elapsedTime += deltaTime;
@@ -4848,61 +4910,14 @@ void Clay_ResetMeasureTextCache(void) {
     context->measureTextHashMapInternal.length = 1; // Reserve the 0 value to mean "no next element"
 }
 
-#define CLAY__LERP(from, to, mix) (from + (to - from) * mix)
+static float Clay__EaseOutCurve(float x) {
+    float inverse = 1.0f - x;
+    return 1.0f - (inverse * inverse * inverse);
+}
 
+CLAY_WASM_EXPORT("Clay_EaseOut")
 CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
-    float ratio = 1;
-    if (arguments.duration > 0) {
-        ratio = CLAY__MIN(arguments.elapsedTime / arguments.duration, 1);
-    }
-    float inverse = 1.0f - ratio;
-    float lerpAmount = 1.0f - (inverse * inverse * inverse);
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_X) {
-        arguments.current->boundingBox.x = CLAY__LERP(arguments.initial.boundingBox.x, arguments.target.boundingBox.x, lerpAmount);
-    }
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_Y) {
-        arguments.current->boundingBox.y = CLAY__LERP(arguments.initial.boundingBox.y, arguments.target.boundingBox.y, lerpAmount);
-    }
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
-        arguments.current->boundingBox.width = CLAY__LERP(arguments.initial.boundingBox.width, arguments.target.boundingBox.width, lerpAmount);
-    }
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) {
-        arguments.current->boundingBox.height = CLAY__LERP(arguments.initial.boundingBox.height, arguments.target.boundingBox.height, lerpAmount);
-    }
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
-        arguments.current->backgroundColor = CLAY__INIT(Clay_Color) {
-            .r = CLAY__LERP(arguments.initial.backgroundColor.r, arguments.target.backgroundColor.r, lerpAmount),
-            .g = CLAY__LERP(arguments.initial.backgroundColor.g, arguments.target.backgroundColor.g, lerpAmount),
-            .b = CLAY__LERP(arguments.initial.backgroundColor.b, arguments.target.backgroundColor.b, lerpAmount),
-            .a = CLAY__LERP(arguments.initial.backgroundColor.a, arguments.target.backgroundColor.a, lerpAmount),
-        };
-    }
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
-        arguments.current->overlayColor = CLAY__INIT(Clay_Color) {
-            .r = CLAY__LERP(arguments.initial.overlayColor.r, arguments.target.overlayColor.r, lerpAmount),
-            .g = CLAY__LERP(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
-            .b = CLAY__LERP(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
-            .a = CLAY__LERP(arguments.initial.overlayColor.a, arguments.target.overlayColor.a, lerpAmount),
-        };
-    }
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
-        arguments.current->borderColor = CLAY__INIT(Clay_Color) {
-            .r = CLAY__LERP(arguments.initial.borderColor.r, arguments.target.borderColor.r, lerpAmount),
-            .g = CLAY__LERP(arguments.initial.borderColor.g, arguments.target.borderColor.g, lerpAmount),
-            .b = CLAY__LERP(arguments.initial.borderColor.b, arguments.target.borderColor.b, lerpAmount),
-            .a = CLAY__LERP(arguments.initial.borderColor.a, arguments.target.borderColor.a, lerpAmount),
-        };
-    }
-    if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
-        arguments.current->borderWidth = CLAY__INIT(Clay_BorderWidth) {
-            .left = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.left, arguments.target.borderWidth.left, lerpAmount),
-            .right = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.right, arguments.target.borderWidth.right, lerpAmount),
-            .top = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.top, arguments.target.borderWidth.top, lerpAmount),
-            .bottom = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.bottom, arguments.target.borderWidth.bottom, lerpAmount),
-            .betweenChildren = (uint16_t)CLAY__LERP(arguments.initial.borderWidth.betweenChildren, arguments.target.borderWidth.betweenChildren, lerpAmount),
-        };
-    }
-    return ratio >= 1;
+    return Clay__Interpolate(Clay__EaseOutCurve, arguments);
 }
 
 #endif // CLAY_IMPLEMENTATION
