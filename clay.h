@@ -4499,7 +4499,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
                             .layoutElementIndex = (int32_t)(data->elementThisFrame - context->layoutElements.internalArray),
                             .parentId = floatingConfig->attachTo != CLAY_ATTACH_TO_NONE ? floatingConfig->parentId : Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id,
-                            .zIndex = floatingConfig->attachTo != CLAY_ATTACH_TO_NONE ? floatingConfig->zIndex : 1,
+                            .zIndex = floatingConfig->attachTo != CLAY_ATTACH_TO_NONE ? floatingConfig->zIndex : (int16_t)1,
                         });
                     }
                 // Parent exited, just delete child without exit transition
