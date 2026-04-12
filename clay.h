@@ -4472,7 +4472,9 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     }
 
                     // Reattach the inserted subtree to its previous parent if it still exists
-                    if (parentHashMapItem->generation > context->generation) {
+                    // and the exiting element is not floating
+                    Clay_FloatingElementConfig* floatingConfig = &hashMapItem->layoutElement->config.floating;
+                    if (parentHashMapItem->generation > context->generation && floatingConfig->attachTo == CLAY_ATTACH_TO_NONE) {
                         Clay_LayoutElement *parentElement = parentHashMapItem->layoutElement;
                         int32_t newChildrenStartIndex = context->layoutElementChildren.length;
                         bool found = false;
@@ -4496,8 +4498,8 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     } else {
                         Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
                             .layoutElementIndex = (int32_t)(data->elementThisFrame - context->layoutElements.internalArray),
-                            .parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id,
-                            .zIndex = 1,
+                            .parentId = floatingConfig->attachTo != CLAY_ATTACH_TO_NONE ? floatingConfig->parentId : Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id,
+                            .zIndex = floatingConfig->attachTo != CLAY_ATTACH_TO_NONE ? floatingConfig->zIndex : 1,
                         });
                     }
                 // Parent exited, just delete child without exit transition
