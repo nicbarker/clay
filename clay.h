@@ -2253,6 +2253,14 @@ bool Clay__FloatEqual(float left, float right) {
     return subtracted < CLAY__EPSILON && subtracted > -CLAY__EPSILON;
 }
 
+Clay_SizingAxis Clay__GetElementSizing(Clay_LayoutElement* element, bool xAxis) {
+    if (element->isTextElement) {
+        return CLAY__INIT(Clay_SizingAxis) {};
+    } else {
+        return xAxis ? element->config.layout.sizing.width : element->config.layout.sizing.height;
+    }
+}
+
 // Writes out the location of text elements to layout elements buffer 1
 void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArray* textElementsOut, Clay__int32_tArray* aspectRatioElementsOut) {
     Clay_Context* context = Clay_GetCurrentContext();
@@ -2319,7 +2327,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             for (int32_t childOffset = 0; childOffset < parent->children.length; childOffset++) {
                 int32_t childElementIndex = parent->children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, childElementIndex);
-                Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                Clay_SizingAxis childSizing = Clay__GetElementSizing(childElement, xAxis);
                 float childSize = xAxis ? childElement->dimensions.width : childElement->dimensions.height;
 
                 if (textElementsOut && childElement->isTextElement) {
@@ -2328,7 +2336,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                     Clay__int32_tArray_Add(&bfsBuffer, childElementIndex);
                 }
 
-                if (aspectRatioElementsOut && childElement->config.aspectRatio.aspectRatio != 0) {
+                if (!childElement->isTextElement && aspectRatioElementsOut && childElement->config.aspectRatio.aspectRatio != 0) {
                     Clay__int32_tArray_Add(aspectRatioElementsOut, childElementIndex);
                 }
 
@@ -2364,7 +2372,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             for (int32_t childOffset = 0; childOffset < parent->children.length; childOffset++) {
                 int32_t childElementIndex = parent->children.elements[childOffset];
                 Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, childElementIndex);
-                Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                Clay_SizingAxis childSizing = Clay__GetElementSizing(childElement, xAxis);
                 float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
                 if (childSizing.type == CLAY__SIZING_TYPE_PERCENT) {
                     *childSize = (parentSize - totalPaddingAndChildGaps) * childSizing.size.percent;
@@ -2423,7 +2431,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                 } else if (sizeToDistribute > 0 && growContainerCount > 0) {
                     for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                         Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
-                        Clay__SizingType childSizing = xAxis ? child->config.layout.sizing.width.type : child->config.layout.sizing.height.type;
+                        Clay__SizingType childSizing = Clay__GetElementSizing(child, xAxis).type;
                         if (childSizing != CLAY__SIZING_TYPE_GROW) {
                             Clay__int32_tArray_RemoveSwapback(&resizableContainerBuffer, childIndex--);
                         }
@@ -2451,7 +2459,8 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
                         for (int childIndex = 0; childIndex < resizableContainerBuffer.length; childIndex++) {
                             Clay_LayoutElement *child = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childIndex));
                             float *childSize = xAxis ? &child->dimensions.width : &child->dimensions.height;
-                            float maxSize = xAxis ? child->config.layout.sizing.width.size.minMax.max : child->config.layout.sizing.height.size.minMax.max;
+                            Clay_SizingAxis childSizing = Clay__GetElementSizing(child, xAxis);
+                            float maxSize = childSizing.size.minMax.max;
                             float previousWidth = *childSize;
                             if (Clay__FloatEqual(*childSize, smallest)) {
                                 *childSize += widthToAdd;
@@ -2468,7 +2477,7 @@ void Clay__SizeContainersAlongAxis(bool xAxis, float deltaTime, Clay__int32_tArr
             } else {
                 for (int32_t childOffset = 0; childOffset < resizableContainerBuffer.length; childOffset++) {
                     Clay_LayoutElement *childElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&resizableContainerBuffer, childOffset));
-                    Clay_SizingAxis childSizing = xAxis ? childElement->config.layout.sizing.width : childElement->config.layout.sizing.height;
+                    Clay_SizingAxis childSizing = Clay__GetElementSizing(childElement, xAxis);
                     float minSize = xAxis ? childElement->minDimensions.width : childElement->minDimensions.height;
                     float *childSize = xAxis ? &childElement->dimensions.width : &childElement->dimensions.height;
 
@@ -2782,7 +2791,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
         while (dfsBuffer.length > 0) {
             Clay__LayoutElementTreeNode *currentElementTreeNode = Clay__LayoutElementTreeNodeArray_Get(&dfsBuffer, (int)dfsBuffer.length - 1);
             Clay_LayoutElement *currentElement = currentElementTreeNode->layoutElement;
-            Clay_LayoutConfig *layoutConfig = &currentElement->config.layout;
+            Clay_LayoutConfig *layoutConfig = currentElement->isTextElement ? &CLAY_LAYOUT_DEFAULT : &currentElement->config.layout;
             Clay_Vector2 scrollOffset = CLAY__DEFAULT_STRUCT;
 
             // DFS is returning back upwards
@@ -2888,50 +2897,52 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
             // This will only be run a single time for each element in downwards DFS order
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_BoundingBox currentElementBoundingBox = { currentElementTreeNode->position.x, currentElementTreeNode->position.y, currentElement->dimensions.width, currentElement->dimensions.height };
-            bool found = false;
-            if (useStoredBoundingBoxes && currentElement->config.transition.handler) {
-                for (int j = 0; j < context->transitionDatas.length; ++j) {
-                    Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
-                    if (transitionData->elementId == currentElement->id) {
-                        found = true;
-                        if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
-                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) != 0) currentElementBoundingBox.x = transitionData->currentState.boundingBox.x;
-                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) != 0) currentElementBoundingBox.y = transitionData->currentState.boundingBox.y;
-                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) != 0) currentElementBoundingBox.width = transitionData->currentState.boundingBox.width;
-                            if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) != 0) currentElementBoundingBox.height = transitionData->currentState.boundingBox.height;
+            Clay__ScrollContainerDataInternal *scrollContainerData = CLAY__NULL;
+            if (!currentElement->isTextElement) {
+                if (useStoredBoundingBoxes && currentElement->config.transition.handler) {
+                    bool found = false;
+                    for (int j = 0; j < context->transitionDatas.length; ++j) {
+                        Clay__TransitionDataInternal* transitionData = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, j);
+                        if (transitionData->elementId == currentElement->id) {
+                            found = true;
+                            if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
+                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) != 0) currentElementBoundingBox.x = transitionData->currentState.boundingBox.x;
+                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) != 0) currentElementBoundingBox.y = transitionData->currentState.boundingBox.y;
+                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) != 0) currentElementBoundingBox.width = transitionData->currentState.boundingBox.width;
+                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) != 0) currentElementBoundingBox.height = transitionData->currentState.boundingBox.height;
+                            }
+                            break;
                         }
-                        break;
+                    }
+                    // An exiting element that completed its transition this frame - skip tree
+                    if (!found && currentElement->config.transition.exit.setFinalState) {
+                        dfsBuffer.length--;
+                        continue;
                     }
                 }
-                // An exiting element that completed its transition this frame - skip tree
-                if (!found && currentElement->config.transition.exit.setFinalState) {
-                    dfsBuffer.length--;
-                    continue;
+                if (currentElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE) {
+                    Clay_FloatingElementConfig *floatingElementConfig = &currentElement->config.floating;
+                    Clay_Dimensions expand = floatingElementConfig->expand;
+                    currentElementBoundingBox.x -= expand.width;
+                    currentElementBoundingBox.width += expand.width * 2;
+                    currentElementBoundingBox.y -= expand.height;
+                    currentElementBoundingBox.height += expand.height * 2;
                 }
-            }
-            if (currentElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE) {
-                Clay_FloatingElementConfig *floatingElementConfig = &currentElement->config.floating;
-                Clay_Dimensions expand = floatingElementConfig->expand;
-                currentElementBoundingBox.x -= expand.width;
-                currentElementBoundingBox.width += expand.width * 2;
-                currentElementBoundingBox.y -= expand.height;
-                currentElementBoundingBox.height += expand.height * 2;
-            }
 
-            Clay__ScrollContainerDataInternal *scrollContainerData = CLAY__NULL;
-            // Apply scroll offsets to container
-            if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
-                // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
-                for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
-                    Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-                    if (mapping->layoutElement == currentElement) {
-                        scrollContainerData = mapping;
-                        mapping->boundingBox = currentElementBoundingBox;
-                        scrollOffset = currentElement->config.clip.childOffset;
-                        if (context->externalScrollHandlingEnabled) {
-                            scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
+                // Apply scroll offsets to container
+                if (currentElement->config.clip.horizontal || currentElement->config.clip.vertical) {
+                    // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
+                    for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
+                        Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
+                        if (mapping->layoutElement == currentElement) {
+                            scrollContainerData = mapping;
+                            mapping->boundingBox = currentElementBoundingBox;
+                            scrollOffset = currentElement->config.clip.childOffset;
+                            if (context->externalScrollHandlingEnabled) {
+                                scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             }
