@@ -1,10 +1,10 @@
 package main
 
-import "core:unicode/utf8"
-import "base:runtime"
 import clay "../../clay-odin"
+import "base:runtime"
 import "core:math"
 import "core:strings"
+import "core:unicode/utf8"
 import rl "vendor:raylib"
 
 Raylib_Font :: struct {
@@ -24,11 +24,11 @@ measure_text :: measure_text_ascii
 measure_text_unicode :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {
     // Needed for grapheme_count
     context = runtime.default_context()
-    
-	line_width: f32 = 0
-    
-	font := raylib_fonts[config.fontId].font
-	text_str := string(text.chars[:text.length])
+
+    line_width: f32 = 0
+
+    font := raylib_fonts[config.fontId].font
+    text_str := string(text.chars[:text.length])
 
     // This function seems somewhat expensive, if you notice performance issues, you could assume
     // - 1 codepoint per visual character (no grapheme clusters), where you can get the length from the loop
@@ -36,59 +36,60 @@ measure_text_unicode :: proc "c" (text: clay.StringSlice, config: ^clay.TextElem
     // see `measure_text_ascii`
     grapheme_count, _, _ := utf8.grapheme_count(text_str)
 
-	for letter, byte_idx in text_str {
-		glyph_index := rl.GetGlyphIndex(font, letter)
+    for letter, byte_idx in text_str {
+        glyph_index := rl.GetGlyphIndex(font, letter)
 
         glyph := font.glyphs[glyph_index]
 
-		if glyph.advanceX != 0 {
-			line_width += f32(glyph.advanceX)
-		} else {
-			line_width += font.recs[glyph_index].width + f32(font.glyphs[glyph_index].offsetX)
-		}
-	}
+        if glyph.advanceX != 0 {
+            line_width += f32(glyph.advanceX)
+        } else {
+            line_width += font.recs[glyph_index].width + f32(font.glyphs[glyph_index].offsetX)
+        }
+    }
 
-	scaleFactor := f32(config.fontSize) / f32(font.baseSize)
+    scaleFactor := f32(config.fontSize) / f32(font.baseSize)
 
-    // Note: 
-    //   I'd expect this to be `grapheme_count - 1`, 
+    // Note:
+    //   I'd expect this to be `grapheme_count - 1`,
     //   but that seems to be one letterSpacing too small
     //   maybe that's a raylib bug, maybe that's Clay?
-	total_spacing := f32(grapheme_count) * f32(config.letterSpacing)
+    total_spacing := f32(grapheme_count) * f32(config.letterSpacing)
 
-	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
+    return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
 }
 
-measure_text_ascii :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {    
-	line_width: f32 = 0
-    
-	font := raylib_fonts[config.fontId].font
-	text_str := string(text.chars[:text.length])
+measure_text_ascii :: proc "c" (text: clay.StringSlice, config: ^clay.TextElementConfig, userData: rawptr) -> clay.Dimensions {
+    line_width: f32 = 0
 
-	for i in 0..<len(text_str) {
-		glyph_index := text_str[i] - 32
+    font := raylib_fonts[config.fontId].font
+    text_str := string(text.chars[:text.length])
+
+    for i in 0 ..< len(text_str) {
+        glyph_index := text_str[i] - 32
 
         glyph := font.glyphs[glyph_index]
 
-		if glyph.advanceX != 0 {
-			line_width += f32(glyph.advanceX)
-		} else {
-			line_width += font.recs[glyph_index].width + f32(font.glyphs[glyph_index].offsetX)
-		}
-	}
+        if glyph.advanceX != 0 {
+            line_width += f32(glyph.advanceX)
+        } else {
+            line_width += font.recs[glyph_index].width + f32(font.glyphs[glyph_index].offsetX)
+        }
+    }
 
-	scaleFactor := f32(config.fontSize) / f32(font.baseSize)
+    scaleFactor := f32(config.fontSize) / f32(font.baseSize)
 
-    // Note: 
-    //   I'd expect this to be `len(text_str) - 1`, 
+    // Note:
+    //   I'd expect this to be `len(text_str) - 1`,
     //   but that seems to be one letterSpacing too small
     //   maybe that's a raylib bug, maybe that's Clay?
-	total_spacing := f32(len(text_str)) * f32(config.letterSpacing)
+    total_spacing := f32(len(text_str)) * f32(config.letterSpacing)
 
-	return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
+    return {width = line_width * scaleFactor + total_spacing, height = f32(config.fontSize)}
 }
 
 clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand), allocator := context.temp_allocator) {
+    overlay_colors := make([dynamic]clay.Color, allocator)
     for i in 0 ..< render_commands.length {
         render_command := clay.RenderCommandArray_Get(render_commands, i)
         bounds := render_command.boundingBox
@@ -108,7 +109,10 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
             rl.DrawTextEx(font, cstr_text, {bounds.x, bounds.y}, f32(config.fontSize), f32(config.letterSpacing), clay_color_to_rl_color(config.textColor))
         case .Image:
             config := render_command.renderData.image
-            tint := config.backgroundColor
+            tint: clay.Color
+            if len(overlay_colors) > 0 {
+                tint = overlay_colors[len(overlay_colors) - 1]
+            }
             if tint == 0 {
                 tint = {255, 255, 255, 255}
             }
@@ -173,7 +177,7 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
             // Rounded Borders
             if config.cornerRadius.topLeft > 0 {
                 draw_arc(
-                    bounds.x + config.cornerRadius.topLeft, 
+                    bounds.x + config.cornerRadius.topLeft,
                     bounds.y + config.cornerRadius.topLeft,
                     config.cornerRadius.topLeft - f32(config.width.top),
                     config.cornerRadius.topLeft,
@@ -206,7 +210,7 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
             }
             if config.cornerRadius.bottomRight > 0 {
                 draw_arc(
-                    bounds.x + bounds.width - config.cornerRadius.bottomRight, 
+                    bounds.x + bounds.width - config.cornerRadius.bottomRight,
                     bounds.y + bounds.height - config.cornerRadius.bottomRight,
                     config.cornerRadius.bottomRight - f32(config.width.bottom),
                     config.cornerRadius.bottomRight,
@@ -215,8 +219,13 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
                     config.color,
                 )
             }
-        case clay.RenderCommandType.Custom:
-            // Implement custom element rendering here
+        case .OverlayColorStart:
+            config := render_command.renderData.overlayColor
+            append(&overlay_colors, config.color)
+        case .OverlayColorEnd:
+            pop(&overlay_colors)
+        case .Custom:
+        // Implement custom element rendering here
         }
     }
 }
@@ -224,30 +233,17 @@ clay_raylib_render :: proc(render_commands: ^clay.ClayArray(clay.RenderCommand),
 // Helper procs, mainly for repeated conversions
 
 @(private = "file")
-draw_arc :: proc(x, y: f32, inner_rad, outer_rad: f32,start_angle, end_angle: f32, color: clay.Color){
-    rl.DrawRing(
-        {math.round(x),math.round(y)},
-        math.round(inner_rad),
-        outer_rad,
-        start_angle,
-        end_angle,
-        10,
-        clay_color_to_rl_color(color),
-    )
+draw_arc :: proc(x, y: f32, inner_rad, outer_rad: f32, start_angle, end_angle: f32, color: clay.Color) {
+    rl.DrawRing({math.round(x), math.round(y)}, math.round(inner_rad), outer_rad, start_angle, end_angle, 10, clay_color_to_rl_color(color))
 }
 
 @(private = "file")
 draw_rect :: proc(x, y, w, h: f32, color: clay.Color) {
-    rl.DrawRectangle(
-        i32(math.round(x)), 
-        i32(math.round(y)), 
-        i32(math.round(w)), 
-        i32(math.round(h)), 
-        clay_color_to_rl_color(color)
-    )
+    rl.DrawRectangle(i32(math.round(x)), i32(math.round(y)), i32(math.round(w)), i32(math.round(h)), clay_color_to_rl_color(color))
 }
 
 @(private = "file")
-draw_rect_rounded :: proc(x,y,w,h: f32, radius: f32, color: clay.Color){
-    rl.DrawRectangleRounded({x,y,w,h},radius,8,clay_color_to_rl_color(color))
+draw_rect_rounded :: proc(x, y, w, h: f32, radius: f32, color: clay.Color) {
+    rl.DrawRectangleRounded({x, y, w, h}, radius, 8, clay_color_to_rl_color(color))
 }
+
