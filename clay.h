@@ -306,8 +306,6 @@ typedef CLAY_PACKED_ENUM {
     CLAY__SIZING_TYPE_PERCENT,
     // Clamps the axis size to an exact size in pixels.
     CLAY__SIZING_TYPE_FIXED,
-    // For internal use
-    CLAY__SIZING_TYPE_TEXT,
 } Clay__SizingType;
 
 // Controls how child elements are aligned on each axis.
@@ -2257,7 +2255,7 @@ bool Clay__FloatEqual(float left, float right) {
 
 Clay_SizingAxis Clay__GetElementSizing(Clay_LayoutElement* element, bool xAxis) {
     if (element->isTextElement) {
-        return CLAY__INIT(Clay_SizingAxis){ .type = CLAY__SIZING_TYPE_TEXT };
+        return CLAY__INIT(Clay_SizingAxis) {};
     } else {
         return xAxis ? element->config.layout.sizing.width : element->config.layout.sizing.height;
     }
