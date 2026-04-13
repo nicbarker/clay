@@ -4507,8 +4507,9 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     continue;
                 }
             }
-        // Transition element exited and doesn't have an exit handler defined, delete the transition data
-        } else if (hashMapItem->generation <= context->generation) {
+        // Transition element exited and doesn't have an exit handler defined
+        // Or, the user deleted the transition handler from one frame to the next
+        } else if (hashMapItem->generation <= context->generation || !hashMapItem->layoutElement->config.transition.handler) {
             Clay__TransitionDataInternalArray_RemoveSwapback(&context->transitionDatas, i);
             i--;
             continue;
