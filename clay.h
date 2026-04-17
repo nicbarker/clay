@@ -958,6 +958,8 @@ CLAY_DLL_EXPORT void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_
 CLAY_DLL_EXPORT Clay_Vector2 Clay_GetScrollOffset(void);
 // Updates the layout dimensions in response to the window or outer container being resized.
 CLAY_DLL_EXPORT void Clay_SetLayoutDimensions(Clay_Dimensions dimensions);
+// Returns the current dimensions set by Clay_SetLayoutDimensions.
+CLAY_DLL_EXPORT Clay_Dimensions Clay_GetLayoutDimensions(void);
 // Called before starting any layout declarations.
 CLAY_DLL_EXPORT void Clay_BeginLayout(void);
 // Called when all layout declarations are finished.
@@ -2906,10 +2908,10 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                         if (transitionData->elementId == currentElement->id) {
                             found = true;
                             if (transitionData->state != CLAY_TRANSITION_STATE_IDLE) {
-                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_X) != 0) currentElementBoundingBox.x = transitionData->currentState.boundingBox.x;
-                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_Y) != 0) currentElementBoundingBox.y = transitionData->currentState.boundingBox.y;
-                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_WIDTH) != 0) currentElementBoundingBox.width = transitionData->currentState.boundingBox.width;
-                                if ((currentElement->config.transition.properties & CLAY_TRANSITION_PROPERTY_HEIGHT) != 0) currentElementBoundingBox.height = transitionData->currentState.boundingBox.height;
+                                if ((transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_X) != 0) currentElementBoundingBox.x = transitionData->currentState.boundingBox.x;
+                                if ((transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_Y) != 0) currentElementBoundingBox.y = transitionData->currentState.boundingBox.y;
+                                if ((transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_WIDTH) != 0) currentElementBoundingBox.width = transitionData->currentState.boundingBox.width;
+                                if ((transitionData->activeProperties & CLAY_TRANSITION_PROPERTY_HEIGHT) != 0) currentElementBoundingBox.height = transitionData->currentState.boundingBox.height;
                             }
                             break;
                         }
@@ -4055,7 +4057,13 @@ CLAY_WASM_EXPORT("Clay_SetLayoutDimensions")
 void Clay_SetLayoutDimensions(Clay_Dimensions dimensions) {
     Clay_Context* context = Clay_GetCurrentContext();
     context->rootResizedLastFrame = !Clay__FloatEqual(context->layoutDimensions.width, dimensions.width) || !Clay__FloatEqual(context->layoutDimensions.height, dimensions.height);
-    Clay_GetCurrentContext()->layoutDimensions = dimensions;
+    context->layoutDimensions = dimensions;
+}
+
+CLAY_WASM_EXPORT("Clay_SetLayoutDimensions")
+Clay_Dimensions Clay_GetLayoutDimensions() {
+    Clay_Context* context = Clay_GetCurrentContext();
+    return context->layoutDimensions;
 }
 
 CLAY_WASM_EXPORT("Clay_SetPointerState")
@@ -4563,10 +4571,12 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         transitionData->state = CLAY_TRANSITION_STATE_ENTERING;
                         transitionData->initialState = currentElement->config.transition.enter.setInitialState(transitionData->targetState, currentElement->config.transition.properties);
                         transitionData->currentState = transitionData->initialState;
+                        transitionData->activeProperties = currentElement->config.transition.properties;
                         Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->initialState, &mapItem->boundingBox, transitionData->reparented);
                     } else {
                         transitionData->initialState = targetState;
                         transitionData->currentState = targetState;
+                        transitionData->activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
                     }
                 } else {
                     Clay_Vector2 parentScrollOffset = parentMapItem->layoutElement->config.clip.childOffset;
@@ -4577,69 +4587,78 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     Clay_Vector2 oldRelativePosition = transitionData->oldParentRelativePosition;
                     transitionData->oldParentRelativePosition = newRelativePosition;
                     Clay_TransitionProperty properties = currentElement->config.transition.properties;
-                    int32_t activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
+                    int32_t newActiveProperties = CLAY_TRANSITION_PROPERTY_NONE;
                     if (properties & CLAY_TRANSITION_PROPERTY_X) {
-                        if (!Clay__FloatEqual(oldTargetState.boundingBox.x, targetState.boundingBox.x) && !(Clay__FloatEqual(oldRelativePosition.x, newRelativePosition.x)) && !context->rootResizedLastFrame) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_X;
+                        // Don't trigger a transition if...
+                        if (
+                            // The element's absolute position didn't change
+                            !Clay__FloatEqual(oldTargetState.boundingBox.x, targetState.boundingBox.x)
+                            // The element is still in the same parent container, and it's parent-relative position didn't change (parent moved)
+                            && (!(Clay__FloatEqual(oldRelativePosition.x, newRelativePosition.x)) || transitionData->reparented)
+                            // The position changed was triggered by the outer window resizing
+                            && !context->rootResizedLastFrame
+                        ) {
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_X;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_Y) {
-                        if (!Clay__FloatEqual(oldTargetState.boundingBox.y, targetState.boundingBox.y) && !(Clay__FloatEqual(oldRelativePosition.y, newRelativePosition.y)) && !context->rootResizedLastFrame) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_Y;
+                        if (!Clay__FloatEqual(oldTargetState.boundingBox.y, targetState.boundingBox.y) && (!(Clay__FloatEqual(oldRelativePosition.y, newRelativePosition.y)) || transitionData->reparented) && !context->rootResizedLastFrame) {
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_Y;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
                         if (!Clay__FloatEqual(oldTargetState.boundingBox.width, targetState.boundingBox.width) && !context->rootResizedLastFrame) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_WIDTH;
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_WIDTH;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_HEIGHT) {
                         if (!Clay__FloatEqual(oldTargetState.boundingBox.height, targetState.boundingBox.height) && !context->rootResizedLastFrame) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_HEIGHT;
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_HEIGHT;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
                         if (!Clay__MemCmp((char *) &oldTargetState.backgroundColor, (char *)&targetState.backgroundColor, sizeof(Clay_Color))) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR;
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
                         if (!Clay__MemCmp((char *) &oldTargetState.overlayColor, (char *)&targetState.overlayColor, sizeof(Clay_Color))) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR;
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
                         if (!Clay__MemCmp((char *) &oldTargetState.borderColor, (char *)&targetState.borderColor, sizeof(Clay_Color))) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_COLOR;
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_BORDER_COLOR;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
                         if (!Clay__MemCmp((char *) &oldTargetState.borderWidth, (char *)&targetState.borderWidth, sizeof(Clay_BorderWidth))) {
-                            activeProperties |= CLAY_TRANSITION_PROPERTY_BORDER_WIDTH;
+                            newActiveProperties |= CLAY_TRANSITION_PROPERTY_BORDER_WIDTH;
                         }
                     }
 
-                    if (activeProperties != 0 && transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
+                    if (newActiveProperties != 0 && transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
                         transitionData->elapsedTime = 0;
                         transitionData->initialState = transitionData->currentState;
                         transitionData->state = CLAY_TRANSITION_STATE_TRANSITIONING;
-                        transitionData->activeProperties = (Clay_TransitionProperty)activeProperties;
+                        transitionData->activeProperties = (Clay_TransitionProperty)(transitionData->activeProperties | newActiveProperties);
                     }
 
                     if (transitionData->state == CLAY_TRANSITION_STATE_IDLE) {
                         transitionData->initialState = targetState;
                         transitionData->currentState = targetState;
                         transitionData->targetState = targetState;
+                        transitionData->activeProperties = CLAY_TRANSITION_PROPERTY_NONE;
                     } else {
                         bool transitionComplete = true;
                         transitionComplete = currentElement->config.transition.handler(CLAY__INIT(Clay_TransitionCallbackArguments) {
-                                transitionData->state,
-                                transitionData->initialState,
-                                &transitionData->currentState,
-                                targetState,
-                                transitionData->elapsedTime,
-                                currentElement->config.transition.duration,
-                                currentElement->config.transition.properties
+                            transitionData->state,
+                            transitionData->initialState,
+                            &transitionData->currentState,
+                            targetState,
+                            transitionData->elapsedTime,
+                            currentElement->config.transition.duration,
+                            transitionData->activeProperties
                         });
 
                         Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->currentState, &mapItem->boundingBox, transitionData->reparented);
