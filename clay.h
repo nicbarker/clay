@@ -4089,28 +4089,35 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
             }
             context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = true;
             Clay_LayoutElement *currentElement = Clay_LayoutElementArray_Get(&context->layoutElements, Clay__int32_tArray_GetValue(&dfsBuffer, (int)dfsBuffer.length - 1));
-            // Skip mouse interactions on an element if it's currently transitioning, based on user config
-            if (currentElement->config.transition.handler) {
-                for (int I = 0; I < context->transitionDatas.length; ++I) {
-                    Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, I);
-                    if (data->elementId == currentElement->id) {
-                        if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING_POSITION) {
-                            if (data->state == CLAY_TRANSITION_STATE_EXITING || data->state == CLAY_TRANSITION_STATE_ENTERING || ((data->activeProperties & CLAY_TRANSITION_PROPERTY_POSITION) && data->state == CLAY_TRANSITION_STATE_TRANSITIONING)) {
-                                skipTree = true;
-                            }
-                        } else if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION) {
-                            if (data->state == CLAY_TRANSITION_STATE_EXITING) {
-                                skipTree = true;
-                            }
-                        }
-                    }
-                }
-            }
 
             Clay_LayoutElementHashMapItem *mapItem = Clay__GetHashMapItem(currentElement->id); // TODO think of a way around this, maybe the fact that it's essentially a binary tree limits the cost, but the worst case is not great
             int32_t clipElementId = Clay__int32_tArray_GetValue(&context->layoutElementClipElementIds, (int32_t)(currentElement - context->layoutElements.internalArray));
             Clay_LayoutElementHashMapItem *clipItem = Clay__GetHashMapItem(clipElementId);
+            // This check skips mouse interactions for elements that are currently "exit transitioning"
             if (mapItem && mapItem->generation > context->generation) {
+                // Conditionally skip mouse interactions on non-exit transitions, based on user config
+                if (!currentElement->isTextElement && currentElement->config.transition.handler) {
+                    for (int I = 0; I < context->transitionDatas.length; ++I) {
+                        Clay__TransitionDataInternal* data = Clay__TransitionDataInternalArray_Get(&context->transitionDatas, I);
+                        if (data->elementId == currentElement->id) {
+                            if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_DISABLE_INTERACTIONS_WHILE_TRANSITIONING_POSITION) {
+                                if (data->state == CLAY_TRANSITION_STATE_EXITING || data->state == CLAY_TRANSITION_STATE_ENTERING || ((data->activeProperties & CLAY_TRANSITION_PROPERTY_POSITION) && data->state == CLAY_TRANSITION_STATE_TRANSITIONING)) {
+                                    skipTree = true;
+                                }
+                            } else if (currentElement->config.transition.interactionHandling == CLAY_TRANSITION_ALLOW_INTERACTIONS_WHILE_TRANSITIONING_POSITION) {
+                                if (data->state == CLAY_TRANSITION_STATE_EXITING) {
+                                    skipTree = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (skipTree) {
+                    dfsBuffer.length--;
+                    continue;
+                }
+
                 Clay_BoundingBox elementBox = mapItem->boundingBox;
                 elementBox.x -= root->pointerOffset.x;
                 elementBox.y -= root->pointerOffset.y;
@@ -4123,10 +4130,7 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
                     }
                     found = true;
                 }
-                if (skipTree || currentElement->isTextElement) {
-                    dfsBuffer.length--;
-                    continue;
-                }
+
                 for (int32_t i = currentElement->children.length - 1; i >= 0; --i) {
                     Clay__int32_tArray_Add(&dfsBuffer, currentElement->children.elements[i]);
                     context->treeNodeVisited.internalArray[dfsBuffer.length - 1] = false; // TODO needs to be ranged checked
