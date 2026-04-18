@@ -4387,7 +4387,7 @@ void Clay__CloneElementsWithExitTransition() {
             }
         }
     }
-};
+}
 
 void Clay_ApplyTransitionedPropertiesToElement(Clay_LayoutElement* currentElement, Clay_TransitionProperty properties, Clay_TransitionData currentTransitionData, Clay_BoundingBox* boundingBox, bool reparented) {
     if (properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
@@ -4477,7 +4477,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         Clay_LayoutElement *layoutElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, Clay__int32_tArray_GetValue(&bfsBuffer, bufferIndex));
                         bufferIndex++;
                         int32_t firstChildSlot = context->layoutElementChildren.length;
-                        for (int j = 0; j < layoutElement->children.length; ++j) {
+                        for (uint32_t j = 0; j < layoutElement->children.length; ++j) {
                             Clay_LayoutElement* childElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, layoutElement->children.elements[j]);
                             int32_t childElementIndex = childElement - context->layoutElements.internalArray;
                             Clay_LayoutElement* newChildElement = Clay_LayoutElementArray_Add(&context->layoutElements, *childElement);
