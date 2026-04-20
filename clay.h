@@ -3607,8 +3607,8 @@ void Clay__RenderDebugView(void) {
             }
         }
         CLAY_AUTO_ID({ .layout = { .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(1)} }, .backgroundColor = CLAY__DEBUGVIEW_COLOR_3 }) {}
-        if (context->debugSelectedElementId != 0) {
-            Clay_LayoutElementHashMapItem *selectedItem = Clay__GetHashMapItem(context->debugSelectedElementId);
+        Clay_LayoutElementHashMapItem *selectedItem = Clay__GetHashMapItem(context->debugSelectedElementId);
+        if (selectedItem->layoutElement) {
             CLAY_AUTO_ID({
                 .layout = { .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(300)}, .layoutDirection = CLAY_TOP_TO_BOTTOM },
                 .backgroundColor = CLAY__DEBUGVIEW_COLOR_2 ,
@@ -4623,6 +4623,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_Y) {
+                        // See extended comments above in PROPERTY_X for explanation
                         if (!Clay__FloatEqual(oldTargetState.boundingBox.y, targetState.boundingBox.y) && (!(Clay__FloatEqual(oldRelativePosition.y, newRelativePosition.y)) || transitionData->reparented) && !context->rootResizedLastFrame) {
                             newActiveProperties |= CLAY_TRANSITION_PROPERTY_Y;
                         }
@@ -4682,7 +4683,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                             transitionData->activeProperties
                         });
 
-                        Clay_ApplyTransitionedPropertiesToElement(currentElement, currentElement->config.transition.properties, transitionData->currentState, &mapItem->boundingBox, transitionData->reparented);
+                        Clay_ApplyTransitionedPropertiesToElement(currentElement, transitionData->activeProperties, transitionData->currentState, &mapItem->boundingBox, transitionData->reparented);
                         transitionData->elapsedTime += deltaTime;
 
                         if (transitionComplete) {
