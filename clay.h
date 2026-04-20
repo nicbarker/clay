@@ -1827,9 +1827,6 @@ Clay_LayoutElementHashMapItem* Clay__AddHashMapItem(Clay_ElementId elementId, Cl
     int32_t indexToUse = 0;
     if (context->layoutElementsHashMapFreeList.length > 0) {
         indexToUse = Clay__int32_tArray_GetValue(&context->layoutElementsHashMapFreeList, context->layoutElementsHashMapFreeList.length - 1);
-        if (indexToUse == hashItemPrevious) {
-            int x = 5;
-        }
         context->layoutElementsHashMapFreeList.length--;
     } else {
         indexToUse = context->layoutElementsHashMapInternal.length;
@@ -4445,10 +4442,6 @@ void Clay_ApplyTransitionedPropertiesToElement(Clay_LayoutElement* currentElemen
     if (properties & CLAY_TRANSITION_PROPERTY_BORDER_WIDTH) {
         currentElement->config.border.width = currentTransitionData.borderWidth;
     }
-}
-
-void Clay__CreateDebugView() {
-
 }
 
 CLAY_WASM_EXPORT("Clay_EndLayout")
