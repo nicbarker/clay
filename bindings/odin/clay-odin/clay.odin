@@ -157,7 +157,6 @@ TransitionState :: enum c.int {
 }
 
 TransitionProperty :: enum c.int {
-	None,
 	X,
 	Y,
 	Width,
