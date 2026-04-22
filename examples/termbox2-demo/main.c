@@ -68,8 +68,7 @@ void component_text_pair(const char *key, const char *value)
         .length = vallen,
         .chars = value,
     };
-    Clay_TextElementConfig *textconfig =
-        CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } });
+    Clay_TextElementConfig textconfig = { .textColor = { 0xff, 0xff, 0xff, 0xff } };
     CLAY_AUTO_ID({
         .layout = {
             .sizing = {
@@ -306,7 +305,7 @@ void component_color_palette(void)
                                                 CLAY_AUTO_ID({
                                                     .layout = layout,
                                                 }) {
-                                                    CLAY_TEXT(CLAY_STRING("#"), CLAY_TEXT_CONFIG({ .textColor = color }));
+                                                    CLAY_TEXT(CLAY_STRING("#"), { .textColor = color });
                                                 }
                                             }
                                         }
@@ -370,7 +369,7 @@ void component_unicode_text(void)
                 "(from https://stackoverflow.com/a/1644280)\n"
                 " ٩(-̮̮̃-̃)۶ ٩(●̮̮̃•̃)۶ ٩(͡๏̯͡๏)۶ ٩(-̮̮̃•̃)."
             ),
-            CLAY_TEXT_CONFIG({ .textColor = { 0x11, 0x11, 0x11, 0xff } })
+            { .textColor = { 0x11, 0x11, 0x11, 0xff } }
         );
     }
 }
@@ -402,7 +401,7 @@ void component_keybinds(void)
                 "  d/D - Toggle debug mode\n"
                 "  q/Q - Quit\n"
             ),
-            CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff }})
+            { .textColor = { 0xff, 0xff, 0xff, 0xff }}
         );
     }
 }
@@ -482,25 +481,25 @@ void component_bordered_text(void)
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0xaa, 0x00, 0x00, 0xff } },
         }) {
             CLAY_TEXT(
-                CLAY_STRING("Test"), CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } }));
+                CLAY_STRING("Test"), { .textColor = { 0xff, 0xff, 0xff, 0xff } });
         }
         CLAY_AUTO_ID({
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0x00, 0xaa, 0x00, 0xff } },
         }) {
             CLAY_TEXT(CLAY_STRING("of the border width"),
-                CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } }));
+                { .textColor = { 0xff, 0xff, 0xff, 0xff } });
         }
         CLAY_AUTO_ID({
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0x00, 0x00, 0xaa, 0xff } },
         }) {
             CLAY_TEXT(CLAY_STRING("and overlap for multiple lines\nof text"),
-                CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } }));
+                { .textColor = { 0xff, 0xff, 0xff, 0xff } });
         }
         CLAY_AUTO_ID({
             .border = { .width = { 1, 1, 1, 1, 1 }, .color = { 0x00, 0x00, 0xaa, 0xff } },
         }) {
             CLAY_TEXT(CLAY_STRING("this text\nis long enough\nto display all\n borders\naround it"),
-                CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } }));
+                { .textColor = { 0xff, 0xff, 0xff, 0xff } });
         }
     }
 }
@@ -555,7 +554,7 @@ Clay_RenderCommandArray CreateLayout(clay_tb_image *image1, clay_tb_image *image
 
         component_color_palette();
     }
-    return Clay_EndLayout();
+    return Clay_EndLayout(0);
 }
 
 
