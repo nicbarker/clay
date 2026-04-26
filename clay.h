@@ -4427,10 +4427,12 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                 Clay_LayoutElementHashMapItem *parentHashMapItem = Clay__GetHashMapItem(data->parentId);
                 // Don't exit transition if the parent has also exited and SKIP_WHEN_PARENT_EXITS is used
                 if (config->exit.trigger == CLAY_TRANSITION_EXIT_TRIGGER_WHEN_PARENT_EXITS || !parentHashMapItem || parentHashMapItem->generation > context->generation) {
+                    // This if only runs one single time when the element first starts exiting
                     if (data->state != CLAY_TRANSITION_STATE_EXITING) {
                         if (parentHashMapItem->generation <= context->generation) {
                             data->elementThisFrame->config.floating.attachTo = CLAY_ATTACH_TO_ROOT;
                             data->elementThisFrame->config.floating.offset = CLAY__INIT(Clay_Vector2) { hashMapItem->boundingBox.x, hashMapItem->boundingBox.y };
+                            data->elementThisFrame->config.floating.parentId = Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id;
                         }
                         data->elementThisFrame->exiting = true;
                         data->elementThisFrame->config.layout.sizing.width = CLAY_SIZING_FIXED(data->elementThisFrame->dimensions.width);
@@ -4440,6 +4442,8 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         data->elapsedTime = 0;
                         data->targetState = config->exit.setFinalState(data->targetState, config->properties);
                     }
+
+                    // Below this line runs every frame while element is exiting -----------
 
                     // Clone the entire subtree back into the main UI layout tree
                     Clay__int32_tArray bfsBuffer = context->openLayoutElementStack;
@@ -4494,12 +4498,12 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                         }
                         parentElement->children.length++;
                         parentElement->children.elements = &context->layoutElementChildren.internalArray[newChildrenStartIndex];
-                    // Otherwise, just attach to the root as a floating element
+                    // Otherwise, create the tree root for the floating element (needs to be created every frame)
                     } else {
                         Clay__LayoutElementTreeRootArray_Add(&context->layoutElementTreeRoots, CLAY__INIT(Clay__LayoutElementTreeRoot) {
                             .layoutElementIndex = (int32_t)(data->elementThisFrame - context->layoutElements.internalArray),
-                            .parentId = floatingConfig->attachTo != CLAY_ATTACH_TO_NONE ? floatingConfig->parentId : Clay__HashString(CLAY_STRING("Clay__RootContainer"), 0).id,
-                            .zIndex = floatingConfig->attachTo != CLAY_ATTACH_TO_NONE ? floatingConfig->zIndex : (int16_t)1,
+                            .parentId = floatingConfig->parentId,
+                            .zIndex = floatingConfig->zIndex,
                         });
                     }
                 // Parent exited, just delete child without exit transition
