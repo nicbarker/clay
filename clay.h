@@ -563,6 +563,7 @@ typedef struct {
     Clay_BoundingBox boundingBox;
     Clay_Color backgroundColor;
     Clay_Color overlayColor;
+    Clay_CornerRadius cornerRadius;
     Clay_Color borderColor;
     Clay_BorderWidth borderWidth;
 } Clay_TransitionData;
@@ -4436,6 +4437,9 @@ void Clay_ApplyTransitionedPropertiesToElement(Clay_LayoutElement* currentElemen
     if (properties & CLAY_TRANSITION_PROPERTY_BACKGROUND_COLOR) {
         currentElement->config.backgroundColor = currentTransitionData.backgroundColor;
     }
+    if (properties & CLAY_TRANSITION_PROPERTY_CORNER_RADIUS) {
+        currentElement->config.cornerRadius = currentTransitionData.cornerRadius;
+    }
     if (properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
         currentElement->config.border.color = currentTransitionData.borderColor;
     }
@@ -4580,6 +4584,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                             mapItem->boundingBox,
                             currentElement->config.backgroundColor,
                             currentElement->config.overlayColor,
+                            currentElement->config.cornerRadius,
                             currentElement->config.border.color,
                             currentElement->config.border.width,
                     };
@@ -4645,6 +4650,14 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                     if (properties & CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR) {
                         if (!Clay__MemCmp((char *) &oldTargetState.overlayColor, (char *)&targetState.overlayColor, sizeof(Clay_Color))) {
                             newActiveProperties |= CLAY_TRANSITION_PROPERTY_OVERLAY_COLOR;
+                        }
+                    }
+                    if (properties & CLAY_TRANSITION_PROPERTY_CORNER_RADIUS) {
+                        if (!Clay__FloatEqual(oldTargetState.cornerRadius.topLeft, targetState.cornerRadius.topLeft)
+                            || !Clay__FloatEqual(oldTargetState.cornerRadius.topRight, targetState.cornerRadius.topRight)
+                            || !Clay__FloatEqual(oldTargetState.cornerRadius.bottomLeft, targetState.cornerRadius.bottomLeft)
+                            || !Clay__FloatEqual(oldTargetState.cornerRadius.bottomRight, targetState.cornerRadius.bottomRight)) {
+                            activeProperties |= CLAY_TRANSITION_PROPERTY_CORNER_RADIUS;
                         }
                     }
                     if (properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
@@ -4967,6 +4980,14 @@ CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
             .g = CLAY__LERP(arguments.initial.overlayColor.g, arguments.target.overlayColor.g, lerpAmount),
             .b = CLAY__LERP(arguments.initial.overlayColor.b, arguments.target.overlayColor.b, lerpAmount),
             .a = CLAY__LERP(arguments.initial.overlayColor.a, arguments.target.overlayColor.a, lerpAmount),
+        };
+    }
+    if (arguments.properties & CLAY_TRANSITION_PROPERTY_CORNER_RADIUS) {
+        arguments.current->cornerRadius = CLAY__INIT(Clay_CornerRadius) {
+            .topLeft = CLAY__LERP(arguments.initial.cornerRadius.topLeft, arguments.target.cornerRadius.topLeft, lerpAmount),
+            .topRight = CLAY__LERP(arguments.initial.cornerRadius.topRight, arguments.target.cornerRadius.topRight, lerpAmount),
+            .bottomLeft = CLAY__LERP(arguments.initial.cornerRadius.bottomLeft, arguments.target.cornerRadius.bottomLeft, lerpAmount),
+            .bottomRight = CLAY__LERP(arguments.initial.cornerRadius.bottomRight, arguments.target.cornerRadius.bottomRight, lerpAmount),
         };
     }
     if (arguments.properties & CLAY_TRANSITION_PROPERTY_BORDER_COLOR) {
