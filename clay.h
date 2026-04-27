@@ -560,6 +560,7 @@ typedef struct Clay_BorderElementConfig {
 CLAY__WRAPPER_STRUCT(Clay_BorderElementConfig);
 
 typedef struct {
+    void* userData;
     Clay_BoundingBox boundingBox;
     Clay_Color backgroundColor;
     Clay_Color overlayColor;
@@ -624,6 +625,7 @@ typedef CLAY_PACKED_ENUM {
 
 // Controls settings related to transitions
 typedef struct Clay_TransitionElementConfig {
+    void* userData;
     bool (*handler)(Clay_TransitionCallbackArguments arguments);
     float duration;
     Clay_TransitionProperty properties;
@@ -4577,6 +4579,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                 Clay_TransitionData targetState = transitionData->targetState;
                 if (transitionData->state != CLAY_TRANSITION_STATE_EXITING) {
                     targetState = CLAY__INIT(Clay_TransitionData) {
+                            currentElement->config.transition.userData,
                             mapItem->boundingBox,
                             currentElement->config.backgroundColor,
                             currentElement->config.overlayColor,
