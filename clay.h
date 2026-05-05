@@ -866,12 +866,38 @@ typedef struct Clay_ElementDeclaration {
     Clay_ClipElementConfig clip;
     // Controls settings related to element borders, and will generate BORDER render commands.
     Clay_BorderElementConfig border;
+    // Enables and controls "transitions" which automatically animate changes to elements.
     Clay_TransitionElementConfig transition;
+    bool focusable;
+    bool focusOnAppear;
     // A pointer that will be transparently passed through to resulting render commands.
     void *userData;
 } Clay_ElementDeclaration;
 
 CLAY__WRAPPER_STRUCT(Clay_ElementDeclaration);
+
+typedef struct {
+    bool isAncestor;
+    // The number of "generations" of parent between the ancestor and the current focus element. 1 == parent, 2 == grandparent, etc
+    int32_t distance;
+} Clay_FocusAncestorInfo;
+
+typedef CLAY_PACKED_ENUM {
+    CLAY_FOCUS_MOVE_NEXT,
+    CLAY_FOCUS_MOVE_PREVIOUS,
+    CLAY_FOCUS_MOVE_PARENT,
+    CLAY_FOCUS_MOVE_FIRST_CHILD,
+    CLAY_FOCUS_MOVE_LAST_CHILD,
+    CLAY_FOCUS_MOVE_LEFT,
+    CLAY_FOCUS_MOVE_RIGHT,
+    CLAY_FOCUS_MOVE_UP,
+    CLAY_FOCUS_MOVE_DOWN,
+} Clay_FocusModificationType;
+
+typedef struct {
+    Clay_FocusModificationType type;
+    bool lockToParent;
+} Clay_FocusModification;
 
 // Represents the type of error clay encountered while computing layout.
 typedef CLAY_PACKED_ENUM {
@@ -988,9 +1014,10 @@ CLAY_DLL_EXPORT bool Clay_Hovered(void);
 // - onHoverFunction is a function pointer to a user defined function.
 // - userData is a pointer that will be transparently passed through when the onHoverFunction is called.
 CLAY_DLL_EXPORT void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_PointerData pointerData, void *userData), void *userData);
-// An imperative function that returns true if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
+// An imperative function that returns > 0 if the pointer position provided by Clay_SetPointerState is within the element with the provided ID's bounding box.
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
-CLAY_DLL_EXPORT bool Clay_PointerOver(Clay_ElementId elementId);
+// The returned int32_t indicates the reverse "depth" of the element in relation to the mouse - 1 indicates the innermost clicked element, 2 is that element's parent, etc.
+CLAY_DLL_EXPORT int32_t Clay_PointerOver(Clay_ElementId elementId);
 // Returns the array of element IDs that the pointer is currently over.
 CLAY_DLL_EXPORT Clay_ElementIdArray Clay_GetPointerOverIds(void);
 // Returns data representing the state of the scrolling element with the provided ID.
@@ -1028,6 +1055,12 @@ CLAY_DLL_EXPORT void Clay_SetMaxMeasureTextCacheWordCount(int32_t maxMeasureText
 CLAY_DLL_EXPORT void Clay_ResetMeasureTextCache(void);
 // A built in transition function that uses the "Ease Out" curve
 CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments);
+CLAY_DLL_EXPORT void Clay_ModifyFocus(Clay_FocusModification modification);
+CLAY_DLL_EXPORT void Clay_FocusOpenElement();
+CLAY_DLL_EXPORT void Clay_FocusElementWithId(Clay_ElementId id);
+CLAY_DLL_EXPORT bool Clay_ElementIsFocused(Clay_ElementId id);
+CLAY_DLL_EXPORT Clay_FocusAncestorInfo Clay_ElementIsFocusAncestor(Clay_ElementId id);
+CLAY_DLL_EXPORT bool Clay_Focused();
 
 // Internal API functions required by macros ----------------------
 
@@ -1306,6 +1339,18 @@ typedef struct {
 CLAY__ARRAY_DEFINE(Clay__MeasureTextCacheItem, Clay__MeasureTextCacheItemArray)
 
 typedef struct {
+    uint32_t layoutElementId;
+    int32_t parentIndex;
+    int32_t previousSibling;
+    int32_t nextSibling;
+    int32_t firstChildIndex;
+    int32_t lastChildIndex;
+    bool focusable;
+} Clay__FocusTreeNode;
+
+CLAY__ARRAY_DEFINE(Clay__FocusTreeNode, Clay__FocusTreeNodeArray)
+
+typedef struct {
     Clay_LayoutElement *layoutElement;
     Clay_Vector2 position;
     Clay_Vector2 nextChildOffset;
@@ -1357,6 +1402,13 @@ struct Clay_Context {
     Clay__int32_tArray reusableElementIndexBuffer;
     Clay__int32_tArray layoutElementClipElementIds;
     // Misc Data Structures
+    Clay__FocusTreeNodeArray focusTreeNodesPrevious;
+    Clay__FocusTreeNodeArray focusTreeNodesCurrent;
+    int32_t openFocusTreeNode;
+    int32_t activeFocusTreeNodePrevious;
+    int32_t activeFocusTreeNodeCurrent;
+    int32_t activeFocusElementId;
+    Clay_FocusModificationType focusLastModificationType;
     Clay__StringArray layoutElementIdStrings;
     Clay__WrappedTextLineArray wrappedTextLines;
     Clay__LayoutElementTreeNodeArray layoutElementTreeNodeArray1;
@@ -1957,6 +2009,31 @@ void Clay__CloseElement(void) {
 
     bool elementIsFloating = openLayoutElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE;
 
+    Clay__FocusTreeNode* focusNode = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesCurrent, context->openFocusTreeNode);
+    if (openLayoutElement->config.focusable || focusNode->firstChildIndex != 0) {
+        int32_t focusNodeIndex = focusNode - context->focusTreeNodesCurrent.internalArray;
+        Clay__FocusTreeNode* parentNode = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesCurrent, focusNode->parentIndex);
+        if (parentNode->firstChildIndex == 0) {
+            parentNode->firstChildIndex = focusNodeIndex;
+            parentNode->lastChildIndex = focusNodeIndex;
+        } else {
+            Clay__FocusTreeNode* previousSibling = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesCurrent, parentNode->lastChildIndex);
+            previousSibling->nextSibling = focusNodeIndex;
+            focusNode->previousSibling = parentNode->lastChildIndex;
+            parentNode->lastChildIndex = focusNodeIndex;
+        }
+
+        if (openLayoutElement->config.focusable && context->activeFocusTreeNodeCurrent == 0) {
+            context->activeFocusTreeNodeCurrent = focusNodeIndex;
+        }
+    } else {
+        int32_t previousIndex = context->openFocusTreeNode;
+        context->openFocusTreeNode = focusNode->parentIndex;
+        Clay__FocusTreeNodeArray_RemoveSwapback(&context->focusTreeNodesCurrent, previousIndex);
+    }
+
+    context->openFocusTreeNode = focusNode->parentIndex;
+
     // Close the currently open element
     int32_t closingElementIndex = Clay__int32_tArray_RemoveSwapback(&context->openLayoutElementStack, (int)context->openLayoutElementStack.length - 1);
 
@@ -2211,6 +2288,27 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
             });
         }
     }
+
+    // Add this element to the focus tree
+    Clay__FocusTreeNode* parentNode = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesCurrent, context->openFocusTreeNode);
+    Clay__FocusTreeNode* newNode = Clay__FocusTreeNodeArray_Add(&context->focusTreeNodesCurrent, {
+        .layoutElementId = openLayoutElement->id,
+        .parentIndex = context->openFocusTreeNode,
+        .focusable = declaration->focusable,
+    });
+    int32_t newNodeIndex = newNode - context->focusTreeNodesCurrent.internalArray;
+    context->openFocusTreeNode = newNodeIndex;
+    if (declaration->focusable) {
+        if (context->activeFocusElementId == openLayoutElement->id) {
+            context->activeFocusTreeNodeCurrent = newNodeIndex;
+            context->activeFocusElementId = openLayoutElement->id;
+        }
+
+        if ((declaration->focusOnAppear && Clay__GetHashMapItem(openLayoutElement->id)->appearedThisFrame)) {
+            context->activeFocusTreeNodeCurrent = newNodeIndex;
+            context->activeFocusElementId = openLayoutElement->id;
+        }
+    }
 }
 
 void Clay__ConfigureOpenElement(const Clay_ElementDeclaration declaration) {
@@ -2248,6 +2346,8 @@ void Clay__InitializePersistentMemory(Clay_Context* context) {
     int32_t maxMeasureTextCacheWordCount = context->maxMeasureTextCacheWordCount;
     Clay_Arena *arena = &context->internalArena;
 
+    context->focusTreeNodesCurrent = Clay__FocusTreeNodeArray_Allocate_Arena(maxElementCount, arena);
+    context->focusTreeNodesPrevious = Clay__FocusTreeNodeArray_Allocate_Arena(maxElementCount, arena);
     context->scrollContainerDatas = Clay__ScrollContainerDataInternalArray_Allocate_Arena(100, arena);
     context->transitionDatas = Clay__TransitionDataInternalArray_Allocate_Arena(200, arena);
     context->layoutElementsHashMapInternal = Clay__LayoutElementHashMapItemArray_Allocate_Arena(maxElementCount, arena);
@@ -4357,6 +4457,14 @@ void Clay_BeginLayout(void) {
     Clay__InitializeEphemeralMemory(context);
     context->generation++;
     context->dynamicElementIndex = 0;
+
+    Clay__FocusTreeNodeArray previousNodes = context->focusTreeNodesPrevious;
+    context->focusTreeNodesPrevious = context->focusTreeNodesCurrent;
+    context->focusTreeNodesCurrent = { .capacity = previousNodes.capacity, .length = 0, .internalArray = previousNodes.internalArray };
+    Clay__FocusTreeNodeArray_Add(&context->focusTreeNodesCurrent, {}); // 0 slot reserved for "empty"
+    context->openFocusTreeNode = 0;
+    context->activeFocusTreeNodePrevious = context->activeFocusTreeNodeCurrent;
+    context->activeFocusTreeNodeCurrent = 0;
     // Set up the root container that covers the entire window
     Clay_Dimensions rootDimensions = {context->layoutDimensions.width, context->layoutDimensions.height};
     if (context->debugModeEnabled) {
@@ -4448,6 +4556,13 @@ CLAY_WASM_EXPORT("Clay_EndLayout")
 Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     Clay_Context* context = Clay_GetCurrentContext();
     Clay__CloseElement();
+
+    Clay_LayoutElementHashMapItem* focusItem = Clay__GetHashMapItem(context->activeFocusElementId);
+    // Item has disappeared, defocus
+    if (focusItem->generation <= context->generation) {
+        context->activeFocusTreeNodeCurrent = 0;
+        context->activeFocusElementId = {};
+    }
 
     if (context->openLayoutElementStack.length > 1) {
         context->errorHandler.errorHandlerFunction(CLAY__INIT(Clay_ErrorData) {
@@ -4820,14 +4935,14 @@ void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId elementId, Clay_Pointer
 }
 
 CLAY_WASM_EXPORT("Clay_PointerOver")
-bool Clay_PointerOver(Clay_ElementId elementId) { // TODO return priority for separating multiple results
+int32_t Clay_PointerOver(Clay_ElementId elementId) { // TODO return priority for separating multiple results
     Clay_Context* context = Clay_GetCurrentContext();
-    for (int32_t i = 0; i < context->pointerOverIds.length; ++i) {
+    for (int32_t i = context->pointerOverIds.length - 1; i >= 0; --i) {
         if (Clay_ElementIdArray_Get(&context->pointerOverIds, i)->id == elementId.id) {
-            return true;
+            return context->pointerOverIds.length - i;
         }
     }
-    return false;
+    return 0;
 }
 
 CLAY_WASM_EXPORT("Clay_GetScrollContainerData")
@@ -4991,6 +5106,165 @@ CLAY_DLL_EXPORT bool Clay_EaseOut(Clay_TransitionCallbackArguments arguments) {
         };
     }
     return ratio >= 1;
+}
+
+void Clay__FocusElementWithFocusNodeIndex(int32_t focusNodeIndex, Clay_FocusModificationType modificationType) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    if (focusNodeIndex < context->focusTreeNodesPrevious.length) {
+        Clay__FocusTreeNode* node = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesPrevious, focusNodeIndex);
+        context->activeFocusTreeNodePrevious = focusNodeIndex;
+        context->activeFocusElementId = node->layoutElementId;
+        context->focusLastModificationType = modificationType;
+    }
+}
+
+void Clay__ModifyFocusInternal(Clay_FocusModification modification) {
+    bool next = true;
+    Clay_LayoutDirection direction = CLAY_LEFT_TO_RIGHT;
+    if (modification.type == CLAY_FOCUS_MOVE_UP || modification.type == CLAY_FOCUS_MOVE_DOWN) {
+        direction = CLAY_TOP_TO_BOTTOM;
+    }
+    if (modification.type == CLAY_FOCUS_MOVE_LEFT || modification.type == CLAY_FOCUS_MOVE_UP) {
+        next = false;
+    }
+    Clay_Context* context = Clay_GetCurrentContext();
+    Clay__FocusTreeNodeArray nodesToUse = context->focusTreeNodesPrevious;
+    Clay__FocusTreeNode* currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, context->activeFocusTreeNodePrevious);
+    Clay__FocusTreeNode* parentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, currentFocusNode->parentIndex);
+    Clay_LayoutElement* currentElement = Clay__GetHashMapItem(currentFocusNode->layoutElementId)->layoutElement;
+    Clay_LayoutElement* parentElement = Clay__GetHashMapItem(parentFocusNode->layoutElementId)->layoutElement;
+
+    // Descend into children if this element is focusable and also has children
+    if (!modification.lockToParent && currentElement && currentElement->config.layout.layoutDirection == direction && next && currentFocusNode->firstChildIndex != 0) {
+        currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, next ? currentFocusNode->firstChildIndex : currentFocusNode->lastChildIndex);
+    } else if (parentElement) {
+        // Otherwise, if there is a next sibling, simple increment / decrement
+        if (parentElement->config.layout.layoutDirection == direction && (next ? currentFocusNode->nextSibling : currentFocusNode->previousSibling) != 0) {
+            currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, next ? currentFocusNode->nextSibling : currentFocusNode->previousSibling);
+        }
+        // If there is no next sibling, try to ascend the tree to a directionally matching container, then move
+        else if (!modification.lockToParent) {
+            while (true) {
+                if (parentFocusNode->focusable) {
+                    currentFocusNode = parentFocusNode;
+                    break;
+                }
+
+                if (parentFocusNode->parentIndex == 0) break;
+                Clay__FocusTreeNode* grandParentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, parentFocusNode->parentIndex);
+                Clay_LayoutElement* grandParentElement = Clay__GetHashMapItem(grandParentFocusNode->layoutElementId)->layoutElement;
+                if (!grandParentElement) break;
+
+                Clay_LayoutDirection grandParentDirection = grandParentElement->config.layout.layoutDirection;
+                if (grandParentDirection == direction && (next ? parentFocusNode->nextSibling : parentFocusNode->previousSibling) != 0) {
+                    currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, (next ? parentFocusNode->nextSibling : parentFocusNode->previousSibling));
+                    break;
+                }
+
+                parentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, parentFocusNode->parentIndex);
+            }
+        }
+    }
+
+    // If we've landed on a container that isn't itself focusable, descend to a focusable child
+    if (!currentFocusNode->focusable) {
+        while (!currentFocusNode->focusable && currentFocusNode->firstChildIndex != 0) {
+            currentElement = Clay__GetHashMapItem(currentFocusNode->layoutElementId)->layoutElement;
+            if (currentElement && currentElement->config.layout.layoutDirection == direction) {
+                currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, next ? currentFocusNode->firstChildIndex : currentFocusNode->lastChildIndex);
+            } else {
+                currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, currentFocusNode->firstChildIndex);
+            }
+        }
+        Clay__FocusElementWithFocusNodeIndex(currentFocusNode - nodesToUse.internalArray, modification.type);
+    }
+    Clay__FocusElementWithFocusNodeIndex(currentFocusNode - nodesToUse.internalArray, modification.type);
+}
+
+CLAY_DLL_EXPORT void Clay_ModifyFocus(Clay_FocusModification modification) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    Clay__FocusTreeNodeArray nodesToUse = context->focusTreeNodesPrevious;
+    Clay__FocusTreeNode* currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, context->activeFocusTreeNodePrevious);
+    Clay__FocusTreeNode* parentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, currentFocusNode->parentIndex);
+
+    switch (modification.type) {
+        case CLAY_FOCUS_MOVE_NEXT:
+            Clay__ModifyFocusInternal(modification);
+            break;
+        case CLAY_FOCUS_MOVE_PREVIOUS:
+            Clay__ModifyFocusInternal(modification);
+            break;
+        case CLAY_FOCUS_MOVE_PARENT:
+            while (true) {
+                if (parentFocusNode->parentIndex == 0) break;
+                if (parentFocusNode->focusable) {
+                    Clay__FocusElementWithFocusNodeIndex(parentFocusNode - nodesToUse.internalArray, CLAY_FOCUS_MOVE_PARENT);
+                    break;
+                }
+                parentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, parentFocusNode->parentIndex);
+            }
+            break;
+        case CLAY_FOCUS_MOVE_FIRST_CHILD:
+            if (currentFocusNode->firstChildIndex != 0) {
+//                Clay__FocusElementWithFocusNodeIndex(currentFocusNode->firstChildIndex);
+            }
+            break;
+        case CLAY_FOCUS_MOVE_LAST_CHILD:
+            break;
+        case CLAY_FOCUS_MOVE_LEFT: {
+            Clay__ModifyFocusInternal(modification);
+            break;
+        }
+        case CLAY_FOCUS_MOVE_RIGHT: {
+            Clay__ModifyFocusInternal(modification);
+            break;
+        }
+        case CLAY_FOCUS_MOVE_UP: {
+            Clay__ModifyFocusInternal(modification);
+            break;
+        }
+        case CLAY_FOCUS_MOVE_DOWN: {
+            Clay__ModifyFocusInternal(modification);
+            break;
+        }
+    }
+
+    if (!Clay__FocusTreeNodeArray_Get(&nodesToUse, context->activeFocusTreeNodePrevious)->focusable) {
+        Clay__FocusElementWithFocusNodeIndex(currentFocusNode - nodesToUse.internalArray, context->focusLastModificationType);
+    }
+}
+
+CLAY_DLL_EXPORT void Clay_FocusOpenElement() {
+    Clay_Context* context = Clay_GetCurrentContext();
+    context->activeFocusElementId = Clay_GetOpenElementId();
+}
+
+CLAY_DLL_EXPORT void Clay_FocusElementWithId(Clay_ElementId id) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    context->activeFocusElementId = id.id;
+}
+
+CLAY_DLL_EXPORT bool Clay_ElementIsFocused(Clay_ElementId id) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    return id.id == context->activeFocusElementId;
+}
+
+CLAY_DLL_EXPORT Clay_FocusAncestorInfo Clay_ElementIsFocusAncestor(Clay_ElementId id) {
+    Clay_Context* context = Clay_GetCurrentContext();
+    Clay__FocusTreeNode* currentNode = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesPrevious, context->activeFocusTreeNodePrevious);
+    int32_t distance = 0;
+    while (currentNode->parentIndex != 0) {
+        distance++;
+        currentNode = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesPrevious, currentNode->parentIndex);
+        if (currentNode->layoutElementId == id.id) {
+            return { .isAncestor = true, .distance = distance };
+        }
+    }
+    return { .isAncestor = false };
+}
+
+CLAY_DLL_EXPORT bool Clay_Focused() {
+    return Clay_ElementIsFocused(CLAY__INIT(Clay_ElementId) { Clay_GetOpenElementId() });
 }
 
 #endif // CLAY_IMPLEMENTATION
