@@ -1018,7 +1018,6 @@ CLAY_DLL_EXPORT void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId element
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
 // The returned int32_t indicates the reverse "depth" of the element in relation to the mouse - 1 indicates the innermost clicked element, 2 is that element's parent, etc.
 CLAY_DLL_EXPORT int32_t Clay_PointerOver(Clay_ElementId elementId);
-CLAY_DLL_EXPORT int32_t Clay_PointerOverWithDepth(Clay_ElementId elementId);
 // Returns the array of element IDs that the pointer is currently over.
 CLAY_DLL_EXPORT Clay_ElementIdArray Clay_GetPointerOverIds(void);
 // Returns data representing the state of the scrolling element with the provided ID.
