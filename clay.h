@@ -4230,7 +4230,7 @@ Clay_Vector2 Clay_GetScrollOffset(void) {
     Clay_LayoutElement *openLayoutElement = Clay__GetOpenLayoutElement();
     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-        if (mapping->layoutElement == openLayoutElement) {
+        if (mapping->elementId == openLayoutElement->id) {
             return mapping->scrollPosition;
         }
     }
