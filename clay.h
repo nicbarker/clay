@@ -1018,6 +1018,7 @@ CLAY_DLL_EXPORT void Clay_OnHover(void (*onHoverFunction)(Clay_ElementId element
 // This ID can be calculated either with CLAY_ID() for string literal IDs, or Clay_GetElementId for dynamic strings.
 // The returned int32_t indicates the reverse "depth" of the element in relation to the mouse - 1 indicates the innermost clicked element, 2 is that element's parent, etc.
 CLAY_DLL_EXPORT int32_t Clay_PointerOver(Clay_ElementId elementId);
+CLAY_DLL_EXPORT int32_t Clay_PointerOverWithDepth(Clay_ElementId elementId);
 // Returns the array of element IDs that the pointer is currently over.
 CLAY_DLL_EXPORT Clay_ElementIdArray Clay_GetPointerOverIds(void);
 // Returns data representing the state of the scrolling element with the provided ID.
@@ -5133,6 +5134,16 @@ void Clay__ModifyFocusInternal(Clay_FocusModification modification) {
     Clay__FocusTreeNode* parentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, currentFocusNode->parentIndex);
     Clay_LayoutElement* currentElement = Clay__GetHashMapItem(currentFocusNode->layoutElementId)->layoutElement;
     Clay_LayoutElement* parentElement = Clay__GetHashMapItem(parentFocusNode->layoutElementId)->layoutElement;
+    Clay__int32_tArray parentSiblingStack = context->reusableElementIndexBuffer;
+    parentSiblingStack.length = 0;
+    // Push the sibling index to the stack so we can use it to find the new focus
+    int32_t originalSiblingIndex = 0;
+    Clay__FocusTreeNode* iterator = currentFocusNode;
+    while(iterator->previousSibling != 0) {
+        originalSiblingIndex++;
+        iterator = Clay__FocusTreeNodeArray_Get(&nodesToUse, iterator->previousSibling);
+    }
+    Clay__int32_tArray_Add(&parentSiblingStack, originalSiblingIndex);
 
     // Descend into children if this element is focusable and also has children
     if (!modification.lockToParent && currentElement && currentElement->config.layout.layoutDirection == direction && next && currentFocusNode->firstChildIndex != 0) {
@@ -5157,9 +5168,18 @@ void Clay__ModifyFocusInternal(Clay_FocusModification modification) {
 
                 Clay_LayoutDirection grandParentDirection = grandParentElement->config.layout.layoutDirection;
                 if (grandParentDirection == direction && (next ? parentFocusNode->nextSibling : parentFocusNode->previousSibling) != 0) {
-                    currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, (next ? parentFocusNode->nextSibling : parentFocusNode->previousSibling));
+                    currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, next ? parentFocusNode->nextSibling : parentFocusNode->previousSibling);
                     break;
                 }
+
+                // Push the sibling index to the stack so we can use it to find the new focus
+                originalSiblingIndex = 0;
+                iterator = parentFocusNode;
+                while(iterator->previousSibling != 0) {
+                    originalSiblingIndex++;
+                    iterator = Clay__FocusTreeNodeArray_Get(&nodesToUse, iterator->previousSibling);
+                }
+                Clay__int32_tArray_Add(&parentSiblingStack, originalSiblingIndex);
 
                 parentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, parentFocusNode->parentIndex);
             }
@@ -5172,8 +5192,16 @@ void Clay__ModifyFocusInternal(Clay_FocusModification modification) {
             currentElement = Clay__GetHashMapItem(currentFocusNode->layoutElementId)->layoutElement;
             if (currentElement && currentElement->config.layout.layoutDirection == direction) {
                 currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, next ? currentFocusNode->firstChildIndex : currentFocusNode->lastChildIndex);
+                parentSiblingStack.length = CLAY__MAX(parentSiblingStack.length - 1, 0);
             } else {
                 currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, currentFocusNode->firstChildIndex);
+                int32_t originalSiblingIndex = parentSiblingStack.length > 0 ? Clay__int32_tArray_GetValue(&parentSiblingStack, parentSiblingStack.length - 1) : 0;
+                parentSiblingStack.length = CLAY__MAX(parentSiblingStack.length - 1, 0);
+                int32_t siblingCount = 0;
+                while (siblingCount < originalSiblingIndex && currentFocusNode->nextSibling != 0) {
+                    currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, currentFocusNode->nextSibling);
+                    siblingCount++;
+                }
             }
         }
         Clay__FocusElementWithFocusNodeIndex(currentFocusNode - nodesToUse.internalArray, modification.type);
