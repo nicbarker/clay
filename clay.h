@@ -897,6 +897,8 @@ typedef CLAY_PACKED_ENUM {
 typedef struct {
     Clay_FocusModificationType type;
     bool lockToParent;
+    bool disableAutoScroll;
+    Clay_Vector2 autoScrollPadding;
 } Clay_FocusModification;
 
 // Represents the type of error clay encountered while computing layout.
@@ -2292,7 +2294,7 @@ void Clay__ConfigureOpenElementPtr(const Clay_ElementDeclaration *declaration) {
 
     // Add this element to the focus tree
     Clay__FocusTreeNode* parentNode = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesCurrent, context->openFocusTreeNode);
-    Clay__FocusTreeNode* newNode = Clay__FocusTreeNodeArray_Add(&context->focusTreeNodesCurrent, {
+    Clay__FocusTreeNode* newNode = Clay__FocusTreeNodeArray_Add(&context->focusTreeNodesCurrent, CLAY__INIT(Clay__FocusTreeNode) {
         .layoutElementId = openLayoutElement->id,
         .parentIndex = context->openFocusTreeNode,
         .focusable = declaration->focusable,
@@ -4461,8 +4463,8 @@ void Clay_BeginLayout(void) {
 
     Clay__FocusTreeNodeArray previousNodes = context->focusTreeNodesPrevious;
     context->focusTreeNodesPrevious = context->focusTreeNodesCurrent;
-    context->focusTreeNodesCurrent = { .capacity = previousNodes.capacity, .length = 0, .internalArray = previousNodes.internalArray };
-    Clay__FocusTreeNodeArray_Add(&context->focusTreeNodesCurrent, {}); // 0 slot reserved for "empty"
+    context->focusTreeNodesCurrent = CLAY__INIT(Clay__FocusTreeNodeArray) { .capacity = previousNodes.capacity, .length = 0, .internalArray = previousNodes.internalArray };
+    Clay__FocusTreeNodeArray_Add(&context->focusTreeNodesCurrent, CLAY__INIT(Clay__FocusTreeNode) {}); // 0 slot reserved for "empty"
     context->openFocusTreeNode = 0;
     context->activeFocusTreeNodePrevious = context->activeFocusTreeNodeCurrent;
     context->activeFocusTreeNodeCurrent = 0;
@@ -4562,7 +4564,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
     // Item has disappeared, defocus
     if (focusItem->generation <= context->generation) {
         context->activeFocusTreeNodeCurrent = 0;
-        context->activeFocusElementId = {};
+        context->activeFocusElementId = 0;
     }
 
     if (context->openLayoutElementStack.length > 1) {
@@ -5259,6 +5261,34 @@ CLAY_DLL_EXPORT void Clay_ModifyFocus(Clay_FocusModification modification) {
 
     if (!Clay__FocusTreeNodeArray_Get(&nodesToUse, context->activeFocusTreeNodePrevious)->focusable) {
         Clay__FocusElementWithFocusNodeIndex(currentFocusNode - nodesToUse.internalArray, context->focusLastModificationType);
+    } else if (!modification.disableAutoScroll) {
+        // Successfully updated focus, make sure that focused element is visible in clip space
+        currentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, context->activeFocusTreeNodePrevious);
+        Clay_ElementData elementData = Clay_GetElementData(CLAY__INIT(Clay_ElementId) { .id = currentFocusNode->layoutElementId });
+        parentFocusNode = currentFocusNode;
+        while (parentFocusNode->parentIndex != 0) {
+            parentFocusNode = Clay__FocusTreeNodeArray_Get(&nodesToUse, parentFocusNode->parentIndex);
+            Clay_ScrollContainerData scrollData = Clay_GetScrollContainerData(CLAY__INIT(Clay_ElementId) { .id = parentFocusNode->layoutElementId });
+            if (scrollData.found && elementData.found) {
+                Clay_ElementData parentElementData = Clay_GetElementData(CLAY__INIT(Clay_ElementId) { .id = parentFocusNode->layoutElementId });
+                int32_t elementDistancePastParentRightEdge = elementData.boundingBox.width > parentElementData.boundingBox.width ? 0 : (elementData.boundingBox.x + elementData.boundingBox.width) - (parentElementData.boundingBox.x + parentElementData.boundingBox.width);
+                int32_t elementDistancePastParentBottomEdge = elementData.boundingBox.height > parentElementData.boundingBox.height ? 0 : (elementData.boundingBox.y + elementData.boundingBox.height) - (parentElementData.boundingBox.y + parentElementData.boundingBox.height);
+                int32_t elementDistancePastParentLeftEdge = elementData.boundingBox.x - parentElementData.boundingBox.x;
+                int32_t elementDistancePastParentTopEdge = elementData.boundingBox.y - parentElementData.boundingBox.y;
+                if (elementDistancePastParentRightEdge > 0 && scrollData.config.horizontal) {
+                    scrollData.scrollPosition->x -= elementDistancePastParentRightEdge + modification.autoScrollPadding.x;
+                }
+                if (elementDistancePastParentLeftEdge < 0 && scrollData.config.horizontal) {
+                    scrollData.scrollPosition->x -= elementDistancePastParentLeftEdge - modification.autoScrollPadding.x;
+                }
+                if (elementDistancePastParentBottomEdge > 0 && scrollData.config.vertical) {
+                    scrollData.scrollPosition->y -= elementDistancePastParentBottomEdge + modification.autoScrollPadding.y;
+                }
+                if (elementDistancePastParentTopEdge < 0 && scrollData.config.vertical) {
+                    scrollData.scrollPosition->y -= elementDistancePastParentTopEdge - modification.autoScrollPadding.y;
+                }
+            }
+        }
     }
 }
 
@@ -5285,10 +5315,10 @@ CLAY_DLL_EXPORT Clay_FocusAncestorInfo Clay_ElementIsFocusAncestor(Clay_ElementI
         distance++;
         currentNode = Clay__FocusTreeNodeArray_Get(&context->focusTreeNodesPrevious, currentNode->parentIndex);
         if (currentNode->layoutElementId == id.id) {
-            return { .isAncestor = true, .distance = distance };
+            return CLAY__INIT(Clay_FocusAncestorInfo) { .isAncestor = true, .distance = distance };
         }
     }
-    return { .isAncestor = false };
+    return CLAY__INIT(Clay_FocusAncestorInfo) { .isAncestor = false };
 }
 
 CLAY_DLL_EXPORT bool Clay_Focused() {
