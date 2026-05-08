@@ -111,8 +111,7 @@ void component_text_pair(const char *key, const char *value)
         .length = vallen,
         .chars = value,
     };
-    Clay_TextElementConfig *textconfig =
-        CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff } });
+    Clay_TextElementConfig textconfig = { .textColor = { 0xff, 0xff, 0xff, 0xff } };
     CLAY_AUTO_ID({
         .layout = {
             .sizing = {
@@ -304,7 +303,7 @@ void component_keybinds(void)
                 "  d/D - Toggle debug mode\n"
                 "  q/Q - Quit\n"
             ),
-            CLAY_TEXT_CONFIG({ .textColor = { 0xff, 0xff, 0xff, 0xff }})
+            { .textColor = { 0xff, 0xff, 0xff, 0xff }}
         );
     }
 }
@@ -446,7 +445,7 @@ Clay_RenderCommandArray CreateLayout(struct img_group **imgs)
         component_image_small(imgs, thumbnail_count, selected_thumbnail);
         component_image(imgs[selected_thumbnail]);
     }
-    return Clay_EndLayout();
+    return Clay_EndLayout(0);
 }
 
 
