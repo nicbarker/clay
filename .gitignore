@@ -5,3 +5,8 @@ cmake-build-release/
 node_modules/
 *.dSYM
 .vs/
+bindings/odin/clay-odin/tmp/
+
+generator/__pycache__/
+
+generator/generators/__pycache__/
