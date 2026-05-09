@@ -1,3 +1,4 @@
+#include "limits.h"
 #include "raylib.h"
 #include "raymath.h"
 #include "stdint.h"
@@ -7,6 +8,8 @@
 
 #define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle) (Rectangle) { .x = rectangle.x, .y = rectangle.y, .width = rectangle.width, .height = rectangle.height }
 #define CLAY_COLOR_TO_RAYLIB_COLOR(color) (Color) { .r = (unsigned char)roundf(color.r), .g = (unsigned char)roundf(color.g), .b = (unsigned char)roundf(color.b), .a = (unsigned char)roundf(color.a) }
+#define CONTROL_CHAR_AMOUNT 32
+
 
 Camera Raylib_camera;
 
@@ -128,6 +131,47 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
     return ray;
 }
 
+typedef int Clay_Raylib_GlyphCodename;
+
+static inline Clay_Raylib_GlyphCodename Raylib_MeasureUtf8Glyph (Clay_StringSlice text, int* index) {
+    const unsigned char TOP_CHAR_BIT      = UCHAR_MAX - (UCHAR_MAX >> 1);
+    const unsigned char CONTINUATION_MASK = UCHAR_MAX - (UCHAR_MAX >> 2);
+    const unsigned char UTF8_STEP         = 6;
+
+    // is utf8
+    const int32_t start_index    = *index;
+    const char signed_start_char = text.chars[start_index];
+    if (signed_start_char >= 0) {
+        *index = start_index + 1;
+        return CONTROL_CHAR_AMOUNT; // not utf8
+    }
+
+    // amount of bytes
+    const unsigned char start_char = (unsigned char)signed_start_char;
+    int16_t amount_of_bytes = 2;
+    if (start_char & (TOP_CHAR_BIT >> 2)) {
+        amount_of_bytes = 3;
+        if (start_char & (TOP_CHAR_BIT >> 3)) {
+            amount_of_bytes = 4;
+        }
+    }
+    if (text.length - start_index < amount_of_bytes) {
+        *index = text.length - 1;
+        return CONTROL_CHAR_AMOUNT; // not enough bytes
+    }
+    const int32_t end_index = start_index + amount_of_bytes - 1;
+    *index = end_index;
+
+    // decode
+    const unsigned char first_byte_mask = UCHAR_MAX - (UCHAR_MAX >> (amount_of_bytes + 1));
+    int glyph_codename = (start_char & ~first_byte_mask);
+    for (int i = start_index + 1; i <= end_index; ++i) {
+        glyph_codename <<= UTF8_STEP;
+        glyph_codename |= ((unsigned char)text.chars[i]) & ~CONTINUATION_MASK;
+    }
+    return glyph_codename;
+}
+
 
 static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
     // Measure string size for Font
@@ -142,7 +186,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
     Font* fonts = (Font*)userData;
     Font fontToUse = fonts[config->fontId];
     // Font failed to load, likely the fonts are in the wrong place relative to the execution dir.
-    // RayLib ships with a default font, so we can continue with that built in one. 
+    // RayLib ships with a default font, so we can continue with that built in one.
     if (!fontToUse.glyphs) {
         fontToUse = GetFontDefault();
     }
@@ -158,7 +202,19 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
             lineCharCount = 0;
             continue;
         }
-        int index = text.chars[i] - 32;
+
+        int index;
+        if (text.chars[i] >= 0) {
+            index = text.chars[i];                          // ascii
+        } else {
+            index = Raylib_MeasureUtf8Glyph(text, &i);      // utf8 (reads several chars)
+        }
+
+        index -= CONTROL_CHAR_AMOUNT;
+        if (index < 0 || index >= fontToUse.glyphCount) {
+            continue;                                       // skip characters not in the font
+        }
+
         if (fontToUse.glyphs[index].advanceX != 0) lineTextWidth += fontToUse.glyphs[index].advanceX;
         else lineTextWidth += (fontToUse.recs[index].width + fontToUse.glyphs[index].offsetX);
     }
@@ -205,21 +261,21 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 Clay_TextRenderData *textData = &renderCommand->renderData.text;
                 Font fontToUse = fonts[textData->fontId];
-    
+
                 int strlen = textData->stringContents.length + 1;
-    
+
                 if(strlen > temp_render_buffer_len) {
                     // Grow the temp buffer if we need a larger string
                     if(temp_render_buffer) free(temp_render_buffer);
                     temp_render_buffer = (char *) malloc(strlen);
                     temp_render_buffer_len = strlen;
                 }
-    
+
                 // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
                 memcpy(temp_render_buffer, textData->stringContents.chars, textData->stringContents.length);
                 temp_render_buffer[textData->stringContents.length] = '\0';
                 DrawTextEx(fontToUse, temp_render_buffer, (Vector2){boundingBox.x, boundingBox.y}, (float)textData->fontSize, (float)textData->letterSpacing, CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor));
-    
+
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
