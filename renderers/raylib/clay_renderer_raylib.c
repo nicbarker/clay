@@ -206,13 +206,14 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                 Clay_TextRenderData *textData = &renderCommand->renderData.text;
                 Font fontToUse = fonts[textData->fontId];
     
-                int strlen = textData->stringContents.length + 1;
-    
-                if(strlen > temp_render_buffer_len) {
+                if (textData->stringContents.length < 0) break;
+                size_t strLen = (size_t)textData->stringContents.length + 1;
+
+                if((int)strLen > temp_render_buffer_len) {
                     // Grow the temp buffer if we need a larger string
                     if(temp_render_buffer) free(temp_render_buffer);
-                    temp_render_buffer = (char *) malloc(strlen);
-                    temp_render_buffer_len = strlen;
+                    temp_render_buffer = (char *) malloc(strLen);
+                    temp_render_buffer_len = (int)strLen;
                 }
     
                 // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
