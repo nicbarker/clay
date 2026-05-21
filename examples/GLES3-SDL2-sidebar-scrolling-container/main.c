@@ -225,6 +225,7 @@ void RenderDropdownTextItem(int index)
 const uint32_t FONT_ID_BODY_24 = 1;
 
 Clay_String profileText = CLAY_STRING_CONST("Profile Page one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen");
+Clay_String rightAlignedText = CLAY_STRING_CONST("Right aligned text in various fonts");
 
 void RenderHeaderButton1(Clay_String text)
 {
@@ -350,6 +351,23 @@ Clay_RenderCommandArray CreateLayout(void)
                     CLAY(CLAY_ID("Picture6.5"), {.layout = {.sizing = {.width = CLAY_SIZING_FIXED(100), .height = CLAY_SIZING_FIXED(120)}}, .image = {.imageData = &g_window4}}) {}
                 }
 
+                // To test that fonts are spaced well and using their appropriate data for the width function put 2 titles side by side
+                // Align them to the right to make it immediately obvious if sizing is not matching the font config
+                CLAY(CLAY_ID("RightAlignedBlock"), {.layout = {.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)}, .childGap = 16, .padding = {16, 16, 16, 16}}, .backgroundColor = {180, 180, 220, (float)(Clay_Hovered() ? 120 : 255)}})
+                {
+                    CLAY(CLAY_ID("RightText1"),  {.layout = {.layoutDirection = CLAY_LEFT_TO_RIGHT, .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)}}, .backgroundColor = {180, 180, 220,  255}})
+                    {
+                        CLAY(CLAY_ID("RightText1Spacer"),  {.layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)}},}) {}
+                        CLAY_TEXT(rightAlignedText, CLAY_TEXT_CONFIG({.fontSize = 24, .textColor = {0, 0, 0, 255}, .textAlignment = CLAY_TEXT_ALIGN_RIGHT}));
+
+                    }
+                    CLAY(CLAY_ID("RightText2"),  {.layout = {.layoutDirection = CLAY_LEFT_TO_RIGHT, .sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)}}, .backgroundColor = {180, 180, 220,  255}})
+                    {
+                        CLAY(CLAY_ID("RightText2Spacer"),  {.layout = {.sizing = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)}},}) {}
+                        CLAY_TEXT(rightAlignedText, CLAY_TEXT_CONFIG({.fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {0, 0, 0, 255}, .textAlignment = CLAY_TEXT_ALIGN_RIGHT}));
+                    }
+                }
+                
                 Clay_String cs = {.isStaticallyAllocated = false, .length = g_glInfoTextLen, .chars = g_glInfoText};
                 Clay_TextElementConfig glInfoElementConfig = {.fontId = FONT_ID_BODY_24, .fontSize = 24, .textColor = {255, 255, 255, 255}};
                 CLAY_TEXT(cs, &glInfoElementConfig);
