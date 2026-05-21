@@ -1,7 +1,18 @@
-cmake-build-debug/
-cmake-build-release/
 .DS_Store
 .idea/
 node_modules/
 *.dSYM
 .vs/
+
+# CMake dependencies
+_deps/
+
+# CMake build artifacts
+build/
+cmake-build-debug/
+cmake-build-release/
+CPack*
+Makefile
+cmake_install.cmake
+CMakeCache.txt
+CMakeFiles
