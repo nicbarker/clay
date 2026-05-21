@@ -8,7 +8,7 @@ set(FETCHCONTENT_QUIET FALSE)
 FetchContent_Declare(
     termbox2
     GIT_REPOSITORY "https://github.com/termbox/termbox2.git"
-    GIT_TAG "ffd159c2a6106dd5eef338a6702ad15d4d4aa809"
+    GIT_TAG "605398fa79108412976191e062ea14bd4bd30213"
     GIT_PROGRESS TRUE
     GIT_SHALLOW TRUE
 )
@@ -17,7 +17,7 @@ FetchContent_MakeAvailable(termbox2)
 FetchContent_Declare(
     stb
     GIT_REPOSITORY "https://github.com/nothings/stb.git"
-    GIT_TAG "fede005abaf93d9d7f3a679d1999b2db341b360f"
+    GIT_TAG "28d546d5eb77d4585506a20480f4de2e706dff4c"
     GIT_PROGRESS TRUE
     GIT_SHALLOW TRUE
 )
