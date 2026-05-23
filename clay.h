@@ -4074,7 +4074,7 @@ void Clay_SetLayoutDimensions(Clay_Dimensions dimensions) {
     context->layoutDimensions = dimensions;
 }
 
-CLAY_WASM_EXPORT("Clay_SetLayoutDimensions")
+CLAY_WASM_EXPORT("Clay_GetLayoutDimensions")
 Clay_Dimensions Clay_GetLayoutDimensions() {
     Clay_Context* context = Clay_GetCurrentContext();
     return context->layoutDimensions;
