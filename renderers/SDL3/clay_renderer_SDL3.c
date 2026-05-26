@@ -14,57 +14,96 @@ typedef struct {
  * no AA or low resolution might make it appear as jagged curves) */
 static int NUM_CIRCLE_SEGMENTS = 16;
 
+static inline void SDL_Clay_AddQuadIndices(int* indices, int* indexCount, int topLeft, int topRight, int bottomRight, int bottomLeft) {
+    indices[(*indexCount)++] = bottomLeft;
+    indices[(*indexCount)++] = topLeft;
+    indices[(*indexCount)++] = topRight;
+    indices[(*indexCount)++] = bottomRight;
+    indices[(*indexCount)++] = bottomLeft;
+    indices[(*indexCount)++] = topRight;
+}
+
 //all rendering is performed by a single SDL call, avoiding multiple RenderRect + plumbing choice for circles.
-static void SDL_Clay_RenderFillRoundedRect(Clay_SDL3RendererData *rendererData, const SDL_FRect rect, const float cornerRadius, const Clay_Color _color) {
+static void SDL_Clay_RenderFillRoundedRect(Clay_SDL3RendererData *rendererData, const SDL_FRect rect, const Clay_CornerRadius cornerRadius, const Clay_Color _color) {
     const SDL_FColor color = { _color.r/255, _color.g/255, _color.b/255, _color.a/255 };
 
     int indexCount = 0, vertexCount = 0;
 
-    const float minRadius = SDL_min(rect.w, rect.h) / 2.0f;
-    const float clampedRadius = SDL_min(cornerRadius, minRadius);
+    enum corner_e {
+        TOP_LEFT,
+        TOP_RIGHT,
+        BOTTOM_RIGHT,
+        BOTTOM_LEFT,
+    };
 
-    const int numCircleSegments = SDL_max(NUM_CIRCLE_SEGMENTS, (int) clampedRadius * 0.5f);
+    const float maxRadius = SDL_min(rect.w, rect.h) / 2.f;
+    const float clampedRadius[4] = {
+        SDL_min(cornerRadius.topLeft, maxRadius),
+        SDL_min(cornerRadius.topRight, maxRadius),
+        SDL_min(cornerRadius.bottomRight, maxRadius),
+        SDL_min(cornerRadius.bottomLeft, maxRadius),
+    };
 
-    int totalVertices = 4 + (4 * (numCircleSegments * 2)) + 2*4;
-    int totalIndices = 6 + (4 * (numCircleSegments * 3)) + 6*4;
+    int numCircleSegments[4];
+    int totalVertices = 4 + 4 + 2 * 4;
+    int totalIndices = 6 + 6*8;
+    for(unsigned i = 0; i < 4; i++) {
+        const int n = SDL_max(NUM_CIRCLE_SEGMENTS, (int) clampedRadius[i] * 0.5f);
+        numCircleSegments[i] = n;
+        totalVertices += n + 1;
+        totalIndices += n * 3;
+    }
 
-    SDL_Vertex vertices[totalVertices];
-    int indices[totalIndices];
+    SDL_Vertex* vertices = SDL_malloc(totalVertices * sizeof(SDL_Vertex));
+    int* indices = SDL_malloc(totalIndices * sizeof(int));
+
+    const float innerLeft = rect.x + SDL_max(clampedRadius[TOP_LEFT], clampedRadius[BOTTOM_LEFT]);
+    const float innerTop = rect.y + SDL_max(clampedRadius[TOP_LEFT], clampedRadius[TOP_RIGHT]);
+    const float innerRight = rect.x + rect.w - SDL_max(clampedRadius[TOP_RIGHT], clampedRadius[BOTTOM_RIGHT]);
+    const float innerBottom = rect.y + rect.h - SDL_max(clampedRadius[BOTTOM_RIGHT], clampedRadius[BOTTOM_LEFT]);
 
     //define center rectangle
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + clampedRadius, rect.y + clampedRadius}, color, {0, 0} }; //0 center TL
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w - clampedRadius, rect.y + clampedRadius}, color, {1, 0} }; //1 center TR
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w - clampedRadius, rect.y + rect.h - clampedRadius}, color, {1, 1} }; //2 center BR
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + clampedRadius, rect.y + rect.h - clampedRadius}, color, {0, 1} }; //3 center BL
+    vertices[vertexCount++] = (SDL_Vertex){ {innerLeft, innerTop}, color, {0, 0} }; //0 center TL
+    vertices[vertexCount++] = (SDL_Vertex){ {innerRight, innerTop}, color, {1, 0} }; //1 center TR
+    vertices[vertexCount++] = (SDL_Vertex){ {innerRight, innerBottom}, color, {1, 1} }; //2 center BR
+    vertices[vertexCount++] = (SDL_Vertex){ {innerLeft, innerBottom}, color, {0, 1} }; //3 center BL
+    SDL_Clay_AddQuadIndices(indices, &indexCount, 0, 1, 2, 3);
 
-    indices[indexCount++] = 0;
-    indices[indexCount++] = 1;
-    indices[indexCount++] = 3;
-    indices[indexCount++] = 1;
-    indices[indexCount++] = 2;
-    indices[indexCount++] = 3;
+    const SDL_FPoint cornerCenter[4] = {
+        { rect.x + clampedRadius[TOP_LEFT], rect.y + clampedRadius[TOP_LEFT] },
+        { rect.x + rect.w - clampedRadius[TOP_RIGHT], rect.y + clampedRadius[TOP_RIGHT]}, 
+        { rect.x + rect.w - clampedRadius[BOTTOM_RIGHT], rect.y + rect.h - clampedRadius[BOTTOM_RIGHT] },
+        { rect.x + clampedRadius[BOTTOM_LEFT], rect.y + rect.h - clampedRadius[BOTTOM_LEFT]},
+    };
+
+    //define corner centers
+    vertices[vertexCount++] = (SDL_Vertex){ cornerCenter[TOP_LEFT], color, {0, 0} };
+    vertices[vertexCount++] = (SDL_Vertex){ cornerCenter[TOP_RIGHT], color, {0, 0} };
+    vertices[vertexCount++] = (SDL_Vertex){ cornerCenter[BOTTOM_RIGHT], color, {0, 0} };
+    vertices[vertexCount++] = (SDL_Vertex){ cornerCenter[BOTTOM_LEFT], color, {0, 0} };
+
+    int cornerStartIndex[4];
 
     //define rounded corners as triangle fans
-    const float step = (SDL_PI_F/2) / numCircleSegments;
-    for (int i = 0; i < numCircleSegments; i++) {
-        const float angle1 = (float)i * step;
-        const float angle2 = ((float)i + 1.0f) * step;
+    for (int i = 0; i < 4; i++) {  // Iterate over four corners
+        const float step = (SDL_PI_F/2) / numCircleSegments[i];
+        SDL_FPoint signedRadius;
 
-        for (int j = 0; j < 4; j++) {  // Iterate over four corners
-            float cx, cy, signX, signY;
+        switch (i) {
+            case TOP_LEFT: signedRadius = (SDL_FPoint){ -clampedRadius[i], -clampedRadius[i]}; break; // Top-left
+            case TOP_RIGHT: signedRadius = (SDL_FPoint){ clampedRadius[i], -clampedRadius[i]}; break; // Top-right
+            case BOTTOM_RIGHT: signedRadius = (SDL_FPoint){ clampedRadius[i], clampedRadius[i]}; break; // Bottom-right
+            case BOTTOM_LEFT: signedRadius = (SDL_FPoint){ -clampedRadius[i], clampedRadius[i]}; break; // Bottom-left
+            default: return;
+        }
+        cornerStartIndex[i] = vertexCount;
+        vertices[vertexCount++] = (SDL_Vertex) { { cornerCenter[i].x + signedRadius.x, cornerCenter[i].y }, color, {0, 0} };
 
-            switch (j) {
-                case 0: cx = rect.x + clampedRadius; cy = rect.y + clampedRadius; signX = -1; signY = -1; break; // Top-left
-                case 1: cx = rect.x + rect.w - clampedRadius; cy = rect.y + clampedRadius; signX = 1; signY = -1; break; // Top-right
-                case 2: cx = rect.x + rect.w - clampedRadius; cy = rect.y + rect.h - clampedRadius; signX = 1; signY = 1; break; // Bottom-right
-                case 3: cx = rect.x + clampedRadius; cy = rect.y + rect.h - clampedRadius; signX = -1; signY = 1; break; // Bottom-left
-                default: return;
-            }
+        for (int j = 0; j < numCircleSegments[i]; j++) {
+            const float angle = ((float)j + 1.0f) * step;
+            vertices[vertexCount++] = (SDL_Vertex){ {cornerCenter[i].x + SDL_cosf(angle) * signedRadius.x, cornerCenter[i].y + SDL_sinf(angle) * signedRadius.y}, color, {0, 0} };
 
-            vertices[vertexCount++] = (SDL_Vertex){ {cx + SDL_cosf(angle1) * clampedRadius * signX, cy + SDL_sinf(angle1) * clampedRadius * signY}, color, {0, 0} };
-            vertices[vertexCount++] = (SDL_Vertex){ {cx + SDL_cosf(angle2) * clampedRadius * signX, cy + SDL_sinf(angle2) * clampedRadius * signY}, color, {0, 0} };
-
-            indices[indexCount++] = j;  // Connect to corresponding central rectangle vertex
+            indices[indexCount++] = 4 + i;  // Connect to corresponding corner center
             indices[indexCount++] = vertexCount - 2;
             indices[indexCount++] = vertexCount - 1;
         }
@@ -72,48 +111,37 @@ static void SDL_Clay_RenderFillRoundedRect(Clay_SDL3RendererData *rendererData, 
 
     //Define edge rectangles
     // Top edge
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + clampedRadius, rect.y}, color, {0, 0} }; //TL
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w - clampedRadius, rect.y}, color, {1, 0} }; //TR
+    vertices[vertexCount++] = (SDL_Vertex){ {cornerCenter[TOP_RIGHT].x, innerTop}, color, {1, 0} }; //BR
+    vertices[vertexCount++] = (SDL_Vertex){ {cornerCenter[TOP_LEFT].x, innerTop}, color, {0, 0} }; //BL
+    int cornerTLLastIndex = cornerStartIndex[TOP_LEFT] + numCircleSegments[TOP_LEFT];
+    int cornerTRLastIndex = cornerStartIndex[TOP_RIGHT] + numCircleSegments[TOP_RIGHT];
+    SDL_Clay_AddQuadIndices(indices, &indexCount, cornerTLLastIndex, cornerTRLastIndex, vertexCount - 2, vertexCount - 1);
 
-    indices[indexCount++] = 0;
-    indices[indexCount++] = vertexCount - 2; //TL
-    indices[indexCount++] = vertexCount - 1; //TR
-    indices[indexCount++] = 1;
-    indices[indexCount++] = 0;
-    indices[indexCount++] = vertexCount - 1; //TR
-    // Right edge
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w, rect.y + clampedRadius}, color, {1, 0} }; //RT
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w, rect.y + rect.h - clampedRadius}, color, {1, 1} }; //RB
-
-    indices[indexCount++] = 1;
-    indices[indexCount++] = vertexCount - 2; //RT
-    indices[indexCount++] = vertexCount - 1; //RB
-    indices[indexCount++] = 2;
-    indices[indexCount++] = 1;
-    indices[indexCount++] = vertexCount - 1; //RB
     // Bottom edge
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w - clampedRadius, rect.y + rect.h}, color, {1, 1} }; //BR
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + clampedRadius, rect.y + rect.h}, color, {0, 1} }; //BL
+    vertices[vertexCount++] = (SDL_Vertex){ {cornerCenter[BOTTOM_LEFT].x, innerBottom}, color, {0, 1} }; //BL
+    vertices[vertexCount++] = (SDL_Vertex){ {cornerCenter[BOTTOM_RIGHT].x, innerBottom}, color, {1, 1} }; //BR
+    int cornerBRLastIndex = cornerStartIndex[BOTTOM_RIGHT] + numCircleSegments[BOTTOM_RIGHT];
+    int cornerBLLastIndex = cornerStartIndex[BOTTOM_LEFT] + numCircleSegments[BOTTOM_LEFT];
+    SDL_Clay_AddQuadIndices(indices, &indexCount, vertexCount - 2, vertexCount - 1, cornerBRLastIndex, cornerBLLastIndex);
 
-    indices[indexCount++] = 2;
-    indices[indexCount++] = vertexCount - 2; //BR
-    indices[indexCount++] = vertexCount - 1; //BL
-    indices[indexCount++] = 3;
-    indices[indexCount++] = 2;
-    indices[indexCount++] = vertexCount - 1; //BL
+    // Right edge
+    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w, innerTop}, color, {1, 0} }; //TR
+    vertices[vertexCount++] = (SDL_Vertex){ {rect.x + rect.w, innerBottom}, color, {1, 1} }; //BR
+    SDL_Clay_AddQuadIndices(indices, &indexCount, 1, vertexCount - 2, vertexCount - 1, 2);
+    SDL_Clay_AddQuadIndices(indices, &indexCount, 4 + TOP_RIGHT, cornerStartIndex[TOP_RIGHT], vertexCount - 2, vertexCount - 6);
+    SDL_Clay_AddQuadIndices(indices, &indexCount, vertexCount - 3, vertexCount - 1, cornerStartIndex[BOTTOM_RIGHT], 4 + BOTTOM_RIGHT);
+
     // Left edge
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x, rect.y + rect.h - clampedRadius}, color, {0, 1} }; //LB
-    vertices[vertexCount++] = (SDL_Vertex){ {rect.x, rect.y + clampedRadius}, color, {0, 0} }; //LT
-
-    indices[indexCount++] = 3;
-    indices[indexCount++] = vertexCount - 2; //LB
-    indices[indexCount++] = vertexCount - 1; //LT
-    indices[indexCount++] = 0;
-    indices[indexCount++] = 3;
-    indices[indexCount++] = vertexCount - 1; //LT
+    vertices[vertexCount++] = (SDL_Vertex){ {rect.x, innerTop}, color, {0, 1} }; //LB
+    vertices[vertexCount++] = (SDL_Vertex){ {rect.x, innerBottom}, color, {0, 0} }; //LT
+    SDL_Clay_AddQuadIndices(indices, &indexCount, vertexCount - 2, 0, 3, vertexCount - 1);
+    SDL_Clay_AddQuadIndices(indices, &indexCount, cornerStartIndex[TOP_LEFT], 4 + TOP_LEFT, vertexCount - 7, vertexCount - 2);
+    SDL_Clay_AddQuadIndices(indices, &indexCount, vertexCount - 1, vertexCount - 6, 4 + BOTTOM_LEFT, cornerStartIndex[BOTTOM_LEFT]);
 
     // Render everything
     SDL_RenderGeometry(rendererData->renderer, NULL, vertices, vertexCount, indices, indexCount);
+    SDL_free(vertices);
+    SDL_free(indices);
 }
 
 static void SDL_Clay_RenderArc(Clay_SDL3RendererData *rendererData, const SDL_FPoint center, const float radius, const float startAngle, const float endAngle, const float thickness, const Clay_Color color) {
@@ -155,8 +183,8 @@ static void SDL_Clay_RenderClayCommands(Clay_SDL3RendererData *rendererData, Cla
                 Clay_RectangleRenderData *config = &rcmd->renderData.rectangle;
                 SDL_SetRenderDrawBlendMode(rendererData->renderer, SDL_BLENDMODE_BLEND);
                 SDL_SetRenderDrawColor(rendererData->renderer, config->backgroundColor.r, config->backgroundColor.g, config->backgroundColor.b, config->backgroundColor.a);
-                if (config->cornerRadius.topLeft > 0) {
-                    SDL_Clay_RenderFillRoundedRect(rendererData, rect, config->cornerRadius.topLeft, config->backgroundColor);
+                if (config->cornerRadius.topLeft > 1.f || config->cornerRadius.topRight > 1.f || config->cornerRadius.bottomLeft > 1.f || config->cornerRadius.bottomRight > 1.f) {
+                    SDL_Clay_RenderFillRoundedRect(rendererData, rect, config->cornerRadius, config->backgroundColor);
                 } else {
                     SDL_RenderFillRect(rendererData->renderer, &rect);
                 }
