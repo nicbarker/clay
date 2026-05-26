@@ -4088,6 +4088,21 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
     }
     context->pointerInfo.position = position;
     context->pointerOverIds.length = 0;
+
+    if (isPointerDown) {
+        if (context->pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
+            context->pointerInfo.state = CLAY_POINTER_DATA_PRESSED;
+        } else if (context->pointerInfo.state != CLAY_POINTER_DATA_PRESSED) {
+            context->pointerInfo.state = CLAY_POINTER_DATA_PRESSED_THIS_FRAME;
+        }
+    } else {
+        if (context->pointerInfo.state == CLAY_POINTER_DATA_RELEASED_THIS_FRAME) {
+            context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED;
+        } else if (context->pointerInfo.state != CLAY_POINTER_DATA_RELEASED)  {
+            context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
+        }
+    }
+
     Clay__int32_tArray dfsBuffer = context->layoutElementChildrenBuffer;
     for (int32_t rootIndex = context->layoutElementTreeRoots.length - 1; rootIndex >= 0; --rootIndex) {
         dfsBuffer.length = 0;
@@ -4157,20 +4172,6 @@ void Clay_SetPointerState(Clay_Vector2 position, bool isPointerDown) {
         Clay_LayoutElement *rootElement = Clay_LayoutElementArray_Get(&context->layoutElements, root->layoutElementIndex);
         if (found && rootElement->config.floating.attachTo != CLAY_ATTACH_TO_NONE && rootElement->config.floating.pointerCaptureMode == CLAY_POINTER_CAPTURE_MODE_CAPTURE) {
             break;
-        }
-    }
-
-    if (isPointerDown) {
-        if (context->pointerInfo.state == CLAY_POINTER_DATA_PRESSED_THIS_FRAME) {
-            context->pointerInfo.state = CLAY_POINTER_DATA_PRESSED;
-        } else if (context->pointerInfo.state != CLAY_POINTER_DATA_PRESSED) {
-            context->pointerInfo.state = CLAY_POINTER_DATA_PRESSED_THIS_FRAME;
-        }
-    } else {
-        if (context->pointerInfo.state == CLAY_POINTER_DATA_RELEASED_THIS_FRAME) {
-            context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED;
-        } else if (context->pointerInfo.state != CLAY_POINTER_DATA_RELEASED)  {
-            context->pointerInfo.state = CLAY_POINTER_DATA_RELEASED_THIS_FRAME;
         }
     }
 }
