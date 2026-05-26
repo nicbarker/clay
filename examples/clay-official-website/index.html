@@ -695,7 +695,6 @@
                         ctx.lineWidth = lineWidth * scale;
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale, (boundingBox.x.value + config.cornerRadius.topLeft.value + halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale, config.cornerRadius.topLeft.value * scale);
-                        ctx.stroke();
                     }
                     // Top border
                     if (config.width.top.value > 0) {
@@ -705,7 +704,6 @@
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + config.cornerRadius.topLeft.value + halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + boundingBox.width.value - config.cornerRadius.topRight.value - halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale);
-                        ctx.stroke();
                     }
                     // Top Right Corner
                     if (config.cornerRadius.topRight.value > 0) {
@@ -715,7 +713,6 @@
                         ctx.lineWidth = lineWidth * scale;
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + halfLineWidth) * scale, (boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + config.cornerRadius.topRight.value + halfLineWidth) * scale, config.cornerRadius.topRight.value * scale);
-                        ctx.stroke();
                     }
                     // Right border
                     if (config.width.right.value > 0) {
@@ -725,7 +722,6 @@
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + config.cornerRadius.topRight.value + halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - config.cornerRadius.topRight.value - halfLineWidth) * scale);
-                        ctx.stroke();
                     }
                     // Bottom Right Corner
                     if (config.cornerRadius.bottomRight.value > 0) {
@@ -735,7 +731,6 @@
                         ctx.lineWidth = lineWidth * scale;
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + boundingBox.width.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale, (boundingBox.x.value + boundingBox.width.value - config.cornerRadius.bottomRight.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale, config.cornerRadius.bottomRight.value * scale);
-                        ctx.stroke();
                     }
                     // Bottom Border
                     if (config.width.bottom.value > 0) {
@@ -745,7 +740,6 @@
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + config.cornerRadius.bottomLeft.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + boundingBox.width.value - config.cornerRadius.bottomRight.value - halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale);
-                        ctx.stroke();
                     }
                     // Bottom Left Corner
                     if (config.cornerRadius.bottomLeft.value > 0) {
@@ -755,7 +749,6 @@
                         ctx.lineWidth = lineWidth * scale;
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.arcTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - halfLineWidth) * scale, (boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - config.cornerRadius.bottomLeft.value - halfLineWidth) * scale, config.cornerRadius.bottomLeft.value * scale);
-                        ctx.stroke();
                     }
                     // Left Border
                     if (config.width.left.value > 0) {
@@ -765,8 +758,8 @@
                         ctx.strokeStyle = `rgba(${color.r.value}, ${color.g.value}, ${color.b.value}, ${color.a.value / 255})`;
                         ctx.moveTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + boundingBox.height.value - config.cornerRadius.bottomLeft.value - halfLineWidth) * scale);
                         ctx.lineTo((boundingBox.x.value + halfLineWidth) * scale, (boundingBox.y.value + config.cornerRadius.bottomRight.value + halfLineWidth) * scale);
-                        ctx.stroke();
                     }
+                    ctx.stroke();
                     ctx.closePath();
                     break;
                 }
