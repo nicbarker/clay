@@ -500,9 +500,6 @@
 
                         let linkContents = customData.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(customData.link.chars.value, customData.link.chars.value + customData.link.length.value))) : 0;
                         memoryDataView.setUint32(0, renderCommand.id.value, true);
-                        if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(0)) {
-                            window.location.href = linkContents;
-                        }
                         if (linkContents.length > 0) {
                             element.href = linkContents;
                         }
@@ -567,9 +564,6 @@
                             element.style.pointerEvents = customData.disablePointerEvents.value ? 'none' : 'all';
                             let linkContents = customData.link.length.value > 0 ? textDecoder.decode(new Uint8Array(memoryDataView.buffer.slice(customData.link.chars.value, customData.link.chars.value + customData.link.length.value))) : 0;
                             memoryDataView.setUint32(0, renderCommand.id.value, true);
-                            if (linkContents.length > 0 && (window.mouseDownThisFrame || window.touchDown) && instance.exports.Clay_PointerOver(0)) {
-                                window.location.href = linkContents;
-                            }
                             if (linkContents.length > 0) {
                                 element.href = linkContents;
                             }
