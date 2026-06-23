@@ -166,7 +166,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
     maxTextWidth = fmax(maxTextWidth, lineTextWidth);
     maxLineCharCount = CLAY__MAX(maxLineCharCount, lineCharCount);
 
-    textSize.width = maxTextWidth * scaleFactor + (lineCharCount * config->letterSpacing);
+    textSize.width = maxTextWidth * scaleFactor + ((maxLineCharCount - 1) * config->letterSpacing);
     textSize.height = textHeight;
 
     return textSize;
