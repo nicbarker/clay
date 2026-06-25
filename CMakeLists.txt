@@ -12,6 +12,7 @@ option(CLAY_INCLUDE_SDL3_EXAMPLES "Build SDL 3 examples" OFF)
 option(CLAY_INCLUDE_WIN32_GDI_EXAMPLES "Build Win32 GDI examples" OFF)
 option(CLAY_INCLUDE_SOKOL_EXAMPLES "Build Sokol examples" OFF)
 option(CLAY_INCLUDE_PLAYDATE_EXAMPLES "Build Playdate examples" OFF)
+option(CLAY_INCLUDE_TIGR_EXAMPLES "Build Tigr examples" OFF)
 
 message(STATUS "CLAY_INCLUDE_DEMOS: ${CLAY_INCLUDE_DEMOS}")
 
@@ -45,6 +46,10 @@ if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_SOKOL_EXAMPLES)
   add_subdirectory("examples/sokol-video-demo")
   add_subdirectory("examples/sokol-corner-radius")
 endif()
+if(CLAY_INCLUDE_ALL_EXAMPLES OR CLAY_INCLUDE_TIGR_EXAMPLES)
+  add_subdirectory("examples/tigr-demo")
+endif()
+
 
 # Playdate example not included in ALL because users need to install the playdate SDK first which requires a license agreement
 if(CLAY_INCLUDE_PLAYDATE_EXAMPLES)
