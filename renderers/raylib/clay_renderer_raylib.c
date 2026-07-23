@@ -12,7 +12,8 @@ Camera Raylib_camera;
 
 typedef enum
 {
-    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL
+    CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL,
+    CUSTOM_LAYOUT_ELEMENT_TYPE_GENERIC,
 } CustomLayoutElementType;
 
 typedef struct
@@ -25,9 +26,16 @@ typedef struct
 
 typedef struct
 {
+    void (*procedure) (Clay_RenderCommandArray *renderCommands, int32_t index, void * arguments);
+    void * arguments;
+} CustomLayoutElement_Generic;
+
+typedef struct
+{
     CustomLayoutElementType type;
     union {
         CustomLayoutElement_3DModel model;
+        CustomLayoutElement_Generic function;
     } customData;
 } CustomLayoutElement;
 
@@ -306,6 +314,11 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
                         BeginMode3D(Raylib_camera);
                             DrawModel(customElement->customData.model.model, positionRay.position, customElement->customData.model.scale * scaleValue, WHITE);        // Draw 3d model with texture
                         EndMode3D();
+                        break;
+                    }
+                    case CUSTOM_LAYOUT_ELEMENT_TYPE_GENERIC: {
+                        CustomLayoutElement_Generic customFunction = customElement->customData.function;
+                        customFunction.procedure(&renderCommands, j, customFunction.arguments);
                         break;
                     }
                     default: break;
