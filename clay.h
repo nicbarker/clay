@@ -95,7 +95,7 @@
 
 #define CLAY_SIDI_LOCAL(label, index) Clay__HashStringWithOffset(label, index, Clay_GetOpenElementId())
 
-#define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - sizeof((s)[0]))
+#define CLAY__STRING_LENGTH(s) ((sizeof(s) / sizeof((s)[0])) - 1)
 
 #define CLAY__ENSURE_STRING_LITERAL(x) ("" x "")
 
@@ -4405,7 +4405,7 @@ void Clay__CloneElementsWithExitTransition() {
             }
         }
     }
-};
+}
 
 void Clay_ApplyTransitionedPropertiesToElement(Clay_LayoutElement* currentElement, Clay_TransitionProperty properties, Clay_TransitionData currentTransitionData, Clay_BoundingBox* boundingBox, bool reparented) {
     if (properties & CLAY_TRANSITION_PROPERTY_WIDTH) {
@@ -4521,7 +4521,7 @@ Clay_RenderCommandArray Clay_EndLayout(float deltaTime) {
                             Clay__AddHashMapItem(CLAY__INIT(Clay_ElementId){ layoutElement->id }, layoutElement);
                             int32_t firstChildSlot = context->layoutElementChildren.length;
                             uint16_t newChildrenLength = layoutElement->children.length;
-                            for (int j = 0; j < layoutElement->children.length; ++j) {
+                            for (uint32_t j = 0; j < layoutElement->children.length; ++j) {
                                 Clay_LayoutElement* childElement = Clay_LayoutElementArray_GetCheckCapacity(&context->layoutElements, layoutElement->children.elements[j]);
                                 Clay_LayoutElementHashMapItem* childMapItem = Clay__GetHashMapItem(childElement->id);
                                 if (childMapItem->generation <= context->generation) {
