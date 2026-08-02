@@ -21,6 +21,8 @@ typedef struct app_state {
     SDL_Window *window;
     Clay_SDL3RendererData rendererData;
     ClayVideoDemo_Data demoData;
+
+    Clay_Vector2 mouseWheel;
 } AppState;
 
 SDL_Texture *sample_image;
@@ -72,7 +74,7 @@ Clay_RenderCommandArray ClayImageSample_CreateLayout() {
         });
     }
 
-    return Clay_EndLayout();
+    return Clay_EndLayout(0.01);
 }
 
 
@@ -143,6 +145,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
+    AppState *state = appstate;
     SDL_AppResult ret_val = SDL_APP_CONTINUE;
 
     switch (event->type) {
@@ -158,7 +161,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
             Clay_SetLayoutDimensions((Clay_Dimensions) { (float) event->window.data1, (float) event->window.data2 });
             break;
         case SDL_EVENT_MOUSE_WHEEL:
-            Clay_UpdateScrollContainers(true, (Clay_Vector2) { event->wheel.x, event->wheel.y }, 0.01f);
+            state->mouseWheel.x += event->wheel.x;
+            state->mouseWheel.y += event->wheel.y;
             break;
         default:
             break;
@@ -179,6 +183,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         (Clay_Vector2){.x = mouse_x, .y = mouse_y},
         buttons & SDL_BUTTON_LMASK
     );
+
+    Clay_UpdateScrollContainers(true, state->mouseWheel, 0.01f);
+    state->mouseWheel = (Clay_Vector2){ 0, 0 };
 
     Clay_RenderCommandArray render_commands = (show_demo
         ? ClayVideoDemo_CreateLayout(&state->demoData)
