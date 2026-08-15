@@ -1488,6 +1488,7 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     __m128i v2 = _mm_set1_epi64x(0x3c6ef372fe94f82bULL);
     __m128i v3 = _mm_set1_epi64x(0xa54ff53a5f1d36f1ULL);
 
+    const uint64_t originalLength = (uint64_t)length;
     uint8_t overflowBuffer[16] = { 0 };  // Temporary buffer for small inputs
 
     while (length > 0) {
@@ -1513,6 +1514,14 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
         v1 = _mm_add_epi64(v1, v3);
     }
 
+    // Mix in the original length as a final, asymmetric (lo != hi) block.
+    __m128i lenMsg = _mm_set_epi64x((int64_t)(~originalLength), (int64_t)originalLength);
+    v0 = _mm_xor_si128(v0, lenMsg);
+    Clay__SIMDARXMix(&v0, &v1);
+    Clay__SIMDARXMix(&v2, &v3);
+    v0 = _mm_add_epi64(v0, v2);
+    v1 = _mm_add_epi64(v1, v3);
+
     Clay__SIMDARXMix(&v0, &v1);
     Clay__SIMDARXMix(&v2, &v3);
     v0 = _mm_add_epi64(v0, v2);
@@ -1537,6 +1546,7 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
     uint64x2_t v2 = vdupq_n_u64(0x3c6ef372fe94f82bULL);
     uint64x2_t v3 = vdupq_n_u64(0xa54ff53a5f1d36f1ULL);
 
+    const uint64_t originalLength = (uint64_t)length;
     uint8_t overflowBuffer[8] = { 0 };
 
     while (length > 0) {
@@ -1566,6 +1576,14 @@ uint64_t Clay__HashData(const uint8_t* data, size_t length) {
         v0 = vaddq_u64(v0, v2);
         v1 = vaddq_u64(v1, v3);
     }
+
+    // Mix in the original length as a final, asymmetric (lo != hi) block
+    uint64x2_t lenMsg = vcombine_u64(vdup_n_u64(originalLength), vdup_n_u64(~originalLength));
+    v0 = veorq_u64(v0, lenMsg);
+    Clay__SIMDARXMix(&v0, &v1);
+    Clay__SIMDARXMix(&v2, &v3);
+    v0 = vaddq_u64(v0, v2);
+    v1 = vaddq_u64(v1, v3);
 
     Clay__SIMDARXMix(&v0, &v1);
     Clay__SIMDARXMix(&v2, &v3);
