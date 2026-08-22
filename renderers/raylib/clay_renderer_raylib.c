@@ -251,6 +251,7 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             }
             case CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END: {
                 DisableColorOverlay();
+                break;
             }
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
                 Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
