@@ -128,8 +128,52 @@ Ray GetScreenToWorldPointWithZDistance(Vector2 position, Camera camera, int scre
     return ray;
 }
 
+// An efficient text measuring function to use if all your text is restricted to ASCII (all unicode codepoints <= 127)
+static inline Clay_Dimensions Raylib_MeasureText_ASCII(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
+    // Measure string size for Font
+    Clay_Dimensions textSize = { 0 };
 
-static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
+    float maxTextWidth = 0.0f;
+    float lineTextWidth = 0;
+    int maxLineCharCount = 0;
+    int lineCharCount = 0;
+
+    float textHeight = config->fontSize;
+    Font* fonts = (Font*)userData;
+    Font fontToUse = fonts[config->fontId];
+    // Font failed to load, likely the fonts are in the wrong place relative to the execution dir.
+    // RayLib ships with a default font, so we can continue with that built in one.
+    if (!fontToUse.glyphs) {
+        fontToUse = GetFontDefault();
+    }
+
+    float scaleFactor = config->fontSize/(float)fontToUse.baseSize;
+
+    for (int i = 0; i < text.length; ++i, lineCharCount++)
+    {
+        if (text.chars[i] == '\n') {
+            maxTextWidth = fmax(maxTextWidth, lineTextWidth);
+            maxLineCharCount = CLAY__MAX(maxLineCharCount, lineCharCount);
+            lineTextWidth = 0;
+            lineCharCount = 0;
+            continue;
+        }
+        int index = text.chars[i] - 32;
+        if (fontToUse.glyphs[index].advanceX != 0) lineTextWidth += fontToUse.glyphs[index].advanceX;
+        else lineTextWidth += (fontToUse.recs[index].width + fontToUse.glyphs[index].offsetX);
+    }
+
+    maxTextWidth = fmax(maxTextWidth, lineTextWidth);
+    maxLineCharCount = CLAY__MAX(maxLineCharCount, lineCharCount);
+
+    textSize.width = maxTextWidth * scaleFactor + ((maxLineCharCount - 1) * config->letterSpacing);
+    textSize.height = textHeight;
+
+    return textSize;
+}
+
+// Alternative text measuring function for the complete unicode character set
+static inline Clay_Dimensions Raylib_MeasureText_UTF8(Clay_StringSlice text, Clay_TextElementConfig *config, void *userData) {
     // Measure string size for Font
     Clay_Dimensions textSize = { 0 };
 
@@ -143,7 +187,7 @@ static inline Clay_Dimensions Raylib_MeasureText(Clay_StringSlice text, Clay_Tex
     Font* fonts = (Font*)userData;
     Font fontToUse = fonts[config->fontId];
     // Font failed to load, likely the fonts are in the wrong place relative to the execution dir.
-    // RayLib ships with a default font, so we can continue with that built in one. 
+    // RayLib ships with a default font, so we can continue with that built in one.
     if (!fontToUse.glyphs) {
         fontToUse = GetFontDefault();
     }
@@ -206,21 +250,21 @@ void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts)
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
                 Clay_TextRenderData *textData = &renderCommand->renderData.text;
                 Font fontToUse = fonts[textData->fontId];
-    
+
                 int strlen = textData->stringContents.length + 1;
-    
+
                 if(strlen > temp_render_buffer_len) {
                     // Grow the temp buffer if we need a larger string
                     if(temp_render_buffer) free(temp_render_buffer);
                     temp_render_buffer = (char *) malloc(strlen);
                     temp_render_buffer_len = strlen;
                 }
-    
+
                 // Raylib uses standard C strings so isn't compatible with cheap slices, we need to clone the string to append null terminator
                 memcpy(temp_render_buffer, textData->stringContents.chars, textData->stringContents.length);
                 temp_render_buffer[textData->stringContents.length] = '\0';
                 DrawTextEx(fontToUse, temp_render_buffer, (Vector2){boundingBox.x, boundingBox.y}, (float)textData->fontSize, (float)textData->letterSpacing, CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor));
-    
+
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
