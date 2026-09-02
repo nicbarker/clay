@@ -165,7 +165,7 @@ static void Clay_Playdate_Render(PlaydateAPI *pd, Clay_RenderCommandArray render
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
                 Clay_ImageRenderData *config = &renderCommand->renderData.image;
-                LCDBitmap *texture = config->imageData;
+                LCDBitmap *texture = (LCDBitmap *)config->imageData;
                 int texWidth;
                 int texHeight;
                 pd->graphics->getBitmapData(texture, &texWidth, &texHeight, NULL, NULL, NULL);
