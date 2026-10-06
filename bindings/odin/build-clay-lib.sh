@@ -4,7 +4,7 @@ rm -f clay-odin/macos/clay.a && clang -c -DCLAY_IMPLEMENTATION -o clay.o -ffrees
 # ARM Mac
 rm -f clay-odin/macos-arm64/clay.a && clang -c -DCLAY_IMPLEMENTATION -g -o clay.o -static clay.c -fPIC -O3 && ar r clay-odin/macos-arm64/clay.a clay.o;
 # x64 Windows
-rm -f clay-odin/windows/clay.lib && clang -c -DCLAY_IMPLEMENTATION -o clay-odin/windows/clay.lib -ffreestanding -target x86_64-pc-windows-msvc -fuse-ld=llvm-lib -static -O3 clay.c;
+rm -f clay-odin/windows/clay.lib && clang -c -DCLAY_IMPLEMENTATION -o clay.o -ffreestanding -target x86_64-pc-windows-msvc -static -O3 clay.c && llvm-lib /OUT:clay-odin/windows/clay.lib clay.o;
 # Linux
 rm -f clay-odin/linux/clay.a && clang -c -DCLAY_IMPLEMENTATION -o clay.o -ffreestanding -static -target x86_64-unknown-linux-gnu clay.c -fPIC -O3 && ar r clay-odin/linux/clay.a clay.o;
 # WASM
