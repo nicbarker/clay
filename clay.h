@@ -2824,7 +2824,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                         closeClipElement = true;
                         for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                             Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-                            if (mapping->layoutElement == currentElement) {
+                            if (mapping->elementId == currentElement->id) {
                                 scrollOffset = currentElement->config.clip.childOffset;
                                 if (context->externalScrollHandlingEnabled) {
                                     scrollOffset = CLAY__INIT(Clay_Vector2) CLAY__DEFAULT_STRUCT;
@@ -2950,7 +2950,7 @@ void Clay__CalculateFinalLayout(float deltaTime, bool useStoredBoundingBoxes, bo
                     // This linear scan could theoretically be slow under very strange conditions, but I can't imagine a real UI with more than a few 10's of scroll containers
                     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
                         Clay__ScrollContainerDataInternal *mapping = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
-                        if (mapping->layoutElement == currentElement) {
+                        if (mapping->elementId == currentElement->id) {
                             scrollContainerData = mapping;
                             mapping->boundingBox = currentElementBoundingBox;
                             scrollOffset = currentElement->config.clip.childOffset;
@@ -4247,14 +4247,14 @@ void Clay_UpdateScrollContainers(bool enableDragScrolling, Clay_Vector2 scrollDe
     for (int32_t i = 0; i < context->scrollContainerDatas.length; i++) {
         Clay__ScrollContainerDataInternal *scrollData = Clay__ScrollContainerDataInternalArray_Get(&context->scrollContainerDatas, i);
         if (!scrollData->openThisFrame) {
-            Clay__ScrollContainerDataInternalArray_RemoveSwapback(&context->scrollContainerDatas, i);
+            Clay__ScrollContainerDataInternalArray_RemoveSwapback(&context->scrollContainerDatas, i--);
             continue;
         }
         scrollData->openThisFrame = false;
         Clay_LayoutElementHashMapItem *hashMapItem = Clay__GetHashMapItem(scrollData->elementId);
         // Element isn't rendered this frame but scroll offset has been retained
         if (!hashMapItem) {
-            Clay__ScrollContainerDataInternalArray_RemoveSwapback(&context->scrollContainerDatas, i);
+            Clay__ScrollContainerDataInternalArray_RemoveSwapback(&context->scrollContainerDatas, i--);
             continue;
         }
 
