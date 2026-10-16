@@ -3953,7 +3953,7 @@ uint32_t Clay__debugViewWidth = 400;
 Clay_Color Clay__debugViewHighlightColor = { 168, 66, 28, 100 };
 
 Clay__WarningArray Clay__WarningArray_Allocate_Arena(int32_t capacity, Clay_Arena *arena) {
-    size_t totalSizeBytes = capacity * sizeof(Clay_String);
+    size_t totalSizeBytes = capacity * sizeof(Clay__Warning);
     Clay__WarningArray array = {.capacity = capacity, .length = 0};
     uintptr_t nextAllocOffset = arena->nextAllocation + (64 - (arena->nextAllocation % 64));
     if (nextAllocOffset + totalSizeBytes <= arena->capacity) {
